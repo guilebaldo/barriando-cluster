@@ -314,14 +314,6 @@ export interface Socio {
       direccion: "https://maps.app.goo.gl/ZBekAULMrMffrpa78"
     },
     {
-      id: 39,
-      name: "Hotel El Sueño",
-      categoria: "Hospedaje",
-      foto: "sueno",
-      url: "https://www.elsueno-hotel.com",
-      direccion: "https://maps.app.goo.gl/GinmCfGJ8WzbmYJ17"
-    },
-    {
       id: 40,
       name: "SANTALAVERA",
       categoria: "Alimentos y Bebidas",
