@@ -7,7 +7,7 @@ import { listaSocios } from '../data/socios';
 import { motion, Variants } from 'framer-motion';
 import { Search, MapPin, Globe, Phone, ExternalLink, Utensils, Hotel, Award, Landmark } from 'lucide-react';
 
-// 1. Configuración de Animaciones con Tipado Estricto de TypeScript
+// 1. Configuración de Animaciones con Tipado Estricto de TypeScript y 'as const'
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
@@ -22,7 +22,7 @@ const cardVariants: Variants = {
     opacity: 1, 
     y: 0,
     transition: { 
-      type: "spring", 
+      type: "spring" as const, 
       stiffness: 100, 
       damping: 15 
     }
@@ -46,11 +46,16 @@ export default function Socios() {
   // Categorías únicas para los botones de filtrado rápido
   const categorias = ['Todos', ...Array.from(new Set(listaSocios.map(s => s.categoria)))];
 
-  // Filtrado lógico de la red de miembros
+  // Filtrado lógico seguro (evita errores si el campo viene en inglés o español)
   const sociosFiltrados = listaSocios.filter(socio => {
-    const cumpleBusqueda = socio.name.toLowerCase().includes(busqueda.toLowerCase()) ||
-                           socio.descripcion?.toLowerCase().includes(busqueda.toLowerCase());
+    const textoSocio = socio.name.toLowerCase();
+    
+    // Validamos de forma segura si existe description (en inglés) o descripcion (en español) en tu objeto Socio
+    const infoExtra = ((socio as any).description || (socio as any).descripcion || "").toLowerCase();
+    
+    const cumpleBusqueda = textoSocio.includes(busqueda.toLowerCase()) || infoExtra.includes(busqueda.toLowerCase());
     const cumpleCategoria = categoriaFiltrada === 'Todos' || socio.categoria === categoriaFiltrada;
+    
     return cumpleBusqueda && cumpleCategoria;
   });
 
@@ -104,7 +109,7 @@ export default function Socios() {
         </div>
       </section>
 
-      {/* REJILLA DE SOCIOS CON ANIMACIÓN RECTIFICADA */}
+      {/* REJILLA DE SOCIOS */}
       <main className="max-w-6xl mx-auto px-6 pb-24">
         {sociosFiltrados.length > 0 ? (
           <motion.div 
@@ -113,65 +118,70 @@ export default function Socios() {
             animate="show"
             className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {sociosFiltrados.map(socio => (
-              <motion.div 
-                key={socio.id}
-                variants={cardVariants}
-                whileHover={{ y: -5 }}
-                className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col group"
-              >
-                {/* Contenedor del Logo con fondo degradado suave */}
-                <div className="h-40 bg-gradient-to-b from-slate-50 to-white border-b border-slate-100 p-6 flex items-center justify-center relative">
-                  <span className="absolute top-3 right-3 bg-slate-100 text-slate-700 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 border border-slate-200/60">
-                    {obtenerIconoCategoria(socio.categoria)} {socio.categoria}
-                  </span>
-                  <img 
-                    src={`/logos/${socio.foto}.png`} 
-                    alt={socio.name}
-                    className="max-w-full max-h-full object-contain filter group-hover:scale-102 transition-transform duration-300"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                </div>
+            {sociosFiltrados.map(socio => {
+              // Convertimos el objeto socio a tipo dinámico (any) de forma local para saltar las restricciones de tipos de dirección/telefono
+              const s = socio as any;
 
-                {/* Información del Establecimiento */}
-                <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="font-bold text-slate-900 text-base mb-2 group-hover:text-[#27366D] transition-colors font-sans">
-                    {socio.name}
-                  </h3>
-                  <p className="text-slate-500 text-xs font-light leading-relaxed mb-6 flex-grow">
-                    {socio.descripcion || 'Establecimiento certificado comprometido con la excelencia del servicio y el desarrollo cultural del Centro Histórico de Puebla.'}
-                  </p>
-
-                  {/* Datos de Ubicación y Enlaces */}
-                  <div className="space-y-2 pt-4 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
-                    {socio.direccion && (
-                      <div className="flex items-start gap-2">
-                        <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                        <span className="truncate">{socio.direccion}</span>
-                      </div>
-                    )}
-                    {socio.telefono && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>{socio.telefono}</span>
-                      </div>
-                    )}
+              return (
+                <motion.div 
+                  key={socio.id}
+                  variants={cardVariants}
+                  whileHover={{ y: -5 }}
+                  className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col group"
+                >
+                  {/* Contenedor del Logo */}
+                  <div className="h-40 bg-gradient-to-b from-slate-50 to-white border-b border-slate-100 p-6 flex items-center justify-center relative">
+                    <span className="absolute top-3 right-3 bg-slate-100 text-slate-700 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 border border-slate-200/60">
+                      {obtenerIconoCategoria(socio.categoria)} {socio.categoria}
+                    </span>
+                    <img 
+                      src={`/logos/${socio.foto}.png`} 
+                      alt={socio.name}
+                      className="max-w-full max-h-full object-contain filter group-hover:scale-102 transition-transform duration-300"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
                   </div>
 
-                  {/* Botón de Enlace Externo */}
-                  {socio.url && (
-                    <a 
-                      href={socio.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-5 w-full bg-slate-50 hover:bg-[#27366D] hover:text-white border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 group/btn tracking-wide uppercase"
-                    >
-                      <Globe className="w-3.5 h-3.5" /> Visitar Sitio Web <ExternalLink className="w-3 h-3 opacity-60 group-hover/btn:translate-x-0.5 transition-transform" />
-                    </a>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                  {/* Información del Establecimiento */}
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="font-bold text-slate-900 text-base mb-2 group-hover:text-[#27366D] transition-colors font-sans">
+                      {socio.name}
+                    </h3>
+                    <p className="text-slate-500 text-xs font-light leading-relaxed mb-6 flex-grow">
+                      {s.description || s.descripcion || 'Establecimiento certificado comprometido con la excelencia del servicio y el desarrollo cultural del Centro Histórico de Puebla.'}
+                    </p>
+
+                    {/* Datos de Ubicación y Enlaces Extrayendo de 's' */}
+                    <div className="space-y-2 pt-4 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
+                      {(s.direccion || s.address) && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                          <span className="truncate">{s.direccion || s.address}</span>
+                        </div>
+                      )}
+                      {(s.telefono || s.phone) && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{s.telefono || s.phone}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Botón de Enlace Externo */}
+                    {socio.url && (
+                      <a 
+                        href={socio.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-5 w-full bg-slate-50 hover:bg-[#27366D] hover:text-white border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 group/btn tracking-wide uppercase"
+                      >
+                        <Globe className="w-3.5 h-3.5" /> Visitar Sitio Web <ExternalLink className="w-3 h-3 opacity-60 group-hover/btn:translate-x-0.5 transition-transform" />
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
           </motion.div>
         ) : (
           <div className="text-center py-20 bg-white border border-slate-200 rounded-2xl shadow-sm">
