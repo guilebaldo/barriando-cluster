@@ -6,10 +6,22 @@ import { Calendar, User, ArrowRight } from 'lucide-react';
 export default function BlogPage() {
   const posts = [
     {
+      title: "Clúster Turístico de Puebla: quiénes somos y qué aportamos al desarrollo de la ciudad",
+      desc: "Definimos con claridad nuestra identidad como ecosistema de cooperación turística y los beneficios que generamos para socios, aliados y visitantes.",
+      fecha: "18 Junio, 2026",
+      autor: "Consejo Directivo"
+    },
+    {
       title: "El MUAAP y la reactivación turística en los barrios fundacionales",
       desc: "Cómo el inventario de los 49 hitos históricos está transformando la manera de caminar y consumir en el Centro Histórico de Puebla.",
       fecha: "15 Junio, 2026",
       autor: "Clúster Turístico"
+    },
+    {
+      title: "Turismo de reuniones y negocios: nuevas oportunidades para Puebla",
+      desc: "El Clúster amplía su posicionamiento más allá del patrimonio y la gastronomía, integrando congresos, ferias y vinculación empresarial.",
+      fecha: "08 Junio, 2026",
+      autor: "Comité Editorial"
     },
     {
       title: "Gastronomía con identidad: La historia detrás de Cosme Tortas",
@@ -30,7 +42,7 @@ export default function BlogPage() {
           </span>
           <h1 className="text-3xl md:text-4xl font-black mt-3 mb-4">Blog del Clúster</h1>
           <p className="text-slate-200 text-sm max-w-2xl mx-auto font-light leading-relaxed">
-            Noticias, artículos de opinión, historia de los barrios tradicionales y novedades de nuestra red sociopolítica y económica.
+            Noticias, proyectos, alianzas y reflexiones sobre el desarrollo turístico y económico de Puebla.
           </p>
         </div>
       </header>

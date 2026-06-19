@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Clúster Turístico de Puebla",
-  description: "Asociación de Cooperación Turística de los barrios tradicionales",
+  description:
+    "Ecosistema de cooperación turística que articula empresas, instituciones y comunidad para el desarrollo turístico y económico de Puebla.",
 };
 
 export default function RootLayout({

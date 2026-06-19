@@ -30,7 +30,8 @@ export default function Footer() {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
             <p className="font-bold text-white text-xs mb-0.5">Clúster Turístico de Puebla</p>
-            <p>© 2026 Barriando Puebla. Todos los derechos reservados.</p>
+            <p className="text-slate-400 text-[10px]">Asociación de Cooperación Turística</p>
+            <p className="mt-1">© 2026 Barriando Puebla. Todos los derechos reservados.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-4 text-slate-400">
             <span className="hover:text-white cursor-pointer transition flex items-center gap-1"><Shield className="w-3 h-3"/> Aviso de Privacidad</span>

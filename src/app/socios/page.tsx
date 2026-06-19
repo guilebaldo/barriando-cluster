@@ -42,7 +42,8 @@ export default function SociosPage() {
             Miembros del Clúster
           </h1>
           <p className="text-slate-200 text-sm max-w-2xl mx-auto font-light leading-relaxed">
-            Conoce a las empresas, hoteles, museos y experiencias que integran la red cultural y turística de nuestro barrio.
+            {listaSocios.length} empresas certificadas — hoteles, museos, restaurantes, tours y servicios —
+            que integran la oferta turística coordinada del Clúster y generan valor para visitantes y la ciudad.
           </p>
         </div>
       </header>

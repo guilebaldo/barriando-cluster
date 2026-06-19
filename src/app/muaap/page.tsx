@@ -26,7 +26,7 @@ export default function MuaapPage() {
           </span>
           <h1 className="text-3xl md:text-4xl font-black mt-3 mb-4">Inventario Cultural del MUAAP</h1>
           <p className="text-slate-200 text-sm max-w-2xl mx-auto font-light leading-relaxed">
-            Explora de manera automatizada los <strong className="text-white font-semibold">{totalHitos} hitos patrimoniales</strong> que conectan el Centro Histórico con sus barrios ancestrales.
+            Explora de manera automatizada los <strong className="text-white font-semibold">{totalHitos} hitos patrimoniales</strong> que conectan el Centro Histórico con sus barrios ancestrales, articulando patrimonio, negocios certificados y desarrollo turístico territorial.
           </p>
         </div>
       </header>
