@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { listaSocios } from "../data/socios";
 import { CreditCard, Upload, LogOut, Building2 } from "lucide-react";
 
@@ -28,9 +29,7 @@ export default function PanelDashboard({ user, subscription, stripeConfigured }:
   const socio = user.socioId ? listaSocios.find((s) => s.id === user.socioId) : null;
 
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
+    await signOut({ callbackUrl: "/login" });
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {

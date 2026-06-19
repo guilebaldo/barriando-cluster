@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import SocioLogo from "../components/SocioLogo";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import SociosMapSection from "./SociosMapSection";
 import { listaSocios } from "../data/socios";
 import { Search, MapPin, ExternalLink, SlidersHorizontal, Building2 } from "lucide-react";
 
@@ -39,16 +40,18 @@ export default function SociosPage() {
             Red Empresarial Certificada
           </span>
           <h1 className="text-3xl md:text-4xl font-black mt-3 mb-4 font-serif-cluster uppercase tracking-wide">
-            Miembros del Clúster
+            Miembros de Barriando
           </h1>
           <p className="text-slate-200 text-sm max-w-2xl mx-auto font-light leading-relaxed">
-            {listaSocios.length} empresas certificadas — hoteles, museos, restaurantes, tours y servicios —
-            que integran la oferta turística coordinada del Clúster y generan valor para visitantes y la ciudad.
+            {listaSocios.length} empresas certificadas del Centro Histórico — hospedaje, gastronomía, tours, museos y servicios —
+            que integran la oferta turística coordinada y generan derrama económica en Puebla.
           </p>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto py-12 px-6">
+        <SociosMapSection />
+
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8 space-y-4 md:space-y-0 md:flex md:items-center md:gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

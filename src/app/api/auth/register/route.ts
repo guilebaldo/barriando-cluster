@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { createSession } from "@/lib/auth";
 import { secureError, secureJson } from "@/lib/api";
 import { listaSocios } from "@/app/data/socios";
 
@@ -34,14 +33,6 @@ export async function POST(request: NextRequest) {
         socioId: data.socioId ?? null,
         subscription: { create: {} },
       },
-    });
-
-    await createSession({
-      id: user.id,
-      email: user.email,
-      nombre: user.nombre,
-      role: user.role,
-      socioId: user.socioId,
     });
 
     return secureJson({ ok: true, user: { id: user.id, email: user.email, nombre: user.nombre } });

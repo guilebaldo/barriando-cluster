@@ -6,12 +6,8 @@ import { definicionInstitucional } from "../data/institucion";
 import { Users, Mail } from "lucide-react";
 
 export default function EquipoPage() {
-  const consejoDirectivo = listaEquipo.filter((m) =>
-    ["Presidente", "Tesorero", "Secretario", "Secretario Técnico"].includes(m.cargo)
-  );
-  const vocales = listaEquipo.filter(
-    (m) => !["Presidente", "Tesorero", "Secretario", "Secretario Técnico"].includes(m.cargo)
-  );
+  const direccion = listaEquipo.filter((m) => m.grupo === "direccion");
+  const operacion = listaEquipo.filter((m) => m.grupo === "operacion");
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
@@ -20,14 +16,14 @@ export default function EquipoPage() {
       <header className="bg-[#27366D] text-white py-16 px-6 text-center border-b border-[#1e2b58]">
         <div className="max-w-4xl mx-auto">
           <span className="text-amber-400 text-xs font-bold uppercase tracking-widest bg-amber-400/10 px-3 py-1 rounded-full border border-amber-400/20">
-            Liderazgo institucional
+            {definicionInstitucional.nombreComercial}
           </span>
           <h1 className="text-3xl md:text-4xl font-black mt-3 mb-4 font-serif-cluster uppercase tracking-wide">
             Equipo directivo
           </h1>
           <p className="text-slate-200 text-sm max-w-2xl mx-auto font-light leading-relaxed">
-            {listaEquipo.length} personas conforman el Consejo Directivo del {definicionInstitucional.nombre},
-            coordinando la operación, la vinculación y el desarrollo del ecosistema turístico de Puebla.
+            {listaEquipo.length} personas lideran la operación de {definicionInstitucional.razonSocial},{" "}
+            {definicionInstitucional.figuraLegal}, coordinando productos turísticos, festivales y la red de socios del Centro Histórico.
           </p>
         </div>
       </header>
@@ -36,10 +32,10 @@ export default function EquipoPage() {
         <section>
           <div className="flex items-center gap-2 mb-6">
             <Users className="w-4 h-4 text-[#27366D]" />
-            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Mesa directiva</h2>
+            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Dirección</h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {consejoDirectivo.map((miembro) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {direccion.map((miembro) => (
               <article
                 key={miembro.id}
                 className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition text-center"
@@ -60,10 +56,10 @@ export default function EquipoPage() {
         <section>
           <div className="flex items-center gap-2 mb-6">
             <Users className="w-4 h-4 text-[#27366D]" />
-            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Vocales del consejo</h2>
+            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Comunicación, contenido y tecnología</h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vocales.map((miembro) => (
+            {operacion.map((miembro) => (
               <article
                 key={miembro.id}
                 className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition"
@@ -87,9 +83,9 @@ export default function EquipoPage() {
 
         <section className="bg-[#27366D] text-white rounded-xl p-8 text-center">
           <Mail className="w-6 h-6 text-amber-400 mx-auto mb-3" />
-          <h3 className="font-bold text-sm mb-2">¿Quieres colaborar con el Consejo Directivo?</h3>
+          <h3 className="font-bold text-sm mb-2">¿Quieres colaborar con Barriando?</h3>
           <p className="text-xs text-slate-300 max-w-md mx-auto mb-4 font-light leading-relaxed">
-            Escríbenos para proponer alianzas, proyectos conjuntos o participar en las comisiones de trabajo del Clúster.
+            Escríbenos para proponer alianzas, proyectos conjuntos o participar en festivales y comisiones de trabajo.
           </p>
           <a
             href="mailto:clusterturistico.pue@gmail.com"

@@ -3,8 +3,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import OAuthButtons from "../components/OAuthButtons";
 import { listaSocios } from "../data/socios";
 import { UserPlus } from "lucide-react";
 
@@ -34,6 +36,12 @@ export default function RegistroPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al registrar");
+
+      const result = await signIn("credentials", { email, password, redirect: false });
+      if (result?.error) {
+        router.push("/login");
+        return;
+      }
       router.push("/panel");
       router.refresh();
     } catch (err) {
@@ -55,7 +63,10 @@ export default function RegistroPage() {
           <p className="text-xs text-slate-500 mb-6 font-light">
             Crea tu cuenta para gestionar tu perfil, actualizar tu logo y pagar tu mensualidad.
           </p>
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+          <OAuthButtons />
+
+          <form onSubmit={handleSubmit} className="space-y-4 mt-6">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre completo</label>
               <input
@@ -110,7 +121,7 @@ export default function RegistroPage() {
               disabled={loading}
               className="w-full bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold py-3 rounded-lg text-xs uppercase tracking-widest transition disabled:opacity-50"
             >
-              {loading ? "Registrando..." : "Crear cuenta"}
+              {loading ? "Registrando..." : "Crear cuenta con correo"}
             </button>
           </form>
           <p className="text-xs text-slate-500 mt-6 text-center">

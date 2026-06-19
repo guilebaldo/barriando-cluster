@@ -29,8 +29,8 @@ export default function Footer() {
       <footer className="bg-[#27366D] text-slate-300 text-[11px] py-10 px-6 border-t border-[#1e2b58]">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
-            <p className="font-bold text-white text-xs mb-0.5">Clúster Turístico de Puebla</p>
-            <p className="text-slate-400 text-[10px]">Asociación de Cooperación Turística</p>
+            <p className="font-bold text-white text-xs mb-0.5">Barriando</p>
+            <p className="text-slate-400 text-[10px]">Clúster Turístico y Asociación de Empresarios del Centro Histórico · A.C.</p>
             <p className="mt-1">© 2026 Barriando Puebla. Todos los derechos reservados.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-4 text-slate-400">
@@ -39,7 +39,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="max-w-5xl mx-auto mt-6 pt-6 border-t border-[#1e2b58]/50 text-slate-400/80 text-center md:text-left leading-relaxed">
-          *De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares de México, el Clúster Turístico de Puebla garantiza que los datos recabados en este formulario se utilizarán exclusivamente para fines informativos y de vinculación empresarial, impidiendo su venta o divulgación no autorizada.*
+          *De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares de México, Barriando (Clúster Turístico y Asociación de Empresarios del Centro Histórico, A.C.) garantiza que los datos recabados se utilizarán exclusivamente para fines informativos y de vinculación empresarial.*
         </div>
       </footer>
     </>

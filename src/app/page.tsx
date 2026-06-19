@@ -9,6 +9,7 @@ import {
   definicionInstitucional,
   propuestaValor,
   ejesEstrategicos,
+  festivalesDestacados,
   proyectosDestacados,
   indicadoresImpacto,
   alianzasEstrategicas,
@@ -27,6 +28,7 @@ import {
   Utensils,
   Lightbulb,
   Globe,
+  Sparkles,
 } from "lucide-react";
 import ContactForm from "./components/ContactForm";
 
@@ -54,13 +56,13 @@ export default function Home() {
         <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <span className="bg-amber-400/10 text-amber-400 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border border-amber-400/20 inline-flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5" /> Ecosistema de Cooperación Turística
+            <Globe className="w-3.5 h-3.5" /> {definicionInstitucional.figuraLegal}
           </span>
-          <h1 className="text-4xl md:text-6xl font-black mt-6 mb-4 tracking-wide uppercase font-serif-cluster text-amber-50">
-            {definicionInstitucional.nombre}
+          <h1 className="text-4xl md:text-6xl font-black mt-6 mb-3 tracking-wide uppercase font-serif-cluster text-amber-50">
+            {definicionInstitucional.nombreComercial}
           </h1>
-          <p className="text-sm text-amber-400/90 font-semibold uppercase tracking-wider mb-4">
-            {definicionInstitucional.figuraLegal}
+          <p className="text-sm text-amber-400/90 font-medium max-w-2xl mx-auto mb-4 leading-relaxed">
+            {definicionInstitucional.razonSocial}
           </p>
           <p className="text-base md:text-lg text-slate-200 max-w-3xl mx-auto font-light leading-relaxed">
             {definicionInstitucional.definicion}
@@ -155,13 +157,13 @@ export default function Home() {
               Puebla, destino integral
             </h2>
             <p className="text-slate-300 text-sm max-w-2xl mx-auto mt-3 font-light leading-relaxed">
-              Vamos más allá del patrimonio y la gastronomía: articulamos cultura, reuniones, negocios,
-              innovación e inversión para fortalecer el desarrollo turístico de la ciudad.
+              Desarrollamos productos y servicios turísticos, festivales con marching bands y danza folklórica,
+              y experiencias que generan derrama económica en el Centro Histórico de Puebla.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ejesEstrategicos.map((eje, i) => {
-              const iconos = [Landmark, Briefcase, Utensils, Lightbulb, Target];
+              const iconos = [Sparkles, Landmark, Utensils, Lightbulb, Target];
               const Icon = iconos[i] ?? Compass;
               return (
                 <div
@@ -178,11 +180,39 @@ export default function Home() {
         </div>
       </section>
 
+      {/* FESTIVALES EMBLEMÁTICOS */}
+      <section className="py-20 px-6 bg-slate-50 border-y border-slate-200">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Eventos que activan la ciudad</span>
+            <h2 className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
+              Festivales y desfiles
+            </h2>
+            <p className="text-slate-600 text-sm max-w-2xl mx-auto mt-3 font-light leading-relaxed">
+              Marching bands y grupos de danza folklórica en el Centro Histórico, invitando a locales y turistas
+              a consumir cultura poblana, gastronomía, arte, hospedaje y tours.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {festivalesDestacados.map((fest) => (
+              <div
+                key={fest.titulo}
+                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500 mb-3" />
+                <h3 className="font-bold text-slate-950 text-sm mb-2">{fest.titulo}</h3>
+                <p className="text-xs text-slate-600 leading-relaxed font-light">{fest.descripcion}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* PROYECTOS DESTACADOS */}
       <section className="py-20 px-6 max-w-5xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-10">
           <div>
-            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Vida del Clúster</span>
+            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Vida de Barriando</span>
             <h2 className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
               Proyectos y actividades
             </h2>

@@ -4,77 +4,71 @@ export interface MiembroEquipo {
   cargo: string;
   descripcion: string;
   iniciales: string;
+  grupo: "direccion" | "operacion";
 }
 
-export const listaEquipo: MiembroEquipo[] = [
+function iniciales(nombre: string) {
+  return nombre
+    .split(" ")
+    .filter(Boolean)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+const miembros: Omit<MiembroEquipo, "iniciales">[] = [
   {
     id: 1,
-    nombre: "Por confirmar",
+    nombre: "Alex Gehrke",
     cargo: "Presidente",
-    descripcion: "Lidera la visión estratégica del Clúster y representa a la organización ante instancias públicas, privadas y académicas.",
-    iniciales: "PR",
+    descripcion:
+      "Lidera la visión estratégica de Barriando y representa a la A.C. ante instancias públicas, privadas y académicas del sector turístico.",
+    grupo: "direccion",
   },
   {
     id: 2,
-    nombre: "Por confirmar",
-    cargo: "Tesorero",
-    descripcion: "Supervisa la administración financiera, la transparencia de recursos y el sustento económico de los proyectos del Clúster.",
-    iniciales: "TE",
+    nombre: "Georgina Vigueras",
+    cargo: "Directora",
+    descripcion:
+      "Coordina la operación institucional, la vinculación con socios y el desarrollo de productos turísticos para Puebla.",
+    grupo: "direccion",
   },
   {
     id: 3,
-    nombre: "Por confirmar",
-    cargo: "Secretario",
-    descripcion: "Coordina actas, comunicación interna y el cumplimiento de los acuerdos del Consejo Directivo.",
-    iniciales: "SE",
+    nombre: "José Ramón Lozano-Torres",
+    cargo: "Tesorero",
+    descripcion:
+      "Supervisa la administración financiera, la transparencia de recursos y el sustento económico de los proyectos del Clúster.",
+    grupo: "direccion",
   },
   {
     id: 4,
-    nombre: "Por confirmar",
-    cargo: "Secretario Técnico",
-    descripcion: "Articula la operación de proyectos, convenios y la vinculación técnica con socios y aliados estratégicos.",
-    iniciales: "ST",
+    nombre: "Alan Bermúdez",
+    cargo: "Director de Comunicación",
+    descripcion:
+      "Define la narrativa institucional, coordina relaciones públicas y posiciona a Barriando en medios y audiencias clave.",
+    grupo: "operacion",
   },
   {
     id: 5,
-    nombre: "Por confirmar",
-    cargo: "Vocal — Vinculación Empresarial",
-    descripcion: "Fortalece la red de socios, impulsa alianzas comerciales y nuevas afiliaciones al ecosistema turístico.",
-    iniciales: "VE",
+    nombre: "Abril Cantú",
+    cargo: "Digital Content Manager",
+    descripcion:
+      "Produce y gestiona contenido digital que visibiliza eventos, socios, rutas y la cultura poblana en canales oficiales.",
+    grupo: "operacion",
   },
   {
     id: 6,
-    nombre: "Por confirmar",
-    cargo: "Vocal — Promoción y Comunicación",
-    descripcion: "Difunde la propuesta de valor del Clúster, coordina campañas y posiciona a Puebla en mercados turísticos.",
-    iniciales: "PC",
-  },
-  {
-    id: 7,
-    nombre: "Por confirmar",
-    cargo: "Vocal — Patrimonio y Cultura",
-    descripcion: "Vincula el patrimonio histórico, las artes y la identidad cultural con productos turísticos de alto valor.",
-    iniciales: "CU",
-  },
-  {
-    id: 8,
-    nombre: "Por confirmar",
-    cargo: "Vocal — Turismo de Reuniones y Negocios",
-    descripcion: "Desarrolla oportunidades en turismo MICE, congresos, ferias y vinculación con el sector empresarial.",
-    iniciales: "TN",
-  },
-  {
-    id: 9,
-    nombre: "Por confirmar",
-    cargo: "Vocal — Innovación y Desarrollo",
-    descripcion: "Integra nuevas tendencias, emprendimiento turístico y soluciones digitales al portafolio del Clúster.",
-    iniciales: "IN",
-  },
-  {
-    id: 10,
-    nombre: "Por confirmar",
-    cargo: "Vocal — Comunidad y Barrios",
-    descripcion: "Conecta a los barrios tradicionales con la promoción turística y el desarrollo económico local inclusivo.",
-    iniciales: "BA",
+    nombre: "Guilebaldo Ruiz",
+    cargo: "Director de Tecnología e Innovación Digital",
+    descripcion:
+      "Impulsa la plataforma digital, herramientas para socios, innovación tecnológica y la presencia en línea del ecosistema Barriando.",
+    grupo: "operacion",
   },
 ];
+
+export const listaEquipo: MiembroEquipo[] = miembros.map((m) => ({
+  ...m,
+  iniciales: iniciales(m.nombre),
+}));
