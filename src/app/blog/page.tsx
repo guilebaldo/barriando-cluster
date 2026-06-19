@@ -1,35 +1,17 @@
-import React from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { Calendar, User, ArrowRight } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import { prisma } from "@/lib/prisma";
+import { Calendar, User, ArrowRight } from "lucide-react";
 
-export default function BlogPage() {
-  const posts = [
-    {
-      title: "Clúster Turístico de Puebla: quiénes somos y qué aportamos al desarrollo de la ciudad",
-      desc: "Definimos con claridad nuestra identidad como ecosistema de cooperación turística y los beneficios que generamos para socios, aliados y visitantes.",
-      fecha: "18 Junio, 2026",
-      autor: "Consejo Directivo"
-    },
-    {
-      title: "El MUAAP y la reactivación turística en los barrios fundacionales",
-      desc: "Cómo el inventario de los 49 hitos históricos está transformando la manera de caminar y consumir en el Centro Histórico de Puebla.",
-      fecha: "15 Junio, 2026",
-      autor: "Clúster Turístico"
-    },
-    {
-      title: "Turismo de reuniones y negocios: nuevas oportunidades para Puebla",
-      desc: "El Clúster amplía su posicionamiento más allá del patrimonio y la gastronomía, integrando congresos, ferias y vinculación empresarial.",
-      fecha: "08 Junio, 2026",
-      autor: "Comité Editorial"
-    },
-    {
-      title: "Gastronomía con identidad: La historia detrás de Cosme Tortas",
-      desc: "Exploramos el valor patrimonial de las recetas tradicionales que dan identidad culinaria a nuestra red empresarial.",
-      fecha: "02 Junio, 2026",
-      autor: "Comité Editorial"
-    }
-  ];
+export const dynamic = "force-dynamic";
+
+export default async function BlogPage() {
+  const posts = await prisma.blogPost.findMany({
+    where: { published: true },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
@@ -49,23 +31,33 @@ export default function BlogPage() {
 
       <main className="max-w-4xl mx-auto py-12 px-6 min-h-[50vh]">
         <div className="grid md:grid-cols-2 gap-6">
-          {posts.map((post, idx) => (
-            <article key={idx} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition flex flex-col justify-between">
+          {posts.map((post) => (
+            <article
+              key={post.id}
+              className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition flex flex-col justify-between"
+            >
               <div>
                 <div className="flex gap-4 text-[11px] text-slate-400 mb-3">
-                  <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {post.fecha}</span>
-                  <span className="flex items-center gap-1"><User className="w-3 h-3" /> Por: {post.autor}</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> {post.fecha}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <User className="w-3 h-3" /> Por: {post.autor}
+                  </span>
                 </div>
-                <h2 className="font-bold text-slate-950 text-base mb-2 hover:text-[#27366D] transition cursor-pointer">
-                  {post.title}
-                </h2>
-                <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
-                  {post.desc}
-                </p>
+                <Link href={`/blog/${post.slug}`}>
+                  <h2 className="font-bold text-slate-950 text-base mb-2 hover:text-[#27366D] transition">
+                    {post.title}
+                  </h2>
+                </Link>
+                <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">{post.excerpt}</p>
               </div>
-              <div className="pt-4 mt-4 border-t border-slate-100 flex items-center text-xs font-bold text-[#27366D] cursor-pointer hover:gap-2 transition-all">
+              <Link
+                href={`/blog/${post.slug}`}
+                className="pt-4 mt-4 border-t border-slate-100 flex items-center text-xs font-bold text-[#27366D] hover:gap-2 transition-all"
+              >
                 Leer artículo completo <ArrowRight className="w-3 h-3 ml-1" />
-              </div>
+              </Link>
             </article>
           ))}
         </div>

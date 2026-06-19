@@ -1,6 +1,6 @@
-import React from 'react';
-import Link from 'next/link';
-import { listaSocios } from '../data/socios';
+import React from "react";
+import Link from "next/link";
+import { listaSocios } from "../data/socios";
 
 export default function Navbar() {
   const conteoAutomatico = listaSocios.length;
@@ -17,6 +17,7 @@ export default function Navbar() {
           <Link href="/socios" className="text-slate-200 hover:text-amber-400 transition">Socios ({conteoAutomatico})</Link>
           <Link href="/equipo" className="text-slate-200 hover:text-amber-400 transition">Equipo</Link>
           <Link href="/blog" className="text-slate-200 hover:text-amber-400 transition">Blog</Link>
+          <Link href="/panel" className="text-amber-400 hover:text-amber-300 transition">Mi cuenta</Link>
         </div>
       </div>
     </nav>

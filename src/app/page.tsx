@@ -28,6 +28,7 @@ import {
   Lightbulb,
   Globe,
 } from "lucide-react";
+import ContactForm from "./components/ContactForm";
 
 const iconoValor: Record<string, React.ReactNode> = {
   building: <Building2 className="w-5 h-5" />,
@@ -348,47 +349,7 @@ export default function Home() {
             ¿Eres empresa turística, institución o aliado estratégico? Escríbenos para explorar afiliación,
             convenios o colaboración en proyectos.
           </p>
-          <form className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Nombre completo o empresa
-              </label>
-              <input
-                required
-                type="text"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs focus:outline-[#27366D] transition-colors focus:bg-white"
-                placeholder="Ej. Tu nombre o negocio"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Correo electrónico
-              </label>
-              <input
-                required
-                type="email"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs focus:outline-[#27366D] transition-colors focus:bg-white"
-                placeholder="contacto@empresa.com"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Mensaje
-              </label>
-              <textarea
-                required
-                rows={4}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs focus:outline-[#27366D] transition-colors focus:bg-white"
-                placeholder="Cuéntanos tu interés en el Clúster..."
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold py-3 rounded-lg text-xs uppercase tracking-widest transition shadow-sm mt-2"
-            >
-              Enviar mensaje
-            </button>
-          </form>
+          <ContactForm />
         </div>
       </section>
 

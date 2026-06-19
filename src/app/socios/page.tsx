@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Image from "next/image";
+import SocioLogo from "../components/SocioLogo";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { listaSocios } from "../data/socios";
@@ -97,14 +97,7 @@ export default function SociosPage() {
                 className="group bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow transition-all duration-300 flex flex-col overflow-hidden"
               >
                 <div className="aspect-square bg-slate-50 relative flex items-center justify-center p-8 border-b border-slate-100 overflow-hidden">
-                  <Image
-                    src={`/logos/${s.foto}.png`}
-                    alt={`Logo de ${s.name}`}
-                    fill
-                    sizes="(max-width: 1024px) 50vw, 33vw"
-                    className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
-                    priority={s.id <= 6}
-                  />
+                  <SocioLogo foto={s.foto} name={s.name} />
                   <span className="absolute top-3 right-3 bg-amber-400/20 text-[#27366D] px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
                     {s.categoria}
                   </span>
