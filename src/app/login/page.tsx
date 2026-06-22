@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import OAuthButtons from "../components/OAuthButtons";
+import { OAuthButtons, AuthDivider } from "../components/OAuthButtons";
 import { LogIn } from "lucide-react";
 
 export default function LoginPage() {
@@ -45,8 +45,9 @@ export default function LoginPage() {
           </div>
 
           <OAuthButtons />
+          <AuthDivider />
 
-          <form onSubmit={handleSubmit} className="space-y-4 mt-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Correo</label>
               <input
@@ -76,6 +77,7 @@ export default function LoginPage() {
               {loading ? "Entrando..." : "Entrar con correo"}
             </button>
           </form>
+
           <p className="text-xs text-slate-500 mt-6 text-center">
             ¿No tienes cuenta?{" "}
             <Link href="/registro" className="text-[#27366D] font-bold hover:underline">

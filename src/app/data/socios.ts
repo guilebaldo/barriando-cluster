@@ -342,7 +342,7 @@ export const listaSocios: Socio[] = [
     id: 42,
     name: "Zócalo Restaurante",
     categoria: "Alimentos y Bebidas",
-    foto: "zocalo",
+    foto: "zocalos",
     url: "https://www.facebook.com/zocaloskaraoke/?locale=es_LA",
     direccion: "https://maps.app.goo.gl/ruQJLquULrNsbk9e6"
   },

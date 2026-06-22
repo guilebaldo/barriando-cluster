@@ -35,7 +35,7 @@
   display: flex;
   width: max-content;
   /* Reducido a 75 segundos para que el movimiento sea extremadamente suave y elegante */
-  animation: marquee 75s linear infinite; 
+  animation: marquee 140s linear infinite;
 }
 
 /* Pausa suave al pasar el cursor para poder leer o dar clic cómodamente */

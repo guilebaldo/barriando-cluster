@@ -6,6 +6,13 @@ export const metadata: Metadata = {
   title: "Barriando — Clúster Turístico del Centro Histórico de Puebla",
   description:
     "Barriando articula empresas del Centro Histórico de Puebla para desarrollar productos y servicios turísticos, festivales y derrama económica local.",
+  icons: {
+    icon: [
+      { url: "/logos/favicon.png", type: "image/png" },
+      { url: "/logos/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/logos/favicon.png",
+  },
 };
 
 export default function RootLayout({
