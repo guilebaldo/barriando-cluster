@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import PanelDashboard from "./PanelDashboard";
-import { getSession, getUserWithSubscription } from "@/lib/auth";
+import { getSession, getUserWithSubscription } from "@/lib/auth-utils";
 import { isStripeConfigured } from "@/lib/stripe";
 
 export default async function PanelPage() {

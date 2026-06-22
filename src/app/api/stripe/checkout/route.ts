@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
-import { requireSession, getUserWithSubscription } from "@/lib/auth";
+import { requireSession, getUserWithSubscription } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { secureError, secureJson } from "@/lib/api";
 

@@ -30,8 +30,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# ======================
+# 🔐 ENVIRONMENT FILES
+# ======================
+.env
+.env.local
+.env.development
+.env.production
+.env*.local
+
+# Permitir solo la plantilla
 !.env.example
 
 # vercel
@@ -41,6 +49,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Prisma
 /src/generated/prisma
 prisma/dev.db
 prisma/dev.db-journal

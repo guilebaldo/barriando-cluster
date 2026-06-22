@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { requireSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth-utils";
 import { listaSocios } from "@/app/data/socios";
 import { secureError, secureJson } from "@/lib/api";
 

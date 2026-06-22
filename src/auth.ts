@@ -1,3 +1,4 @@
+// auth.ts
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
@@ -12,8 +13,8 @@ const providers = [];
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   providers.push(
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     })
   );
@@ -22,8 +23,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 if (process.env.APPLE_ID && process.env.APPLE_SECRET) {
   providers.push(
     Apple({
-      clientId: process.env.APPLE_ID,
-      clientSecret: process.env.APPLE_SECRET,
+      clientId: process.env.APPLE_ID!,
+      clientSecret: process.env.APPLE_SECRET!,
       allowDangerousEmailAccountLinking: true,
     })
   );
@@ -37,6 +38,7 @@ providers.push(
     },
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) return null;
+
       const email = credentials.email as string;
       const password = credentials.password as string;
 
@@ -68,9 +70,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user?.id) {
         token.id = user.id;
         const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-        token.socioId = dbUser?.socioId ?? null;
-        token.role = dbUser?.role ?? "SOCIO";
-        token.nombre = dbUser?.nombre ?? user.name;
+        if (dbUser) {
+          token.socioId = dbUser.socioId ?? null;
+          token.role = dbUser.role;
+          token.nombre = dbUser.nombre;
+        }
       }
       return token;
     },
