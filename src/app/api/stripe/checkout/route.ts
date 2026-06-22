@@ -18,21 +18,33 @@ export async function POST(request: NextRequest) {
     if (!user) return secureError("Usuario no encontrado", 404);
 
     let customerId = user.subscription?.stripeCustomerId;
+
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: user.email,
-        name: user.nombre,
-        metadata: { userId: user.id, socioId: String(user.socioId ?? "") },
+        email: user.email ?? undefined,
+        name: user.nombre || undefined,
+        metadata: { 
+          userId: user.id, 
+          socioId: user.socioId ? String(user.socioId) : undefined 
+        },
       });
+
       customerId = customer.id;
+
       await prisma.subscription.upsert({
         where: { userId: user.id },
-        create: { userId: user.id, stripeCustomerId: customerId },
-        update: { stripeCustomerId: customerId },
+        create: { 
+          userId: user.id, 
+          stripeCustomerId: customerId 
+        },
+        update: { 
+          stripeCustomerId: customerId 
+        },
       });
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     const checkout = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
@@ -47,6 +59,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return secureError("Debes iniciar sesión", 401);
     }
+    console.error("Stripe checkout error:", error);
     return secureError("No se pudo iniciar el pago", 500);
   }
 }
