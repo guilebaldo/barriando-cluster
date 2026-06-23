@@ -29,7 +29,7 @@ export default async function PanelPage({
         <PanelDashboard
           user={{
             id: user.id,
-            nombre: user.nombre,
+            nombre: user.nombre ?? "",
             email: user.email ?? "",
             socioId: user.socioId,
           }}

@@ -3,7 +3,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { barriandoPrismaAdapter } from "@/lib/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
@@ -67,13 +67,13 @@ async function enrichTokenFromDb(userId: string) {
   return {
     socioId: dbUser.socioId ?? null,
     role: dbUser.role,
-    nombre: dbUser.nombre,
+    nombre: dbUser.nombre ?? "",
     plan: (dbUser.subscription?.plan ?? "VECINO") as MembershipPlan,
   };
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: barriandoPrismaAdapter(prisma),
   debug: true,
   session: { strategy: "jwt" },
   pages: {
