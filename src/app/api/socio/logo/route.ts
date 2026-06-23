@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { requireSession } from "@/lib/auth-utils";
+import { requireSession, getUserWithSubscription } from "@/lib/auth-utils";
+import { hasCommercialAccess } from "@/lib/membresia";
 import { listaSocios } from "@/app/data/socios";
 import { secureError, secureJson } from "@/lib/api";
 
@@ -11,6 +12,10 @@ const ALLOWED = ["image/png", "image/jpeg", "image/webp"];
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
+    const user = await getUserWithSubscription(session.id);
+    if (!user?.subscription || !hasCommercialAccess(user.subscription.plan, user.subscription.status)) {
+      return secureError("Necesitas una membresía de pago activa para subir tu logo", 403);
+    }
     if (!session.socioId) {
       return secureError("Tu cuenta no está vinculada a un negocio socio", 403);
     }

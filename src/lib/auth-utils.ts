@@ -1,7 +1,7 @@
 // lib/auth-utils.ts
 import { auth } from "@/auth";
 import { prisma } from "./prisma";
-import type { UserRole } from "@/generated/prisma/client";
+import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
 export interface SessionUser {
   id: string;
@@ -9,6 +9,7 @@ export interface SessionUser {
   nombre: string;
   role: UserRole;
   socioId: number | null;
+  plan: MembershipPlan;
 }
 
 export async function getSession(): Promise<SessionUser | null> {
@@ -21,6 +22,7 @@ export async function getSession(): Promise<SessionUser | null> {
     nombre: session.user.name ?? "",
     role: session.user.role as UserRole,
     socioId: session.user.socioId ?? null,
+    plan: session.user.plan ?? "VECINO",
   };
 }
 

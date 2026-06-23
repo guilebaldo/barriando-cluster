@@ -1,4 +1,4 @@
-import type { UserRole } from "@/generated/prisma/client";
+import type { UserRole, MembershipPlan } from "@/generated/prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -9,6 +9,7 @@ declare module "next-auth" {
       image?: string | null;
       socioId: number | null;
       role: UserRole;
+      plan: MembershipPlan;
     };
   }
 }
@@ -19,5 +20,6 @@ declare module "next-auth/jwt" {
     socioId?: number | null;
     role?: UserRole;
     nombre?: string;
+    plan?: MembershipPlan;
   }
 }

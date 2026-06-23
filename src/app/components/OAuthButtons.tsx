@@ -9,7 +9,7 @@ export function OAuthButtons() {
       {/* Botón de Google - Siempre visible porque ya lo tienes configurado */}
       <button
         type="button"
-        onClick={() => signIn("google", { callbackUrl: "/panel" })}
+        onClick={() => signIn("google", { redirectTo: "/panel" })}
         className="w-full flex items-center justify-center gap-2 border border-slate-200 rounded-lg py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -25,7 +25,7 @@ export function OAuthButtons() {
       {process.env.NEXT_PUBLIC_APPLE_ID && (
         <button
           type="button"
-          onClick={() => signIn("apple", { callbackUrl: "/panel" })}
+          onClick={() => signIn("apple", { redirectTo: "/panel" })}
           className="w-full flex items-center justify-center gap-2 bg-black text-white rounded-lg py-3 text-xs font-bold hover:bg-slate-900 transition"
         >
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

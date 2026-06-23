@@ -6,7 +6,7 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import type { UserRole } from "@/generated/prisma/client";
+import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
 const providers = [];
 
@@ -58,24 +58,44 @@ providers.push(
   })
 );
 
+async function enrichTokenFromDb(userId: string) {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { subscription: true },
+  });
+  if (!dbUser) return null;
+  return {
+    socioId: dbUser.socioId ?? null,
+    role: dbUser.role,
+    nombre: dbUser.nombre,
+    plan: (dbUser.subscription?.plan ?? "VECINO") as MembershipPlan,
+  };
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  debug: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
   },
   providers,
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user?.id) {
         token.id = user.id;
-        const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
-        if (dbUser) {
-          token.socioId = dbUser.socioId ?? null;
-          token.role = dbUser.role;
-          token.nombre = dbUser.nombre;
+      }
+
+      if (token.id && (user?.id || trigger === "update")) {
+        const enriched = await enrichTokenFromDb(token.id as string);
+        if (enriched) {
+          token.socioId = enriched.socioId;
+          token.role = enriched.role;
+          token.nombre = enriched.nombre;
+          token.plan = enriched.plan;
         }
       }
+
       return token;
     },
     async session({ session, token }) {
@@ -83,6 +103,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         session.user.socioId = (token.socioId as number | null) ?? null;
         session.user.role = (token.role as UserRole) ?? "SOCIO";
+        session.user.plan = (token.plan as MembershipPlan) ?? "VECINO";
         if (token.nombre) session.user.name = token.nombre as string;
       }
       return session;
@@ -98,7 +119,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         await prisma.subscription.upsert({
           where: { userId: user.id },
-          create: { userId: user.id },
+          create: { userId: user.id, plan: "VECINO", status: "inactive" },
           update: {},
         });
       }
