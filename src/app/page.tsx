@@ -31,6 +31,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import ContactForm from "./components/ContactForm";
+import DestacadoBanner from "./components/DestacadoBanner";
+import { destacadoActual } from "./data/destacados";
 
 const iconoValor: Record<string, React.ReactNode> = {
   building: <Building2 className="w-5 h-5" />,
@@ -83,6 +85,8 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      <DestacadoBanner destacado={destacadoActual} />
 
       {/* PROPUESTA DE VALOR */}
       <section className="py-20 px-6 bg-slate-50 border-b border-slate-200">

@@ -1,0 +1,26 @@
+{
+  "name": "Barriando — Clúster Turístico de Puebla",
+  "short_name": "Barriando",
+  "description": "Clúster Turístico y Asociación de Empresarios del Centro Histórico de Puebla",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#27366D",
+  "theme_color": "#27366D",
+  "lang": "es-MX",
+  "icons": [
+    {
+      "src": "/logos/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logos/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

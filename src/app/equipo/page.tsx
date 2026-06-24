@@ -81,18 +81,20 @@ export default function EquipoPage() {
           </div>
         </section>
 
-        <section className="bg-[#27366D] text-white rounded-xl p-8 text-center">
-          <Mail className="w-6 h-6 text-amber-400 mx-auto mb-3" />
-          <h3 className="font-bold text-sm mb-2">¿Quieres colaborar con Barriando?</h3>
-          <p className="text-xs text-slate-300 max-w-md mx-auto mb-4 font-light leading-relaxed">
-            Escríbenos para proponer alianzas, proyectos conjuntos o participar en festivales y comisiones de trabajo.
-          </p>
-          <a
-            href="mailto:clusterturistico.pue@gmail.com"
-            className="inline-block bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition"
-          >
-            clusterturistico.pue@gmail.com
-          </a>
+        <section className="bg-[#27366D] text-white rounded-xl p-6 sm:p-8">
+          <div className="flex flex-col items-center text-center max-w-lg mx-auto">
+            <Mail className="w-6 h-6 text-amber-400 mb-3 shrink-0" />
+            <h3 className="font-bold text-sm mb-2">¿Quieres colaborar con Barriando?</h3>
+            <p className="text-xs text-slate-300 mb-5 font-light leading-relaxed">
+              Escríbenos para proponer alianzas, proyectos conjuntos o participar en festivales y comisiones de trabajo.
+            </p>
+            <a
+              href="mailto:clusterturistico.pue@gmail.com"
+              className="inline-flex items-center justify-center w-full sm:w-auto max-w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] sm:text-xs uppercase tracking-wider px-4 sm:px-6 py-3 rounded-lg transition break-all sm:break-normal text-center"
+            >
+              clusterturistico.pue@gmail.com
+            </a>
+          </div>
         </section>
       </main>
 

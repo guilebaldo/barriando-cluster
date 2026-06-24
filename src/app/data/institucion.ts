@@ -76,19 +76,19 @@ export const proyectosDestacados = [
     titulo: "Festival Fundacional",
     descripcion:
       "Ediciones recurrentes con marching bands y danza folklórica que activan el Centro Histórico y conectan cultura con consumo turístico.",
-    enlace: "/blog",
+    enlace: "#contacto",
   },
   {
     titulo: "La Cabalgata de Iturbide",
     descripcion:
       "Desfile emblemático que convoca a locales y visitantes al corazón de Puebla para consumir cultura, gastronomía, hospedaje y servicios del Clúster.",
-    enlace: "/blog",
+    enlace: "#contacto",
   },
   {
     titulo: "Cinco de Mayo Fest",
     descripcion:
       "Festival que integra espectáculos, cultura poblana y oferta turística certificada para generar derrama económica en el centro de la ciudad.",
-    enlace: "/blog",
+    enlace: "#contacto",
   },
   {
     titulo: "MUAAP — Museo Urbano Andante Abierto de Puebla",
