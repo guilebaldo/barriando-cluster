@@ -25,7 +25,7 @@ export default function Footer() {
         </div>
       </section>
 
-      <footer className="bg-[#27366D] text-slate-300 text-[11px] py-10 px-6 border-t border-[#1e2b58]">
+      <footer className="bg-[#27366D] text-slate-300 text-[11px] py-10 px-6 border-t border-[#1e2b58] safe-area-bottom">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
             <p className="font-bold text-white text-xs mb-0.5">Barriando</p>

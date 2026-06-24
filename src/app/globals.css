@@ -16,6 +16,15 @@
     color: #0f172a;
   }
 
+  /* PWA / iPhone: respeta notch y barra de estado */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   /* Estilizado de los títulos monumentales de turismo */
   h1, h2, .font-serif-cluster {
     font-family: var(--font-serif-monumental);

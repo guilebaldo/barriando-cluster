@@ -51,7 +51,7 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-[#27366D] border-b border-[#1e2b58] sticky top-0 z-50">
+    <nav className="bg-[#27366D] border-b border-[#1e2b58] sticky top-0 z-50 safe-area-top">
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
         <Link href="/" className="text-white font-black tracking-tight text-lg hover:text-amber-400 transition min-w-0">
           <span className="text-amber-400">Barriando</span>
@@ -86,7 +86,7 @@ export default function Navbar() {
         <>
           <button
             type="button"
-            className="md:hidden fixed inset-0 top-[73px] bg-black/50 z-40"
+            className="md:hidden fixed inset-x-0 bottom-0 top-[calc(4.5rem+env(safe-area-inset-top,0px))] bg-black/50 z-40"
             aria-label="Cerrar menú"
             onClick={() => setOpen(false)}
           />
