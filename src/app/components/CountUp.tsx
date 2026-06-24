@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function parseNumericTarget(value: string): { end: number; suffix: string; prefix: string } | null {
   const match = value.match(/^([^\d]*)(\d+)([^\d]*)$/);
@@ -11,46 +11,71 @@ function parseNumericTarget(value: string): { end: number; suffix: string; prefi
 export default function CountUp({
   value,
   className = "",
-  duration = 1400,
+  duration = 1600,
 }: {
   value: string;
   className?: string;
   duration?: number;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const parsed = parseNumericTarget(value);
-  const [display, setDisplay] = useState(() =>
-    parsed ? `${parsed.prefix}0${parsed.suffix}` : value
-  );
+  const rafRef = useRef<number | null>(null);
+  const hasAnimatedRef = useRef(false);
+
+  const parsed = useMemo(() => parseNumericTarget(value), [value]);
+  const initial = parsed ? `${parsed.prefix}0${parsed.suffix}` : value;
+
+  const [display, setDisplay] = useState(initial);
 
   useEffect(() => {
-    if (!parsed || !ref.current) {
+    hasAnimatedRef.current = false;
+    setDisplay(parsed ? `${parsed.prefix}0${parsed.suffix}` : value);
+  }, [value, parsed]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    if (!parsed) {
       setDisplay(value);
       return;
     }
 
+    const { end, prefix, suffix } = parsed;
+    const finalDisplay = `${prefix}${end}${suffix}`;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) return;
+        if (!entry.isIntersecting || hasAnimatedRef.current) return;
+        hasAnimatedRef.current = true;
         observer.disconnect();
 
         const start = performance.now();
-        const { end, prefix, suffix } = parsed;
 
         function frame(now: number) {
           const t = Math.min((now - start) / duration, 1);
           const eased = 1 - Math.pow(1 - t, 3);
           setDisplay(`${prefix}${Math.round(end * eased)}${suffix}`);
-          if (t < 1) requestAnimationFrame(frame);
+          if (t < 1) {
+            rafRef.current = requestAnimationFrame(frame);
+          } else {
+            setDisplay(finalDisplay);
+            rafRef.current = null;
+          }
         }
 
-        requestAnimationFrame(frame);
+        rafRef.current = requestAnimationFrame(frame);
       },
-      { threshold: 0.35 }
+      { threshold: 0.25, rootMargin: "0px 0px -8% 0px" }
     );
 
-    observer.observe(ref.current);
-    return () => observer.disconnect();
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
   }, [value, parsed, duration]);
 
   return (

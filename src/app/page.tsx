@@ -33,6 +33,7 @@ import {
 import ContactForm from "./components/ContactForm";
 import DestacadoBanner from "./components/DestacadoBanner";
 import CountUp from "./components/CountUp";
+import Reveal from "./components/Reveal";
 import SociosCarousel from "./components/SociosCarousel";
 import { destacadoActual } from "./data/destacados";
 
@@ -58,19 +59,28 @@ export default function Home() {
       <header className="bg-[#27366D] text-white py-24 px-6 border-b border-[#1e2b58] relative overflow-hidden">
         <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
         <div className="max-w-5xl mx-auto text-center relative z-10">
-          <span className="bg-amber-400/10 text-amber-400 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border border-amber-400/20 inline-flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5" /> {definicionInstitucional.figuraLegal}
-          </span>
-          <h1 className="text-4xl md:text-6xl font-black mt-6 mb-3 tracking-wide uppercase font-serif-cluster text-amber-50">
-            {definicionInstitucional.nombreComercial}
-          </h1>
-          <p className="text-sm text-amber-400/90 font-medium max-w-2xl mx-auto mb-4 leading-relaxed">
-            {definicionInstitucional.razonSocial}
-          </p>
-          <p className="text-base md:text-lg text-slate-200 max-w-3xl mx-auto font-light leading-relaxed">
-            {definicionInstitucional.definicion}
-          </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
+          <Reveal>
+            <span className="bg-amber-400/10 text-amber-400 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border border-amber-400/20 inline-flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" /> {definicionInstitucional.figuraLegal}
+            </span>
+          </Reveal>
+          <Reveal delay={80}>
+            <h1 className="text-4xl md:text-6xl font-black mt-6 mb-3 tracking-wide uppercase font-serif-cluster text-amber-50">
+              {definicionInstitucional.nombreComercial}
+            </h1>
+          </Reveal>
+          <Reveal delay={140}>
+            <p className="text-sm text-amber-400/90 font-medium max-w-2xl mx-auto mb-4 leading-relaxed">
+              {definicionInstitucional.razonSocial}
+            </p>
+          </Reveal>
+          <Reveal delay={200}>
+            <p className="text-base md:text-lg text-slate-200 max-w-3xl mx-auto font-light leading-relaxed">
+              {definicionInstitucional.definicion}
+            </p>
+          </Reveal>
+          <Reveal delay={280}>
+            <div className="mt-10 flex flex-wrap justify-center gap-4">
             <a
               href="/socios"
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg transition shadow-sm"
@@ -83,7 +93,8 @@ export default function Home() {
             >
               Conocer al equipo directivo
             </a>
-          </div>
+            </div>
+          </Reveal>
         </div>
       </header>
 
@@ -92,7 +103,7 @@ export default function Home() {
       {/* PROPUESTA DE VALOR */}
       <section className="py-20 px-6 bg-slate-50 border-b border-slate-200">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <Reveal className="text-center mb-12">
             <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">¿Por qué existimos?</span>
             <h2 className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
               Propuesta de valor
@@ -100,12 +111,12 @@ export default function Home() {
             <p className="text-slate-600 text-sm max-w-2xl mx-auto mt-3 font-light leading-relaxed">
               {definicionInstitucional.mision}
             </p>
-          </div>
+          </Reveal>
           <div className="grid md:grid-cols-3 gap-6">
-            {propuestaValor.map((item) => (
+            {propuestaValor.map((item, i) => (
+              <Reveal key={item.titulo} delay={i * 90}>
               <div
-                key={item.titulo}
-                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition"
+                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition h-full"
               >
                 <div className="w-10 h-10 bg-[#27366D]/10 text-[#27366D] rounded-lg flex items-center justify-center mb-4">
                   {iconoValor[item.icono]}
@@ -115,6 +126,7 @@ export default function Home() {
                   {sustituirVars(item.descripcion, totalSocios, totalHitos)}
                 </p>
               </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -124,33 +136,37 @@ export default function Home() {
       <section className="py-20 px-6 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-12 gap-12 items-start">
           <div className="md:col-span-5">
-            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Resultados medibles</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold mt-2 mb-4 text-slate-950 font-serif-cluster uppercase tracking-wide">
-              Impacto del Clúster
-            </h2>
-            <p className="text-slate-600 text-sm leading-relaxed font-light mb-6">
-              Más que un directorio de empresas: una red activa que articula patrimonio, negocios y comunidad
-              para generar desarrollo turístico y económico en Puebla.
-            </p>
-            <a
-              href="/equipo"
-              className="text-xs font-bold text-[#27366D] hover:text-amber-500 transition flex items-center gap-1 group uppercase tracking-wider"
-            >
-              Ver equipo directivo <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </a>
+            <Reveal>
+              <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Resultados medibles</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold mt-2 mb-4 text-slate-950 font-serif-cluster uppercase tracking-wide">
+                Impacto del Clúster
+              </h2>
+              <p className="text-slate-600 text-sm leading-relaxed font-light mb-6">
+                Más que un directorio de empresas: una red activa que articula patrimonio, negocios y comunidad
+                para generar desarrollo turístico y económico en Puebla.
+              </p>
+              <a
+                href="/equipo"
+                className="text-xs font-bold text-[#27366D] hover:text-amber-500 transition flex items-center gap-1 group uppercase tracking-wider"
+              >
+                Ver equipo directivo <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </a>
+            </Reveal>
           </div>
           <div className="md:col-span-7 grid grid-cols-2 gap-4">
-            {indicadoresImpacto.map((ind) => (
-              <div key={ind.etiqueta} className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-                <p className="text-3xl font-black text-[#27366D]">
-                  <CountUp
-                    value={sustituirVars(ind.valor, totalSocios, totalHitos)}
-                    className="tabular-nums"
-                  />
-                </p>
-                <p className="text-xs font-bold text-slate-800 mt-1">{ind.etiqueta}</p>
-                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ind.contexto}</p>
-              </div>
+            {indicadoresImpacto.map((ind, i) => (
+              <Reveal key={ind.etiqueta} delay={i * 100}>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 h-full">
+                  <p className="text-3xl font-black text-[#27366D]">
+                    <CountUp
+                      value={sustituirVars(ind.valor, totalSocios, totalHitos)}
+                      className="tabular-nums"
+                    />
+                  </p>
+                  <p className="text-xs font-bold text-slate-800 mt-1">{ind.etiqueta}</p>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ind.contexto}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -159,7 +175,7 @@ export default function Home() {
       {/* EJES ESTRATÉGICOS — Narrativa ampliada */}
       <section className="py-20 px-6 bg-[#27366D] text-white">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <Reveal className="text-center mb-12">
             <span className="text-amber-400 text-xs font-bold uppercase tracking-widest">Posicionamiento</span>
             <h2 className="text-2xl md:text-3xl font-extrabold mt-2 font-serif-cluster uppercase tracking-wide">
               Puebla, destino integral
@@ -168,20 +184,21 @@ export default function Home() {
               Desarrollamos productos y servicios turísticos, festivales con marching bands y danza folklórica,
               y experiencias que generan derrama económica en el Centro Histórico de Puebla.
             </p>
-          </div>
+          </Reveal>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ejesEstrategicos.map((eje, i) => {
               const iconos = [Sparkles, Landmark, Utensils, Lightbulb, Target];
               const Icon = iconos[i] ?? Compass;
               return (
+                <Reveal key={eje.titulo} delay={i * 70}>
                 <div
-                  key={eje.titulo}
-                  className="bg-[#1e2b58]/50 border border-[#314385]/50 rounded-xl p-5 hover:border-amber-400/30 transition"
+                  className="bg-[#1e2b58]/50 border border-[#314385]/50 rounded-xl p-5 hover:border-amber-400/30 transition h-full"
                 >
                   <Icon className="w-4 h-4 text-amber-400 mb-3" />
                   <h3 className="font-bold text-sm text-white mb-1.5">{eje.titulo}</h3>
                   <p className="text-xs text-slate-300 leading-relaxed font-light">{eje.descripcion}</p>
                 </div>
+                </Reveal>
               );
             })}
           </div>
@@ -191,7 +208,7 @@ export default function Home() {
       {/* FESTIVALES EMBLEMÁTICOS */}
       <section className="py-20 px-6 bg-slate-50 border-y border-slate-200">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <Reveal className="text-center mb-12">
             <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Eventos que activan la ciudad</span>
             <h2 className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
               Festivales y desfiles
@@ -200,17 +217,18 @@ export default function Home() {
               Marching bands y grupos de danza folklórica en el Centro Histórico, invitando a locales y turistas
               a consumir cultura poblana, gastronomía, arte, hospedaje y tours.
             </p>
-          </div>
+          </Reveal>
           <div className="grid md:grid-cols-3 gap-6">
-            {festivalesDestacados.map((fest) => (
+            {festivalesDestacados.map((fest, i) => (
+              <Reveal key={fest.titulo} delay={i * 90}>
               <div
-                key={fest.titulo}
-                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition"
+                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition h-full"
               >
                 <Sparkles className="w-4 h-4 text-amber-500 mb-3" />
                 <h3 className="font-bold text-slate-950 text-sm mb-2">{fest.titulo}</h3>
                 <p className="text-xs text-slate-600 leading-relaxed font-light">{fest.descripcion}</p>
               </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -218,7 +236,7 @@ export default function Home() {
 
       {/* PROYECTOS DESTACADOS */}
       <section className="py-20 px-6 max-w-5xl mx-auto">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-10">
+        <Reveal className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-10">
           <div>
             <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Vida de Barriando</span>
             <h2 className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
@@ -228,15 +246,15 @@ export default function Home() {
           <p className="text-xs text-slate-500 max-w-sm font-light leading-relaxed">
             Personas, alianzas y resultados concretos que dan dinamismo a nuestra operación institucional.
           </p>
-        </div>
+        </Reveal>
         <div className="grid md:grid-cols-2 gap-6">
-          {proyectosDestacados.map((proyecto) => (
+          {proyectosDestacados.map((proyecto, i) => (
+            <Reveal key={proyecto.titulo} delay={i * 80}>
             <a
-              key={proyecto.titulo}
               href={proyecto.enlace}
               target={proyecto.enlace.startsWith("http") ? "_blank" : undefined}
               rel={proyecto.enlace.startsWith("http") ? "noreferrer" : undefined}
-              className="group bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow hover:border-amber-400/40 transition flex flex-col justify-between"
+              className="group bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow hover:border-amber-400/40 transition flex flex-col justify-between h-full"
             >
               <div>
                 <h3 className="font-bold text-slate-950 text-sm mb-2 group-hover:text-[#27366D] transition">
@@ -250,6 +268,7 @@ export default function Home() {
                 Conocer más <ArrowUpRight className="w-3 h-3 ml-1" />
               </span>
             </a>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -277,7 +296,7 @@ export default function Home() {
       {/* MUAAP */}
       <section className="py-20 px-6 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-12 gap-12 items-center">
-          <div className="md:col-span-7">
+          <Reveal className="md:col-span-7">
             <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Proyecto insignia</span>
             <h2 className="text-2xl md:text-4xl font-extrabold mt-1 mb-6 text-slate-950 font-serif-cluster uppercase tracking-wide">
               MUAAP: Museo Urbano Andante Abierto de Puebla
@@ -297,9 +316,10 @@ export default function Home() {
             >
               Explorar inventario MUAAP <ArrowUpRight className="w-3.5 h-3.5" />
             </a>
-          </div>
+          </Reveal>
 
-          <div className="md:col-span-5 bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-premium text-center">
+          <Reveal className="md:col-span-5" delay={120}>
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-premium text-center h-full">
             <div className="w-12 h-12 bg-amber-400/10 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3">
               <MapPin className="w-6 h-6" />
             </div>
@@ -321,6 +341,7 @@ export default function Home() {
               />
             </div>
           </div>
+          </Reveal>
         </div>
       </section>
 
@@ -348,7 +369,7 @@ export default function Home() {
 
       {/* CONTACTO */}
       <section id="contacto" className="py-20 bg-white px-6">
-        <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-premium">
+        <Reveal className="max-w-xl mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-premium">
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-4 h-4 text-[#27366D]" />
             <h3 className="text-xl font-bold text-slate-950 font-serif-cluster uppercase tracking-wide">
@@ -360,7 +381,7 @@ export default function Home() {
             convenios o colaboración en proyectos.
           </p>
           <ContactForm />
-        </div>
+        </Reveal>
       </section>
 
       <Footer />
