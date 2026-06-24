@@ -16,6 +16,8 @@ const POSTER_SRC =
 const FORM_SRC =
   "https://docs.google.com/forms/d/e/1FAIpQLSekKtVRegTyIdVt41C2LiF1zOi22knrmIStQznEqRhn--1PNQ/viewform?embedded=true";
 
+const FORM_HEIGHT = 1580;
+
 export default function DocumentaPage() {
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans antialiased">
@@ -91,8 +93,8 @@ export default function DocumentaPage() {
             <iframe
               src={FORM_SRC}
               width={640}
-              height={1167}
-              style={{ border: 0, display: "block", width: "100%", maxWidth: 640, height: 1167 }}
+              height={FORM_HEIGHT}
+              style={{ border: 0, display: "block", width: "100%", maxWidth: 640, height: FORM_HEIGHT }}
               title="Formulario de convocatoria Barriando Documenta"
               className="w-full max-w-[640px] mx-auto bg-white rounded-b-2xl"
             >
