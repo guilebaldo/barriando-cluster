@@ -11,7 +11,7 @@ interface SociosCarouselProps {
 export default function SociosCarousel({ socios }: SociosCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [isHoveringControl, setIsHoveringControl] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const offsetRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
@@ -29,7 +29,7 @@ export default function SociosCarousel({ socios }: SociosCarouselProps) {
       const delta = (ts - lastTsRef.current) / 1000;
       lastTsRef.current = ts;
 
-      if (!isHoveringControl) {
+      if (!isPaused) {
         offsetRef.current += direction * speed * delta;
         if (offsetRef.current >= loopWidth) offsetRef.current -= loopWidth;
         if (offsetRef.current < 0) offsetRef.current += loopWidth;
@@ -44,20 +44,20 @@ export default function SociosCarousel({ socios }: SociosCarouselProps) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       lastTsRef.current = null;
     };
-  }, [direction, isHoveringControl, loopWidth]);
+  }, [direction, isPaused, loopWidth]);
 
   const items = [...socios, ...socios];
 
   return (
-    <div className="relative group">
+    <div
+      className="relative group"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <button
         type="button"
         aria-label="Invertir carrusel hacia la izquierda"
-        onMouseEnter={() => {
-          setDirection(-1);
-          setIsHoveringControl(true);
-        }}
-        onMouseLeave={() => setIsHoveringControl(false)}
+        onClick={() => setDirection(-1)}
         className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 border border-slate-200 shadow-md flex items-center justify-center text-[#27366D] opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <ChevronLeft className="w-5 h-5" />
@@ -66,11 +66,7 @@ export default function SociosCarousel({ socios }: SociosCarouselProps) {
       <button
         type="button"
         aria-label="Avanzar carrusel hacia la derecha"
-        onMouseEnter={() => {
-          setDirection(1);
-          setIsHoveringControl(true);
-        }}
-        onMouseLeave={() => setIsHoveringControl(false)}
+        onClick={() => setDirection(1)}
         className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 border border-slate-200 shadow-md flex items-center justify-center text-[#27366D] opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <ChevronRight className="w-5 h-5" />

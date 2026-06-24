@@ -75,7 +75,7 @@ export default function Home() {
               href="/socios"
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg transition shadow-sm"
             >
-              Explorar la red de <CountUp value={String(totalSocios)} className="tabular-nums" /> socios
+              Explorar la red de socios
             </a>
             <a
               href="/equipo"
@@ -288,10 +288,7 @@ export default function Home() {
             </p>
             <p className="text-slate-600 text-sm leading-relaxed font-light">
               Un inventario de{" "}
-              <strong className="text-slate-900 font-semibold">
-                <CountUp value={String(totalHitos)} className="tabular-nums" /> hitos patrimoniales
-              </strong>{" "}
-              en
+              <strong className="text-slate-900 font-semibold">{totalHitos} hitos patrimoniales</strong> en
               4 zonas conecta herencia virreinal con desarrollo comunitario y oferta turística verificada.
             </p>
             <a
@@ -335,8 +332,7 @@ export default function Home() {
               <TrendingUp className="w-3.5 h-3.5" /> Red empresarial en acción
             </h2>
             <p className="text-xs text-slate-400 font-light mt-0.5">
-              <CountUp value={String(totalSocios)} className="tabular-nums" /> empresas que generan empleo,
-              experiencias y valor territorial.
+              {totalSocios} empresas que generan empleo, experiencias y valor territorial.
             </p>
           </div>
           <a
