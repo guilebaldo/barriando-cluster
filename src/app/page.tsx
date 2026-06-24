@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import ContactForm from "./components/ContactForm";
 import DestacadoBanner from "./components/DestacadoBanner";
+import CountUp from "./components/CountUp";
+import SociosCarousel from "./components/SociosCarousel";
 import { destacadoActual } from "./data/destacados";
 
 const iconoValor: Record<string, React.ReactNode> = {
@@ -47,7 +49,6 @@ function sustituirVars(texto: string, socios: number, hitos: number) {
 export default function Home() {
   const totalSocios = listaSocios.length;
   const totalHitos = listaHitos.length;
-  const sociosCarrusel = [...listaSocios, ...listaSocios];
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-amber-200">
@@ -74,7 +75,7 @@ export default function Home() {
               href="/socios"
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg transition shadow-sm"
             >
-              Explorar la red de {totalSocios} socios
+              Explorar la red de <CountUp value={String(totalSocios)} className="tabular-nums" /> socios
             </a>
             <a
               href="/equipo"
@@ -142,7 +143,10 @@ export default function Home() {
             {indicadoresImpacto.map((ind) => (
               <div key={ind.etiqueta} className="bg-slate-50 border border-slate-200 rounded-xl p-5">
                 <p className="text-3xl font-black text-[#27366D]">
-                  {sustituirVars(ind.valor, totalSocios, totalHitos)}
+                  <CountUp
+                    value={sustituirVars(ind.valor, totalSocios, totalHitos)}
+                    className="tabular-nums"
+                  />
                 </p>
                 <p className="text-xs font-bold text-slate-800 mt-1">{ind.etiqueta}</p>
                 <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ind.contexto}</p>
@@ -283,7 +287,11 @@ export default function Home() {
               La historia se camina, se observa en las fachadas y se saborea en negocios certificados del Clúster.
             </p>
             <p className="text-slate-600 text-sm leading-relaxed font-light">
-              Un inventario de <strong className="text-slate-900 font-semibold">{totalHitos} hitos patrimoniales</strong> en
+              Un inventario de{" "}
+              <strong className="text-slate-900 font-semibold">
+                <CountUp value={String(totalHitos)} className="tabular-nums" /> hitos patrimoniales
+              </strong>{" "}
+              en
               4 zonas conecta herencia virreinal con desarrollo comunitario y oferta turística verificada.
             </p>
             <a
@@ -327,7 +335,8 @@ export default function Home() {
               <TrendingUp className="w-3.5 h-3.5" /> Red empresarial en acción
             </h2>
             <p className="text-xs text-slate-400 font-light mt-0.5">
-              {totalSocios} empresas que generan empleo, experiencias y valor territorial.
+              <CountUp value={String(totalSocios)} className="tabular-nums" /> empresas que generan empleo,
+              experiencias y valor territorial.
             </p>
           </div>
           <a
@@ -338,36 +347,7 @@ export default function Home() {
           </a>
         </div>
 
-        <div className="w-full overflow-hidden relative select-none">
-          <div className="animate-marquee gap-8 flex">
-            {sociosCarrusel.map((socio, index) => (
-              <a
-                href={socio.url}
-                target="_blank"
-                rel="noreferrer"
-                key={index}
-                className="flex flex-col shrink-0 items-center group w-64"
-              >
-                <div className="w-full h-36 bg-white border border-slate-200/80 rounded-2xl p-6 flex items-center justify-center transition-all duration-300 shadow-sm group-hover:border-amber-400 group-hover:shadow-premium-hover bg-gradient-to-b from-white to-slate-50/30">
-                  <img
-                    src={`/logos/${socio.foto}.png`}
-                    alt={socio.name}
-                    className="max-w-full max-h-full object-contain filter group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </div>
-                <span className="text-xs font-bold text-slate-800 mt-3.5 block truncate w-full text-center group-hover:text-[#27366D] transition-colors tracking-wide">
-                  {socio.name}
-                </span>
-                <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">
-                  {socio.categoria}
-                </span>
-              </a>
-            ))}
-          </div>
-        </div>
+        <SociosCarousel socios={listaSocios} />
       </section>
 
       {/* CONTACTO */}

@@ -409,6 +409,14 @@ export const listaSocios: Socio[] = [
     foto: "parador",
     url: "https://baiku.com.mx/proyectos-proyecto-PwTbaO",
     direccion: "https://maps.app.goo.gl/uk1ajFSS9u1N1BPF8"
+  },
+  {
+    id: 51,
+    name: "El Sultán Taquería Oriental",
+    categoria: "Alimentos y Bebidas",
+    foto: "sultan",
+    url: "https://www.facebook.com/taqueriaelsultanpuebla/?locale=es_LA",
+    direccion: "https://maps.app.goo.gl/3VHdghswBE2U1UUm7"
   }
 
   ];;

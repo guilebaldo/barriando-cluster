@@ -105,6 +105,11 @@ export function hasCommercialAccess(plan: MembershipPlan, status: string): boole
   return status === "active" || status === "manual_active";
 }
 
+/** Vincular negocio del catálogo solo tras pago verificado (tarjeta o manual aprobado). */
+export function canLinkSocioAccount(status: string): boolean {
+  return status === "active" || status === "manual_active";
+}
+
 export function getPlanLabel(plan: MembershipPlan): string {
   return MEMBERSHIP_PLANS[plan].label;
 }

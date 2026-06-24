@@ -11,6 +11,7 @@ import {
   getPlanLabel,
   hasCommercialAccess,
   isVecinoPlan,
+  canLinkSocioAccount,
 } from "@/lib/membresia";
 import { linkSocioAccount, reportManualPayment } from "./actions";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -70,6 +71,7 @@ export default function PanelDashboard({
   const socio = user.socioId ? listaSocios.find((s) => s.id === user.socioId) : null;
   const isVecino = isVecinoPlan(subscription.plan);
   const commercial = hasCommercialAccess(subscription.plan, subscription.status);
+  const canLink = canLinkSocioAccount(subscription.status);
 
   async function handleLogout() {
     await signOut({ callbackUrl: "/login" });
@@ -284,42 +286,6 @@ export default function PanelDashboard({
               <p className="px-6 pb-4 text-xs text-slate-600">{payMsg || manualMsg}</p>
             )}
           </section>
-
-          <section className="bg-white border border-amber-200 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Link2 className="w-5 h-5 text-amber-600" />
-              <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                ¿Ya eres socio activo de Barriando (pagos en efectivo/transferencia)?
-              </h2>
-            </div>
-            <p className="text-sm text-slate-600 mb-4 font-light">
-              Vincula tu cuenta con tu negocio del catálogo oficial. Asignaremos automáticamente el
-              nivel de membresía que corresponda según la categoría de tu establecimiento.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <select
-                value={linkSocioId}
-                onChange={(e) => setLinkSocioId(e.target.value)}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs focus:outline-[#27366D]"
-              >
-                <option value="">Selecciona tu negocio...</option>
-                {socios.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} — {s.categoria}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleLinkSocio}
-                disabled={!linkSocioId || linkLoading}
-                className="bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition disabled:opacity-50"
-              >
-                {linkLoading ? "Vinculando..." : "Vincular mi negocio"}
-              </button>
-            </div>
-            {linkMsg && <p className="text-xs mt-3 text-slate-600">{linkMsg}</p>}
-          </section>
         </>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
@@ -348,7 +314,9 @@ export default function PanelDashboard({
               </div>
             ) : (
               <p className="text-xs text-slate-500">
-                Vincula tu negocio en la sección de abajo para activar tu perfil comercial.
+                {canLink
+                  ? "Vincula tu negocio en la sección de abajo para activar tu perfil comercial."
+                  : "Cuando tu pago esté verificado podrás vincular tu negocio del catálogo oficial."}
               </p>
             )}
           </section>
@@ -412,7 +380,7 @@ export default function PanelDashboard({
             {payMsg && <p className="text-xs mt-3 text-slate-600">{payMsg}</p>}
           </section>
 
-          {!socio && (
+          {!socio && canLink && (
             <section className="bg-white border border-amber-200 rounded-xl p-6 shadow-sm md:col-span-2">
               <div className="flex items-center gap-2 mb-3">
                 <Link2 className="w-5 h-5 text-amber-600" />

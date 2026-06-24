@@ -3,21 +3,19 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { listaSocios } from "../data/socios";
 import { Menu, X } from "lucide-react";
 
 const links = [
   { href: "/", label: "Inicio" },
   { href: "/documenta", label: "Documenta", highlight: true },
   { href: "/muaap", label: "Ruta MUAAP" },
-  { href: "/socios", label: "Socios", dynamicCount: true },
+  { href: "/socios", label: "Socios" },
   { href: "/equipo", label: "Equipo" },
 ] as const;
 
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const conteoAutomatico = listaSocios.length;
 
   useEffect(() => {
     setOpen(false);
@@ -29,11 +27,6 @@ export default function Navbar() {
       document.body.style.overflow = "";
     };
   }, [open]);
-
-  function linkLabel(link: (typeof links)[number]) {
-    if ("dynamicCount" in link && link.dynamicCount) return `Socios (${conteoAutomatico})`;
-    return link.label;
-  }
 
   function linkClass(link: (typeof links)[number]) {
     const isActive = pathname === link.href;
@@ -64,7 +57,7 @@ export default function Navbar() {
         <div className="hidden md:flex flex-wrap justify-end gap-6 text-xs uppercase tracking-wider font-bold">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className={`transition ${linkClass(link)}`}>
-              {linkLabel(link)}
+              {link.label}
             </Link>
           ))}
         </div>
@@ -102,7 +95,7 @@ export default function Navbar() {
                       : "text-slate-200 hover:bg-[#27366D] hover:text-white"
                   }`}
                 >
-                  {linkLabel(link)}
+                  {link.label}
                   {"highlight" in link && link.highlight && (
                     <span className="ml-2 text-[9px] bg-amber-500 text-neutral-950 px-1.5 py-0.5 rounded-full normal-case">
                       Nuevo

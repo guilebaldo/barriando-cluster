@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { listaSocios } from "@/app/data/socios";
-import { getPlanForSocio, getPlanLabel } from "@/lib/membresia";
+import { canLinkSocioAccount, getPlanForSocio, getPlanLabel } from "@/lib/membresia";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 export type LinkSocioResult =
@@ -27,6 +27,17 @@ export async function linkSocioAccount(socioId: number): Promise<LinkSocioResult
       return { ok: false, error: "Este negocio ya está vinculado a otra cuenta." };
     }
 
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId: session.id },
+    });
+    if (!subscription || !canLinkSocioAccount(subscription.status)) {
+      return {
+        ok: false,
+        error:
+          "Solo puedes vincular tu negocio cuando tu pago esté verificado (tarjeta activa o transferencia confirmada).",
+      };
+    }
+
     const plan = getPlanForSocio(socio);
 
     await prisma.user.update({
@@ -34,17 +45,9 @@ export async function linkSocioAccount(socioId: number): Promise<LinkSocioResult
       data: { socioId },
     });
 
-    await prisma.subscription.upsert({
+    await prisma.subscription.update({
       where: { userId: session.id },
-      create: {
-        userId: session.id,
-        plan,
-        status: "manual_active",
-      },
-      update: {
-        plan,
-        status: "manual_active",
-      },
+      data: { plan },
     });
 
     revalidatePath("/panel");
