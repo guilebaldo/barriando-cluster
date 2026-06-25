@@ -3,8 +3,7 @@
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { OAuthButtons, AuthDivider } from "../components/OAuthButtons";
-import EmailMagicLinkForm from "../components/EmailMagicLinkForm";
+import { OAuthButtons } from "../components/OAuthButtons";
 import { MEMBERSHIP_PLANS } from "@/lib/membresia";
 import { planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -31,21 +30,18 @@ export default function RegistroClient({ plan }: RegistroClientProps) {
             <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             {isVecino ? (
               <>
-                Plan <strong className="text-slate-700">{planDef.label}</strong> — newsletters, eventos y lectura del blog.
+                Plan <strong className="text-slate-700">{planDef.label}</strong> — newsletters, eventos y lectura del
+                blog.
               </>
             ) : (
               <>
-                Plan <strong className="text-slate-700">{planDef.label}</strong> — tras verificar tu correo irás al pago
-                para certificar tu negocio en el Clúster.
+                Plan <strong className="text-slate-700">{planDef.label}</strong> — tras iniciar sesión con Google irás
+                al pago para certificar tu negocio en el Clúster.
               </>
             )}
           </p>
 
           <OAuthButtons />
-          <AuthDivider label="O con enlace mágico" />
-          <EmailMagicLinkForm
-            submitLabel={isVecino ? "Empezar gratis con mi correo" : "Continuar con enlace mágico"}
-          />
 
           <p className="text-xs text-slate-500 mt-6 text-center">
             ¿Ya tienes cuenta?{" "}

@@ -3,8 +3,7 @@
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { OAuthButtons, AuthDivider } from "../components/OAuthButtons";
-import EmailMagicLinkForm from "../components/EmailMagicLinkForm";
+import { OAuthButtons } from "../components/OAuthButtons";
 import { MEMBERSHIP_PLANS } from "@/lib/membresia";
 import { registroUrl } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -26,15 +25,13 @@ export default function LoginClient({ plan }: LoginClientProps) {
             <LogIn className="w-5 h-5 text-[#27366D]" />
             <h1 className="text-xl font-bold font-serif-cluster uppercase tracking-wide">Iniciar sesión</h1>
           </div>
-          {plan !== "VECINO" && (
-            <p className="text-xs text-amber-700 mb-4 font-medium">
-              Plan seleccionado: {planDef.label}. Al entrar continuarás al pago de certificación.
-            </p>
-          )}
+          <p className="text-xs text-slate-500 mb-6 font-light">
+            {plan !== "VECINO"
+              ? `Plan seleccionado: ${planDef.label}. Tras autenticarte continuarás al pago de certificación.`
+              : "Accede con tu cuenta de Google para entrar a la comunidad Barriando."}
+          </p>
 
           <OAuthButtons />
-          <AuthDivider label="O con enlace mágico" />
-          <EmailMagicLinkForm submitLabel="Enviar enlace a mi correo" />
 
           <p className="text-xs text-slate-500 mt-6 text-center">
             ¿Aún no tienes cuenta?{" "}

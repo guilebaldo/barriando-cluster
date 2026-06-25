@@ -3,19 +3,37 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { Menu, X } from "lucide-react";
 
 const links = [
   { href: "/", label: "Inicio" },
-  { href: "/documenta", label: "Documenta", highlight: true },
+  { href: "/documenta", label: "Documenta", badge: "Nuevo" },
   { href: "/muaap", label: "Ruta MUAAP" },
   { href: "/socios", label: "Socios" },
   { href: "/equipo", label: "Equipo" },
 ] as const;
 
+function isNavActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function navLinkClass(pathname: string, href: string) {
+  const active = isNavActive(pathname, href);
+  return active
+    ? "text-amber-400"
+    : "text-white hover:text-amber-400 transition-colors duration-200";
+}
+
 export default function Navbar() {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
+  const isAuthenticated = status === "authenticated" && session?.user;
+
+  const panelLabel =
+    session?.user?.name?.trim().split(/\s+/)[0] || "Mi Panel";
 
   useEffect(() => {
     setOpen(false);
@@ -28,44 +46,79 @@ export default function Navbar() {
     };
   }, [open]);
 
-  function linkClass(link: (typeof links)[number]) {
-    const isActive = pathname === link.href;
-    if ("accent" in link && link.accent) {
-      return isActive
-        ? "text-amber-300"
-        : "text-amber-400 hover:text-amber-300";
+  function AuthActions({ mobile = false }: { mobile?: boolean }) {
+    if (isAuthenticated) {
+      return (
+        <div className={mobile ? "flex flex-col gap-2 mt-2 pt-2 border-t border-[#314385]/60" : "flex items-center gap-3"}>
+          <Link
+            href="/panel"
+            className={
+              mobile
+                ? "py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+                : "text-white hover:text-amber-400 transition-colors duration-200 text-xs uppercase tracking-wider font-bold"
+            }
+          >
+            {panelLabel}
+          </Link>
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className={
+              mobile
+                ? "py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition text-left"
+                : "text-slate-300 hover:text-white text-xs uppercase tracking-wider font-bold transition-colors duration-200"
+            }
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      );
     }
-    if ("highlight" in link && link.highlight) {
-      return isActive
-        ? "text-amber-300"
-        : "text-amber-400 hover:text-amber-200";
-    }
-    return isActive ? "text-white" : "text-slate-200 hover:text-white";
+
+    return (
+      <div className={mobile ? "flex flex-col gap-2 mt-2 pt-2 border-t border-[#314385]/60" : "flex items-center gap-3"}>
+        <Link
+          href="/login"
+          className={
+            mobile
+              ? "py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+              : "text-white hover:text-amber-400 transition-colors duration-200 text-xs uppercase tracking-wider font-bold"
+          }
+        >
+          Iniciar sesión
+        </Link>
+        <Link
+          href="/planes"
+          className={
+            mobile
+              ? "py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold bg-amber-500 text-slate-950 text-center hover:bg-amber-400 transition"
+              : "bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider font-bold"
+          }
+        >
+          Súmate al Barrio
+        </Link>
+      </div>
+    );
   }
 
   return (
     <nav className="bg-[#27366D] border-b border-[#1e2b58] sticky top-0 z-50 safe-area-top">
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <Link href="/" className="text-white font-black tracking-tight text-lg hover:text-amber-400 transition min-w-0">
-          <span className="text-amber-400">Barriando</span>
+        <Link href="/" className="text-white font-black tracking-tight text-lg transition min-w-0 group">
+          <span className="text-white group-hover:text-amber-400 transition-colors duration-200">Barriando</span>
           <span className="text-slate-300 text-[10px] font-semibold block sm:inline sm:ml-2 sm:text-xs normal-case tracking-normal">
             Clúster Turístico · Puebla
           </span>
         </Link>
 
         {/* Desktop */}
-        <div className="hidden md:flex flex-wrap justify-end items-center gap-4 text-xs uppercase tracking-wider font-bold">
+        <div className="hidden md:flex flex-wrap justify-end items-center gap-5 text-xs uppercase tracking-wider font-bold">
           {links.map((link) => (
-            <Link key={link.href} href={link.href} className={`transition ${linkClass(link)}`}>
+            <Link key={link.href} href={link.href} className={navLinkClass(pathname, link.href)}>
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/planes"
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg transition"
-          >
-            Súmate al Barrio
-          </Link>
+          <AuthActions />
         </div>
 
         {/* Mobile toggle */}
@@ -91,30 +144,28 @@ export default function Navbar() {
           />
           <div className="md:hidden absolute left-0 right-0 top-full z-50 border-b border-[#1e2b58] bg-[#1e2b58] shadow-xl">
             <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col gap-1">
-              {links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold transition ${
-                    pathname === link.href
-                      ? "bg-[#27366D] text-amber-300"
-                      : "text-slate-200 hover:bg-[#27366D] hover:text-white"
-                  }`}
-                >
-                  {link.label}
-                  {"highlight" in link && link.highlight && (
-                    <span className="ml-2 text-[9px] bg-amber-500 text-neutral-950 px-1.5 py-0.5 rounded-full normal-case">
-                      Nuevo
-                    </span>
-                  )}
-                </Link>
-              ))}
-              <Link
-                href="/planes"
-                className="mt-2 py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold bg-amber-500 text-slate-950 text-center hover:bg-amber-400 transition"
-              >
-                Súmate al Barrio
-              </Link>
+              {links.map((link) => {
+                const active = isNavActive(pathname, link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold transition ${
+                      active
+                        ? "bg-[#27366D] text-amber-400"
+                        : "text-white hover:bg-[#27366D] hover:text-amber-400"
+                    }`}
+                  >
+                    {link.label}
+                    {"badge" in link && link.badge && (
+                      <span className="ml-2 text-[9px] bg-amber-500 text-neutral-950 px-1.5 py-0.5 rounded-full normal-case">
+                        {link.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+              <AuthActions mobile />
             </div>
           </div>
         </>
