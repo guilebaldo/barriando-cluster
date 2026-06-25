@@ -2,10 +2,10 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
-import Credentials from "next-auth/providers/credentials";
+import Resend from "next-auth/providers/resend";
 import { barriandoPrismaAdapter } from "@/lib/prisma-adapter";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import type { Provider } from "next-auth/providers";
 import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
@@ -27,12 +27,14 @@ const authUrl = readEnv("AUTH_URL", "NEXTAUTH_URL", "NEXT_PUBLIC_APP_URL")?.repl
 
 const googleClientId = readEnv("GOOGLE_CLIENT_ID", "AUTH_GOOGLE_ID");
 const googleClientSecret = readEnv("GOOGLE_CLIENT_SECRET", "AUTH_GOOGLE_SECRET");
+const resendApiKey = readEnv("RESEND_API_KEY", "AUTH_RESEND_KEY");
 
 function logAuthBoot() {
   console.info("[auth] boot:", {
     trustHost: TRUST_HOST,
     secretConfigured: Boolean(authSecret),
     googleOAuth: Boolean(googleClientId && googleClientSecret),
+    resendMagicLink: Boolean(resendApiKey),
     authUrl: authUrl ?? "(request host)",
     vercel: Boolean(process.env.VERCEL),
     nodeEnv: process.env.NODE_ENV,
@@ -42,6 +44,9 @@ function logAuthBoot() {
   }
   if (isProduction && (!googleClientId || !googleClientSecret)) {
     console.warn("[auth] Faltan GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET en producción.");
+  }
+  if (isProduction && !resendApiKey) {
+    console.warn("[auth] Falta RESEND_API_KEY para magic links en producción.");
   }
 }
 
@@ -74,33 +79,49 @@ function buildProviders(): Provider[] {
     );
   }
 
-  providers.push(
-    Credentials({
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        const email = credentials.email as string;
-        const password = credentials.password as string;
-
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user?.passwordHash) return null;
-
-        const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.nombre,
-          image: user.image,
-        };
-      },
-    })
-  );
+  if (resendApiKey) {
+    providers.push(
+      Resend({
+        apiKey: resendApiKey,
+        from: "Barriando <hola@barriandopuebla.com>",
+        async sendVerificationRequest({ identifier: email, url, provider }) {
+          const res = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${provider.apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: provider.from,
+              to: email,
+              subject: "Tu enlace para unirte a Barriando",
+              html: `
+                <div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px">
+                  <p style="color:#27366D;font-weight:800;font-size:18px;margin:0 0 8px">Barriando</p>
+                  <p style="color:#334155;font-size:14px;line-height:1.6">
+                    Haz clic en el botón para verificar tu correo y continuar tu registro en el Clúster Turístico del Centro Histórico de Puebla.
+                  </p>
+                  <p style="margin:24px 0">
+                    <a href="${url}" style="background:#f59e0b;color:#0f172a;font-weight:700;text-decoration:none;padding:12px 20px;border-radius:8px;display:inline-block;font-size:13px">
+                      Continuar a Barriando
+                    </a>
+                  </p>
+                  <p style="color:#94a3b8;font-size:11px">Si no solicitaste este correo, puedes ignorarlo.</p>
+                </div>
+              `,
+              text: `Continúa tu registro en Barriando: ${url}`,
+            }),
+          });
+          if (!res.ok) {
+            const body = await res.text();
+            throw new Error(`Resend error: ${body}`);
+          }
+        },
+      })
+    );
+  } else if (isProduction) {
+    console.warn("[auth] Resend no registrado: falta RESEND_API_KEY.");
+  }
 
   return providers;
 }
@@ -204,7 +225,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         console.warn("[auth] redirect URL inválida:", url);
       }
 
-      return `${canonical}/panel`;
+      return `${canonical}${ONBOARDING_CONTINUE_PATH}`;
     },
     async jwt({ token, user, trigger }) {
       if (user?.id) {

@@ -5,7 +5,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // No redirigir callbacks OAuth (POST); rompería el flujo de Google/Apple.
-  if (pathname.startsWith("/api/auth")) {
+  if (pathname.startsWith("/api/auth") || pathname.startsWith("/api/onboarding")) {
     return NextResponse.next();
   }
 

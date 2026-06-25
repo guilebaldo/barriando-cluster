@@ -54,12 +54,18 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop */}
-        <div className="hidden md:flex flex-wrap justify-end gap-6 text-xs uppercase tracking-wider font-bold">
+        <div className="hidden md:flex flex-wrap justify-end items-center gap-4 text-xs uppercase tracking-wider font-bold">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className={`transition ${linkClass(link)}`}>
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/planes"
+            className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg transition"
+          >
+            Súmate al Barrio
+          </Link>
         </div>
 
         {/* Mobile toggle */}
@@ -103,6 +109,12 @@ export default function Navbar() {
                   )}
                 </Link>
               ))}
+              <Link
+                href="/planes"
+                className="mt-2 py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold bg-amber-500 text-slate-950 text-center hover:bg-amber-400 transition"
+              >
+                Súmate al Barrio
+              </Link>
             </div>
           </div>
         </>

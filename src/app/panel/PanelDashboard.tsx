@@ -47,6 +47,7 @@ interface PanelProps {
   };
   stripeConfigured: boolean;
   showWelcome: boolean;
+  paymentNotice?: string | null;
   socios: SocioOption[];
 }
 
@@ -55,6 +56,7 @@ export default function PanelDashboard({
   subscription,
   stripeConfigured,
   showWelcome,
+  paymentNotice,
   socios,
 }: PanelProps) {
   const router = useRouter();
@@ -150,6 +152,12 @@ export default function PanelDashboard({
 
   return (
     <div className="space-y-6">
+      {paymentNotice && (
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 text-xs">
+          {paymentNotice}
+        </div>
+      )}
+
       {showWelcome && (
         <div className="bg-gradient-to-r from-[#27366D] to-[#1e2b58] text-white rounded-xl p-6 shadow-lg border border-amber-400/30">
           <div className="flex items-start gap-3">
