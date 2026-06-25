@@ -4,10 +4,14 @@ import { getStripePriceId, isStripeConfigured, isStripeConfiguredForPlan } from 
 export { getStripePriceId, isStripeConfigured, isStripeConfiguredForPlan };
 
 let stripeClient: Stripe | null = null;
+let stripeClientKey: string | null = null;
 
-export function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
+export function getStripe(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY?.trim();
   if (!key) return null;
-  if (!stripeClient) stripeClient = new Stripe(key);
+  if (!stripeClient || stripeClientKey !== key) {
+    stripeClient = new Stripe(key);
+    stripeClientKey = key;
+  }
   return stripeClient;
 }

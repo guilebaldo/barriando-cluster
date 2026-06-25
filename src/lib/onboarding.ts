@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createStripeCheckoutUrl } from "@/lib/stripe-checkout";
+import { isStripeConfiguredForPlan } from "@/lib/stripe";
 import {
   isPaidMembershipPlan,
   ONBOARDING_CONTINUE_PATH,
@@ -74,6 +75,9 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   }
 
   if (isPaidMembershipPlan(pending)) {
+    if (!isStripeConfiguredForPlan(pending)) {
+      redirect("/panel?pago=stripe_no_configurado");
+    }
     await createStripeCheckoutRedirect(session.user.id, pending);
   }
 
