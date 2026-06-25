@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // No redirigir callbacks OAuth (POST); rompería el flujo de Google/Apple.
+  if (pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
   const proto = request.headers.get("x-forwarded-proto");
   const host = request.headers.get("host");
 

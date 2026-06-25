@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { getCsrfToken, signIn } from "next-auth/react";
 
 const PANEL_CALLBACK = "/panel";
@@ -13,7 +14,7 @@ async function submitOAuthForm(provider: "google" | "apple", csrfToken: string) 
 
   const fields: Record<string, string> = {
     csrfToken,
-    callbackUrl: `${window.location.origin}${PANEL_CALLBACK}`,
+    callbackUrl: PANEL_CALLBACK,
   };
 
   for (const [name, value] of Object.entries(fields)) {
@@ -29,9 +30,26 @@ async function submitOAuthForm(provider: "google" | "apple", csrfToken: string) 
 }
 
 export function OAuthButtons() {
+  return (
+    <Suspense fallback={null}>
+      <OAuthButtonsInner />
+    </Suspense>
+  );
+}
+
+function OAuthButtonsInner() {
+  const searchParams = useSearchParams();
   const [csrfToken, setCsrfToken] = useState("");
   const [loading, setLoading] = useState<"google" | "apple" | null>(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    if (authError) {
+      console.error("[auth] login error param:", authError);
+      setError("No se pudo iniciar sesión con el proveedor. Intenta de nuevo o usa correo y contraseña.");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     getCsrfToken()

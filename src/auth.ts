@@ -1,4 +1,4 @@
-// auth.ts
+// auth.ts — Auth.js v5 (NextAuth) hardened for Vercel + Neon
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
@@ -6,57 +6,115 @@ import Credentials from "next-auth/providers/credentials";
 import { barriandoPrismaAdapter } from "@/lib/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import type { Provider } from "next-auth/providers";
 import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
-const providers = [];
+const isProduction = process.env.NODE_ENV === "production";
 
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    })
-  );
+/** Vercel requires trusting the Host header; env alone is not always applied by Auth.js. */
+const TRUST_HOST = true as const;
+
+function readEnv(...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = process.env[key]?.trim();
+    if (value) return value;
+  }
+  return undefined;
 }
 
-if (process.env.APPLE_ID && process.env.APPLE_SECRET) {
-  providers.push(
-    Apple({
-      clientId: process.env.APPLE_ID!,
-      clientSecret: process.env.APPLE_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    })
-  );
+const authSecret = readEnv("AUTH_SECRET", "NEXTAUTH_SECRET");
+const authUrl = readEnv("AUTH_URL", "NEXTAUTH_URL", "NEXT_PUBLIC_APP_URL")?.replace(/\/$/, "");
+
+const googleClientId = readEnv("GOOGLE_CLIENT_ID", "AUTH_GOOGLE_ID");
+const googleClientSecret = readEnv("GOOGLE_CLIENT_SECRET", "AUTH_GOOGLE_SECRET");
+
+function logAuthBoot() {
+  console.info("[auth] boot:", {
+    trustHost: TRUST_HOST,
+    secretConfigured: Boolean(authSecret),
+    googleOAuth: Boolean(googleClientId && googleClientSecret),
+    authUrl: authUrl ?? "(request host)",
+    vercel: Boolean(process.env.VERCEL),
+    nodeEnv: process.env.NODE_ENV,
+  });
+  if (isProduction && !authSecret) {
+    console.error("[auth] Falta AUTH_SECRET o NEXTAUTH_SECRET en producción.");
+  }
+  if (isProduction && (!googleClientId || !googleClientSecret)) {
+    console.warn("[auth] Faltan GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET en producción.");
+  }
 }
 
-providers.push(
-  Credentials({
-    credentials: {
-      email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" },
-    },
-    async authorize(credentials) {
-      if (!credentials?.email || !credentials?.password) return null;
+logAuthBoot();
 
-      const email = credentials.email as string;
-      const password = credentials.password as string;
+function buildProviders(): Provider[] {
+  const providers: Provider[] = [];
 
-      const user = await prisma.user.findUnique({ where: { email } });
-      if (!user?.passwordHash) return null;
+  if (googleClientId && googleClientSecret) {
+    providers.push(
+      Google({
+        clientId: googleClientId,
+        clientSecret: googleClientSecret,
+        allowDangerousEmailAccountLinking: true,
+      })
+    );
+  } else if (isProduction) {
+    console.warn("[auth] Google OAuth no registrado: credenciales incompletas.");
+  }
 
-      const valid = await bcrypt.compare(password, user.passwordHash);
-      if (!valid) return null;
+  const appleId = readEnv("APPLE_ID", "AUTH_APPLE_ID");
+  const appleSecret = readEnv("APPLE_SECRET", "AUTH_APPLE_SECRET");
+  if (appleId && appleSecret) {
+    providers.push(
+      Apple({
+        clientId: appleId,
+        clientSecret: appleSecret,
+        allowDangerousEmailAccountLinking: true,
+      })
+    );
+  }
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.nombre,
-        image: user.image,
-      };
-    },
-  })
-);
+  providers.push(
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
+
+        const email = credentials.email as string;
+        const password = credentials.password as string;
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user?.passwordHash) return null;
+
+        const valid = await bcrypt.compare(password, user.passwordHash);
+        if (!valid) return null;
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.nombre,
+          image: user.image,
+        };
+      },
+    })
+  );
+
+  return providers;
+}
+
+function hostMatches(originA: string, originB: string): boolean {
+  try {
+    const a = new URL(originA);
+    const b = new URL(originB);
+    const norm = (host: string) => host.replace(/^www\./i, "").toLowerCase();
+    return norm(a.host) === norm(b.host) && a.protocol === b.protocol;
+  } catch {
+    return false;
+  }
+}
 
 async function enrichTokenFromDb(userId: string) {
   const dbUser = await prisma.user.findUnique({
@@ -73,26 +131,98 @@ async function enrichTokenFromDb(userId: string) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: TRUST_HOST,
+  secret: authSecret,
+  basePath: "/api/auth",
   adapter: barriandoPrismaAdapter(prisma),
-  debug: true,
+  useSecureCookies: isProduction,
+  debug: readEnv("AUTH_DEBUG") === "true",
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
-  providers,
+  providers: buildProviders(),
+  logger: {
+    error(error) {
+      const err = error as Error & { type?: string; cause?: unknown };
+      console.error("[auth] error:", {
+        type: err.type ?? err.name,
+        message: err.message,
+        cause: err.cause ?? null,
+        ...(isProduction ? {} : { stack: err.stack }),
+      });
+    },
+    warn(code) {
+      console.warn("[auth] warn:", code);
+    },
+    debug(message, metadata) {
+      if (!isProduction || readEnv("AUTH_DEBUG") === "true") {
+        console.debug("[auth] debug:", message, metadata ?? "");
+      }
+    },
+  },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      try {
+        const email = user.email ?? profile?.email;
+        if (account?.provider === "google" && !email) {
+          console.error("[auth] Google sign-in rechazado: perfil sin email.");
+          return false;
+        }
+        if (account?.provider && account.provider !== "credentials") {
+          console.info("[auth] OAuth sign-in attempt:", {
+            provider: account.provider,
+            email,
+            userId: user.id,
+          });
+        }
+        return true;
+      } catch (error) {
+        console.error("[auth] signIn callback failed:", error);
+        return false;
+      }
+    },
+    async redirect({ url, baseUrl }) {
+      const canonical = authUrl ?? baseUrl.replace(/\/$/, "");
+
+      if (url.startsWith("/")) {
+        return `${canonical}${url}`;
+      }
+
+      try {
+        const target = new URL(url);
+        if (hostMatches(target.origin, canonical) || hostMatches(target.origin, baseUrl)) {
+          return url;
+        }
+        console.warn("[auth] redirect bloqueado (origen distinto):", {
+          target: target.origin,
+          canonical,
+          baseUrl,
+        });
+      } catch {
+        console.warn("[auth] redirect URL inválida:", url);
+      }
+
+      return `${canonical}/panel`;
+    },
     async jwt({ token, user, trigger }) {
       if (user?.id) {
         token.id = user.id;
       }
 
       if (token.id && (user?.id || trigger === "update")) {
-        const enriched = await enrichTokenFromDb(token.id as string);
-        if (enriched) {
-          token.socioId = enriched.socioId;
-          token.role = enriched.role;
-          token.nombre = enriched.nombre;
-          token.plan = enriched.plan;
+        try {
+          const enriched = await enrichTokenFromDb(token.id as string);
+          if (enriched) {
+            token.socioId = enriched.socioId;
+            token.role = enriched.role;
+            token.nombre = enriched.nombre;
+            token.plan = enriched.plan;
+          }
+        } catch (error) {
+          // No tumbar OAuth si Neon tarda en el primer callback
+          console.error("[auth] jwt enrich failed (session parcial):", error);
         }
       }
 
@@ -110,8 +240,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   events: {
+    async signIn({ account, user, isNewUser }) {
+      console.info("[auth] signIn event:", {
+        provider: account?.provider,
+        userId: user.id,
+        isNewUser,
+      });
+    },
+    async linkAccount({ user, account }) {
+      console.info("[auth] linkAccount event:", {
+        provider: account.provider,
+        userId: user.id,
+      });
+    },
     async createUser({ user }) {
-      if (user.id) {
+      if (!user.id) return;
+      try {
         const nombre = user.name || user.email?.split("@")[0] || "Usuario";
         await prisma.user.update({
           where: { id: user.id },
@@ -122,6 +266,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           create: { userId: user.id, plan: "VECINO", status: "inactive" },
           update: {},
         });
+      } catch (error) {
+        console.error("[auth] createUser event failed:", error);
       }
     },
   },
