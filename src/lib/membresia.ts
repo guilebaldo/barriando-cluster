@@ -105,6 +105,19 @@ export function hasCommercialAccess(plan: MembershipPlan, status: string): boole
   return status === "active" || status === "manual_active";
 }
 
+/** Permite entrar al panel sin rebotar al onboarding (p. ej. webhook pendiente). */
+export function canAccessPanel(
+  plan: MembershipPlan,
+  status: string,
+  opts?: { stripeSubscriptionId?: string | null; stripeCustomerId?: string | null }
+): boolean {
+  if (isVecinoPlan(plan)) return true;
+  if (hasCommercialAccess(plan, status)) return true;
+  if (status === "manual_pending") return true;
+  if (opts?.stripeSubscriptionId || opts?.stripeCustomerId) return true;
+  return false;
+}
+
 /** Vincular negocio del catálogo solo tras pago verificado (tarjeta o manual aprobado). */
 export function canLinkSocioAccount(status: string): boolean {
   return status === "active" || status === "manual_active";

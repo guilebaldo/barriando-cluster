@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createStripeCheckoutUrl } from "@/lib/stripe-checkout";
+import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
 import { isStripeConfiguredForPlan } from "@/lib/stripe";
 import {
   isPaidMembershipPlan,
@@ -11,7 +12,12 @@ import {
 } from "@/lib/plan-routing";
 import { PENDING_PLAN_COOKIE } from "@/lib/pending-plan-cookie";
 import type { MembershipPlan } from "@/generated/prisma/client";
-import { hasCommercialAccess, isVecinoPlan, type PaidMembershipPlan } from "@/lib/membresia";
+import {
+  canAccessPanel,
+  hasCommercialAccess,
+  isVecinoPlan,
+  type PaidMembershipPlan,
+} from "@/lib/membresia";
 
 export async function readPendingPlanCookie(): Promise<MembershipPlan | null> {
   const jar = await cookies();
@@ -31,6 +37,14 @@ async function ensureVecinoSubscription(userId: string) {
   });
 }
 
+async function loadSubscription(userId: string) {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { subscription: true },
+  });
+  return dbUser?.subscription ?? null;
+}
+
 async function createStripeCheckoutRedirect(userId: string, plan: PaidMembershipPlan) {
   const url = await createStripeCheckoutUrl(userId, plan);
   if (!url) redirect("/panel?pago=stripe_no_configurado");
@@ -45,31 +59,42 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   const pending = explicitPlan ?? (await readPendingPlanCookie());
   await clearPendingPlanCookie();
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: { subscription: true },
-  });
-  const sub = dbUser?.subscription;
+  await syncStripeSubscriptionForUser(session.user.id);
+  let sub = await loadSubscription(session.user.id);
 
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {
-    redirect("/panel");
+    redirect("/panel?pago=exitoso");
   }
 
-  if (!pending || pending === "VECINO") {
-    if (!sub || isVecinoPlan(sub.plan)) {
-      await ensureVecinoSubscription(session.user.id);
-    }
-    redirect("/panel?bienvenida=1");
-  }
-
-  if (isPaidMembershipPlan(pending)) {
+  if (pending && isPaidMembershipPlan(pending)) {
     if (!isStripeConfiguredForPlan(pending)) {
       redirect("/panel?pago=stripe_no_configurado");
     }
-    await createStripeCheckoutRedirect(session.user.id, pending);
+    if (sub?.stripeSubscriptionId || sub?.stripeCustomerId) {
+      redirect("/panel?pago=procesando");
+    }
+    await createStripeCheckoutRedirect(session.user.id, pending as PaidMembershipPlan);
   }
 
-  redirect("/panel");
+  if (!sub || isVecinoPlan(sub.plan)) {
+    await ensureVecinoSubscription(session.user.id);
+    redirect("/panel?bienvenida=1");
+  }
+
+  if (
+    canAccessPanel(sub.plan, sub.status, {
+      stripeSubscriptionId: sub.stripeSubscriptionId,
+      stripeCustomerId: sub.stripeCustomerId,
+    })
+  ) {
+    redirect("/panel?pago=procesando");
+  }
+
+  if (isPaidMembershipPlan(sub.plan) && isStripeConfiguredForPlan(sub.plan)) {
+    await createStripeCheckoutRedirect(session.user.id, sub.plan as PaidMembershipPlan);
+  }
+
+  redirect("/planes?pago=requiere_plan");
 }
 
 export { ONBOARDING_CONTINUE_PATH };
