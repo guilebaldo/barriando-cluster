@@ -57,6 +57,9 @@ export default async function PanelPage({
     paymentNotice = "Stripe no está configurado aún. Contacta al equipo de Barriando.";
   }
 
+  const catalogSocio = user.socioId ? listaSocios.find((s) => s.id === user.socioId) ?? null : null;
+  const profile = user.socioProfile;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
       <Navbar />
@@ -73,6 +76,27 @@ export default async function PanelPage({
             status: refreshedSub.status,
             currentPeriodEnd: refreshedSub.currentPeriodEnd?.toISOString() ?? null,
           }}
+          socioProfile={
+            profile
+              ? {
+                  businessName: profile.businessName ?? "",
+                  website: profile.website ?? "",
+                  googleBusinessUrl: profile.googleBusinessUrl ?? "",
+                  logoUrl: profile.logoUrl ?? "",
+                }
+              : null
+          }
+          catalogSocio={
+            catalogSocio
+              ? {
+                  name: catalogSocio.name,
+                  categoria: catalogSocio.categoria,
+                  foto: catalogSocio.foto,
+                  url: catalogSocio.url,
+                  direccion: catalogSocio.direccion,
+                }
+              : null
+          }
           stripeConfigured={isStripeConfigured()}
           showWelcome={showWelcome}
           paymentNotice={paymentNotice}

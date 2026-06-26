@@ -2,29 +2,32 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
-import { listaSocios } from "../data/socios";
+import { useSession } from "next-auth/react";
 import {
   COMMERCIAL_BENEFITS,
   MEMBERSHIP_PLANS,
   PAID_PLANS,
+  formatPlanPriceMxn,
   getPlanLabel,
+  getSubscriptionStatusLabel,
   hasCommercialAccess,
   isVecinoPlan,
   canLinkSocioAccount,
+  isSubscriptionStatusPending,
+  type PaidMembershipPlan,
 } from "@/lib/membresia";
 import { linkSocioAccount, reportManualPayment } from "./actions";
+import SocioProfileForm from "./SocioProfileForm";
+import TransferPaymentSection from "./TransferPaymentSection";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import {
   Building2,
   CreditCard,
   Link2,
-  LogOut,
   MapPin,
   Sparkles,
   Upload,
   CheckCircle2,
-  Banknote,
 } from "lucide-react";
 
 interface SocioOption {
@@ -45,6 +48,19 @@ interface PanelProps {
     status: string;
     currentPeriodEnd: string | null;
   };
+  socioProfile: {
+    businessName: string;
+    website: string;
+    googleBusinessUrl: string;
+    logoUrl: string;
+  } | null;
+  catalogSocio: {
+    name: string;
+    categoria: string;
+    foto: string;
+    url: string;
+    direccion?: string;
+  } | null;
   stripeConfigured: boolean;
   showWelcome: boolean;
   paymentNotice?: string | null;
@@ -54,6 +70,8 @@ interface PanelProps {
 export default function PanelDashboard({
   user,
   subscription,
+  socioProfile,
+  catalogSocio,
   stripeConfigured,
   showWelcome,
   paymentNotice,
@@ -61,7 +79,7 @@ export default function PanelDashboard({
 }: PanelProps) {
   const router = useRouter();
   const { update } = useSession();
-  const [activeTab, setActiveTab] = useState<MembershipPlan>("NEGOCIO_FAMILIAR");
+  const [activeTab, setActiveTab] = useState<PaidMembershipPlan>("NEGOCIO_FAMILIAR");
   const [linkSocioId, setLinkSocioId] = useState("");
   const [linkMsg, setLinkMsg] = useState("");
   const [linkLoading, setLinkLoading] = useState(false);
@@ -70,14 +88,20 @@ export default function PanelDashboard({
   const [manualMsg, setManualMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const socio = user.socioId ? listaSocios.find((s) => s.id === user.socioId) : null;
   const isVecino = isVecinoPlan(subscription.plan);
   const commercial = hasCommercialAccess(subscription.plan, subscription.status);
   const canLink = canLinkSocioAccount(subscription.status);
+  const pendingValidation = isSubscriptionStatusPending(subscription.status);
 
-  async function handleLogout() {
-    await signOut({ callbackUrl: "/login" });
-  }
+  const displayName = socioProfile?.businessName || catalogSocio?.name;
+  const displayLogo = socioProfile?.logoUrl || (catalogSocio ? `/logos/${catalogSocio.foto}.png` : null);
+
+  const profileDefaults = {
+    businessName: socioProfile?.businessName ?? catalogSocio?.name ?? "",
+    website: socioProfile?.website ?? catalogSocio?.url ?? "",
+    googleBusinessUrl: socioProfile?.googleBusinessUrl ?? catalogSocio?.direccion ?? "",
+    logoUrl: socioProfile?.logoUrl ?? "",
+  };
 
   async function refreshSession() {
     await update();
@@ -94,9 +118,7 @@ export default function PanelDashboard({
       setLinkMsg(result.error);
       return;
     }
-    setLinkMsg(
-      `¡Vinculado con ${result.socioName}! Plan asignado: ${result.planLabel}.`
-    );
+    setLinkMsg(`¡Vinculado con ${result.socioName}! Plan asignado: ${result.planLabel}.`);
     setLinkSocioId("");
     await refreshSession();
   }
@@ -108,9 +130,7 @@ export default function PanelDashboard({
       setManualMsg(result.error);
       return;
     }
-    setManualMsg(
-      "Pago reportado. El equipo de Barriando validará tu transferencia o pago en efectivo."
-    );
+    setManualMsg("Solicitud registrada. Tu plan aparece como Pendiente de Validación.");
     await refreshSession();
   }
 
@@ -158,6 +178,13 @@ export default function PanelDashboard({
         </div>
       )}
 
+      {pendingValidation && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-xs">
+          Tu pago por transferencia o efectivo está <strong>Pendiente de Validación</strong>. Te
+          avisaremos por correo cuando quede activo.
+        </div>
+      )}
+
       {showWelcome && (
         <div className="bg-gradient-to-r from-[#27366D] to-[#1e2b58] text-white rounded-xl p-6 shadow-lg border border-amber-400/30">
           <div className="flex items-start gap-3">
@@ -175,22 +202,23 @@ export default function PanelDashboard({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-        <div>
-          <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-            {isVecino ? "Mi comunidad Barriando" : "Panel del socio"}
-          </h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Bienvenido, {user.nombre} · Plan{" "}
-            <strong className="text-[#27366D]">{getPlanLabel(subscription.plan)}</strong>
-          </p>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#27366D] uppercase tracking-wider"
-        >
-          <LogOut className="w-4 h-4" /> Cerrar sesión
-        </button>
+      <div>
+        <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+          {isVecino ? "Mi comunidad Barriando" : "Panel del socio"}
+        </h1>
+        <p className="text-sm text-slate-600 mt-1">
+          Bienvenido, {user.nombre} · Plan{" "}
+          <strong className="text-[#27366D]">{getPlanLabel(subscription.plan)}</strong>
+          {!isVecino && (
+            <>
+              {" "}
+              · Estado{" "}
+              <strong className={pendingValidation ? "text-amber-600" : "text-[#27366D]"}>
+                {getSubscriptionStatusLabel(subscription.status)}
+              </strong>
+            </>
+          )}
+        </p>
       </div>
 
       {isVecino ? (
@@ -241,6 +269,7 @@ export default function PanelDashboard({
             <div className="p-6">
               {(() => {
                 const plan = MEMBERSHIP_PLANS[activeTab];
+                const price = formatPlanPriceMxn(activeTab);
                 return (
                   <div className="space-y-4">
                     <div>
@@ -248,6 +277,7 @@ export default function PanelDashboard({
                         {plan.tagline}
                       </p>
                       <h3 className="text-lg font-bold text-slate-950 mt-1">{plan.label}</h3>
+                      <p className="text-2xl font-black text-[#27366D] mt-2">{price}</p>
                       {plan.highlight && (
                         <p className="text-xs text-amber-700 mt-1">{plan.highlight}</p>
                       )}
@@ -261,31 +291,23 @@ export default function PanelDashboard({
                         </li>
                       ))}
                     </ul>
-                    <div className="flex flex-wrap gap-3 pt-2">
+                    <div className="flex flex-col gap-3 pt-2">
                       {stripeConfigured ? (
                         <button
                           type="button"
                           onClick={() => handleStripePay(activeTab)}
-                          className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
+                          className="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition w-fit"
                         >
                           <CreditCard className="w-4 h-4" />
                           Pagar con Stripe
                         </button>
                       ) : null}
-                      <button
-                        type="button"
-                        onClick={() => handleManualPayment(activeTab)}
-                        className="flex items-center gap-2 border border-[#27366D] text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
-                      >
-                        <Banknote className="w-4 h-4" />
-                        Reportar pago manual
-                      </button>
+                      <TransferPaymentSection
+                        plan={activeTab}
+                        onConfirm={handleManualPayment}
+                        disabled={pendingValidation}
+                      />
                     </div>
-                    {!stripeConfigured && (
-                      <p className="text-[10px] text-slate-400">
-                        Stripe no está configurado aún; usa pago manual (efectivo o transferencia).
-                      </p>
-                    )}
                   </div>
                 );
               })()}
@@ -302,23 +324,27 @@ export default function PanelDashboard({
               <Building2 className="w-4 h-4 text-[#27366D]" />
               <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Tu negocio</h2>
             </div>
-            {socio ? (
+            {catalogSocio || displayName ? (
               <div>
-                <p className="font-bold text-slate-950">{socio.name}</p>
-                <p className="text-xs text-slate-500 mt-1">{socio.categoria}</p>
+                <p className="font-bold text-slate-950">{displayName}</p>
+                {catalogSocio && (
+                  <p className="text-xs text-slate-500 mt-1">{catalogSocio.categoria}</p>
+                )}
                 <p className="text-xs text-amber-700 mt-2 font-bold">
                   Plan: {getPlanLabel(subscription.plan)}
                 </p>
-                <div className="mt-4 h-24 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img
-                    src={`/logos/${socio.foto}.png`}
-                    alt={socio.name}
-                    className="max-h-full max-w-full object-contain p-2"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                </div>
+                {displayLogo && (
+                  <div className="mt-4 h-24 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img
+                      src={displayLogo}
+                      alt={displayName ?? "Logo"}
+                      className="max-h-full max-w-full object-contain p-2"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-xs text-slate-500">
@@ -339,7 +365,7 @@ export default function PanelDashboard({
               type="file"
               accept="image/png,image/jpeg,image/webp"
               onChange={handleLogoUpload}
-              disabled={!commercial || !socio || loading}
+              disabled={!commercial || !user.socioId || loading}
               className="text-xs w-full"
             />
             {!commercial && (
@@ -350,6 +376,10 @@ export default function PanelDashboard({
             {logoMsg && <p className="text-xs mt-3 text-slate-600">{logoMsg}</p>}
           </section>
 
+          {user.socioId && (
+            <SocioProfileForm initial={profileDefaults} disabled={!user.socioId} />
+          )}
+
           <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <CreditCard className="w-4 h-4 text-[#27366D]" />
@@ -359,17 +389,19 @@ export default function PanelDashboard({
               Estado:{" "}
               <strong
                 className={
-                  subscription.status === "active" || subscription.status === "manual_active"
+                  commercial
                     ? "text-green-700"
-                    : "text-amber-600"
+                    : pendingValidation
+                      ? "text-amber-600"
+                      : "text-slate-500"
                 }
               >
-                {subscription.status === "active" || subscription.status === "manual_active"
-                  ? "Activa"
-                  : subscription.status === "manual_pending"
-                    ? "Pago manual en revisión"
-                    : "Inactiva / pendiente"}
+                {getSubscriptionStatusLabel(subscription.status)}
               </strong>
+            </p>
+            <p className="text-sm font-semibold text-[#27366D] mb-2">
+              {formatPlanPriceMxn(subscription.plan as PaidMembershipPlan)} ·{" "}
+              {getPlanLabel(subscription.plan)}
             </p>
             {subscription.currentPeriodEnd && (
               <p className="text-xs text-slate-500 mb-4">
@@ -377,18 +409,28 @@ export default function PanelDashboard({
                 {new Date(subscription.currentPeriodEnd).toLocaleDateString("es-MX")}
               </p>
             )}
-            {stripeConfigured && (
-              <button
-                onClick={() => handleStripePay(subscription.plan)}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition"
-              >
-                {subscription.status === "active" ? "Gestionar suscripción" : "Renovar con Stripe"}
-              </button>
-            )}
+            <div className="flex flex-col gap-3">
+              {stripeConfigured && (
+                <button
+                  onClick={() => handleStripePay(subscription.plan)}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
+                >
+                  {subscription.status === "active" ? "Gestionar suscripción" : "Renovar con Stripe"}
+                </button>
+              )}
+              {!commercial && subscription.plan !== "VECINO" && (
+                <TransferPaymentSection
+                  plan={subscription.plan}
+                  onConfirm={handleManualPayment}
+                  disabled={pendingValidation}
+                />
+              )}
+            </div>
             {payMsg && <p className="text-xs mt-3 text-slate-600">{payMsg}</p>}
+            {manualMsg && <p className="text-xs mt-3 text-slate-600">{manualMsg}</p>}
           </section>
 
-          {!socio && canLink && (
+          {!user.socioId && canLink && (
             <section className="bg-white border border-amber-200 rounded-xl p-6 shadow-sm md:col-span-2">
               <div className="flex items-center gap-2 mb-3">
                 <Link2 className="w-5 h-5 text-amber-600" />

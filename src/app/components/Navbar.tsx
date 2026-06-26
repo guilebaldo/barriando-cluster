@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 
 const links = [
   { href: "/", label: "Inicio" },
@@ -26,14 +26,94 @@ function navLinkClass(pathname: string, href: string) {
     : "text-white hover:text-amber-400 transition-colors duration-200";
 }
 
+function UserMenu({ mobile = false }: { mobile?: boolean }) {
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const displayName = session?.user?.name?.trim() || "Mi cuenta";
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [open]);
+
+  if (mobile) {
+    return (
+      <div className="mt-2 pt-2 border-t border-[#314385]/60">
+        <p className="px-3 py-2 text-sm font-bold text-amber-400">{displayName}</p>
+        <Link
+          href="/panel"
+          className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+        >
+          Mi Panel
+        </Link>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="w-full py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition text-left"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        {displayName}
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]"
+        >
+          <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
+            <Link
+              href="/panel"
+              role="menuitem"
+              className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+              onClick={() => setOpen(false)}
+            >
+              Mi Panel
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="w-full text-left px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const isAuthenticated = status === "authenticated" && session?.user;
-
-  const panelLabel =
-    session?.user?.name?.trim().split(/\s+/)[0] || "Mi Panel";
 
   useEffect(() => {
     setOpen(false);
@@ -48,31 +128,7 @@ export default function Navbar() {
 
   function AuthActions({ mobile = false }: { mobile?: boolean }) {
     if (isAuthenticated) {
-      return (
-        <div className={mobile ? "flex flex-col gap-2 mt-2 pt-2 border-t border-[#314385]/60" : "flex items-center gap-3"}>
-          <Link
-            href="/panel"
-            className={
-              mobile
-                ? "py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-                : "text-white hover:text-amber-400 transition-colors duration-200 text-xs uppercase tracking-wider font-bold"
-            }
-          >
-            {panelLabel}
-          </Link>
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className={
-              mobile
-                ? "py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition text-left"
-                : "text-slate-300 hover:text-white text-xs uppercase tracking-wider font-bold transition-colors duration-200"
-            }
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      );
+      return <UserMenu mobile={mobile} />;
     }
 
     return (
@@ -111,7 +167,6 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop */}
         <div className="hidden md:flex flex-wrap justify-end items-center gap-5 text-xs uppercase tracking-wider font-bold">
           {links.map((link) => (
             <Link key={link.href} href={link.href} className={navLinkClass(pathname, link.href)}>
@@ -121,7 +176,6 @@ export default function Navbar() {
           <AuthActions />
         </div>
 
-        {/* Mobile toggle */}
         <button
           type="button"
           className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[#314385] text-white hover:bg-[#1e2b58] transition"
@@ -133,7 +187,6 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile menu */}
       {open && (
         <>
           <button

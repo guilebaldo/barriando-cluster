@@ -35,6 +35,6 @@ export async function requireSession() {
 export async function getUserWithSubscription(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
-    include: { subscription: true },
+    include: { subscription: true, socioProfile: true },
   });
 }

@@ -78,6 +78,17 @@ export const PAID_PLANS: PaidMembershipPlan[] = [
   "GRAN_EMPRESA",
 ];
 
+/** Precios mensuales en MXN (mostrar en panel / planes). */
+export const PLAN_PRICES_MXN: Record<PaidMembershipPlan, number> = {
+  NEGOCIO_FAMILIAR: 600,
+  MEDIANA_EMPRESA: 950,
+  GRAN_EMPRESA: 1500,
+};
+
+export function formatPlanPriceMxn(plan: PaidMembershipPlan): string {
+  return `$${PLAN_PRICES_MXN[plan].toLocaleString("es-MX")} MXN / mes`;
+}
+
 export const COMMERCIAL_BENEFITS = [
   "Aparecer en el mapa y directorio de socios",
   "Mostrar tu logotipo en el carrusel de la página principal",
@@ -125,4 +136,14 @@ export function canLinkSocioAccount(status: string): boolean {
 
 export function getPlanLabel(plan: MembershipPlan): string {
   return MEMBERSHIP_PLANS[plan].label;
+}
+
+export function getSubscriptionStatusLabel(status: string): string {
+  if (status === "active" || status === "manual_active") return "Activa";
+  if (status === "manual_pending") return "Pendiente de Validación";
+  return "Inactiva / pendiente";
+}
+
+export function isSubscriptionStatusPending(status: string): boolean {
+  return status === "manual_pending";
 }

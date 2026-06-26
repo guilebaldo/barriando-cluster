@@ -1,11 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { listaSocios } from "@/app/data/socios";
 import { canLinkSocioAccount, getPlanForSocio, getPlanLabel } from "@/lib/membresia";
 import type { MembershipPlan } from "@/generated/prisma/client";
+
+const profileSchema = z.object({
+  businessName: z.string().trim().min(2, "Ingresa el nombre del negocio.").max(120),
+  website: z.string().trim().url("Ingresa una URL válida para el sitio web.").max(500),
+  googleBusinessUrl: z
+    .string()
+    .trim()
+    .url("Ingresa una URL válida de Google My Business.")
+    .max(500),
+  logoUrl: z.string().trim().max(500).optional(),
+});
 
 export type LinkSocioResult =
   | { ok: true; socioName: string; plan: MembershipPlan; planLabel: string }
@@ -67,6 +79,62 @@ export async function linkSocioAccount(socioId: number): Promise<LinkSocioResult
 }
 
 export type ReportPaymentResult = { ok: true } | { ok: false; error: string };
+
+export type UpdateProfileResult = { ok: true } | { ok: false; error: string };
+
+export async function updateSocioProfile(input: {
+  businessName: string;
+  website: string;
+  googleBusinessUrl: string;
+  logoUrl?: string;
+}): Promise<UpdateProfileResult> {
+  try {
+    const session = await requireSession();
+    const parsed = profileSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    if (!session.socioId) {
+      return { ok: false, error: "Vincula tu negocio antes de editar el perfil." };
+    }
+
+    const { businessName, website, googleBusinessUrl, logoUrl } = parsed.data;
+
+    if (logoUrl && logoUrl.length > 0) {
+      try {
+        new URL(logoUrl);
+      } catch {
+        return { ok: false, error: "Ingresa una URL pública de imagen válida." };
+      }
+    }
+
+    await prisma.socioProfile.upsert({
+      where: { userId: session.id },
+      create: {
+        userId: session.id,
+        businessName,
+        website,
+        googleBusinessUrl,
+        logoUrl: logoUrl || null,
+      },
+      update: {
+        businessName,
+        website,
+        googleBusinessUrl,
+        logoUrl: logoUrl || null,
+      },
+    });
+
+    revalidatePath("/panel");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo guardar el perfil. Intenta de nuevo." };
+  }
+}
 
 export async function reportManualPayment(
   plan: MembershipPlan,

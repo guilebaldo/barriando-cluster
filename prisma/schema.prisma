@@ -69,6 +69,7 @@ model User {
   accounts        Account[]
   sessions        Session[]
   subscription    Subscription?
+  socioProfile    SocioProfile?
 }
 
 model VerificationToken {
@@ -95,6 +96,18 @@ model Subscription {
   currentPeriodEnd     DateTime?
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
+}
+
+model SocioProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName      String?
+  website           String?
+  googleBusinessUrl String?
+  logoUrl           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model ContactMessage {
