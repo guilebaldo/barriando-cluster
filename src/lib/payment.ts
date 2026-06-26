@@ -1,9 +1,20 @@
-/** Datos bancarios de la asociación para pagos manuales. */
-export const BARRIANDO_CLABE =
-  process.env.BARRIANDO_CLABE?.trim() || "646180157000000004";
+/** Datos bancarios de la asociación para pagos manuales (solo servidor). */
 
-export const BARRIANDO_PAYMENT_EMAIL =
-  process.env.BARRIANDO_PAYMENT_EMAIL?.trim() || "hola@barriandopuebla.com";
+export type BarriandoPaymentDetails = {
+  clabe: string;
+  bankLabel: string;
+  paymentEmail: string;
+};
 
-export const BARRIANDO_BANK_LABEL =
-  process.env.BARRIANDO_BANK_LABEL?.trim() || "STP — Asociación Barriando";
+const DEFAULT_CLABE = "646180157000000004";
+const DEFAULT_PAYMENT_EMAIL = "hola@barriandopuebla.com";
+const DEFAULT_BANK_LABEL = "STP — Asociación Barriando";
+
+/** Leer en Server Components y pasar como props a clientes. */
+export function getBarriandoPaymentDetails(): BarriandoPaymentDetails {
+  return {
+    clabe: process.env.BARRIANDO_CLABE?.trim() || DEFAULT_CLABE,
+    paymentEmail: process.env.BARRIANDO_PAYMENT_EMAIL?.trim() || DEFAULT_PAYMENT_EMAIL,
+    bankLabel: process.env.BARRIANDO_BANK_LABEL?.trim() || DEFAULT_BANK_LABEL,
+  };
+}

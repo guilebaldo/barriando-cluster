@@ -2,31 +2,38 @@
 
 import { useState } from "react";
 import { Banknote, Copy, Check } from "lucide-react";
-import {
-  BARRIANDO_BANK_LABEL,
-  BARRIANDO_CLABE,
-  BARRIANDO_PAYMENT_EMAIL,
-} from "@/lib/payment";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 interface TransferPaymentSectionProps {
   plan: MembershipPlan;
   onConfirm: (plan: MembershipPlan) => Promise<void>;
   disabled?: boolean;
+  clabe?: string;
+  bankLabel?: string;
+  paymentEmail?: string;
 }
 
 export default function TransferPaymentSection({
   plan,
   onConfirm,
   disabled,
+  clabe = "",
+  bankLabel = "",
+  paymentEmail = "",
 }: TransferPaymentSectionProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const clabeValue = clabe.trim();
+  const bankLabelValue = bankLabel.trim() || "Asociación Barriando";
+  const paymentEmailValue = paymentEmail.trim() || "hola@barriandopuebla.com";
+  const hasClabe = clabeValue.length > 0;
+
   async function handleCopy() {
+    if (!hasClabe) return;
     try {
-      await navigator.clipboard.writeText(BARRIANDO_CLABE);
+      await navigator.clipboard.writeText(clabeValue);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -59,29 +66,42 @@ export default function TransferPaymentSection({
           </p>
           <p>
             <span className="text-slate-500">Banco / beneficiario:</span>{" "}
-            <strong>{BARRIANDO_BANK_LABEL}</strong>
+            <strong>{bankLabelValue}</strong>
           </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-500">CLABE:</span>
-            <code className="bg-white border border-slate-200 px-2 py-1 rounded font-mono text-sm tracking-wide">
-              {BARRIANDO_CLABE}
-            </code>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="inline-flex items-center gap-1 bg-[#27366D] text-white px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider hover:bg-[#1e2b58] transition"
-            >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? "Copiada" : "Copiar CLABE"}
-            </button>
-          </div>
+          {hasClabe ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-slate-500">CLABE:</span>
+              <code className="bg-white border border-slate-200 px-2 py-1 rounded font-mono text-sm tracking-wide">
+                {clabeValue}
+              </code>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="inline-flex items-center gap-1 bg-[#27366D] text-white px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider hover:bg-[#1e2b58] transition"
+              >
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? "Copiada" : "Copiar CLABE"}
+              </button>
+            </div>
+          ) : (
+            <p className="text-slate-600 leading-relaxed">
+              Los datos de CLABE no están disponibles en este momento. Escríbenos a{" "}
+              <a
+                href={`mailto:${paymentEmailValue}`}
+                className="text-[#27366D] font-semibold underline"
+              >
+                {paymentEmailValue}
+              </a>{" "}
+              para recibir instrucciones de pago.
+            </p>
+          )}
           <p className="leading-relaxed">
             Realiza tu transferencia o depósito y envía tu comprobante a{" "}
             <a
-              href={`mailto:${BARRIANDO_PAYMENT_EMAIL}`}
+              href={`mailto:${paymentEmailValue}`}
               className="text-[#27366D] font-semibold underline"
             >
-              {BARRIANDO_PAYMENT_EMAIL}
+              {paymentEmailValue}
             </a>
             . Tu plan quedará como <strong>Pendiente de Validación</strong> hasta que el equipo
             confirme el pago.

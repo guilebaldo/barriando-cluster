@@ -17,6 +17,7 @@ import {
   normalizeSocioProfile,
 } from "@/lib/panel-data";
 import { listaSocios } from "../data/socios";
+import { getBarriandoPaymentDetails } from "@/lib/payment";
 
 export default async function PanelPage({
   searchParams,
@@ -82,6 +83,8 @@ export default async function PanelPage({
       ? listaSocios.map((s) => ({ id: s.id, name: s.name, categoria: s.categoria }))
       : [];
 
+    const paymentDetails = getBarriandoPaymentDetails();
+
     return (
       <SiteShell>
         <Navbar />
@@ -112,6 +115,7 @@ export default async function PanelPage({
             paymentNotice={paymentNotice}
             socios={sociosList}
             takenSocioIds={takenSocioIds}
+            paymentDetails={paymentDetails}
           />
         </main>
         <Footer />

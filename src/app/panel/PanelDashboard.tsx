@@ -78,6 +78,11 @@ interface PanelProps {
   paymentNotice?: string | null;
   socios: SocioOption[];
   takenSocioIds?: number[];
+  paymentDetails: {
+    clabe: string;
+    bankLabel: string;
+    paymentEmail: string;
+  };
 }
 
 export default function PanelDashboard({
@@ -91,6 +96,7 @@ export default function PanelDashboard({
   paymentNotice,
   socios = [],
   takenSocioIds = [],
+  paymentDetails,
 }: PanelProps) {
   const router = useRouter();
   const { update } = useSession();
@@ -332,6 +338,9 @@ export default function PanelDashboard({
                         plan={activeTab}
                         onConfirm={handleManualPayment}
                         disabled={pendingValidation}
+                        clabe={paymentDetails.clabe}
+                        bankLabel={paymentDetails.bankLabel}
+                        paymentEmail={paymentDetails.paymentEmail}
                       />
                     </div>
                   </div>
@@ -449,6 +458,9 @@ export default function PanelDashboard({
                   plan={plan}
                   onConfirm={handleManualPayment}
                   disabled={pendingValidation}
+                  clabe={paymentDetails.clabe}
+                  bankLabel={paymentDetails.bankLabel}
+                  paymentEmail={paymentDetails.paymentEmail}
                 />
               )}
             </div>
