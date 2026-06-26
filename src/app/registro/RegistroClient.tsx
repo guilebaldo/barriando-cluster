@@ -6,7 +6,6 @@ import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import { OAuthButtons } from "../components/OAuthButtons";
 import { MEMBERSHIP_PLANS } from "@/lib/membresia";
-import { planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { UserPlus, Sparkles } from "lucide-react";
 
@@ -54,7 +53,7 @@ export default function RegistroClient({ plan }: RegistroClientProps) {
 
             <p className="text-xs text-slate-500 mt-6 text-center">
               ¿Ya tienes cuenta?{" "}
-              <Link href={`/login?plan=${planToSlug(plan)}`} className="text-[#27366D] font-bold hover:underline">
+              <Link href="/login" className="text-[#27366D] font-bold hover:underline">
                 Inicia sesión
               </Link>
               {" · "}

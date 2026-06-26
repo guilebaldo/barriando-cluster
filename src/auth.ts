@@ -55,6 +55,8 @@ function buildProviders(): Provider[] {
         clientId: googleClientId,
         clientSecret: googleClientSecret,
         allowDangerousEmailAccountLinking: true,
+        // Sin PKCE: evita InvalidCheck si el navegador pierde la cookie en el redirect OAuth.
+        checks: ["state"],
       })
     );
   } else if (isProduction) {
