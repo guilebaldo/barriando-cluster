@@ -23,12 +23,13 @@ export function barriandoPrismaAdapter(prisma: PrismaClient): Adapter {
   return {
     ...base,
     async createUser(data) {
+      const email = data.email?.trim().toLowerCase() ?? data.email;
       const user = await prisma.user.create({
         data: {
-          email: data.email,
+          email,
           emailVerified: data.emailVerified,
           image: data.image,
-          nombre: resolveNombre(data.name, data.email),
+          nombre: resolveNombre(data.name, email),
         },
       });
       return toAdapterUser(user);
@@ -38,7 +39,10 @@ export function barriandoPrismaAdapter(prisma: PrismaClient): Adapter {
       return user ? toAdapterUser(user) : null;
     },
     async getUserByEmail(email) {
-      const user = await prisma.user.findUnique({ where: { email } });
+      const normalized = email.trim().toLowerCase();
+      const user = await prisma.user.findFirst({
+        where: { email: { equals: normalized, mode: "insensitive" } },
+      });
       return user ? toAdapterUser(user) : null;
     },
     async getUserByAccount(provider_providerAccountId) {

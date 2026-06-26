@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getCsrfToken, signIn } from "next-auth/react";
+import { getCsrfToken, signIn, signOut } from "next-auth/react";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 
 async function submitOAuthForm(csrfToken: string) {
@@ -42,10 +42,20 @@ function OAuthButtonsInner() {
 
   useEffect(() => {
     const authError = searchParams.get("error");
-    if (authError) {
-      console.error("[auth] login error param:", authError);
-      setError("No se pudo iniciar sesión con Google. Intenta de nuevo.");
+    if (!authError) return;
+
+    console.error("[auth] login error param:", authError);
+
+    if (authError === "OAuthAccountNotLinked") {
+      void signOut({ redirect: false }).then(() => {
+        setError(
+          "Tu cuenta de Google no estaba vinculada. Sesión anterior limpiada; intenta de nuevo."
+        );
+      });
+      return;
     }
+
+    setError("No se pudo iniciar sesión con Google. Intenta de nuevo.");
   }, [searchParams]);
 
   useEffect(() => {
@@ -63,6 +73,9 @@ function OAuthButtonsInner() {
     setLoading(true);
 
     try {
+      // Evita OAuthAccountNotLinked por sesión JWT previa de otro usuario.
+      await signOut({ redirect: false });
+
       const result = await signIn("google", {
         redirectTo: ONBOARDING_CONTINUE_PATH,
         callbackUrl: ONBOARDING_CONTINUE_PATH,

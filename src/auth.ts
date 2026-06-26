@@ -54,6 +54,7 @@ function buildProviders(): Provider[] {
       Google({
         clientId: googleClientId,
         clientSecret: googleClientSecret,
+        // Vincula Google con usuarios existentes (mismo email en Neon).
         allowDangerousEmailAccountLinking: true,
         // Sin PKCE: evita InvalidCheck si el navegador pierde la cookie en el redirect OAuth.
         checks: ["state"],
