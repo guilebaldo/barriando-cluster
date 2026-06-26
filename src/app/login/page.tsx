@@ -1,5 +1,4 @@
 import { parsePlanSlug } from "@/lib/plan-routing";
-import { setPendingPlanCookie } from "@/lib/onboarding";
 import LoginClient from "./LoginClient";
 
 export default async function LoginPage({
@@ -9,6 +8,5 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const plan = parsePlanSlug(params.plan) ?? "VECINO";
-  await setPendingPlanCookie(plan);
   return <LoginClient plan={plan} />;
 }

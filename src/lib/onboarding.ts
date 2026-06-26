@@ -7,10 +7,9 @@ import { isStripeConfiguredForPlan } from "@/lib/stripe";
 import {
   isPaidMembershipPlan,
   ONBOARDING_CONTINUE_PATH,
-  PENDING_PLAN_COOKIE,
   parsePlanSlug,
-  planToSlug,
 } from "@/lib/plan-routing";
+import { PENDING_PLAN_COOKIE } from "@/lib/pending-plan-cookie";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { hasCommercialAccess, isVecinoPlan, type PaidMembershipPlan } from "@/lib/membresia";
 
@@ -22,17 +21,6 @@ export async function readPendingPlanCookie(): Promise<MembershipPlan | null> {
 export async function clearPendingPlanCookie() {
   const jar = await cookies();
   jar.delete(PENDING_PLAN_COOKIE);
-}
-
-export async function setPendingPlanCookie(plan: MembershipPlan) {
-  const jar = await cookies();
-  jar.set(PENDING_PLAN_COOKIE, planToSlug(plan), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 2,
-  });
 }
 
 async function ensureVecinoSubscription(userId: string) {

@@ -1,5 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { parsePlanSlug } from "@/lib/plan-routing";
+import {
+  PENDING_PLAN_COOKIE,
+  pendingPlanCookieOptions,
+  pendingPlanCookieValue,
+} from "@/lib/pending-plan-cookie";
+
+function attachPendingPlanCookie(request: NextRequest, response: NextResponse) {
+  const plan = parsePlanSlug(request.nextUrl.searchParams.get("plan")) ?? "VECINO";
+  response.cookies.set(PENDING_PLAN_COOKIE, pendingPlanCookieValue(plan), pendingPlanCookieOptions());
+  return response;
+}
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -21,6 +33,11 @@ export function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.protocol = "https:";
     return NextResponse.redirect(url, 301);
+  }
+
+  // Next.js no permite cookies().set() en Server Components (login/registro).
+  if (pathname === "/login" || pathname === "/registro") {
+    return attachPendingPlanCookie(request, NextResponse.next());
   }
 
   return NextResponse.next();
