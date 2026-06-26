@@ -134,6 +134,12 @@ export function canLinkSocioAccount(status: string): boolean {
   return status === "active" || status === "manual_active";
 }
 
+export function getUpgradePlans(current: PaidMembershipPlan): PaidMembershipPlan[] {
+  const idx = PAID_PLANS.indexOf(current);
+  if (idx < 0) return [];
+  return PAID_PLANS.slice(idx + 1);
+}
+
 export function getPlanLabel(plan: MembershipPlan): string {
   return MEMBERSHIP_PLANS[plan].label;
 }

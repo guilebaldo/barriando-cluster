@@ -4,7 +4,7 @@ import { Mail, Phone, Shield } from "lucide-react";
 
 export default function Footer() {
   return (
-    <>
+    <div className="mt-auto w-full">
       <section className="py-10 bg-white border-t border-slate-200 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-6">
           <div className="flex flex-col sm:flex-row gap-4 text-center sm:text-left">
@@ -56,6 +56,6 @@ export default function Footer() {
           *De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares de México, Barriando (Clúster Turístico y Asociación de Empresarios del Centro Histórico, A.C.) garantiza que los datos recabados se utilizarán exclusivamente para fines informativos y de vinculación empresarial.*
         </div>
       </footer>
-    </>
+    </div>
   );
 }

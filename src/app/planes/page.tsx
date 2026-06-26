@@ -1,15 +1,16 @@
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import SiteShell from "../components/SiteShell";
 import { MEMBERSHIP_PLANS, PAID_PLANS } from "@/lib/membresia";
 import { registroUrl } from "@/lib/plan-routing";
 import { Check } from "lucide-react";
 
 export default function PlanesPage() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+    <SiteShell>
       <Navbar />
-      <main className="max-w-5xl mx-auto py-16 px-6">
+      <main className="flex-1 max-w-5xl mx-auto py-16 px-6 w-full">
         <div className="text-center mb-12">
           <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Membresías</span>
           <h1 className="text-3xl md:text-4xl font-extrabold mt-2 font-serif-cluster uppercase tracking-wide text-slate-950">
@@ -36,7 +37,7 @@ export default function PlanesPage() {
         </div>
       </main>
       <Footer />
-    </div>
+    </SiteShell>
   );
 }
 

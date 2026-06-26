@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import SiteShell from "../components/SiteShell";
 import PanelDashboard from "./PanelDashboard";
 import { getSession, getUserWithSubscription } from "@/lib/auth-utils";
 import { isStripeConfigured } from "@/lib/stripe";
 import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
+import { expireManualSubscriptionsIfNeeded } from "@/lib/subscription-lifecycle";
 import { canAccessPanel, hasCommercialAccess, isVecinoPlan } from "@/lib/membresia";
+import { isAdminEmail } from "@/lib/admin";
+import { prisma } from "@/lib/prisma";
 import { listaSocios } from "../data/socios";
 
 export default async function PanelPage({
@@ -16,6 +20,8 @@ export default async function PanelPage({
   const params = await searchParams;
   const session = await getSession();
   if (!session) redirect("/login");
+
+  await expireManualSubscriptionsIfNeeded();
 
   if (params.pago === "exitoso" || params.pago === "procesando") {
     await syncStripeSubscriptionForUser(session.id);
@@ -41,6 +47,12 @@ export default async function PanelPage({
     redirect("/planes?pago=requiere_plan");
   }
 
+  const takenRows = await prisma.user.findMany({
+    where: { socioId: { not: null }, NOT: { id: session.id } },
+    select: { socioId: true },
+  });
+  const takenSocioIds = takenRows.map((r) => r.socioId!);
+
   const isNewUser = Date.now() - user.createdAt.getTime() < 5 * 60 * 1000;
   const showWelcome =
     params.bienvenida === "1" || (isNewUser && isVecinoPlan(refreshedSub.plan));
@@ -52,7 +64,7 @@ export default async function PanelPage({
     paymentNotice =
       "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página.";
   } else if (params.pago === "cancelado") {
-    paymentNotice = "Pago cancelado. Puedes intentar de nuevo cuando quieras.";
+    paymentNotice = "Pago cancelado. Puedes intentar de nuevo cuando quieras desde tu panel.";
   } else if (params.pago === "stripe_no_configurado") {
     paymentNotice = "Stripe no está configurado aún. Contacta al equipo de Barriando.";
   }
@@ -61,9 +73,9 @@ export default async function PanelPage({
   const profile = user.socioProfile;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+    <SiteShell>
       <Navbar />
-      <main className="max-w-5xl mx-auto py-12 px-6">
+      <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
         <PanelDashboard
           user={{
             id: user.id,
@@ -71,10 +83,12 @@ export default async function PanelPage({
             email: user.email ?? "",
             socioId: user.socioId,
           }}
+          isAdmin={isAdminEmail(user.email)}
           subscription={{
             plan: refreshedSub.plan,
             status: refreshedSub.status,
             currentPeriodEnd: refreshedSub.currentPeriodEnd?.toISOString() ?? null,
+            stripeSubscriptionId: refreshedSub.stripeSubscriptionId,
           }}
           socioProfile={
             profile
@@ -101,9 +115,10 @@ export default async function PanelPage({
           showWelcome={showWelcome}
           paymentNotice={paymentNotice}
           socios={listaSocios.map((s) => ({ id: s.id, name: s.name, categoria: s.categoria }))}
+          takenSocioIds={takenSocioIds}
         />
       </main>
       <Footer />
-    </div>
+    </SiteShell>
   );
 }

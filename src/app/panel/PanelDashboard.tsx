@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -10,24 +11,33 @@ import {
   formatPlanPriceMxn,
   getPlanLabel,
   getSubscriptionStatusLabel,
+  getUpgradePlans,
   hasCommercialAccess,
   isVecinoPlan,
   canLinkSocioAccount,
   isSubscriptionStatusPending,
   type PaidMembershipPlan,
 } from "@/lib/membresia";
-import { linkSocioAccount, reportManualPayment } from "./actions";
+import {
+  formatMembershipExpiry,
+  getRenewalMode,
+  getRenewalModeLabel,
+} from "@/lib/subscription-lifecycle";
+import { reportManualPayment } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
+import LinkSocioSection from "./LinkSocioSection";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import {
   Building2,
   CreditCard,
-  Link2,
   MapPin,
   Sparkles,
   Upload,
   CheckCircle2,
+  Shield,
+  ArrowUpCircle,
+  X,
 } from "lucide-react";
 
 interface SocioOption {
@@ -43,10 +53,12 @@ interface PanelProps {
     email: string;
     socioId: number | null;
   };
+  isAdmin: boolean;
   subscription: {
     plan: MembershipPlan;
     status: string;
     currentPeriodEnd: string | null;
+    stripeSubscriptionId: string | null;
   };
   socioProfile: {
     businessName: string;
@@ -65,10 +77,12 @@ interface PanelProps {
   showWelcome: boolean;
   paymentNotice?: string | null;
   socios: SocioOption[];
+  takenSocioIds: number[];
 }
 
 export default function PanelDashboard({
   user,
+  isAdmin,
   subscription,
   socioProfile,
   catalogSocio,
@@ -76,22 +90,27 @@ export default function PanelDashboard({
   showWelcome,
   paymentNotice,
   socios,
+  takenSocioIds,
 }: PanelProps) {
   const router = useRouter();
   const { update } = useSession();
   const [activeTab, setActiveTab] = useState<PaidMembershipPlan>("NEGOCIO_FAMILIAR");
-  const [linkSocioId, setLinkSocioId] = useState("");
-  const [linkMsg, setLinkMsg] = useState("");
-  const [linkLoading, setLinkLoading] = useState(false);
   const [logoMsg, setLogoMsg] = useState("");
   const [payMsg, setPayMsg] = useState("");
   const [manualMsg, setManualMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [dismissedNotice, setDismissedNotice] = useState(false);
 
   const isVecino = isVecinoPlan(subscription.plan);
   const commercial = hasCommercialAccess(subscription.plan, subscription.status);
   const canLink = canLinkSocioAccount(subscription.status);
   const pendingValidation = isSubscriptionStatusPending(subscription.status);
+  const renewalMode = getRenewalMode(subscription.status, subscription.stripeSubscriptionId);
+  const renewalLabel = getRenewalModeLabel(renewalMode);
+  const expiryLabel = formatMembershipExpiry(subscription.currentPeriodEnd);
+  const upgradePlans = commercial && !isVecino
+    ? getUpgradePlans(subscription.plan as PaidMembershipPlan)
+    : [];
 
   const displayName = socioProfile?.businessName || catalogSocio?.name;
   const displayLogo = socioProfile?.logoUrl || (catalogSocio ? `/logos/${catalogSocio.foto}.png` : null);
@@ -106,21 +125,6 @@ export default function PanelDashboard({
   async function refreshSession() {
     await update();
     router.refresh();
-  }
-
-  async function handleLinkSocio() {
-    if (!linkSocioId) return;
-    setLinkLoading(true);
-    setLinkMsg("");
-    const result = await linkSocioAccount(Number(linkSocioId));
-    setLinkLoading(false);
-    if (!result.ok) {
-      setLinkMsg(result.error);
-      return;
-    }
-    setLinkMsg(`¡Vinculado con ${result.socioName}! Plan asignado: ${result.planLabel}.`);
-    setLinkSocioId("");
-    await refreshSession();
   }
 
   async function handleManualPayment(plan: MembershipPlan) {
@@ -170,10 +174,20 @@ export default function PanelDashboard({
     }
   }
 
+  const stripeButtonLabel = commercial ? "Renovar Membresía" : "Pagar de forma Segura";
+
   return (
     <div className="space-y-6">
-      {paymentNotice && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 text-xs">
+      {paymentNotice && !dismissedNotice && (
+        <div className="relative bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 pr-10 text-xs">
+          <button
+            type="button"
+            onClick={() => setDismissedNotice(true)}
+            className="absolute top-3 right-3 text-emerald-700 hover:text-emerald-900 transition"
+            aria-label="Cerrar aviso"
+          >
+            <X className="w-4 h-4" />
+          </button>
           {paymentNotice}
         </div>
       )}
@@ -202,23 +216,34 @@ export default function PanelDashboard({
         </div>
       )}
 
-      <div>
-        <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-          {isVecino ? "Mi comunidad Barriando" : "Panel del socio"}
-        </h1>
-        <p className="text-sm text-slate-600 mt-1">
-          Bienvenido, {user.nombre} · Plan{" "}
-          <strong className="text-[#27366D]">{getPlanLabel(subscription.plan)}</strong>
-          {!isVecino && (
-            <>
-              {" "}
-              · Estado{" "}
-              <strong className={pendingValidation ? "text-amber-600" : "text-[#27366D]"}>
-                {getSubscriptionStatusLabel(subscription.status)}
-              </strong>
-            </>
-          )}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+            {isVecino ? "Mi comunidad Barriando" : "Panel del socio"}
+          </h1>
+          <p className="text-sm text-slate-600 mt-1">
+            Bienvenido, {user.nombre} · Plan{" "}
+            <strong className="text-[#27366D]">{getPlanLabel(subscription.plan)}</strong>
+            {!isVecino && (
+              <>
+                {" "}
+                · Estado{" "}
+                <strong className={pendingValidation ? "text-amber-600" : "text-[#27366D]"}>
+                  {getSubscriptionStatusLabel(subscription.status)}
+                </strong>
+              </>
+            )}
+          </p>
+        </div>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition shrink-0"
+          >
+            <Shield className="w-4 h-4" />
+            Panel Admin
+          </Link>
+        )}
       </div>
 
       {isVecino ? (
@@ -299,7 +324,7 @@ export default function PanelDashboard({
                           className="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition w-fit"
                         >
                           <CreditCard className="w-4 h-4" />
-                          Pagar con Stripe
+                          Pagar de forma Segura
                         </button>
                       ) : null}
                       <TransferPaymentSection
@@ -385,7 +410,7 @@ export default function PanelDashboard({
               <CreditCard className="w-4 h-4 text-[#27366D]" />
               <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Membresía</h2>
             </div>
-            <p className="text-sm text-slate-700 mb-2">
+            <p className="text-sm text-slate-700 mb-1">
               Estado:{" "}
               <strong
                 className={
@@ -403,19 +428,24 @@ export default function PanelDashboard({
               {formatPlanPriceMxn(subscription.plan as PaidMembershipPlan)} ·{" "}
               {getPlanLabel(subscription.plan)}
             </p>
-            {subscription.currentPeriodEnd && (
+            {expiryLabel && (
+              <p className="text-sm text-slate-700 mb-1">
+                Vence el: <strong className="text-slate-900">{expiryLabel}</strong>
+              </p>
+            )}
+            {renewalLabel && (
               <p className="text-xs text-slate-500 mb-4">
-                Próximo periodo hasta:{" "}
-                {new Date(subscription.currentPeriodEnd).toLocaleDateString("es-MX")}
+                Tipo de renovación: <strong className="text-[#27366D]">{renewalLabel}</strong>
               </p>
             )}
             <div className="flex flex-col gap-3">
               {stripeConfigured && (
                 <button
+                  type="button"
                   onClick={() => handleStripePay(subscription.plan)}
                   className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
                 >
-                  {subscription.status === "active" ? "Gestionar suscripción" : "Renovar con Stripe"}
+                  {stripeButtonLabel}
                 </button>
               )}
               {!commercial && subscription.plan !== "VECINO" && (
@@ -426,42 +456,48 @@ export default function PanelDashboard({
                 />
               )}
             </div>
+            {upgradePlans.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <div className="flex items-center gap-2 mb-3">
+                  <ArrowUpCircle className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+                    Upgrade a plan superior
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {upgradePlans.map((planId) => (
+                    <div
+                      key={planId}
+                      className="border border-slate-200 rounded-lg p-4 bg-slate-50 min-w-[10rem]"
+                    >
+                      <p className="font-bold text-slate-900 text-sm">{MEMBERSHIP_PLANS[planId].label}</p>
+                      <p className="text-xs text-[#27366D] font-semibold mt-1">
+                        {formatPlanPriceMxn(planId)}
+                      </p>
+                      {stripeConfigured && (
+                        <button
+                          type="button"
+                          onClick={() => handleStripePay(planId)}
+                          className="mt-3 text-[10px] font-bold uppercase tracking-wider bg-[#27366D] text-white px-3 py-2 rounded-lg hover:bg-[#1e2b58] transition"
+                        >
+                          Upgrade
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {payMsg && <p className="text-xs mt-3 text-slate-600">{payMsg}</p>}
             {manualMsg && <p className="text-xs mt-3 text-slate-600">{manualMsg}</p>}
           </section>
 
           {!user.socioId && canLink && (
-            <section className="bg-white border border-amber-200 rounded-xl p-6 shadow-sm md:col-span-2">
-              <div className="flex items-center gap-2 mb-3">
-                <Link2 className="w-5 h-5 text-amber-600" />
-                <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                  Vincula tu negocio
-                </h2>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <select
-                  value={linkSocioId}
-                  onChange={(e) => setLinkSocioId(e.target.value)}
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs"
-                >
-                  <option value="">Selecciona tu negocio...</option>
-                  {socios.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} — {s.categoria}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={handleLinkSocio}
-                  disabled={!linkSocioId || linkLoading}
-                  className="bg-[#27366D] text-white font-bold text-xs uppercase px-6 py-3 rounded-lg disabled:opacity-50"
-                >
-                  {linkLoading ? "Vinculando..." : "Vincular"}
-                </button>
-              </div>
-              {linkMsg && <p className="text-xs mt-3 text-slate-600">{linkMsg}</p>}
-            </section>
+            <LinkSocioSection
+              socios={socios}
+              takenSocioIds={takenSocioIds}
+              onLinked={refreshSession}
+            />
           )}
         </div>
       )}

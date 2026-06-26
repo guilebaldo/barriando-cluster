@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import SiteShell from "../components/SiteShell";
 import AdminDashboard from "./AdminDashboard";
 import { getSession } from "@/lib/auth-utils";
 import { isAdminEmail } from "@/lib/admin";
@@ -14,12 +15,12 @@ export default async function AdminPage() {
   const users = await listAdminUsers();
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+    <SiteShell>
       <Navbar />
-      <main className="max-w-6xl mx-auto py-12 px-6">
+      <main className="flex-1 max-w-6xl mx-auto py-12 px-6 w-full">
         <AdminDashboard users={users} />
       </main>
       <Footer />
-    </div>
+    </SiteShell>
   );
 }
