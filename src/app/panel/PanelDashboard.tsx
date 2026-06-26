@@ -21,8 +21,8 @@ import {
 import {
   formatMembershipExpiry,
   formatRenewalDisplay,
-} from "@/lib/subscription-lifecycle";
-import { safePlanPriceLabel } from "@/lib/panel-data";
+  safePlanPriceLabel,
+} from "@/lib/panel-display";
 import { reportManualPayment } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";

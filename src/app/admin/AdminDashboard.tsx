@@ -10,7 +10,7 @@ import {
 } from "./actions";
 import { listaSocios } from "@/app/data/socios";
 import { getSubscriptionStatusLabel } from "@/lib/membresia";
-import { formatMembershipExpiry } from "@/lib/subscription-lifecycle";
+import { formatMembershipExpiry } from "@/lib/panel-display";
 import { CheckCircle2, Pencil, Shield, Trash2, X } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
 

@@ -1,6 +1,6 @@
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { MEMBERSHIP_PLANS, formatPlanPriceMxn, type PaidMembershipPlan } from "@/lib/membresia";
+import { MEMBERSHIP_PLANS } from "@/lib/membresia";
 
 export type SafePanelSubscription = {
   plan: MembershipPlan;
@@ -16,12 +16,6 @@ export type SafeSocioProfile = {
   googleBusinessUrl: string;
   logoUrl: string;
 };
-
-const PAID_PLANS = new Set<MembershipPlan>([
-  "NEGOCIO_FAMILIAR",
-  "MEDIANA_EMPRESA",
-  "GRAN_EMPRESA",
-]);
 
 export const DEFAULT_PANEL_SUBSCRIPTION: SafePanelSubscription = {
   plan: "VECINO",
@@ -79,11 +73,6 @@ export function normalizeSocioProfile(
     googleBusinessUrl: profile.googleBusinessUrl?.trim() ?? "",
     logoUrl: profile.logoUrl?.trim() ?? "",
   };
-}
-
-export function safePlanPriceLabel(plan: MembershipPlan): string {
-  if (!PAID_PLANS.has(plan)) return "Plan comunitario gratuito";
-  return formatPlanPriceMxn(plan as PaidMembershipPlan);
 }
 
 /** Carga usuario + suscripción; socioProfile es opcional si la tabla aún no existe en Neon. */
