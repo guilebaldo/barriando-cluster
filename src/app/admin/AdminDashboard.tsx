@@ -156,7 +156,7 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                           {getSubscriptionStatusLabel(user.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{expiry ?? "—"}</td>
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{expiry}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-2">
                           {pending && (

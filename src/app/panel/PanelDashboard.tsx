@@ -20,9 +20,9 @@ import {
 } from "@/lib/membresia";
 import {
   formatMembershipExpiry,
-  getRenewalMode,
-  getRenewalModeLabel,
+  formatRenewalDisplay,
 } from "@/lib/subscription-lifecycle";
+import { safePlanPriceLabel } from "@/lib/panel-data";
 import { reportManualPayment } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
@@ -77,7 +77,7 @@ interface PanelProps {
   showWelcome: boolean;
   paymentNotice?: string | null;
   socios: SocioOption[];
-  takenSocioIds: number[];
+  takenSocioIds?: number[];
 }
 
 export default function PanelDashboard({
@@ -89,8 +89,8 @@ export default function PanelDashboard({
   stripeConfigured,
   showWelcome,
   paymentNotice,
-  socios,
-  takenSocioIds,
+  socios = [],
+  takenSocioIds = [],
 }: PanelProps) {
   const router = useRouter();
   const { update } = useSession();
@@ -101,16 +101,17 @@ export default function PanelDashboard({
   const [loading, setLoading] = useState(false);
   const [dismissedNotice, setDismissedNotice] = useState(false);
 
-  const isVecino = isVecinoPlan(subscription.plan);
-  const commercial = hasCommercialAccess(subscription.plan, subscription.status);
-  const canLink = canLinkSocioAccount(subscription.status);
-  const pendingValidation = isSubscriptionStatusPending(subscription.status);
-  const renewalMode = getRenewalMode(subscription.status, subscription.stripeSubscriptionId);
-  const renewalLabel = getRenewalModeLabel(renewalMode);
-  const expiryLabel = formatMembershipExpiry(subscription.currentPeriodEnd);
-  const upgradePlans = commercial && !isVecino
-    ? getUpgradePlans(subscription.plan as PaidMembershipPlan)
-    : [];
+  const plan = subscription?.plan ?? "VECINO";
+  const status = subscription?.status ?? "inactive";
+
+  const isVecino = isVecinoPlan(plan);
+  const commercial = hasCommercialAccess(plan, status);
+  const canLink = canLinkSocioAccount(status);
+  const pendingValidation = isSubscriptionStatusPending(status);
+  const expiryLabel = formatMembershipExpiry(subscription?.currentPeriodEnd);
+  const renewalLabel = formatRenewalDisplay(status, subscription?.stripeSubscriptionId);
+  const upgradePlans =
+    commercial && !isVecino ? getUpgradePlans(plan) : [];
 
   const displayName = socioProfile?.businessName || catalogSocio?.name;
   const displayLogo = socioProfile?.logoUrl || (catalogSocio ? `/logos/${catalogSocio.foto}.png` : null);
@@ -223,13 +224,13 @@ export default function PanelDashboard({
           </h1>
           <p className="text-sm text-slate-600 mt-1">
             Bienvenido, {user.nombre} · Plan{" "}
-            <strong className="text-[#27366D]">{getPlanLabel(subscription.plan)}</strong>
+            <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>
             {!isVecino && (
               <>
                 {" "}
                 · Estado{" "}
                 <strong className={pendingValidation ? "text-amber-600" : "text-[#27366D]"}>
-                  {getSubscriptionStatusLabel(subscription.status)}
+                  {getSubscriptionStatusLabel(status)}
                 </strong>
               </>
             )}
@@ -356,7 +357,7 @@ export default function PanelDashboard({
                   <p className="text-xs text-slate-500 mt-1">{catalogSocio.categoria}</p>
                 )}
                 <p className="text-xs text-amber-700 mt-2 font-bold">
-                  Plan: {getPlanLabel(subscription.plan)}
+                  Plan: {getPlanLabel(plan)}
                 </p>
                 {displayLogo && (
                   <div className="mt-4 h-24 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
@@ -421,36 +422,31 @@ export default function PanelDashboard({
                       : "text-slate-500"
                 }
               >
-                {getSubscriptionStatusLabel(subscription.status)}
+                {getSubscriptionStatusLabel(status)}
               </strong>
             </p>
             <p className="text-sm font-semibold text-[#27366D] mb-2">
-              {formatPlanPriceMxn(subscription.plan as PaidMembershipPlan)} ·{" "}
-              {getPlanLabel(subscription.plan)}
+              {safePlanPriceLabel(plan)} · {getPlanLabel(plan)}
             </p>
-            {expiryLabel && (
-              <p className="text-sm text-slate-700 mb-1">
-                Vence el: <strong className="text-slate-900">{expiryLabel}</strong>
-              </p>
-            )}
-            {renewalLabel && (
-              <p className="text-xs text-slate-500 mb-4">
-                Tipo de renovación: <strong className="text-[#27366D]">{renewalLabel}</strong>
-              </p>
-            )}
+            <p className="text-sm text-slate-700 mb-1">
+              Vence el: <strong className="text-slate-900">{expiryLabel}</strong>
+            </p>
+            <p className="text-xs text-slate-500 mb-4">
+              Tipo de renovación: <strong className="text-[#27366D]">{renewalLabel}</strong>
+            </p>
             <div className="flex flex-col gap-3">
               {stripeConfigured && (
                 <button
                   type="button"
-                  onClick={() => handleStripePay(subscription.plan)}
+                  onClick={() => handleStripePay(plan)}
                   className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
                 >
                   {stripeButtonLabel}
                 </button>
               )}
-              {!commercial && subscription.plan !== "VECINO" && (
+              {!commercial && plan !== "VECINO" && (
                 <TransferPaymentSection
-                  plan={subscription.plan}
+                  plan={plan}
                   onConfirm={handleManualPayment}
                   disabled={pendingValidation}
                 />
@@ -492,10 +488,10 @@ export default function PanelDashboard({
             {manualMsg && <p className="text-xs mt-3 text-slate-600">{manualMsg}</p>}
           </section>
 
-          {!user.socioId && canLink && (
+          {!user?.socioId && canLink && (
             <LinkSocioSection
-              socios={socios}
-              takenSocioIds={takenSocioIds}
+              socios={socios ?? []}
+              takenSocioIds={takenSocioIds ?? []}
               onLinked={refreshSession}
             />
           )}

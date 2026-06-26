@@ -1,6 +1,6 @@
 // lib/auth-utils.ts
 import { auth } from "@/auth";
-import { prisma } from "./prisma";
+import { loadPanelUser } from "@/lib/panel-data";
 import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
 export interface SessionUser {
@@ -33,8 +33,5 @@ export async function requireSession() {
 }
 
 export async function getUserWithSubscription(userId: string) {
-  return prisma.user.findUnique({
-    where: { id: userId },
-    include: { subscription: true, socioProfile: true },
-  });
+  return loadPanelUser(userId);
 }

@@ -3,13 +3,19 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import PanelDashboard from "./PanelDashboard";
-import { getSession, getUserWithSubscription } from "@/lib/auth-utils";
+import PanelFallback from "./PanelFallback";
+import { getSession } from "@/lib/auth-utils";
 import { isStripeConfigured } from "@/lib/stripe";
 import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
 import { expireManualSubscriptionsIfNeeded } from "@/lib/subscription-lifecycle";
 import { canAccessPanel, hasCommercialAccess, isVecinoPlan } from "@/lib/membresia";
 import { isAdminEmail } from "@/lib/admin";
-import { prisma } from "@/lib/prisma";
+import {
+  loadPanelUser,
+  loadTakenSocioIds,
+  normalizePanelSubscription,
+  normalizeSocioProfile,
+} from "@/lib/panel-data";
 import { listaSocios } from "../data/socios";
 
 export default async function PanelPage({
@@ -21,104 +27,106 @@ export default async function PanelPage({
   const session = await getSession();
   if (!session) redirect("/login");
 
-  await expireManualSubscriptionsIfNeeded();
+  try {
+    await expireManualSubscriptionsIfNeeded();
 
-  if (params.pago === "exitoso" || params.pago === "procesando") {
-    await syncStripeSubscriptionForUser(session.id);
+    if (params.pago === "exitoso" || params.pago === "procesando") {
+      try {
+        await syncStripeSubscriptionForUser(session.id);
+      } catch (error) {
+        console.error("[panel] stripe sync failed:", error);
+      }
+    }
+
+    const user = await loadPanelUser(session.id);
+    if (!user) redirect("/login");
+
+    const refreshedSub = normalizePanelSubscription(user.subscription);
+
+    const panelAllowed = canAccessPanel(refreshedSub.plan, refreshedSub.status, {
+      stripeSubscriptionId: refreshedSub.stripeSubscriptionId,
+      stripeCustomerId: refreshedSub.stripeCustomerId,
+    });
+
+    if (!panelAllowed) {
+      redirect("/planes?pago=requiere_plan");
+    }
+
+    const takenSocioIds = await loadTakenSocioIds(session.id);
+
+    const createdAtMs = user.createdAt ? new Date(user.createdAt).getTime() : NaN;
+    const isNewUser = Number.isFinite(createdAtMs) && Date.now() - createdAtMs < 5 * 60 * 1000;
+    const showWelcome =
+      params.bienvenida === "1" || (isNewUser && isVecinoPlan(refreshedSub.plan));
+
+    let paymentNotice: string | null = null;
+    if (params.pago === "exitoso" && hasCommercialAccess(refreshedSub.plan, refreshedSub.status)) {
+      paymentNotice =
+        "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales.";
+    } else if (params.pago === "exitoso" || params.pago === "procesando") {
+      paymentNotice =
+        "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página.";
+    } else if (params.pago === "cancelado") {
+      paymentNotice = "Pago cancelado. Puedes intentar de nuevo cuando quieras desde tu panel.";
+    } else if (params.pago === "stripe_no_configurado") {
+      paymentNotice = "Stripe no está configurado aún. Contacta al equipo de Barriando.";
+    }
+
+    const catalogSocio =
+      user.socioId != null ? listaSocios.find((s) => s.id === user.socioId) ?? null : null;
+    const profile = normalizeSocioProfile(
+      "socioProfile" in user ? (user.socioProfile ?? null) : null
+    );
+
+    const sociosList = Array.isArray(listaSocios)
+      ? listaSocios.map((s) => ({ id: s.id, name: s.name, categoria: s.categoria }))
+      : [];
+
+    return (
+      <SiteShell>
+        <Navbar />
+        <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
+          <PanelDashboard
+            user={{
+              id: user.id,
+              nombre: user.nombre?.trim() || session.nombre || "Vecino",
+              email: user.email ?? session.email ?? "",
+              socioId: user.socioId ?? null,
+            }}
+            isAdmin={isAdminEmail(user.email ?? session.email)}
+            subscription={refreshedSub}
+            socioProfile={profile}
+            catalogSocio={
+              catalogSocio
+                ? {
+                    name: catalogSocio.name ?? "",
+                    categoria: catalogSocio.categoria ?? "",
+                    foto: catalogSocio.foto ?? "",
+                    url: catalogSocio.url ?? "",
+                    direccion: catalogSocio.direccion,
+                  }
+                : null
+            }
+            stripeConfigured={isStripeConfigured()}
+            showWelcome={showWelcome}
+            paymentNotice={paymentNotice}
+            socios={sociosList}
+            takenSocioIds={takenSocioIds}
+          />
+        </main>
+        <Footer />
+      </SiteShell>
+    );
+  } catch (error) {
+    console.error("[panel] render failed:", error);
+    return (
+      <SiteShell>
+        <Navbar />
+        <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
+          <PanelFallback nombre={session.nombre || session.email || "Vecino"} />
+        </main>
+        <Footer />
+      </SiteShell>
+    );
   }
-
-  let user = await getUserWithSubscription(session.id);
-  if (!user) redirect("/login");
-
-  const refreshedSub = user.subscription ?? {
-    plan: "VECINO" as const,
-    status: "inactive",
-    currentPeriodEnd: null,
-    stripeSubscriptionId: null,
-    stripeCustomerId: null,
-  };
-
-  const panelAllowed = canAccessPanel(refreshedSub.plan, refreshedSub.status, {
-    stripeSubscriptionId: refreshedSub.stripeSubscriptionId,
-    stripeCustomerId: refreshedSub.stripeCustomerId,
-  });
-
-  if (!panelAllowed) {
-    redirect("/planes?pago=requiere_plan");
-  }
-
-  const takenRows = await prisma.user.findMany({
-    where: { socioId: { not: null }, NOT: { id: session.id } },
-    select: { socioId: true },
-  });
-  const takenSocioIds = takenRows.map((r) => r.socioId!);
-
-  const isNewUser = Date.now() - user.createdAt.getTime() < 5 * 60 * 1000;
-  const showWelcome =
-    params.bienvenida === "1" || (isNewUser && isVecinoPlan(refreshedSub.plan));
-
-  let paymentNotice: string | null = null;
-  if (params.pago === "exitoso" && hasCommercialAccess(refreshedSub.plan, refreshedSub.status)) {
-    paymentNotice = "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales.";
-  } else if (params.pago === "exitoso" || params.pago === "procesando") {
-    paymentNotice =
-      "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página.";
-  } else if (params.pago === "cancelado") {
-    paymentNotice = "Pago cancelado. Puedes intentar de nuevo cuando quieras desde tu panel.";
-  } else if (params.pago === "stripe_no_configurado") {
-    paymentNotice = "Stripe no está configurado aún. Contacta al equipo de Barriando.";
-  }
-
-  const catalogSocio = user.socioId ? listaSocios.find((s) => s.id === user.socioId) ?? null : null;
-  const profile = user.socioProfile;
-
-  return (
-    <SiteShell>
-      <Navbar />
-      <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
-        <PanelDashboard
-          user={{
-            id: user.id,
-            nombre: user.nombre ?? "",
-            email: user.email ?? "",
-            socioId: user.socioId,
-          }}
-          isAdmin={isAdminEmail(user.email)}
-          subscription={{
-            plan: refreshedSub.plan,
-            status: refreshedSub.status,
-            currentPeriodEnd: refreshedSub.currentPeriodEnd?.toISOString() ?? null,
-            stripeSubscriptionId: refreshedSub.stripeSubscriptionId,
-          }}
-          socioProfile={
-            profile
-              ? {
-                  businessName: profile.businessName ?? "",
-                  website: profile.website ?? "",
-                  googleBusinessUrl: profile.googleBusinessUrl ?? "",
-                  logoUrl: profile.logoUrl ?? "",
-                }
-              : null
-          }
-          catalogSocio={
-            catalogSocio
-              ? {
-                  name: catalogSocio.name,
-                  categoria: catalogSocio.categoria,
-                  foto: catalogSocio.foto,
-                  url: catalogSocio.url,
-                  direccion: catalogSocio.direccion,
-                }
-              : null
-          }
-          stripeConfigured={isStripeConfigured()}
-          showWelcome={showWelcome}
-          paymentNotice={paymentNotice}
-          socios={listaSocios.map((s) => ({ id: s.id, name: s.name, categoria: s.categoria }))}
-          takenSocioIds={takenSocioIds}
-        />
-      </main>
-      <Footer />
-    </SiteShell>
-  );
 }

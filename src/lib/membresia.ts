@@ -86,7 +86,9 @@ export const PLAN_PRICES_MXN: Record<PaidMembershipPlan, number> = {
 };
 
 export function formatPlanPriceMxn(plan: PaidMembershipPlan): string {
-  return `$${PLAN_PRICES_MXN[plan].toLocaleString("es-MX")} MXN / mes`;
+  const amount = PLAN_PRICES_MXN[plan];
+  if (!amount) return "—";
+  return `$${amount.toLocaleString("es-MX")} MXN / mes`;
 }
 
 export const COMMERCIAL_BENEFITS = [
@@ -134,14 +136,17 @@ export function canLinkSocioAccount(status: string): boolean {
   return status === "active" || status === "manual_active";
 }
 
-export function getUpgradePlans(current: PaidMembershipPlan): PaidMembershipPlan[] {
-  const idx = PAID_PLANS.indexOf(current);
+export function getUpgradePlans(current: MembershipPlan): PaidMembershipPlan[] {
+  if (current === "VECINO" || !PAID_PLANS.includes(current as PaidMembershipPlan)) {
+    return [];
+  }
+  const idx = PAID_PLANS.indexOf(current as PaidMembershipPlan);
   if (idx < 0) return [];
   return PAID_PLANS.slice(idx + 1);
 }
 
 export function getPlanLabel(plan: MembershipPlan): string {
-  return MEMBERSHIP_PLANS[plan].label;
+  return MEMBERSHIP_PLANS[plan]?.label ?? "Plan no iniciado";
 }
 
 export function getSubscriptionStatusLabel(status: string): string {
