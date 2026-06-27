@@ -123,13 +123,38 @@ function parseCsvRows(raw: string): Array<{ name: string; mapsUrl: string; html:
   return rows;
 }
 
+function loadResolvedCoordsLookup(): Record<string, { lat: number; lng: number }> {
+  try {
+    const jsonPath = path.join(process.cwd(), "data/muaap-resolved-coords.json");
+    const raw = JSON.parse(readFileSync(jsonPath, "utf8")) as Record<
+      string,
+      { lat: number; lng: number }
+    >;
+    return raw;
+  } catch {
+    return {};
+  }
+}
+
+function coordsForMilestone(
+  name: string,
+  html: string,
+  resolved: Record<string, { lat: number; lng: number }>
+): { lat: number; lng: number } | null {
+  const pinned = resolved[name];
+  if (pinned) return { lat: pinned.lat, lng: pinned.lng };
+  const fromEmbed = extractLatLngFromMapsEmbed(html);
+  return fromEmbed ? { lat: fromEmbed.lat, lng: fromEmbed.lng } : null;
+}
+
 function loadCsvMilestones(): RawPoint[] {
   try {
     const csvPath = path.join(process.cwd(), "data/barriando-muaap-hitos.csv");
     const raw = readFileSync(csvPath, "utf8");
+    const resolved = loadResolvedCoordsLookup();
     return parseCsvRows(raw)
       .map((row) => {
-        const coords = extractLatLngFromMapsEmbed(row.html);
+        const coords = coordsForMilestone(row.name, row.html, resolved);
         if (!coords) return null;
         const socio = findSocioByName(row.name);
         return {
@@ -279,9 +304,10 @@ export async function buildMuaapRoute(): Promise<MuaapRouteResult> {
 /** Utilidad para seed: filas del CSV con coordenadas resueltas. */
 export function parseMuaapCsvFile(csvPath: string) {
   const raw = readFileSync(csvPath, "utf8");
+  const resolved = loadResolvedCoordsLookup();
   return parseCsvRows(raw)
     .map((row) => {
-      const coords = extractLatLngFromMapsEmbed(row.html);
+      const coords = coordsForMilestone(row.name, row.html, resolved);
       if (!coords) return null;
       const hito = listaHitos.find((h) => normalizeName(h.nombre) === normalizeName(row.name));
       const socio = hito?.socioId ? listaSocios.find((s) => s.id === hito.socioId) : findSocioByName(row.name);

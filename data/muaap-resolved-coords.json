@@ -1,0 +1,247 @@
+{
+  "Barrio de Analco": {
+    "lat": 19.0380368,
+    "lng": -98.1919112,
+    "source": "maps_url_pin"
+  },
+  "Barrio de El Alto": {
+    "lat": 19.0447415,
+    "lng": -98.1883138,
+    "source": "maps_url_pin"
+  },
+  "Bazar Los Sapos": {
+    "lat": 19.0412245,
+    "lng": -98.1958608,
+    "source": "maps_url_pin"
+  },
+  "Bello y Zetina": {
+    "lat": 19.046668,
+    "lng": -98.1974932,
+    "source": "maps_url_pin"
+  },
+  "Biblioteca Palafoxiana": {
+    "lat": 19.0422385,
+    "lng": -98.1987439,
+    "source": "maps_url_pin"
+  },
+  "Calle de los Dulces": {
+    "lat": 19.0463988,
+    "lng": -98.1966106,
+    "source": "maps_url_pin"
+  },
+  "Callejón de los Sapos": {
+    "lat": 19.0407529,
+    "lng": -98.1964781,
+    "source": "maps_url_pin"
+  },
+  "Capilla de Dolores": {
+    "lat": 19.0454541,
+    "lng": -98.1913281,
+    "source": "maps_url_pin"
+  },
+  "Capilla del Cirineo": {
+    "lat": 19.0453518,
+    "lng": -98.1887828,
+    "source": "maps_url_pin"
+  },
+  "Casa Aguayo": {
+    "lat": 19.0455169,
+    "lng": -98.1878855,
+    "source": "maps_url_pin"
+  },
+  "Casa de cultura": {
+    "lat": 19.0424519,
+    "lng": -98.1987305,
+    "source": "maps_url_pin"
+  },
+  "CasaReyna": {
+    "lat": 19.0419444,
+    "lng": -98.1911111,
+    "source": "maps_url_pin"
+  },
+  "Catedral": {
+    "lat": 19.0428904,
+    "lng": -98.1983291,
+    "source": "maps_url_pin"
+  },
+  "Centro de Convenciones": {
+    "lat": 19.0432332,
+    "lng": -98.1916429,
+    "source": "maps_url_pin"
+  },
+  "Palacio Episcopal": {
+    "lat": 19.0427243,
+    "lng": -98.1994521,
+    "source": "maps_url_pin"
+  },
+  "Fábrica de Vidrio": {
+    "lat": 19.040361,
+    "lng": -98.1922084,
+    "source": "maps_url_pin"
+  },
+  "Mural de los Poblanos": {
+    "lat": 19.0422809,
+    "lng": -98.1998476,
+    "source": "maps_url_pin"
+  },
+  "Fuente de los Leones": {
+    "lat": 19.0456092,
+    "lng": -98.1894865,
+    "source": "maps_url_pin"
+  },
+  "Museo Regional de la Revolución Mexicana": {
+    "lat": 19.0459557,
+    "lng": -98.1951981,
+    "source": "maps_url_pin"
+  },
+  "Hotel Colonial": {
+    "lat": 19.0424567,
+    "lng": -98.1960932,
+    "source": "maps_url_pin"
+  },
+  "La Compañía de Jesús": {
+    "lat": 19.0427559,
+    "lng": -98.1957109,
+    "source": "maps_url_pin"
+  },
+  "La Acocota": {
+    "lat": 19.0413753,
+    "lng": -98.1872992,
+    "source": "maps_url_pin"
+  },
+  "La Casa del Mendrugo": {
+    "lat": 19.0418258,
+    "lng": -98.1961867,
+    "source": "maps_url_pin"
+  },
+  "La Pasita": {
+    "lat": 19.041068,
+    "lng": -98.1958848,
+    "source": "maps_url_pin"
+  },
+  "La Victoria": {
+    "lat": 19.0472233,
+    "lng": -98.1981911,
+    "source": "maps_url_pin"
+  },
+  "Lavaderos de Almoloya": {
+    "lat": 19.0457487,
+    "lng": -98.1891523,
+    "source": "maps_url_pin"
+  },
+  "Mesón del Cristo": {
+    "lat": 19.0461877,
+    "lng": -98.1941597,
+    "source": "maps_url_pin"
+  },
+  "Monumento a los fundadores de Puebla": {
+    "lat": 19.0454926,
+    "lng": -98.1899225,
+    "source": "maps_url_pin"
+  },
+  "Museo Amparo": {
+    "lat": 19.0409265,
+    "lng": -98.1984453,
+    "source": "maps_url_pin"
+  },
+  "Parador de La luz": {
+    "lat": 19.0409884,
+    "lng": -98.1899336,
+    "source": "maps_url_pin"
+  },
+  "Parque San Francisco": {
+    "lat": 19.0434509,
+    "lng": -98.1903738,
+    "source": "maps_url_pin"
+  },
+  "Parroquia de la Santa Cruz": {
+    "lat": 19.0460037,
+    "lng": -98.1874608,
+    "source": "maps_url_pin"
+  },
+  "Parroquia del Santo Angel Custodio": {
+    "lat": 19.0387901,
+    "lng": -98.1927871,
+    "source": "maps_url_pin"
+  },
+  "Portales": {
+    "lat": 19.0443058,
+    "lng": -98.1981715,
+    "source": "maps_url_pin"
+  },
+  "Puente de Bubas": {
+    "lat": 19.0419703,
+    "lng": -98.1924661,
+    "source": "maps_url_pin"
+  },
+  "Palacio Municipal": {
+    "lat": 19.0439568,
+    "lng": -98.1974646,
+    "source": "maps_url_pin"
+  },
+  "Restauro": {
+    "lat": 19.040859,
+    "lng": -98.195895,
+    "source": "maps_url_pin"
+  },
+  "Ruinas San Francisco": {
+    "lat": 19.0434509,
+    "lng": -98.1903738,
+    "source": "maps_url_pin"
+  },
+  "Salón Mezcalli": {
+    "lat": 19.0397362,
+    "lng": -98.1944174,
+    "source": "maps_url_pin"
+  },
+  "San Cristóbal": {
+    "lat": 19.0454316,
+    "lng": -98.1943986,
+    "source": "maps_url_pin"
+  },
+  "Santa Clara": {
+    "lat": 19.0455874,
+    "lng": -98.1948731,
+    "source": "maps_url_pin"
+  },
+  "Santo Domingo": {
+    "lat": 19.0465235,
+    "lng": -98.1983087,
+    "source": "maps_url_pin"
+  },
+  "Talavera de La Luz": {
+    "lat": 19.0396806,
+    "lng": -98.1895268,
+    "source": "maps_url_pin"
+  },
+  "Centro Alfarero del Barro de La Luz": {
+    "lat": 19.0399409,
+    "lng": -98.1900981,
+    "source": "maps_url_pin"
+  },
+  "Teatro Principal": {
+    "lat": 19.0446205,
+    "lng": -98.1923828,
+    "source": "maps_url_pin"
+  },
+  "Templo de Nuestra Señora de La luz": {
+    "lat": 19.0408173,
+    "lng": -98.189967,
+    "source": "maps_url_pin"
+  },
+  "Templo y Convento de San Francisco": {
+    "lat": 19.0449233,
+    "lng": -98.1894467,
+    "source": "maps_url_pin"
+  },
+  "Tianguis Analco": {
+    "lat": 19.0394605,
+    "lng": -98.1937486,
+    "source": "maps_url_pin"
+  },
+  "Zócalo": {
+    "lat": 19.0436846,
+    "lng": -98.1981031,
+    "source": "maps_url_pin"
+  }
+}
