@@ -20,7 +20,7 @@ export default function MuaapRouteView({ route }: { route: MuaapRouteResult }) {
     <div className="space-y-8">
       <section className="grid lg:grid-cols-5 gap-6 items-start">
         <div className="lg:col-span-3 space-y-4">
-          <MuaapRouteMap points={route.points} highlightedId={selectedId} />
+          <MuaapRouteMap points={route.points} walkPath={route.walkPath} highlightedId={selectedId} />
           <div className="flex flex-wrap gap-4 text-[11px] text-slate-600">
             <span className="inline-flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-amber-400 border-2 border-[#27366D]" />

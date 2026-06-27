@@ -134,15 +134,17 @@ function RouteMarker({
 
 export default function MuaapRouteMap({
   points,
+  walkPath,
   highlightedId = null,
 }: {
   points: MuaapRoutePoint[];
+  walkPath?: Array<[number, number]>;
   highlightedId?: string | null;
 }) {
-  const polyline = useMemo(
-    () => points.map((p) => [p.latitude, p.longitude] as [number, number]),
-    [points]
-  );
+  const polyline = useMemo(() => {
+    if (walkPath?.length) return walkPath;
+    return points.map((p) => [p.latitude, p.longitude] as [number, number]);
+  }, [points, walkPath]);
 
   const center = useMemo<[number, number]>(() => {
     if (points.length === 0) return [19.0414, -98.1984];
@@ -169,7 +171,7 @@ export default function MuaapRouteMap({
         <FocusHighlightedPoint points={points} highlightedId={highlightedId} />
         <Polyline
           positions={polyline}
-          pathOptions={{ color: "#27366D", weight: 4, opacity: 0.75, dashArray: "8 6" }}
+          pathOptions={{ color: "#27366D", weight: 4, opacity: 0.85 }}
         />
         {points.map((point, idx) => (
           <RouteMarker

@@ -3,6 +3,7 @@ import { listaSocios } from "@/app/data/socios";
 import { listaHitos } from "@/app/data/hitos";
 import { sociosCoords } from "@/app/data/socios-coords";
 import { extractLatLngFromMapsEmbed } from "@/lib/muaap-coords";
+import { buildWalkingPath, type WalkLatLng } from "@/lib/muaap-walking-route";
 import { readFileSync } from "fs";
 import path from "path";
 
@@ -22,6 +23,7 @@ export type MuaapRoutePoint = {
 export type MuaapRouteResult = {
   startName: string;
   points: MuaapRoutePoint[];
+  walkPath: WalkLatLng[];
   totalStops: number;
   milestoneCount: number;
   premiumCount: number;
@@ -121,7 +123,7 @@ function parseCsvRows(raw: string): Array<{ name: string; mapsUrl: string; html:
   return rows;
 }
 
-function loadFallbackMilestones(): RawPoint[] {
+function loadCsvMilestones(): RawPoint[] {
   try {
     const csvPath = path.join(process.cwd(), "data/barriando-muaap-hitos.csv");
     const raw = readFileSync(csvPath, "utf8");
@@ -131,7 +133,7 @@ function loadFallbackMilestones(): RawPoint[] {
         if (!coords) return null;
         const socio = findSocioByName(row.name);
         return {
-          id: `milestone-fallback-${normalizeName(row.name).replace(/\s+/g, "-")}`,
+          id: `milestone-${normalizeName(row.name).replace(/\s+/g, "-")}`,
           name: row.name,
           latitude: coords.lat,
           longitude: coords.lng,
@@ -147,12 +149,14 @@ function loadFallbackMilestones(): RawPoint[] {
 }
 
 async function loadActiveMilestones(): Promise<RawPoint[]> {
+  const fromCsv = loadCsvMilestones();
+  if (fromCsv.length > 0) return fromCsv;
+
   try {
     const rows = await prisma.muaapMilestone.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
     });
-    if (rows.length === 0) return loadFallbackMilestones();
 
     return rows.map((row) => ({
       id: row.id,
@@ -164,8 +168,8 @@ async function loadActiveMilestones(): Promise<RawPoint[]> {
       category: row.businessId ? "Hito + Socio certificado" : "Hito patrimonial",
     }));
   } catch (error) {
-    console.error("[muaap] loadActiveMilestones failed, using CSV fallback:", error);
-    return loadFallbackMilestones();
+    console.error("[muaap] loadActiveMilestones failed:", error);
+    return [];
   }
 }
 
@@ -254,9 +258,18 @@ export async function buildMuaapRoute(): Promise<MuaapRouteResult> {
     ...ordered.map((p, idx) => ({ ...p, order: idx + 2 })),
   ];
 
+  let walkPath: WalkLatLng[] = [];
+  try {
+    walkPath = await buildWalkingPath(allPoints);
+  } catch (error) {
+    console.error("[muaap] buildWalkingPath failed:", error);
+    walkPath = allPoints.map((p) => [p.latitude, p.longitude] as WalkLatLng);
+  }
+
   return {
     startName: MUAAP_ROUTE_START.name,
     points: allPoints,
+    walkPath,
     totalStops: allPoints.length,
     milestoneCount: allPoints.filter((p) => p.kind === "milestone").length,
     premiumCount: allPoints.filter((p) => p.kind === "premium_business").length,

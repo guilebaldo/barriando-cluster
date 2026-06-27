@@ -39,7 +39,7 @@ export default async function MuaapPage() {
                 <strong className="text-amber-400">{route.premiumCount} negocios Gran Empresa</strong>
               </>
             )}
-            . El algoritmo ordena cada parada para caminar el Centro Histórico de forma fluida.
+            . El algoritmo ordena cada parada y traza el recorrido siguiendo calles transitables.
           </p>
         </div>
       </header>
@@ -56,10 +56,9 @@ export default async function MuaapPage() {
               </h2>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed font-light">
-              Partimos del <strong>Teatro Principal</strong> y aplicamos el algoritmo de{" "}
-              <em>vecino más cercano</em> (Haversine) para unir hitos históricos verificados. Los
-              negocios del Clúster con plan <strong>Gran Empresa</strong> activo se integran al mapa
-              como paradas premium — beneficio exclusivo de esa membresía.
+              Partimos del <strong>Teatro Principal</strong>, ordenamos las paradas con{" "}
+              <em>vecino más cercano</em> y trazamos el circuito sobre calles peatonales reales (OSRM).
+              Los negocios con plan <strong>Gran Empresa</strong> activo aparecen como paradas premium.
             </p>
           </div>
           <div className="bg-gradient-to-br from-[#27366D] to-[#1e2b58] text-white rounded-2xl p-6 border border-amber-400/20">

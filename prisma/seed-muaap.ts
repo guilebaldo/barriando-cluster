@@ -35,7 +35,6 @@ async function seedBusinesses() {
 async function seedMilestones(csvPath: string) {
   const rows = parseMuaapCsvFile(csvPath);
   let inserted = 0;
-  let skipped = 0;
 
   for (const row of rows) {
     await prisma.muaapMilestone.upsert({
@@ -61,13 +60,13 @@ async function seedMilestones(csvPath: string) {
     inserted++;
   }
 
-  const csvNames = new Set(rows.map((r) => r.name));
-  const existing = await prisma.muaapMilestone.findMany({ select: { name: true } });
-  for (const item of existing) {
-    if (!csvNames.has(item.name)) skipped++;
-  }
+  const csvNames = rows.map((r) => r.name);
+  const deactivated = await prisma.muaapMilestone.updateMany({
+    where: { name: { notIn: csvNames } },
+    data: { active: false },
+  });
 
-  return { inserted, skipped, total: rows.length };
+  return { inserted, deactivated: deactivated.count, total: rows.length };
 }
 
 async function main() {
@@ -79,7 +78,7 @@ async function main() {
 
   const result = await seedMilestones(csvPath);
   console.log(
-    `[muaap-seed] Hitos MUAAP: ${result.total} procesados, ${result.inserted} upserted, ${result.skipped} legacy sin CSV.`
+    `[muaap-seed] Hitos MUAAP: ${result.total} procesados, ${result.inserted} upserted, ${result.deactivated} desactivados (legacy).`
   );
 }
 
