@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getCsrfToken, signIn, signOut } from "next-auth/react";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 
-async function submitOAuthForm(csrfToken: string) {
+async function submitOAuthForm(csrfToken: string, callbackUrl: string) {
   const form = document.createElement("form");
   form.method = "POST";
   form.action = "/api/auth/signin/google";
@@ -13,7 +13,7 @@ async function submitOAuthForm(csrfToken: string) {
 
   for (const [name, value] of Object.entries({
     csrfToken,
-    callbackUrl: ONBOARDING_CONTINUE_PATH,
+    callbackUrl,
   })) {
     const input = document.createElement("input");
     input.type = "hidden";
@@ -39,6 +39,12 @@ function OAuthButtonsInner() {
   const [csrfToken, setCsrfToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const redirectAfterLogin = useMemo(() => {
+    const raw = searchParams.get("callbackUrl");
+    if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
+    return ONBOARDING_CONTINUE_PATH;
+  }, [searchParams]);
 
   useEffect(() => {
     const authError = searchParams.get("error");
@@ -77,8 +83,8 @@ function OAuthButtonsInner() {
       await signOut({ redirect: false });
 
       const result = await signIn("google", {
-        redirectTo: ONBOARDING_CONTINUE_PATH,
-        callbackUrl: ONBOARDING_CONTINUE_PATH,
+        redirectTo: redirectAfterLogin,
+        callbackUrl: redirectAfterLogin,
         redirect: false,
       });
 
@@ -93,12 +99,12 @@ function OAuthButtonsInner() {
       }
 
       await signIn("google", {
-        redirectTo: ONBOARDING_CONTINUE_PATH,
-        callbackUrl: ONBOARDING_CONTINUE_PATH,
+        redirectTo: redirectAfterLogin,
+        callbackUrl: redirectAfterLogin,
       });
     } catch {
       if (csrfToken) {
-        submitOAuthForm(csrfToken);
+        submitOAuthForm(csrfToken, redirectAfterLogin);
         return;
       }
       setError("Error al iniciar sesión. Recarga la página e intenta de nuevo.");

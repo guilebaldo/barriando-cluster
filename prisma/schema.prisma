@@ -70,6 +70,7 @@ model User {
   sessions        Session[]
   subscription    Subscription?
   socioProfile    SocioProfile?
+  stamps          Stamp[]
 }
 
 model VerificationToken {
@@ -133,4 +134,15 @@ model BlogPost {
   published Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Stamp {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurantId Int
+  status       String   @default("validado")
+  createdAt    DateTime @default(now())
+
+  @@index([userId, restaurantId, createdAt])
 }
