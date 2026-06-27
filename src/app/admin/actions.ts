@@ -243,16 +243,101 @@ export async function rejectLinkage(userId: string): Promise<ActionResult> {
   }
 }
 
+const BASE_SOCIO_PROFILE_SELECT = {
+  businessName: true,
+  website: true,
+  googleBusinessUrl: true,
+  logoUrl: true,
+} as const;
+
+const EXTENDED_SOCIO_PROFILE_SELECT = {
+  ...BASE_SOCIO_PROFILE_SELECT,
+  linkageStatus: true,
+  isManualEntry: true,
+  address: true,
+  category: true,
+} as const;
+
+const SUBSCRIPTION_ADMIN_SELECT = {
+  plan: true,
+  status: true,
+  currentPeriodEnd: true,
+  manualPaymentNote: true,
+  stripeSubscriptionId: true,
+} as const;
+
+const USER_ADMIN_BASE_SELECT = {
+  id: true,
+  email: true,
+  nombre: true,
+  socioId: true,
+  createdAt: true,
+  subscription: { select: SUBSCRIPTION_ADMIN_SELECT },
+} as const;
+
+type AdminUserRecord = {
+  id: string;
+  email: string | null;
+  nombre: string | null;
+  socioId: number | null;
+  createdAt: Date;
+  subscription: {
+    plan: MembershipPlan;
+    status: string;
+    currentPeriodEnd: Date | null;
+    manualPaymentNote: string | null;
+    stripeSubscriptionId: string | null;
+  } | null;
+  socioProfile?: {
+    businessName: string | null;
+    website: string | null;
+    googleBusinessUrl: string | null;
+    logoUrl: string | null;
+    linkageStatus?: string | null;
+    isManualEntry?: boolean | null;
+    address?: string | null;
+    category?: string | null;
+  } | null;
+};
+
+async function fetchAdminUserRecords(): Promise<AdminUserRecord[]> {
+  try {
+    return (await prisma.user.findMany({
+      select: {
+        ...USER_ADMIN_BASE_SELECT,
+        socioProfile: { select: EXTENDED_SOCIO_PROFILE_SELECT },
+      },
+      orderBy: { createdAt: "desc" },
+    })) as AdminUserRecord[];
+  } catch (error) {
+    console.error("[admin] load with extended socioProfile failed, retrying base profile:", error);
+  }
+
+  try {
+    return (await prisma.user.findMany({
+      select: {
+        ...USER_ADMIN_BASE_SELECT,
+        socioProfile: { select: BASE_SOCIO_PROFILE_SELECT },
+      },
+      orderBy: { createdAt: "desc" },
+    })) as AdminUserRecord[];
+  } catch (error) {
+    console.error("[admin] load with socioProfile failed, retrying without profile:", error);
+  }
+
+  return (await prisma.user.findMany({
+    select: USER_ADMIN_BASE_SELECT,
+    orderBy: { createdAt: "desc" },
+  })) as AdminUserRecord[];
+}
+
 export async function listAdminUsers(): Promise<AdminUserRow[]> {
   const session = await requireSession();
   if (!isAdminEmail(session.email)) {
     throw new Error("FORBIDDEN");
   }
 
-  const users = await prisma.user.findMany({
-    include: { subscription: true, socioProfile: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const users = await fetchAdminUserRecords();
 
   return users.map((user) => {
     const catalogSocio = user.socioId ? listaSocios.find((s) => s.id === user.socioId) : null;
