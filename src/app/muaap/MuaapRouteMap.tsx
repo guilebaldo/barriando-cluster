@@ -1,45 +1,144 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import { useEffect, useMemo, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { MuaapRoutePoint } from "@/lib/muaapRoute";
 
-function FitRouteBounds({ points }: { points: MuaapRoutePoint[] }) {
+function FitRouteBounds({
+  points,
+  highlightedId,
+}: {
+  points: MuaapRoutePoint[];
+  highlightedId: string | null;
+}) {
   const map = useMap();
 
   useEffect(() => {
-    if (points.length === 0) return;
+    if (highlightedId || points.length === 0) return;
     const bounds = L.latLngBounds(points.map((p) => [p.latitude, p.longitude] as [number, number]));
     map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 });
-  }, [map, points]);
+  }, [map, points, highlightedId]);
 
   return null;
 }
 
-const milestoneIcon = L.divIcon({
-  className: "",
-  html: `<div style="background:#64748b;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></div>`,
-  iconSize: [12, 12],
-  iconAnchor: [6, 6],
-});
+function FocusHighlightedPoint({
+  points,
+  highlightedId,
+}: {
+  points: MuaapRoutePoint[];
+  highlightedId: string | null;
+}) {
+  const map = useMap();
 
-const premiumIcon = L.divIcon({
-  className: "",
-  html: `<div style="background:#27366D;width:14px;height:14px;border-radius:50%;border:3px solid #fbbf24;box-shadow:0 2px 8px rgba(39,54,109,.45)"></div>`,
-  iconSize: [14, 14],
-  iconAnchor: [7, 7],
-});
+  useEffect(() => {
+    if (!highlightedId) return;
+    const point = points.find((p) => p.id === highlightedId);
+    if (!point) return;
+    map.flyTo([point.latitude, point.longitude], 17, { duration: 0.55 });
+  }, [map, points, highlightedId]);
 
-const startIcon = L.divIcon({
-  className: "",
-  html: `<div style="background:#fbbf24;width:16px;height:16px;border-radius:50%;border:3px solid #27366D;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-});
+  return null;
+}
 
-export default function MuaapRouteMap({ points }: { points: MuaapRoutePoint[] }) {
+function makeIcon(kind: "start" | "milestone" | "premium", highlighted: boolean): L.DivIcon {
+  const pulse = highlighted
+    ? "box-shadow:0 0 0 6px rgba(251,191,36,.45),0 0 0 12px rgba(251,191,36,.2);"
+    : "box-shadow:0 2px 6px rgba(0,0,0,.35);";
+
+  if (kind === "start") {
+    const size = highlighted ? 22 : 16;
+    return L.divIcon({
+      className: highlighted ? "muaap-marker-highlight" : "",
+      html: `<div style="background:#fbbf24;width:${size}px;height:${size}px;border-radius:50%;border:3px solid #27366D;${pulse}transition:transform .2s ease"></div>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
+    });
+  }
+
+  if (kind === "premium") {
+    const size = highlighted ? 20 : 14;
+    return L.divIcon({
+      className: highlighted ? "muaap-marker-highlight" : "",
+      html: `<div style="background:#27366D;width:${size}px;height:${size}px;border-radius:50%;border:3px solid #fbbf24;${pulse}transition:transform .2s ease"></div>`,
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
+    });
+  }
+
+  const size = highlighted ? 18 : 12;
+  return L.divIcon({
+    className: highlighted ? "muaap-marker-highlight" : "",
+    html: `<div style="background:${highlighted ? "#27366D" : "#64748b"};width:${size}px;height:${size}px;border-radius:50%;border:2px solid ${highlighted ? "#fbbf24" : "#fff"};${pulse}transition:transform .2s ease"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+
+function RouteMarker({
+  point,
+  idx,
+  highlighted,
+}: {
+  point: MuaapRoutePoint;
+  idx: number;
+  highlighted: boolean;
+}) {
+  const markerRef = useRef<L.Marker>(null);
+  const kind = idx === 0 ? "start" : point.kind === "premium_business" ? "premium" : "milestone";
+  const icon = useMemo(() => makeIcon(kind, highlighted), [kind, highlighted]);
+
+  useEffect(() => {
+    if (highlighted) markerRef.current?.openPopup();
+  }, [highlighted]);
+
+  return (
+    <>
+      {highlighted && (
+        <Circle
+          center={[point.latitude, point.longitude]}
+          radius={45}
+          pathOptions={{
+            color: "#fbbf24",
+            fillColor: "#fbbf24",
+            fillOpacity: 0.15,
+            weight: 2,
+            opacity: 0.85,
+          }}
+        />
+      )}
+      <Marker ref={markerRef} position={[point.latitude, point.longitude]} icon={icon} zIndexOffset={highlighted ? 1000 : 0}>
+        <Popup>
+          <div className="text-xs min-w-[10rem]">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Parada {point.order}
+            </p>
+            <p className="font-bold text-slate-900 mt-0.5">{point.name}</p>
+            {point.category && <p className="text-slate-500 mt-1">{point.category}</p>}
+            <a
+              href={point.mapsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#27366D] font-semibold underline mt-2 inline-block"
+            >
+              Abrir en Google Maps
+            </a>
+          </div>
+        </Popup>
+      </Marker>
+    </>
+  );
+}
+
+export default function MuaapRouteMap({
+  points,
+  highlightedId = null,
+}: {
+  points: MuaapRoutePoint[];
+  highlightedId?: string | null;
+}) {
   const polyline = useMemo(
     () => points.map((p) => [p.latitude, p.longitude] as [number, number]),
     [points]
@@ -66,39 +165,20 @@ export default function MuaapRouteMap({ points }: { points: MuaapRoutePoint[] })
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <FitRouteBounds points={points} />
+        <FitRouteBounds points={points} highlightedId={highlightedId} />
+        <FocusHighlightedPoint points={points} highlightedId={highlightedId} />
         <Polyline
           positions={polyline}
           pathOptions={{ color: "#27366D", weight: 4, opacity: 0.75, dashArray: "8 6" }}
         />
-        {points.map((point, idx) => {
-          const icon = idx === 0 ? startIcon : point.kind === "premium_business" ? premiumIcon : milestoneIcon;
-          return (
-            <Marker
-              key={point.id}
-              position={[point.latitude, point.longitude]}
-              icon={icon}
-            >
-              <Popup>
-                <div className="text-xs min-w-[10rem]">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Parada {point.order}
-                  </p>
-                  <p className="font-bold text-slate-900 mt-0.5">{point.name}</p>
-                  {point.category && <p className="text-slate-500 mt-1">{point.category}</p>}
-                  <a
-                    href={point.mapsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[#27366D] font-semibold underline mt-2 inline-block"
-                  >
-                    Abrir en Google Maps
-                  </a>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+        {points.map((point, idx) => (
+          <RouteMarker
+            key={point.id}
+            point={point}
+            idx={idx}
+            highlighted={highlightedId === point.id}
+          />
+        ))}
       </MapContainer>
     </div>
   );
