@@ -146,3 +146,36 @@ model Stamp {
 
   @@index([userId, restaurantId, createdAt])
 }
+
+// ======================
+// MUAAP — Museo Urbano Andante Abierto de Puebla
+// ======================
+
+model Business {
+  id         Int              @id
+  name       String
+  category   String?
+  website    String?
+  mapsUrl    String?
+  latitude   Float?
+  longitude  Float?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  milestones MuaapMilestone[]
+}
+
+model MuaapMilestone {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  latitude   Float
+  longitude  Float
+  mapsUrl    String
+  active     Boolean  @default(true)
+  zone       Int?
+  businessId Int?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active])
+}

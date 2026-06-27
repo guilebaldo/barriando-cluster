@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "npx tsx prisma/seed.ts",
+    "seed:muaap": "npx tsx prisma/seed-muaap.ts",
     "db:setup": "prisma migrate dev && npx tsx prisma/seed.ts",
     "sync:socios": "node scripts/sync-socios.mjs",
     "geocode:socios": "node scripts/geocode-socios.mjs"
