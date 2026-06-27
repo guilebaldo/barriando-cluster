@@ -152,6 +152,7 @@ export function getPlanLabel(plan: MembershipPlan): string {
 export function getSubscriptionStatusLabel(status: string): string {
   if (status === "active" || status === "manual_active") return "Activa";
   if (status === "manual_pending") return "Pendiente de Validación";
+  if (status === "manual_rejected") return "Rechazada";
   return "Inactiva / pendiente";
 }
 

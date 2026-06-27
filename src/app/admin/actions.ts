@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/auth-utils";
 import { isAdminEmail } from "@/lib/admin";
 import { listaSocios } from "@/app/data/socios";
 import { getPlanLabel } from "@/lib/membresia";
-import { endOfCurrentMonth } from "@/lib/subscription-lifecycle";
+import { addOneMonthFrom } from "@/lib/subscription-lifecycle";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -28,7 +28,7 @@ export async function approveManualCertification(userId: string): Promise<Action
       where: { userId },
       data: {
         status: "manual_active",
-        currentPeriodEnd: endOfCurrentMonth(),
+        currentPeriodEnd: addOneMonthFrom(),
       },
     });
 
@@ -40,6 +40,37 @@ export async function approveManualCertification(userId: string): Promise<Action
       return { ok: false, error: "Debes iniciar sesión." };
     }
     return { ok: false, error: "No se pudo aprobar la certificación." };
+  }
+}
+
+export async function rejectManualCertification(userId: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminEmail(session.email)) {
+      return { ok: false, error: "No autorizado." };
+    }
+
+    const subscription = await prisma.subscription.findUnique({ where: { userId } });
+    if (!subscription) {
+      return { ok: false, error: "El usuario no tiene suscripción." };
+    }
+
+    await prisma.subscription.update({
+      where: { userId },
+      data: {
+        status: "manual_rejected",
+        currentPeriodEnd: null,
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/panel");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo rechazar la certificación." };
   }
 }
 
@@ -97,14 +128,14 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
           userId,
           plan: plan ?? "VECINO",
           status: status ?? "inactive",
-          ...(status === "manual_active" ? { currentPeriodEnd: endOfCurrentMonth() } : {}),
+          ...(status === "manual_active" ? { currentPeriodEnd: addOneMonthFrom() } : {}),
         },
         update: {
           ...(plan !== undefined ? { plan } : {}),
           ...(status !== undefined
             ? {
                 status,
-                ...(status === "manual_active" ? { currentPeriodEnd: endOfCurrentMonth() } : {}),
+                ...(status === "manual_active" ? { currentPeriodEnd: addOneMonthFrom() } : {}),
               }
             : {}),
         },

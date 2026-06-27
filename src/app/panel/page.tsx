@@ -15,6 +15,7 @@ import {
   loadTakenSocioIds,
   normalizePanelSubscription,
   normalizeSocioProfile,
+  cleanupOrphanSocioProfile,
 } from "@/lib/panel-data";
 import { listaSocios } from "../data/socios";
 import { getBarriandoPaymentDetails } from "@/lib/payment";
@@ -42,7 +43,10 @@ export default async function PanelPage({
     const user = await loadPanelUser(session.id);
     if (!user) redirect("/login");
 
-    const refreshedSub = normalizePanelSubscription(user.subscription);
+    await cleanupOrphanSocioProfile(session.id, user.socioId ?? null);
+    const panelUser = (await loadPanelUser(session.id)) ?? user;
+
+    const refreshedSub = normalizePanelSubscription(panelUser?.subscription);
 
     const panelAllowed = canAccessPanel(refreshedSub.plan, refreshedSub.status, {
       stripeSubscriptionId: refreshedSub.stripeSubscriptionId,
@@ -55,7 +59,7 @@ export default async function PanelPage({
 
     const takenSocioIds = await loadTakenSocioIds(session.id);
 
-    const createdAtMs = user.createdAt ? new Date(user.createdAt).getTime() : NaN;
+    const createdAtMs = panelUser.createdAt ? new Date(panelUser.createdAt).getTime() : NaN;
     const isNewUser = Number.isFinite(createdAtMs) && Date.now() - createdAtMs < 5 * 60 * 1000;
     const showWelcome =
       params.bienvenida === "1" || (isNewUser && isVecinoPlan(refreshedSub.plan));
@@ -64,11 +68,7 @@ export default async function PanelPage({
     const hasPaidAccess = hasCommercialAccess(refreshedSub.plan, refreshedSub.status);
     const pagoParam = params.pago;
 
-    if (pagoParam === "exitoso" || pagoParam === "procesando") {
-      paymentNotice = hasPaidAccess
-        ? "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales."
-        : "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página.";
-    } else if (
+    if (
       pagoParam === "cancelado" &&
       !hasPaidAccess &&
       !refreshedSub.stripeSubscriptionId
@@ -79,9 +79,9 @@ export default async function PanelPage({
     }
 
     const catalogSocio =
-      user.socioId != null ? listaSocios.find((s) => s.id === user.socioId) ?? null : null;
+      panelUser.socioId != null ? listaSocios.find((s) => s.id === panelUser.socioId) ?? null : null;
     const profile = normalizeSocioProfile(
-      "socioProfile" in user ? (user.socioProfile ?? null) : null
+      "socioProfile" in panelUser ? (panelUser.socioProfile ?? null) : null
     );
 
     const sociosList = Array.isArray(listaSocios)
@@ -96,12 +96,12 @@ export default async function PanelPage({
         <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
           <PanelDashboard
             user={{
-              id: user.id,
-              nombre: user.nombre?.trim() || session.nombre || "Vecino",
-              email: user.email ?? session.email ?? "",
-              socioId: user.socioId ?? null,
+              id: panelUser.id,
+              nombre: panelUser.nombre?.trim() || session.nombre || "Vecino",
+              email: panelUser.email ?? session.email ?? "",
+              socioId: panelUser.socioId ?? null,
             }}
-            isAdmin={isAdminEmail(user.email ?? session.email)}
+            isAdmin={isAdminEmail(panelUser.email ?? session.email)}
             subscription={refreshedSub}
             socioProfile={profile}
             catalogSocio={
@@ -117,6 +117,7 @@ export default async function PanelPage({
             }
             stripeConfigured={isStripeConfigured()}
             showWelcome={showWelcome}
+            hasPaidAccess={hasPaidAccess}
             paymentNotice={paymentNotice}
             socios={sociosList}
             takenSocioIds={takenSocioIds}

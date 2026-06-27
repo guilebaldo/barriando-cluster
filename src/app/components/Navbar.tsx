@@ -47,6 +47,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
       <div className="mt-2 pt-2 border-t border-[#314385]/60">
         <p className="px-3 py-2 text-sm font-bold text-amber-400">{displayName}</p>
         <Link
+          href="/pasaporte"
+          className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+        >
+          🎟️ Mi Pasaporte
+        </Link>
+        <Link
           href="/panel"
           className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
         >
@@ -86,6 +92,14 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
           className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]"
         >
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
+            <Link
+              href="/pasaporte"
+              role="menuitem"
+              className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+              onClick={() => setOpen(false)}
+            >
+              🎟️ Mi Pasaporte
+            </Link>
             <Link
               href="/panel"
               role="menuitem"
@@ -160,7 +174,11 @@ export default function Navbar() {
   return (
     <nav className="bg-[#27366D] border-b border-[#1e2b58] sticky top-0 z-50 safe-area-top">
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <Link href="/" className="text-white font-black tracking-tight text-lg transition min-w-0 group">
+        <Link
+          href="/"
+          onClick={() => window.scrollTo(0, 0)}
+          className="text-white font-black tracking-tight text-lg transition min-w-0 group"
+        >
           <span className="text-white group-hover:text-amber-400 transition-colors duration-200">Barriando</span>
           <span className="text-slate-300 text-[10px] font-semibold block sm:inline sm:ml-2 sm:text-xs normal-case tracking-normal">
             Clúster Turístico · Puebla

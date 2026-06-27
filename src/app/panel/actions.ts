@@ -309,11 +309,13 @@ export async function reportManualPayment(
         plan,
         status: "manual_pending",
         manualPaymentNote: note?.trim() || null,
+        currentPeriodEnd: null,
       },
       update: {
         plan,
         status: "manual_pending",
         manualPaymentNote: note?.trim() || null,
+        currentPeriodEnd: null,
       },
     });
 

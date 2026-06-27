@@ -31,7 +31,45 @@ export function getRenewalModeLabel(mode: RenewalMode): string | null {
 }
 
 export const EXPIRY_DISPLAY_FALLBACK = "Sin fecha de vencimiento";
+export const EXPIRY_PENDING_APPROVAL = "Pendiente de aprobación";
 export const RENEWAL_DISPLAY_FALLBACK = "Plan no iniciado";
+
+export function addMonthsFromDate(base: Date | string, months: number): Date {
+  const d = typeof base === "string" ? new Date(base) : new Date(base.getTime());
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+export function resolveMembershipExpiryLabel(input: {
+  status: string;
+  currentPeriodEnd?: string | null;
+  subscriptionCreatedAt?: string | null;
+  stripeSubscriptionId?: string | null;
+}): string {
+  const { status, currentPeriodEnd, subscriptionCreatedAt, stripeSubscriptionId } = input;
+
+  if (status === "manual_pending") {
+    return EXPIRY_PENDING_APPROVAL;
+  }
+
+  if (status === "manual_rejected") {
+    return EXPIRY_DISPLAY_FALLBACK;
+  }
+
+  if (currentPeriodEnd) {
+    return formatMembershipExpiry(currentPeriodEnd);
+  }
+
+  const isActiveStripe = status === "active" && Boolean(stripeSubscriptionId);
+  const isActiveManual = status === "manual_active";
+
+  if ((isActiveStripe || isActiveManual) && subscriptionCreatedAt) {
+    const estimated = addMonthsFromDate(subscriptionCreatedAt, 1);
+    return formatMembershipExpiry(estimated);
+  }
+
+  return EXPIRY_DISPLAY_FALLBACK;
+}
 
 export function formatMembershipExpiry(date: Date | string | null | undefined): string {
   if (!date) return EXPIRY_DISPLAY_FALLBACK;

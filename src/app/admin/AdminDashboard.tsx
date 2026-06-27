@@ -8,6 +8,7 @@ import {
   approveManualCertification,
   deleteSocioUser,
   rejectLinkage,
+  rejectManualCertification,
   updateSocioAdmin,
   type AdminUserRow,
 } from "./actions";
@@ -30,6 +31,11 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 const PLANS: MembershipPlan[] = ["VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
 type AdminTab = "all" | "pending";
+type ResolvedAction = "approved" | "rejected";
+
+function hasPendingLinkageRequest(user: AdminUserRow): boolean {
+  return isLinkagePending(user.linkageStatus) && Boolean(user.profile?.businessName?.trim());
+}
 
 export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
   const router = useRouter();
@@ -38,9 +44,11 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+  const [linkageResolved, setLinkageResolved] = useState<Record<string, ResolvedAction>>({});
+  const [paymentResolved, setPaymentResolved] = useState<Record<string, ResolvedAction>>({});
 
   const pendingLinkages = useMemo(
-    () => users.filter((u) => isLinkagePending(u.linkageStatus)),
+    () => users.filter(hasPendingLinkageRequest),
     [users]
   );
 
@@ -69,6 +77,44 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
       setMsg(result.error ?? "Error");
       return;
     }
+    setMsg(success);
+    router.refresh();
+  }
+
+  async function runLinkageAction(
+    userId: string,
+    action: () => Promise<{ ok: boolean; error?: string }>,
+    outcome: ResolvedAction,
+    success: string
+  ) {
+    setMsg("");
+    setLoadingId(userId);
+    const result = await action();
+    setLoadingId(null);
+    if (!result.ok) {
+      setMsg(result.error ?? "Error");
+      return;
+    }
+    setLinkageResolved((prev) => ({ ...prev, [userId]: outcome }));
+    setMsg(success);
+    router.refresh();
+  }
+
+  async function runPaymentAction(
+    userId: string,
+    action: () => Promise<{ ok: boolean; error?: string }>,
+    outcome: ResolvedAction,
+    success: string
+  ) {
+    setMsg("");
+    setLoadingId(userId);
+    const result = await action();
+    setLoadingId(null);
+    if (!result.ok) {
+      setMsg(result.error ?? "Error");
+      return;
+    }
+    setPaymentResolved((prev) => ({ ...prev, [userId]: outcome }));
     setMsg(success);
     router.refresh();
   }
@@ -162,9 +208,9 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
         </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[720px]">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden max-w-full">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[900px]">
             <thead className="bg-slate-50 border-b border-slate-200 text-[#27366D] uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3 font-bold">Nombre</th>
@@ -178,7 +224,21 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
             <tbody className="divide-y divide-slate-100">
               {visibleUsers.map((user) => {
                 const pendingPayment = user.status === "manual_pending";
-                const pendingLink = isLinkagePending(user.linkageStatus);
+                const pendingLink = hasPendingLinkageRequest(user);
+                const linkageOutcome =
+                  linkageResolved[user.id] ??
+                  (user.linkageStatus === "approved"
+                    ? "approved"
+                    : user.linkageStatus === "rejected"
+                      ? "rejected"
+                      : null);
+                const paymentOutcome =
+                  paymentResolved[user.id] ??
+                  (user.status === "manual_active"
+                    ? "approved"
+                    : user.status === "manual_rejected"
+                      ? "rejected"
+                      : null);
                 const isEditing = editingId === user.id;
                 const expiry = formatMembershipExpiry(user.currentPeriodEnd);
 
@@ -213,15 +273,30 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-end flex-wrap gap-1.5">
-                          {pendingLink && (
+                        <div className="flex justify-end flex-wrap gap-1.5 items-center">
+                          {linkageOutcome === "approved" && (
+                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50">
+                              Aprobado
+                            </span>
+                          )}
+                          {linkageOutcome === "rejected" && (
+                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50">
+                              Rechazado
+                            </span>
+                          )}
+                          {pendingLink && !linkageOutcome && (
                             <>
                               <button
                                 type="button"
                                 title="Aprobar vinculación"
                                 disabled={loadingId === user.id}
                                 onClick={() =>
-                                  runAction(user.id, () => approveLinkage(user.id), "Vinculación aprobada.")
+                                  runLinkageAction(
+                                    user.id,
+                                    () => approveLinkage(user.id),
+                                    "approved",
+                                    "Vinculación aprobada."
+                                  )
                                 }
                                 className="p-2 rounded-lg text-green-700 hover:bg-green-50 disabled:opacity-50"
                               >
@@ -232,7 +307,12 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                                 title="Rechazar vinculación"
                                 disabled={loadingId === user.id}
                                 onClick={() =>
-                                  runAction(user.id, () => rejectLinkage(user.id), "Vinculación rechazada.")
+                                  runLinkageAction(
+                                    user.id,
+                                    () => rejectLinkage(user.id),
+                                    "rejected",
+                                    "Vinculación rechazada."
+                                  )
                                 }
                                 className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
                               >
@@ -240,22 +320,51 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                               </button>
                             </>
                           )}
-                          {pendingPayment && (
-                            <button
-                              type="button"
-                              title="Aprobar pago manual"
-                              disabled={loadingId === user.id}
-                              onClick={() =>
-                                runAction(
-                                  user.id,
-                                  () => approveManualCertification(user.id),
-                                  "Certificación aprobada."
-                                )
-                              }
-                              className="p-2 rounded-lg text-[#27366D] hover:bg-slate-100 disabled:opacity-50"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                            </button>
+                          {paymentOutcome === "approved" && (
+                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50">
+                              Aprobado
+                            </span>
+                          )}
+                          {paymentOutcome === "rejected" && (
+                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50">
+                              Rechazado
+                            </span>
+                          )}
+                          {pendingPayment && !paymentOutcome && (
+                            <>
+                              <button
+                                type="button"
+                                title="Aprobar pago manual"
+                                disabled={loadingId === user.id}
+                                onClick={() =>
+                                  runPaymentAction(
+                                    user.id,
+                                    () => approveManualCertification(user.id),
+                                    "approved",
+                                    "Certificación aprobada."
+                                  )
+                                }
+                                className="p-2 rounded-lg text-[#27366D] hover:bg-slate-100 disabled:opacity-50"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Rechazar pago manual"
+                                disabled={loadingId === user.id}
+                                onClick={() =>
+                                  runPaymentAction(
+                                    user.id,
+                                    () => rejectManualCertification(user.id),
+                                    "rejected",
+                                    "Certificación rechazada."
+                                  )
+                                }
+                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
                           <button
                             type="button"

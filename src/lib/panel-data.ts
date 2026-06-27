@@ -8,6 +8,7 @@ export type SafePanelSubscription = {
   currentPeriodEnd: string | null;
   stripeSubscriptionId: string | null;
   stripeCustomerId: string | null;
+  createdAt: string | null;
 };
 
 export type SafeSocioProfile = {
@@ -27,6 +28,7 @@ export const DEFAULT_PANEL_SUBSCRIPTION: SafePanelSubscription = {
   currentPeriodEnd: null,
   stripeSubscriptionId: null,
   stripeCustomerId: null,
+  createdAt: null,
 };
 
 function isMembershipPlan(value: unknown): value is MembershipPlan {
@@ -40,6 +42,7 @@ export function normalizePanelSubscription(
     currentPeriodEnd?: Date | string | null;
     stripeSubscriptionId?: string | null;
     stripeCustomerId?: string | null;
+    createdAt?: Date | string | null;
   } | null
 ): SafePanelSubscription {
   if (!sub) return { ...DEFAULT_PANEL_SUBSCRIPTION };
@@ -53,12 +56,19 @@ export function normalizePanelSubscription(
     currentPeriodEnd = Number.isNaN(d.getTime()) ? null : d.toISOString();
   }
 
+  let createdAt: string | null = null;
+  if (sub.createdAt) {
+    const d = sub.createdAt instanceof Date ? sub.createdAt : new Date(sub.createdAt);
+    createdAt = Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
   return {
     plan: isMembershipPlan(sub.plan) ? sub.plan : "VECINO",
     status: typeof sub.status === "string" && sub.status.trim() ? sub.status : "inactive",
     currentPeriodEnd,
     stripeSubscriptionId: sub.stripeSubscriptionId ?? null,
     stripeCustomerId: sub.stripeCustomerId ?? null,
+    createdAt,
   };
 }
 
@@ -80,7 +90,7 @@ export function normalizeSocioProfile(
     website: profile.website?.trim() ?? "",
     googleBusinessUrl: profile.googleBusinessUrl?.trim() ?? "",
     logoUrl: profile.logoUrl?.trim() ?? "",
-    linkageStatus: profile.linkageStatus?.trim() || "pending",
+    linkageStatus: profile.linkageStatus?.trim() ?? "",
     isManualEntry: Boolean(profile.isManualEntry),
     address: profile.address?.trim() ?? "",
     category: profile.category?.trim() ?? "",
@@ -113,5 +123,18 @@ export async function loadTakenSocioIds(excludeUserId: string): Promise<number[]
   } catch (error) {
     console.error("[panel] loadTakenSocioIds failed:", error);
     return [];
+  }
+}
+
+/** Elimina perfil huérfano si el usuario ya no tiene negocio vinculado en catálogo. */
+export async function cleanupOrphanSocioProfile(userId: string, socioId: number | null): Promise<void> {
+  if (socioId != null) return;
+  try {
+    const profile = await prisma.socioProfile.findUnique({ where: { userId } });
+    if (!profile) return;
+    if (profile.linkageStatus === "pending" && profile.businessName?.trim()) return;
+    await prisma.socioProfile.delete({ where: { userId } });
+  } catch (error) {
+    console.error("[panel] cleanupOrphanSocioProfile failed:", error);
   }
 }

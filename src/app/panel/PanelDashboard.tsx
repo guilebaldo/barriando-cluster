@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -19,13 +19,13 @@ import {
   type PaidMembershipPlan,
 } from "@/lib/membresia";
 import {
-  formatMembershipExpiry,
   formatRenewalDisplay,
   formatNextChargeDate,
   getRenewalMode,
+  resolveMembershipExpiryLabel,
   safePlanPriceLabel,
 } from "@/lib/panel-display";
-import { getLinkageStatusLabel, isLinkageApproved, isLinkagePending } from "@/lib/linkage";
+import { getLinkageStatusLabel, isLinkageApproved, isLinkagePending, isLinkageRejected } from "@/lib/linkage";
 import { reportManualPayment, cancelMembership } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
@@ -62,6 +62,7 @@ interface PanelProps {
     status: string;
     currentPeriodEnd: string | null;
     stripeSubscriptionId: string | null;
+    createdAt: string | null;
   };
   socioProfile: {
     businessName: string;
@@ -82,6 +83,7 @@ interface PanelProps {
   } | null;
   stripeConfigured: boolean;
   showWelcome: boolean;
+  hasPaidAccess: boolean;
   paymentNotice?: string | null;
   socios: SocioOption[];
   takenSocioIds?: number[];
@@ -100,6 +102,7 @@ export default function PanelDashboard({
   catalogSocio,
   stripeConfigured,
   showWelcome,
+  hasPaidAccess,
   paymentNotice,
   socios = [],
   takenSocioIds = [],
@@ -115,6 +118,7 @@ export default function PanelDashboard({
   const [cancelMsg, setCancelMsg] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
   const [dismissedNotice, setDismissedNotice] = useState(false);
+  const [localPaymentNotice, setLocalPaymentNotice] = useState<string | null>(null);
 
   const plan = subscription?.plan ?? "VECINO";
   const status = subscription?.status ?? "inactive";
@@ -123,16 +127,22 @@ export default function PanelDashboard({
   const commercial = hasCommercialAccess(plan, status);
   const canLink = canLinkSocioAccount(status);
   const pendingValidation = isSubscriptionStatusPending(status);
-  const expiryLabel = formatMembershipExpiry(subscription?.currentPeriodEnd);
+  const paymentRejected = status === "manual_rejected";
+  const expiryLabel = resolveMembershipExpiryLabel({
+    status,
+    currentPeriodEnd: subscription?.currentPeriodEnd,
+    subscriptionCreatedAt: subscription?.createdAt,
+    stripeSubscriptionId: subscription?.stripeSubscriptionId,
+  });
   const renewalLabel = formatRenewalDisplay(status, subscription?.stripeSubscriptionId);
   const upgradePlans =
     commercial && !isVecino ? getUpgradePlans(plan) : [];
 
   const linkagePending = isLinkagePending(socioProfile?.linkageStatus);
   const linkageApproved = isLinkageApproved(socioProfile?.linkageStatus);
-  const hasBusinessLinked = Boolean(user.socioId || socioProfile?.businessName);
-  const showLinkSection =
-    canLink && !user.socioId && !linkagePending && !linkageApproved;
+  const linkageRejected = isLinkageRejected(socioProfile?.linkageStatus);
+  const hasBusinessLinked = Boolean(user.socioId && linkageApproved);
+  const showLinkSection = canLink && !user.socioId && !linkagePending;
   const autoRenewal =
     getRenewalMode(status, subscription?.stripeSubscriptionId) === "automatic";
   const nextChargeDate = formatNextChargeDate(subscription?.currentPeriodEnd);
@@ -218,9 +228,39 @@ export default function PanelDashboard({
 
   const stripeButtonLabel = commercial ? "Renovar Membresía" : "Pagar de forma Segura";
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pago = params.get("pago");
+    const success = params.get("success");
+
+    if (pago === "exitoso" || pago === "procesando" || success === "true") {
+      setLocalPaymentNotice(
+        hasPaidAccess
+          ? "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales."
+          : "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página."
+      );
+    } else if (pago === "cancelado" && !hasPaidAccess) {
+      setLocalPaymentNotice("Pago cancelado. Puedes intentar de nuevo cuando quieras desde tu panel.");
+    } else if (pago === "stripe_no_configurado") {
+      setLocalPaymentNotice("Stripe no está configurado aún. Contacta al equipo de Barriando.");
+    }
+
+    params.delete("pago");
+    params.delete("bienvenida");
+    params.delete("success");
+    const qs = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      qs ? `${window.location.pathname}?${qs}` : window.location.pathname
+    );
+  }, [hasPaidAccess]);
+
+  const activePaymentNotice = localPaymentNotice ?? paymentNotice;
+
   return (
     <div className="space-y-6">
-      {paymentNotice && !dismissedNotice && (
+      {activePaymentNotice && !dismissedNotice && (
         <div className="relative bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 pr-10 text-xs">
           <button
             type="button"
@@ -230,7 +270,7 @@ export default function PanelDashboard({
           >
             <X className="w-4 h-4" />
           </button>
-          {paymentNotice}
+          {activePaymentNotice}
         </div>
       )}
 
@@ -238,6 +278,13 @@ export default function PanelDashboard({
         <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-xs">
           Tu pago por transferencia o efectivo está <strong>Pendiente de Validación</strong>. Te
           avisaremos por correo cuando quede activo.
+        </div>
+      )}
+
+      {(paymentRejected || linkageRejected) && (
+        <div className="bg-red-50 border border-red-200 text-red-900 rounded-xl p-4 text-xs leading-relaxed">
+          Tu {paymentRejected && linkageRejected ? "pago y vinculación" : paymentRejected ? "pago" : "vinculación"} no
+          fue aprobado por el administrador. Por favor, verifica tus datos y reenvía la solicitud.
         </div>
       )}
 
@@ -520,7 +567,7 @@ export default function PanelDashboard({
                 {safePlanPriceLabel(plan)} · {getPlanLabel(plan)}
               </p>
               <p className="text-sm text-slate-700 mb-1">
-                Vence el: <strong className="text-slate-900">{expiryLabel}</strong>
+                Vencimiento: <strong className="text-slate-900">{expiryLabel}</strong>
               </p>
               <p className="text-xs text-slate-500 mb-4">
                 Tipo de renovación: <strong className="text-[#27366D]">{renewalLabel}</strong>

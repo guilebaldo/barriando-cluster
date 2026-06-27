@@ -1,8 +1,8 @@
 export type LinkageStatus = "pending" | "approved" | "rejected";
 
-export function normalizeLinkageStatus(raw?: string | null): LinkageStatus {
-  if (raw === "approved" || raw === "rejected") return raw;
-  return "pending";
+export function normalizeLinkageStatus(raw?: string | null): LinkageStatus | null {
+  if (raw === "approved" || raw === "rejected" || raw === "pending") return raw;
+  return null;
 }
 
 export function getLinkageStatusLabel(status: LinkageStatus): string {
@@ -12,9 +12,13 @@ export function getLinkageStatusLabel(status: LinkageStatus): string {
 }
 
 export function isLinkageApproved(status?: string | null): boolean {
-  return normalizeLinkageStatus(status) === "approved";
+  return status === "approved";
 }
 
 export function isLinkagePending(status?: string | null): boolean {
-  return normalizeLinkageStatus(status) === "pending";
+  return status === "pending";
+}
+
+export function isLinkageRejected(status?: string | null): boolean {
+  return status === "rejected";
 }

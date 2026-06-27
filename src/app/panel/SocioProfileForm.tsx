@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Building2, Save } from "lucide-react";
 import { updateSocioProfile } from "./actions";
 
@@ -22,8 +22,18 @@ export default function SocioProfileForm({ initial, disabled }: SocioProfileForm
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const isDirty = useMemo(
+    () =>
+      businessName !== initial.businessName ||
+      website !== initial.website ||
+      googleBusinessUrl !== initial.googleBusinessUrl ||
+      logoUrl !== initial.logoUrl,
+    [businessName, website, googleBusinessUrl, logoUrl, initial]
+  );
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isDirty) return;
     setMsg("");
     setLoading(true);
     const result = await updateSocioProfile({
@@ -109,17 +119,22 @@ export default function SocioProfileForm({ initial, disabled }: SocioProfileForm
             Mientras habilitamos el almacenamiento de archivos, puedes pegar la URL de tu logotipo.
           </p>
         </label>
-        <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            disabled={disabled || loading}
-            className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg disabled:opacity-50 transition"
-          >
-            <Save className="w-4 h-4" />
-            {loading ? "Guardando..." : "Guardar cambios"}
-          </button>
-          {msg && <p className="text-xs text-slate-600">{msg}</p>}
-        </div>
+        {isDirty && (
+          <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
+            <button
+              type="submit"
+              disabled={disabled || loading}
+              className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg disabled:opacity-50 transition"
+            >
+              <Save className="w-4 h-4" />
+              {loading ? "Guardando..." : "Guardar cambios"}
+            </button>
+            {msg && <p className="text-xs text-slate-600">{msg}</p>}
+          </div>
+        )}
+        {!isDirty && msg && (
+          <p className="sm:col-span-2 text-xs text-slate-600">{msg}</p>
+        )}
       </form>
     </section>
   );

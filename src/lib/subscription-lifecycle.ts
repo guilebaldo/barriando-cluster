@@ -10,7 +10,14 @@ export {
   type RenewalMode,
 } from "@/lib/panel-display";
 
-/** Último instante del mes calendario (hora local del servidor). */
+/** Suma un mes calendario desde la fecha indicada. */
+export function addOneMonthFrom(from = new Date()): Date {
+  const d = new Date(from);
+  d.setMonth(d.getMonth() + 1);
+  return d;
+}
+
+/** @deprecated Usar addOneMonthFrom para aprobaciones manuales. */
 export function endOfCurrentMonth(from = new Date()): Date {
   return new Date(from.getFullYear(), from.getMonth() + 1, 0, 23, 59, 59, 999);
 }
