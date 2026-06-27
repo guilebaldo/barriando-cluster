@@ -1,27 +1,50 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  approveLinkage,
   approveManualCertification,
   deleteSocioUser,
+  rejectLinkage,
   updateSocioAdmin,
   type AdminUserRow,
 } from "./actions";
 import { listaSocios } from "@/app/data/socios";
 import { getSubscriptionStatusLabel } from "@/lib/membresia";
+import { getLinkageStatusLabel, isLinkagePending } from "@/lib/linkage";
 import { formatMembershipExpiry } from "@/lib/panel-display";
-import { CheckCircle2, Pencil, Shield, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Pencil,
+  Shield,
+  Trash2,
+  X,
+  XCircle,
+} from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const PLANS: MembershipPlan[] = ["VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
+type AdminTab = "all" | "pending";
+
 export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
   const router = useRouter();
+  const [tab, setTab] = useState<AdminTab>("all");
   const [msg, setMsg] = useState("");
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
+
+  const pendingLinkages = useMemo(
+    () => users.filter((u) => isLinkagePending(u.linkageStatus)),
+    [users]
+  );
+
+  const visibleUsers = tab === "pending" ? pendingLinkages : users;
 
   function openEdit(user: AdminUserRow) {
     setEditingId(user.id);
@@ -37,30 +60,16 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
     });
   }
 
-  async function handleApprove(userId: string) {
+  async function runAction(userId: string, action: () => Promise<{ ok: boolean; error?: string }>, success: string) {
     setMsg("");
     setLoadingId(userId);
-    const result = await approveManualCertification(userId);
+    const result = await action();
     setLoadingId(null);
     if (!result.ok) {
-      setMsg(result.error);
+      setMsg(result.error ?? "Error");
       return;
     }
-    setMsg("Certificación aprobada hasta fin de mes.");
-    router.refresh();
-  }
-
-  async function handleDelete(userId: string, nombre: string) {
-    if (!confirm(`¿Eliminar la cuenta de ${nombre}? Esta acción no se puede deshacer.`)) return;
-    setMsg("");
-    setLoadingId(userId);
-    const result = await deleteSocioUser(userId);
-    setLoadingId(null);
-    if (!result.ok) {
-      setMsg(result.error);
-      return;
-    }
-    setMsg("Socio eliminado.");
+    setMsg(success);
     router.refresh();
   }
 
@@ -94,18 +103,35 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
     []
   );
 
+  function businessStatus(user: AdminUserRow): string {
+    if (!user.profile && !user.socioId) return "Sin vincular";
+    if (user.linkageStatus) {
+      return getLinkageStatusLabel(user.linkageStatus as "pending" | "approved" | "rejected");
+    }
+    return user.socioName ?? "Vinculado";
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-start gap-3">
-        <Shield className="w-8 h-8 text-[#27366D] shrink-0" />
-        <div>
-          <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-            Administración Barriando
-          </h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Gestión total de socios, vinculaciones y certificaciones manuales.
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <Shield className="w-8 h-8 text-[#27366D] shrink-0" />
+          <div>
+            <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+              Administración Barriando
+            </h1>
+            <p className="text-sm text-slate-600 mt-1">
+              Gestión de socios, vinculaciones y certificaciones.
+            </p>
+          </div>
         </div>
+        <Link
+          href="/panel"
+          className="inline-flex items-center gap-2 border border-slate-200 text-[#27366D] hover:bg-slate-50 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition shrink-0"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Regresar al Panel Principal
+        </Link>
       </div>
 
       {msg && (
@@ -114,184 +140,226 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
         </div>
       )}
 
-      <div className="space-y-4">
-        {users.map((user) => {
-          const pending = user.status === "manual_pending";
-          const isEditing = editingId === user.id;
-          const expiry = formatMembershipExpiry(user.currentPeriodEnd);
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setTab("all")}
+          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+            tab === "all" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          Todos los usuarios ({users.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("pending")}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+            tab === "pending" ? "bg-amber-500 text-slate-950" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          Vinculaciones pendientes ({pendingLinkages.length})
+        </button>
+      </div>
 
-          return (
-            <div key={user.id} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-[#27366D] uppercase tracking-wider">
-                    <tr>
-                      <th className="px-4 py-3 font-bold">Usuario</th>
-                      <th className="px-4 py-3 font-bold">Correo</th>
-                      <th className="px-4 py-3 font-bold">Negocio</th>
-                      <th className="px-4 py-3 font-bold">Plan</th>
-                      <th className="px-4 py-3 font-bold">Estado</th>
-                      <th className="px-4 py-3 font-bold">Vence</th>
-                      <th className="px-4 py-3 font-bold">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[720px]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-[#27366D] uppercase tracking-wider">
+              <tr>
+                <th className="px-4 py-3 font-bold">Nombre</th>
+                <th className="px-4 py-3 font-bold">Correo</th>
+                <th className="px-4 py-3 font-bold">Plan activo</th>
+                <th className="px-4 py-3 font-bold">Estado negocio</th>
+                <th className="px-4 py-3 font-bold">Membresía</th>
+                <th className="px-4 py-3 font-bold text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {visibleUsers.map((user) => {
+                const pendingPayment = user.status === "manual_pending";
+                const pendingLink = isLinkagePending(user.linkageStatus);
+                const isEditing = editingId === user.id;
+                const expiry = formatMembershipExpiry(user.currentPeriodEnd);
+
+                return (
+                  <Fragment key={user.id}>
+                    <tr className="hover:bg-slate-50/50">
                       <td className="px-4 py-3 font-medium text-slate-900">{user.nombre}</td>
                       <td className="px-4 py-3 text-slate-600">{user.email}</td>
-                      <td className="px-4 py-3 text-slate-600">
-                        {user.socioName ?? (user.socioId ? `#${user.socioId}` : "—")}
-                      </td>
                       <td className="px-4 py-3 text-slate-700">{user.planLabel}</td>
                       <td className="px-4 py-3">
                         <span
                           className={
-                            user.status === "active" || user.status === "manual_active"
-                              ? "text-green-700 font-semibold"
-                              : pending
-                                ? "text-amber-600 font-semibold"
-                                : "text-slate-500"
+                            pendingLink
+                              ? "text-amber-600 font-semibold"
+                              : user.linkageStatus === "approved"
+                                ? "text-green-700 font-semibold"
+                                : "text-slate-600"
                           }
                         >
-                          {getSubscriptionStatusLabel(user.status)}
+                          {businessStatus(user)}
                         </span>
+                        {user.isManualEntry && user.profile?.address && (
+                          <p className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[12rem]">
+                            {user.profile.address}
+                          </p>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{expiry}</td>
+                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                        {getSubscriptionStatusLabel(user.status)}
+                        {user.currentPeriodEnd && (
+                          <span className="block text-[10px] text-slate-400">Vence: {expiry}</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          {pending && (
+                        <div className="flex justify-end flex-wrap gap-1.5">
+                          {pendingLink && (
+                            <>
+                              <button
+                                type="button"
+                                title="Aprobar vinculación"
+                                disabled={loadingId === user.id}
+                                onClick={() =>
+                                  runAction(user.id, () => approveLinkage(user.id), "Vinculación aprobada.")
+                                }
+                                className="p-2 rounded-lg text-green-700 hover:bg-green-50 disabled:opacity-50"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Rechazar vinculación"
+                                disabled={loadingId === user.id}
+                                onClick={() =>
+                                  runAction(user.id, () => rejectLinkage(user.id), "Vinculación rechazada.")
+                                }
+                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          {pendingPayment && (
                             <button
                               type="button"
+                              title="Aprobar pago manual"
                               disabled={loadingId === user.id}
-                              onClick={() => handleApprove(user.id)}
-                              className="inline-flex items-center gap-1 bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg disabled:opacity-50"
+                              onClick={() =>
+                                runAction(
+                                  user.id,
+                                  () => approveManualCertification(user.id),
+                                  "Certificación aprobada."
+                                )
+                              }
+                              className="p-2 rounded-lg text-[#27366D] hover:bg-slate-100 disabled:opacity-50"
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Aprobar
+                              <CheckCircle2 className="w-4 h-4" />
                             </button>
                           )}
                           <button
                             type="button"
+                            title={isEditing ? "Cerrar" : "Editar"}
                             onClick={() => (isEditing ? setEditingId(null) : openEdit(user))}
-                            className="inline-flex items-center gap-1 border border-slate-300 text-slate-700 font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg hover:bg-slate-50"
+                            className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
                           >
-                            {isEditing ? <X className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
-                            {isEditing ? "Cerrar" : "Editar"}
+                            {isEditing ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
                           </button>
                           <button
                             type="button"
+                            title="Eliminar"
                             disabled={loadingId === user.id}
-                            onClick={() => handleDelete(user.id, user.nombre)}
-                            className="inline-flex items-center gap-1 border border-red-200 text-red-700 font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                            onClick={() => {
+                              if (!confirm(`¿Eliminar la cuenta de ${user.nombre}?`)) return;
+                              runAction(user.id, () => deleteSocioUser(user.id), "Socio eliminado.");
+                            }}
+                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Eliminar
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {isEditing && (
-                <div className="border-t border-slate-100 bg-slate-50 p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-                  <label className="block">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider">Nombre</span>
-                    <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                      value={editForm.nombre ?? ""}
-                      onChange={(e) => setEditForm((f) => ({ ...f, nombre: e.target.value }))}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider">Negocio vinculado</span>
-                    <select
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                      value={editForm.socioId ?? ""}
-                      onChange={(e) => setEditForm((f) => ({ ...f, socioId: e.target.value }))}
-                    >
-                      <option value="">Sin vincular</option>
-                      {socioOptions.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider">Plan</span>
-                    <select
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                      value={editForm.plan ?? "VECINO"}
-                      onChange={(e) => setEditForm((f) => ({ ...f, plan: e.target.value }))}
-                    >
-                      {PLANS.map((p) => (
-                        <option key={p} value={p}>
-                          {p}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider">Estado</span>
-                    <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                      value={editForm.status ?? ""}
-                      onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
-                      placeholder="active, manual_active, manual_pending, inactive"
-                    />
-                  </label>
-                  <label className="block sm:col-span-2">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider">Nombre negocio</span>
-                    <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                      value={editForm.businessName ?? ""}
-                      onChange={(e) => setEditForm((f) => ({ ...f, businessName: e.target.value }))}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider">Sitio web</span>
-                    <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                      value={editForm.website ?? ""}
-                      onChange={(e) => setEditForm((f) => ({ ...f, website: e.target.value }))}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider">Google My Business</span>
-                    <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                      value={editForm.googleBusinessUrl ?? ""}
-                      onChange={(e) => setEditForm((f) => ({ ...f, googleBusinessUrl: e.target.value }))}
-                    />
-                  </label>
-                  <label className="block sm:col-span-2">
-                    <span className="font-bold text-slate-500 uppercase tracking-wider">URL logo</span>
-                    <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                      value={editForm.logoUrl ?? ""}
-                      onChange={(e) => setEditForm((f) => ({ ...f, logoUrl: e.target.value }))}
-                    />
-                  </label>
-                  <div className="sm:col-span-2 lg:col-span-3">
-                    <button
-                      type="button"
-                      disabled={loadingId === user.id}
-                      onClick={() => handleSave(user.id)}
-                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg disabled:opacity-50"
-                    >
-                      Guardar cambios
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {users.length === 0 && (
-          <p className="p-6 text-sm text-slate-500 text-center bg-white border border-slate-200 rounded-xl">
-            No hay usuarios registrados.
+                    {isEditing && (
+                      <tr className="bg-slate-50">
+                        <td colSpan={6} className="px-4 py-4">
+                          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <label className="block">
+                              <span className="font-bold text-slate-500 uppercase tracking-wider">Nombre</span>
+                              <input
+                                className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                value={editForm.nombre ?? ""}
+                                onChange={(e) => setEditForm((f) => ({ ...f, nombre: e.target.value }))}
+                              />
+                            </label>
+                            <label className="block">
+                              <span className="font-bold text-slate-500 uppercase tracking-wider">Negocio catálogo</span>
+                              <select
+                                className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                value={editForm.socioId ?? ""}
+                                onChange={(e) => setEditForm((f) => ({ ...f, socioId: e.target.value }))}
+                              >
+                                <option value="">Sin vincular</option>
+                                {socioOptions.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="block">
+                              <span className="font-bold text-slate-500 uppercase tracking-wider">Plan</span>
+                              <select
+                                className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                value={editForm.plan ?? "VECINO"}
+                                onChange={(e) => setEditForm((f) => ({ ...f, plan: e.target.value }))}
+                              >
+                                {PLANS.map((p) => (
+                                  <option key={p} value={p}>
+                                    {p}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="block">
+                              <span className="font-bold text-slate-500 uppercase tracking-wider">Estado membresía</span>
+                              <input
+                                className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                value={editForm.status ?? ""}
+                                onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                              />
+                            </label>
+                            <label className="block sm:col-span-2">
+                              <span className="font-bold text-slate-500 uppercase tracking-wider">Nombre negocio</span>
+                              <input
+                                className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                value={editForm.businessName ?? ""}
+                                onChange={(e) => setEditForm((f) => ({ ...f, businessName: e.target.value }))}
+                              />
+                            </label>
+                            <div className="sm:col-span-2 lg:col-span-3">
+                              <button
+                                type="button"
+                                disabled={loadingId === user.id}
+                                onClick={() => handleSave(user.id)}
+                                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg disabled:opacity-50"
+                              >
+                                Guardar cambios
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {visibleUsers.length === 0 && (
+          <p className="p-8 text-sm text-slate-500 text-center">
+            {tab === "pending" ? "No hay vinculaciones pendientes." : "No hay usuarios registrados."}
           </p>
         )}
       </div>

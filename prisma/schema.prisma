@@ -106,6 +106,10 @@ model SocioProfile {
   website           String?
   googleBusinessUrl String?
   logoUrl           String?
+  linkageStatus     String   @default("pending")
+  isManualEntry     Boolean  @default(false)
+  address           String?
+  category          String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

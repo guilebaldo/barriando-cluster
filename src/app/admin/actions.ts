@@ -180,13 +180,68 @@ export type AdminUserRow = {
   currentPeriodEnd: string | null;
   manualPaymentNote: string | null;
   stripeSubscriptionId: string | null;
+  linkageStatus: string | null;
+  isManualEntry: boolean;
   profile: {
     businessName: string;
     website: string;
     googleBusinessUrl: string;
     logoUrl: string;
+    address: string;
+    category: string;
   } | null;
 };
+
+export async function approveLinkage(userId: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminEmail(session.email)) {
+      return { ok: false, error: "No autorizado." };
+    }
+
+    const profile = await prisma.socioProfile.findUnique({ where: { userId } });
+    if (!profile) {
+      return { ok: false, error: "El usuario no tiene solicitud de vinculación." };
+    }
+
+    await prisma.socioProfile.update({
+      where: { userId },
+      data: { linkageStatus: "approved" },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/panel");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo aprobar la vinculación." };
+  }
+}
+
+export async function rejectLinkage(userId: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminEmail(session.email)) {
+      return { ok: false, error: "No autorizado." };
+    }
+
+    await prisma.socioProfile.updateMany({
+      where: { userId },
+      data: { linkageStatus: "rejected" },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/panel");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo rechazar la vinculación." };
+  }
+}
 
 export async function listAdminUsers(): Promise<AdminUserRow[]> {
   const session = await requireSession();
@@ -217,12 +272,16 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
       currentPeriodEnd: user.subscription?.currentPeriodEnd?.toISOString() ?? null,
       manualPaymentNote: user.subscription?.manualPaymentNote ?? null,
       stripeSubscriptionId: user.subscription?.stripeSubscriptionId ?? null,
+      linkageStatus: user.socioProfile?.linkageStatus ?? null,
+      isManualEntry: user.socioProfile?.isManualEntry ?? false,
       profile: user.socioProfile
         ? {
             businessName: user.socioProfile.businessName ?? "",
             website: user.socioProfile.website ?? "",
             googleBusinessUrl: user.socioProfile.googleBusinessUrl ?? "",
             logoUrl: user.socioProfile.logoUrl ?? "",
+            address: user.socioProfile.address ?? "",
+            category: user.socioProfile.category ?? "",
           }
         : null,
     };

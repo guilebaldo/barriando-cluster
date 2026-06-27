@@ -21,9 +21,12 @@ import {
 import {
   formatMembershipExpiry,
   formatRenewalDisplay,
+  formatNextChargeDate,
+  getRenewalMode,
   safePlanPriceLabel,
 } from "@/lib/panel-display";
-import { reportManualPayment } from "./actions";
+import { getLinkageStatusLabel, isLinkageApproved, isLinkagePending } from "@/lib/linkage";
+import { reportManualPayment, cancelMembership } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
 import LinkSocioSection from "./LinkSocioSection";
@@ -65,6 +68,10 @@ interface PanelProps {
     website: string;
     googleBusinessUrl: string;
     logoUrl: string;
+    linkageStatus: string;
+    isManualEntry: boolean;
+    address: string;
+    category: string;
   } | null;
   catalogSocio: {
     name: string;
@@ -105,6 +112,8 @@ export default function PanelDashboard({
   const [payMsg, setPayMsg] = useState("");
   const [manualMsg, setManualMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cancelMsg, setCancelMsg] = useState("");
+  const [cancelLoading, setCancelLoading] = useState(false);
   const [dismissedNotice, setDismissedNotice] = useState(false);
 
   const plan = subscription?.plan ?? "VECINO";
@@ -119,7 +128,17 @@ export default function PanelDashboard({
   const upgradePlans =
     commercial && !isVecino ? getUpgradePlans(plan) : [];
 
-  const displayName = socioProfile?.businessName || catalogSocio?.name;
+  const linkagePending = isLinkagePending(socioProfile?.linkageStatus);
+  const linkageApproved = isLinkageApproved(socioProfile?.linkageStatus);
+  const hasBusinessLinked = Boolean(user.socioId || socioProfile?.businessName);
+  const showLinkSection =
+    canLink && !user.socioId && !linkagePending && !linkageApproved;
+  const autoRenewal =
+    getRenewalMode(status, subscription?.stripeSubscriptionId) === "automatic";
+  const nextChargeDate = formatNextChargeDate(subscription?.currentPeriodEnd);
+
+  const displayName =
+    socioProfile?.businessName || catalogSocio?.name || (linkagePending ? "Solicitud en revisión" : null);
   const displayLogo = socioProfile?.logoUrl || (catalogSocio ? `/logos/${catalogSocio.foto}.png` : null);
 
   const profileDefaults = {
@@ -179,6 +198,22 @@ export default function PanelDashboard({
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleCancelMembership() {
+    if (!confirm("¿Cancelar tu membresía? Seguirás con acceso hasta el fin del periodo facturado.")) {
+      return;
+    }
+    setCancelMsg("");
+    setCancelLoading(true);
+    const result = await cancelMembership();
+    setCancelLoading(false);
+    if (!result.ok) {
+      setCancelMsg(result.error);
+      return;
+    }
+    setCancelMsg(result.message);
+    await refreshSession();
   }
 
   const stripeButtonLabel = commercial ? "Renovar Membresía" : "Pagar de forma Segura";
@@ -353,160 +388,209 @@ export default function PanelDashboard({
           </section>
         </>
       ) : (
-        <div className="grid md:grid-cols-2 gap-6">
-          <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <Building2 className="w-4 h-4 text-[#27366D]" />
-              <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Tu negocio</h2>
-            </div>
-            {catalogSocio || displayName ? (
-              <div>
-                <p className="font-bold text-slate-950">{displayName}</p>
-                {catalogSocio && (
-                  <p className="text-xs text-slate-500 mt-1">{catalogSocio.categoria}</p>
-                )}
-                <p className="text-xs text-amber-700 mt-2 font-bold">
-                  Plan: {getPlanLabel(plan)}
-                </p>
-                {displayLogo && (
-                  <div className="mt-4 h-24 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img
-                      src={displayLogo}
-                      alt={displayName ?? "Logo"}
-                      className="max-h-full max-w-full object-contain p-2"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-500">
-                {canLink
-                  ? "Vincula tu negocio en la sección de abajo para activar tu perfil comercial."
-                  : "Cuando tu pago esté verificado podrás vincular tu negocio del catálogo oficial."}
-              </p>
-            )}
-          </section>
-
-          <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <Upload className="w-4 h-4 text-[#27366D]" />
-              <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Actualizar logo</h2>
-            </div>
-            <p className="text-xs text-slate-500 mb-4 font-light">PNG, JPG o WebP. Máximo 2 MB.</p>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleLogoUpload}
-              disabled={!commercial || !user.socioId || loading}
-              className="text-xs w-full"
-            />
-            {!commercial && (
-              <p className="text-xs text-amber-600 mt-2">
-                Activa tu membresía de pago para subir tu logo al carrusel.
-              </p>
-            )}
-            {logoMsg && <p className="text-xs mt-3 text-slate-600">{logoMsg}</p>}
-          </section>
-
-          {user.socioId && (
-            <SocioProfileForm initial={profileDefaults} disabled={!user.socioId} />
-          )}
-
-          <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <CreditCard className="w-4 h-4 text-[#27366D]" />
-              <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Membresía</h2>
-            </div>
-            <p className="text-sm text-slate-700 mb-1">
-              Estado:{" "}
-              <strong
-                className={
-                  commercial
-                    ? "text-green-700"
-                    : pendingValidation
-                      ? "text-amber-600"
-                      : "text-slate-500"
-                }
-              >
-                {getSubscriptionStatusLabel(status)}
-              </strong>
-            </p>
-            <p className="text-sm font-semibold text-[#27366D] mb-2">
-              {safePlanPriceLabel(plan)} · {getPlanLabel(plan)}
-            </p>
-            <p className="text-sm text-slate-700 mb-1">
-              Vence el: <strong className="text-slate-900">{expiryLabel}</strong>
-            </p>
-            <p className="text-xs text-slate-500 mb-4">
-              Tipo de renovación: <strong className="text-[#27366D]">{renewalLabel}</strong>
-            </p>
-            <div className="flex flex-col gap-3">
-              {stripeConfigured && (
-                <button
-                  type="button"
-                  onClick={() => handleStripePay(plan)}
-                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
-                >
-                  {stripeButtonLabel}
-                </button>
-              )}
-              {!commercial && plan !== "VECINO" && (
-                <TransferPaymentSection
-                  plan={plan}
-                  onConfirm={handleManualPayment}
-                  disabled={pendingValidation}
-                  clabe={paymentDetails.clabe}
-                  bankLabel={paymentDetails.bankLabel}
-                  paymentEmail={paymentDetails.paymentEmail}
-                />
-              )}
-            </div>
-            {upgradePlans.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-slate-100">
-                <div className="flex items-center gap-2 mb-3">
-                  <ArrowUpCircle className="w-4 h-4 text-amber-600" />
-                  <h3 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                    Upgrade a plan superior
-                  </h3>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {upgradePlans.map((planId) => (
-                    <div
-                      key={planId}
-                      className="border border-slate-200 rounded-lg p-4 bg-slate-50 min-w-[10rem]"
-                    >
-                      <p className="font-bold text-slate-900 text-sm">{MEMBERSHIP_PLANS[planId].label}</p>
-                      <p className="text-xs text-[#27366D] font-semibold mt-1">
-                        {formatPlanPriceMxn(planId)}
-                      </p>
-                      {stripeConfigured && (
-                        <button
-                          type="button"
-                          onClick={() => handleStripePay(planId)}
-                          className="mt-3 text-[10px] font-bold uppercase tracking-wider bg-[#27366D] text-white px-3 py-2 rounded-lg hover:bg-[#1e2b58] transition"
-                        >
-                          Upgrade
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {payMsg && <p className="text-xs mt-3 text-slate-600">{payMsg}</p>}
-            {manualMsg && <p className="text-xs mt-3 text-slate-600">{manualMsg}</p>}
-          </section>
-
-          {!user?.socioId && canLink && (
+        <div className="space-y-6">
+          {showLinkSection && (
             <LinkSocioSection
               socios={socios ?? []}
               takenSocioIds={takenSocioIds ?? []}
               onLinked={refreshSession}
             />
           )}
+
+          {linkagePending && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-xs">
+              Tu vinculación está <strong>Pendiente de aprobación</strong>. Un administrador revisará tu
+              solicitud antes de activar tu perfil público.
+            </div>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Building2 className="w-4 h-4 text-[#27366D]" />
+                <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Tu negocio</h2>
+              </div>
+              {hasBusinessLinked || displayName ? (
+                <div>
+                  <p className="font-bold text-slate-950">{displayName}</p>
+                  {(catalogSocio?.categoria || socioProfile?.category) && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      {socioProfile?.category || catalogSocio?.categoria}
+                    </p>
+                  )}
+                  {socioProfile?.address && (
+                    <p className="text-xs text-slate-500 mt-1">{socioProfile.address}</p>
+                  )}
+                  {socioProfile?.linkageStatus && (
+                    <p
+                      className={`text-xs mt-2 font-bold ${
+                        linkageApproved ? "text-green-700" : linkagePending ? "text-amber-600" : "text-red-600"
+                      }`}
+                    >
+                      Estado: {getLinkageStatusLabel(socioProfile.linkageStatus as "pending" | "approved" | "rejected")}
+                    </p>
+                  )}
+                  <p className="text-xs text-amber-700 mt-2 font-bold">
+                    Plan: {getPlanLabel(plan)}
+                  </p>
+                  {displayLogo && linkageApproved && (
+                    <div className="mt-4 h-24 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+                      <img
+                        src={displayLogo}
+                        alt={displayName ?? "Logo"}
+                        className="max-h-full max-w-full object-contain p-2"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  {canLink
+                    ? "Usa el buscador de arriba para vincular o registrar tu negocio."
+                    : "Cuando tu pago esté verificado podrás vincular tu negocio."}
+                </p>
+              )}
+            </section>
+
+            <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <Upload className="w-4 h-4 text-[#27366D]" />
+                <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Actualizar logo</h2>
+              </div>
+              <p className="text-xs text-slate-500 mb-4 font-light">PNG, JPG o WebP. Máximo 2 MB.</p>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleLogoUpload}
+                disabled={!commercial || !linkageApproved || loading}
+                className="text-xs w-full"
+              />
+              {!linkageApproved && hasBusinessLinked && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Podrás subir tu logo cuando el administrador apruebe tu vinculación.
+                </p>
+              )}
+              {!commercial && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Activa tu membresía de pago para subir tu logo al carrusel.
+                </p>
+              )}
+              {logoMsg && <p className="text-xs mt-3 text-slate-600">{logoMsg}</p>}
+            </section>
+
+            {(user.socioId || socioProfile?.businessName) && linkageApproved && (
+              <SocioProfileForm initial={profileDefaults} disabled={!linkageApproved} />
+            )}
+
+            <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm md:col-span-2 relative">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-[#27366D]" />
+                  <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Membresía</h2>
+                </div>
+                {commercial && !isVecino && (
+                  <button
+                    type="button"
+                    disabled={cancelLoading}
+                    onClick={handleCancelMembership}
+                    className="text-[10px] text-slate-400 hover:text-red-600 underline underline-offset-2 transition shrink-0"
+                  >
+                    Cancelar membresía
+                  </button>
+                )}
+              </div>
+              <p className="text-sm text-slate-700 mb-1">
+                Estado:{" "}
+                <strong
+                  className={
+                    commercial
+                      ? "text-green-700"
+                      : pendingValidation
+                        ? "text-amber-600"
+                        : "text-slate-500"
+                  }
+                >
+                  {getSubscriptionStatusLabel(status)}
+                </strong>
+              </p>
+              <p className="text-sm font-semibold text-[#27366D] mb-2">
+                {safePlanPriceLabel(plan)} · {getPlanLabel(plan)}
+              </p>
+              <p className="text-sm text-slate-700 mb-1">
+                Vence el: <strong className="text-slate-900">{expiryLabel}</strong>
+              </p>
+              <p className="text-xs text-slate-500 mb-4">
+                Tipo de renovación: <strong className="text-[#27366D]">{renewalLabel}</strong>
+              </p>
+
+              {autoRenewal && nextChargeDate && (
+                <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-xs text-emerald-900">
+                  Tu renovación automática está activa. Tu próximo cargo será el{" "}
+                  <strong>{nextChargeDate}</strong>.
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3">
+                {stripeConfigured && !autoRenewal && (
+                  <button
+                    type="button"
+                    onClick={() => handleStripePay(plan)}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
+                  >
+                    {stripeButtonLabel}
+                  </button>
+                )}
+                {!commercial && plan !== "VECINO" && (
+                  <TransferPaymentSection
+                    plan={plan}
+                    onConfirm={handleManualPayment}
+                    disabled={pendingValidation}
+                    clabe={paymentDetails.clabe}
+                    bankLabel={paymentDetails.bankLabel}
+                    paymentEmail={paymentDetails.paymentEmail}
+                  />
+                )}
+              </div>
+              {upgradePlans.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ArrowUpCircle className="w-4 h-4 text-amber-600" />
+                    <h3 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+                      Upgrade a plan superior
+                    </h3>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {upgradePlans.map((planId) => (
+                      <div
+                        key={planId}
+                        className="border border-slate-200 rounded-lg p-4 bg-slate-50 min-w-[10rem]"
+                      >
+                        <p className="font-bold text-slate-900 text-sm">{MEMBERSHIP_PLANS[planId].label}</p>
+                        <p className="text-xs text-[#27366D] font-semibold mt-1">
+                          {formatPlanPriceMxn(planId)}
+                        </p>
+                        {stripeConfigured && (
+                          <button
+                            type="button"
+                            onClick={() => handleStripePay(planId)}
+                            className="mt-3 text-[10px] font-bold uppercase tracking-wider bg-[#27366D] text-white px-3 py-2 rounded-lg hover:bg-[#1e2b58] transition"
+                          >
+                            Upgrade
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {payMsg && <p className="text-xs mt-3 text-slate-600">{payMsg}</p>}
+              {manualMsg && <p className="text-xs mt-3 text-slate-600">{manualMsg}</p>}
+              {cancelMsg && <p className="text-xs mt-3 text-slate-600">{cancelMsg}</p>}
+            </section>
+          </div>
         </div>
       )}
     </div>

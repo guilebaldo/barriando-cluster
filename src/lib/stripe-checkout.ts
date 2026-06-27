@@ -50,7 +50,7 @@ export async function createStripeCheckoutUrl(
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/panel?pago=exitoso&bienvenida=1`,
-      cancel_url: `${appUrl}/panel?pago=cancelado`,
+      cancel_url: `${appUrl}/planes?pago=cancelado`,
       metadata: { userId, plan },
     });
 

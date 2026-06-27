@@ -61,15 +61,20 @@ export default async function PanelPage({
       params.bienvenida === "1" || (isNewUser && isVecinoPlan(refreshedSub.plan));
 
     let paymentNotice: string | null = null;
-    if (params.pago === "exitoso" && hasCommercialAccess(refreshedSub.plan, refreshedSub.status)) {
-      paymentNotice =
-        "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales.";
-    } else if (params.pago === "exitoso" || params.pago === "procesando") {
-      paymentNotice =
-        "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página.";
-    } else if (params.pago === "cancelado") {
+    const hasPaidAccess = hasCommercialAccess(refreshedSub.plan, refreshedSub.status);
+    const pagoParam = params.pago;
+
+    if (pagoParam === "exitoso" || pagoParam === "procesando") {
+      paymentNotice = hasPaidAccess
+        ? "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales."
+        : "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página.";
+    } else if (
+      pagoParam === "cancelado" &&
+      !hasPaidAccess &&
+      !refreshedSub.stripeSubscriptionId
+    ) {
       paymentNotice = "Pago cancelado. Puedes intentar de nuevo cuando quieras desde tu panel.";
-    } else if (params.pago === "stripe_no_configurado") {
+    } else if (pagoParam === "stripe_no_configurado") {
       paymentNotice = "Stripe no está configurado aún. Contacta al equipo de Barriando.";
     }
 

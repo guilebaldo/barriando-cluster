@@ -51,3 +51,14 @@ export function formatRenewalDisplay(
   const mode = getRenewalMode(status ?? "", stripeSubscriptionId);
   return getRenewalModeLabel(mode) ?? RENEWAL_DISPLAY_FALLBACK;
 }
+
+export function formatNextChargeDate(date: Date | string | null | undefined): string | null {
+  if (!date) return null;
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}

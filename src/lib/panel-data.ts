@@ -15,6 +15,10 @@ export type SafeSocioProfile = {
   website: string;
   googleBusinessUrl: string;
   logoUrl: string;
+  linkageStatus: string;
+  isManualEntry: boolean;
+  address: string;
+  category: string;
 };
 
 export const DEFAULT_PANEL_SUBSCRIPTION: SafePanelSubscription = {
@@ -64,6 +68,10 @@ export function normalizeSocioProfile(
     website?: string | null;
     googleBusinessUrl?: string | null;
     logoUrl?: string | null;
+    linkageStatus?: string | null;
+    isManualEntry?: boolean | null;
+    address?: string | null;
+    category?: string | null;
   } | null
 ): SafeSocioProfile | null {
   if (!profile) return null;
@@ -72,6 +80,10 @@ export function normalizeSocioProfile(
     website: profile.website?.trim() ?? "",
     googleBusinessUrl: profile.googleBusinessUrl?.trim() ?? "",
     logoUrl: profile.logoUrl?.trim() ?? "",
+    linkageStatus: profile.linkageStatus?.trim() || "pending",
+    isManualEntry: Boolean(profile.isManualEntry),
+    address: profile.address?.trim() ?? "",
+    category: profile.category?.trim() ?? "",
   };
 }
 
