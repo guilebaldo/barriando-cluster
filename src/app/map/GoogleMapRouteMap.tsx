@@ -76,24 +76,33 @@ export default function GoogleMapRouteMap({
             map.setZoom(17);
           }
         } else {
-          map.fitBounds(bounds, 48);
+          map.fitBounds(bounds, { top: 48, right: 48, bottom: 48, left: 48 });
         }
 
-        const walkPath = await buildGoogleWalkingPath(points);
-        if (cancelled) return;
+        setError(null);
 
-        polylineRef.current?.setMap(null);
-        polylineRef.current = new google.maps.Polyline({
-          map,
-          path: walkPath.map(([lat, lng]) => ({ lat, lng })),
-          strokeColor: "#27366D",
-          strokeOpacity: 0.9,
-          strokeWeight: 4,
-        });
+        try {
+          const walkPath = await buildGoogleWalkingPath(points);
+          if (cancelled) return;
+
+          polylineRef.current?.setMap(null);
+          polylineRef.current = new google.maps.Polyline({
+            map,
+            path: walkPath.map(([lat, lng]) => ({ lat, lng })),
+            strokeColor: "#27366D",
+            strokeOpacity: 0.9,
+            strokeWeight: 4,
+          });
+        } catch (pathErr) {
+          console.warn("[map] Ruta peatonal no disponible, mostrando solo marcadores:", pathErr);
+        }
       })
       .catch((err) => {
         console.error("[map] Google Maps failed:", err);
-        setError("No se pudo cargar el mapa. Verifica NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.");
+        const detail = err instanceof Error ? err.message : "Error desconocido";
+        setError(
+          `No se pudo cargar el mapa (${detail}). Activa Maps JavaScript API y Directions API en Google Cloud, habilita facturación y autoriza el dominio barriandopuebla.com en la clave.`
+        );
       });
 
     return () => {
