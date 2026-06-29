@@ -14,6 +14,7 @@ import {
 } from "./actions";
 import { listaSocios } from "@/app/data/socios";
 import { getSubscriptionStatusLabel } from "@/lib/membresia";
+import { PLAN_ADMIN_LABELS, MEMBERSHIP_STATUS_OPTIONS } from "@/lib/admin-labels";
 import { getLinkageStatusLabel, isLinkagePending } from "@/lib/linkage";
 import { formatMembershipExpiry } from "@/lib/panel-display";
 import {
@@ -216,8 +217,11 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                 <th className="px-4 py-3 font-bold">Nombre</th>
                 <th className="px-4 py-3 font-bold">Correo</th>
                 <th className="px-4 py-3 font-bold">Plan activo</th>
+                <th className="px-4 py-3 font-bold">Negocio solicitado</th>
                 <th className="px-4 py-3 font-bold">Estado negocio</th>
                 <th className="px-4 py-3 font-bold">Membresía</th>
+                <th className="px-4 py-3 font-bold text-center">Pago validado</th>
+                <th className="px-4 py-3 font-bold text-center">Vinculación aprobada</th>
                 <th className="px-4 py-3 font-bold text-right">Acciones</th>
               </tr>
             </thead>
@@ -248,6 +252,11 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                       <td className="px-4 py-3 font-medium text-slate-900">{user.nombre}</td>
                       <td className="px-4 py-3 text-slate-600">{user.email}</td>
                       <td className="px-4 py-3 text-slate-700">{user.planLabel}</td>
+                      <td className="px-4 py-3 text-slate-800 font-medium max-w-[10rem]">
+                        {user.requestedBusinessName ?? (
+                          <span className="text-slate-400 font-normal">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <span
                           className={
@@ -272,100 +281,110 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                           <span className="block text-[10px] text-slate-400">Vence: {expiry}</span>
                         )}
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        {paymentOutcome === "approved" && (
+                          <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50">
+                            Sí
+                          </span>
+                        )}
+                        {paymentOutcome === "rejected" && (
+                          <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50">
+                            Rechazado
+                          </span>
+                        )}
+                        {pendingPayment && !paymentOutcome && (
+                          <div className="flex justify-center gap-1">
+                            <button
+                              type="button"
+                              title="Aprobar pago manual"
+                              disabled={loadingId === user.id}
+                              onClick={() =>
+                                runPaymentAction(
+                                  user.id,
+                                  () => approveManualCertification(user.id),
+                                  "approved",
+                                  "Certificación aprobada."
+                                )
+                              }
+                              className="p-2 rounded-lg text-[#27366D] hover:bg-slate-100 disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Rechazar pago manual"
+                              disabled={loadingId === user.id}
+                              onClick={() =>
+                                runPaymentAction(
+                                  user.id,
+                                  () => rejectManualCertification(user.id),
+                                  "rejected",
+                                  "Certificación rechazada."
+                                )
+                              }
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                        {!pendingPayment && !paymentOutcome && (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {linkageOutcome === "approved" && (
+                          <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50">
+                            Sí
+                          </span>
+                        )}
+                        {linkageOutcome === "rejected" && (
+                          <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50">
+                            Rechazado
+                          </span>
+                        )}
+                        {pendingLink && !linkageOutcome && (
+                          <div className="flex justify-center gap-1">
+                            <button
+                              type="button"
+                              title="Aprobar vinculación"
+                              disabled={loadingId === user.id}
+                              onClick={() =>
+                                runLinkageAction(
+                                  user.id,
+                                  () => approveLinkage(user.id),
+                                  "approved",
+                                  "Vinculación aprobada."
+                                )
+                              }
+                              className="p-2 rounded-lg text-green-700 hover:bg-green-50 disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Rechazar vinculación"
+                              disabled={loadingId === user.id}
+                              onClick={() =>
+                                runLinkageAction(
+                                  user.id,
+                                  () => rejectLinkage(user.id),
+                                  "rejected",
+                                  "Vinculación rechazada."
+                                )
+                              }
+                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                        {!pendingLink && !linkageOutcome && (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end flex-wrap gap-1.5 items-center">
-                          {linkageOutcome === "approved" && (
-                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50">
-                              Aprobado
-                            </span>
-                          )}
-                          {linkageOutcome === "rejected" && (
-                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50">
-                              Rechazado
-                            </span>
-                          )}
-                          {pendingLink && !linkageOutcome && (
-                            <>
-                              <button
-                                type="button"
-                                title="Aprobar vinculación"
-                                disabled={loadingId === user.id}
-                                onClick={() =>
-                                  runLinkageAction(
-                                    user.id,
-                                    () => approveLinkage(user.id),
-                                    "approved",
-                                    "Vinculación aprobada."
-                                  )
-                                }
-                                className="p-2 rounded-lg text-green-700 hover:bg-green-50 disabled:opacity-50"
-                              >
-                                <CheckCircle2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                title="Rechazar vinculación"
-                                disabled={loadingId === user.id}
-                                onClick={() =>
-                                  runLinkageAction(
-                                    user.id,
-                                    () => rejectLinkage(user.id),
-                                    "rejected",
-                                    "Vinculación rechazada."
-                                  )
-                                }
-                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                          {paymentOutcome === "approved" && (
-                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50">
-                              Aprobado
-                            </span>
-                          )}
-                          {paymentOutcome === "rejected" && (
-                            <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50">
-                              Rechazado
-                            </span>
-                          )}
-                          {pendingPayment && !paymentOutcome && (
-                            <>
-                              <button
-                                type="button"
-                                title="Aprobar pago manual"
-                                disabled={loadingId === user.id}
-                                onClick={() =>
-                                  runPaymentAction(
-                                    user.id,
-                                    () => approveManualCertification(user.id),
-                                    "approved",
-                                    "Certificación aprobada."
-                                  )
-                                }
-                                className="p-2 rounded-lg text-[#27366D] hover:bg-slate-100 disabled:opacity-50"
-                              >
-                                <CheckCircle2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                title="Rechazar pago manual"
-                                disabled={loadingId === user.id}
-                                onClick={() =>
-                                  runPaymentAction(
-                                    user.id,
-                                    () => rejectManualCertification(user.id),
-                                    "rejected",
-                                    "Certificación rechazada."
-                                  )
-                                }
-                                className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
                           <button
                             type="button"
                             title={isEditing ? "Cerrar" : "Editar"}
@@ -391,7 +410,7 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                     </tr>
                     {isEditing && (
                       <tr className="bg-slate-50">
-                        <td colSpan={6} className="px-4 py-4">
+                        <td colSpan={9} className="px-4 py-4">
                           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             <label className="block">
                               <span className="font-bold text-slate-500 uppercase tracking-wider">Nombre</span>
@@ -425,18 +444,26 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                               >
                                 {PLANS.map((p) => (
                                   <option key={p} value={p}>
-                                    {p}
+                                    {PLAN_ADMIN_LABELS[p]}
                                   </option>
                                 ))}
                               </select>
                             </label>
                             <label className="block">
-                              <span className="font-bold text-slate-500 uppercase tracking-wider">Estado membresía</span>
-                              <input
+                              <span className="font-bold text-slate-500 uppercase tracking-wider">
+                                Estado membresía
+                              </span>
+                              <select
                                 className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                                value={editForm.status ?? ""}
+                                value={editForm.status ?? "inactive"}
                                 onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
-                              />
+                              >
+                                {MEMBERSHIP_STATUS_OPTIONS.map((o) => (
+                                  <option key={o.value} value={o.value}>
+                                    {o.label}
+                                  </option>
+                                ))}
+                              </select>
                             </label>
                             <label className="block sm:col-span-2">
                               <span className="font-bold text-slate-500 uppercase tracking-wider">Nombre negocio</span>
@@ -446,6 +473,48 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                                 onChange={(e) => setEditForm((f) => ({ ...f, businessName: e.target.value }))}
                               />
                             </label>
+                            {user.profile && (
+                              <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-white p-4 text-xs space-y-2">
+                                <p className="font-bold text-[#27366D] uppercase tracking-wider text-[10px]">
+                                  Datos fiscales (CFDI 4.0)
+                                </p>
+                                <p>
+                                  <span className="text-slate-500">RFC:</span>{" "}
+                                  {user.profile.rfc || "—"}
+                                </p>
+                                <p>
+                                  <span className="text-slate-500">Razón social:</span>{" "}
+                                  {user.profile.razonSocial || "—"}
+                                </p>
+                                <p>
+                                  <span className="text-slate-500">Régimen:</span>{" "}
+                                  {user.profile.regimenFiscal || "—"}
+                                </p>
+                                <p>
+                                  <span className="text-slate-500">Uso CFDI:</span>{" "}
+                                  {user.profile.usoCfdi || "—"}
+                                </p>
+                                <p>
+                                  <span className="text-slate-500">Dirección:</span>{" "}
+                                  {user.profile.billingAddressFull || user.profile.address || "—"}
+                                </p>
+                                {(user.profile.billingStreet || user.profile.billingCodigoPostal) && (
+                                  <p className="text-slate-600">
+                                    {[
+                                      user.profile.billingStreet,
+                                      user.profile.billingColonia,
+                                      user.profile.billingCiudad,
+                                      user.profile.billingEstado,
+                                      user.profile.billingPais,
+                                      user.profile.billingCodigoPostal &&
+                                        `C.P. ${user.profile.billingCodigoPostal}`,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(", ")}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             <div className="sm:col-span-2 lg:col-span-3">
                               <button
                                 type="button"

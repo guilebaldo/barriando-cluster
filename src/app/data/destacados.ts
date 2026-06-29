@@ -14,7 +14,7 @@ export interface Destacado {
 /** Actualización destacada en la landing — editar aquí para cambiar el banner principal. */
 export const destacadoActual: Destacado = {
   id: "documenta-gastronomia-2026",
-  activo: true,
+  activo: false,
   etiqueta: "Convocatoria abierta",
   titulo: "Barriando documenta la gastronomía poblana",
   descripcion:

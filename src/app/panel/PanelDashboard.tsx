@@ -73,6 +73,17 @@ interface PanelProps {
     isManualEntry: boolean;
     address: string;
     category: string;
+    rfc: string;
+    razonSocial: string;
+    regimenFiscal: string;
+    usoCfdi: string;
+    billingStreet: string;
+    billingColonia: string;
+    billingCiudad: string;
+    billingEstado: string;
+    billingPais: string;
+    billingCodigoPostal: string;
+    billingAddressFull: string;
   } | null;
   catalogSocio: {
     name: string;
@@ -143,6 +154,7 @@ export default function PanelDashboard({
   const linkageRejected = isLinkageRejected(socioProfile?.linkageStatus);
   const hasBusinessLinked = Boolean(user.socioId && linkageApproved);
   const showLinkSection = canLink && !user.socioId && !linkagePending;
+  const showLinkageFirst = canLink && !user.socioId && !linkagePending && !linkageApproved;
   const autoRenewal =
     getRenewalMode(status, subscription?.stripeSubscriptionId) === "automatic";
   const nextChargeDate = formatNextChargeDate(subscription?.currentPeriodEnd);
@@ -155,7 +167,17 @@ export default function PanelDashboard({
     businessName: socioProfile?.businessName ?? catalogSocio?.name ?? "",
     website: socioProfile?.website ?? catalogSocio?.url ?? "",
     googleBusinessUrl: socioProfile?.googleBusinessUrl ?? catalogSocio?.direccion ?? "",
-    logoUrl: socioProfile?.logoUrl ?? "",
+    rfc: socioProfile?.rfc ?? "",
+    razonSocial: socioProfile?.razonSocial ?? "",
+    regimenFiscal: socioProfile?.regimenFiscal ?? "",
+    usoCfdi: socioProfile?.usoCfdi ?? "",
+    billingStreet: socioProfile?.billingStreet ?? "",
+    billingColonia: socioProfile?.billingColonia ?? "",
+    billingCiudad: socioProfile?.billingCiudad ?? "",
+    billingEstado: socioProfile?.billingEstado ?? "",
+    billingPais: socioProfile?.billingPais ?? "México",
+    billingCodigoPostal: socioProfile?.billingCodigoPostal ?? "",
+    billingAddressFull: socioProfile?.billingAddressFull ?? "",
   };
 
   async function refreshSession() {
@@ -342,9 +364,8 @@ export default function PanelDashboard({
               Eres miembro oficial de la comunidad
             </h2>
             <p className="text-sm text-slate-600 font-light leading-relaxed">
-              Como <strong>Vecino</strong> recibirás noticias, invitaciones a eventos y festivales del
-              Centro Histórico. Para desbloquear herramientas comerciales —mapa, carrusel, blog y
-              MAP — sube de nivel a cualquiera de los planes de pago.
+              Como <strong>Turista</strong> recibirás novedades del Centro Histórico y acceso al Pasaporte MAP.
+              Para desbloquear herramientas comerciales —mapa, carrusel, blog y rutas oficiales— elige un plan de socio.
             </p>
           </section>
 
@@ -434,6 +455,20 @@ export default function PanelDashboard({
             )}
           </section>
         </>
+      ) : showLinkageFirst ? (
+        <div className="space-y-6">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-sm text-emerald-900">
+            <p className="font-bold mb-1">¡Pago verificado! Siguiente paso: vincula tu negocio</p>
+            <p className="text-xs font-light leading-relaxed">
+              Tu membresía está activa. Completa la vinculación para aparecer en el directorio y rutas MAP.
+            </p>
+          </div>
+          <LinkSocioSection
+            socios={socios ?? []}
+            takenSocioIds={takenSocioIds ?? []}
+            onLinked={refreshSession}
+          />
+        </div>
       ) : (
         <div className="space-y-6">
           {showLinkSection && (

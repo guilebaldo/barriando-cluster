@@ -1,9 +1,10 @@
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
-import { hasCommercialAccess, isTuristaPlan } from "@/lib/membresia";
+import { hasCommercialAccess } from "@/lib/membresia";
 
 const PAID_PLANS = new Set<MembershipPlan>([
+  "VECINO",
   "NEGOCIO_FAMILIAR",
   "MEDIANA_EMPRESA",
   "GRAN_EMPRESA",
@@ -21,7 +22,7 @@ function parsePlanFromMetadata(raw?: string | null): MembershipPlan | null {
   return PAID_PLANS.has(upper) ? upper : null;
 }
 
-/** Consulta Stripe y persiste el estado de suscripción antes de evaluar redirecciones. */
+/** Consulta Stripe y persiste el estado solo tras pago confirmado. */
 export async function syncStripeSubscriptionForUser(userId: string): Promise<boolean> {
   const stripe = getStripe();
   if (!stripe) return false;
@@ -31,7 +32,7 @@ export async function syncStripeSubscriptionForUser(userId: string): Promise<boo
     include: { subscription: true },
   });
   const sub = user?.subscription;
-  if (!sub || isTuristaPlan(sub.plan)) return false;
+  if (!sub) return false;
 
   try {
     if (sub.stripeSubscriptionId) {
@@ -53,14 +54,17 @@ export async function syncStripeSubscriptionForUser(userId: string): Promise<boo
     if (sub.stripeCustomerId) {
       const { data: sessions } = await stripe.checkout.sessions.list({
         customer: sub.stripeCustomerId,
-        limit: 5,
+        limit: 8,
       });
-      const completed = sessions.find((s) => s.status === "complete" && s.subscription);
+      const completed = sessions.find(
+        (s) => s.status === "complete" && s.payment_status === "paid" && s.subscription
+      );
       if (completed?.subscription) {
         const stripeSub = await stripe.subscriptions.retrieve(completed.subscription as string);
         const periodEnd = (stripeSub as { current_period_end?: number }).current_period_end;
         const status = normalizeStripeStatus(stripeSub.status);
-        const plan = parsePlanFromMetadata(completed.metadata?.plan) ?? sub.plan;
+        const plan = parsePlanFromMetadata(completed.metadata?.plan);
+        if (!plan) return false;
 
         await prisma.subscription.update({
           where: { userId },
@@ -73,27 +77,6 @@ export async function syncStripeSubscriptionForUser(userId: string): Promise<boo
           },
         });
         return hasCommercialAccess(plan, status);
-      }
-
-      const { data: subscriptions } = await stripe.subscriptions.list({
-        customer: sub.stripeCustomerId,
-        status: "all",
-        limit: 3,
-      });
-      const latest = subscriptions[0];
-      if (latest) {
-        const periodEnd = (latest as { current_period_end?: number }).current_period_end;
-        const status = normalizeStripeStatus(latest.status);
-
-        await prisma.subscription.update({
-          where: { userId },
-          data: {
-            status,
-            stripeSubscriptionId: latest.id,
-            currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-          },
-        });
-        return hasCommercialAccess(sub.plan, status);
       }
     }
   } catch (error) {

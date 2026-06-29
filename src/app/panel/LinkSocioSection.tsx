@@ -124,8 +124,9 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
         <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Vincula tu negocio</h2>
       </div>
       <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
-        Busca tu negocio en el catálogo oficial. Tras vincular, un administrador revisará y aprobará tu
-        solicitud antes de publicarla.
+        Busca tu establecimiento en la lista. Si no lo encuentras, desplázate hasta el final y selecciona
+        la opción <strong className="text-[#27366D]">&quot;Mi negocio no está listado&quot;</strong> para
+        registrarlo desde cero.
       </p>
 
       <div ref={containerRef} className="relative mb-4">

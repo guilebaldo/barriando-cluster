@@ -20,6 +20,17 @@ export type SafeSocioProfile = {
   isManualEntry: boolean;
   address: string;
   category: string;
+  rfc: string;
+  razonSocial: string;
+  regimenFiscal: string;
+  usoCfdi: string;
+  billingStreet: string;
+  billingColonia: string;
+  billingCiudad: string;
+  billingEstado: string;
+  billingPais: string;
+  billingCodigoPostal: string;
+  billingAddressFull: string;
 };
 
 export const DEFAULT_PANEL_SUBSCRIPTION: SafePanelSubscription = {
@@ -82,6 +93,17 @@ export function normalizeSocioProfile(
     isManualEntry?: boolean | null;
     address?: string | null;
     category?: string | null;
+    rfc?: string | null;
+    razonSocial?: string | null;
+    regimenFiscal?: string | null;
+    usoCfdi?: string | null;
+    billingStreet?: string | null;
+    billingColonia?: string | null;
+    billingCiudad?: string | null;
+    billingEstado?: string | null;
+    billingPais?: string | null;
+    billingCodigoPostal?: string | null;
+    billingAddressFull?: string | null;
   } | null
 ): SafeSocioProfile | null {
   if (!profile) return null;
@@ -94,6 +116,17 @@ export function normalizeSocioProfile(
     isManualEntry: Boolean(profile.isManualEntry),
     address: profile.address?.trim() ?? "",
     category: profile.category?.trim() ?? "",
+    rfc: profile.rfc?.trim() ?? "",
+    razonSocial: profile.razonSocial?.trim() ?? "",
+    regimenFiscal: profile.regimenFiscal?.trim() ?? "",
+    usoCfdi: profile.usoCfdi?.trim() ?? "",
+    billingStreet: profile.billingStreet?.trim() ?? "",
+    billingColonia: profile.billingColonia?.trim() ?? "",
+    billingCiudad: profile.billingCiudad?.trim() ?? "",
+    billingEstado: profile.billingEstado?.trim() ?? "",
+    billingPais: profile.billingPais?.trim() ?? "México",
+    billingCodigoPostal: profile.billingCodigoPostal?.trim() ?? "",
+    billingAddressFull: profile.billingAddressFull?.trim() ?? "",
   };
 }
 

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const PAID_PLANS = new Set<MembershipPlan>([
+  "VECINO",
   "NEGOCIO_FAMILIAR",
   "MEDIANA_EMPRESA",
   "GRAN_EMPRESA",
@@ -37,11 +38,17 @@ export async function POST(request: NextRequest) {
     const session = event.data.object as {
       metadata?: { userId?: string; plan?: string };
       subscription?: string;
+      payment_status?: string;
     };
+
+    if (session.payment_status && session.payment_status !== "paid") {
+      return new Response("ok", { status: 200 });
+    }
+
     const userId = session.metadata?.userId;
     const plan = parsePlan(session.metadata?.plan);
 
-    if (userId && session.subscription) {
+    if (userId && session.subscription && plan) {
       const sub = await stripe.subscriptions.retrieve(session.subscription as string);
       const periodEnd = (sub as { current_period_end?: number }).current_period_end;
       const status = sub.status === "active" || sub.status === "trialing" ? "active" : sub.status;
@@ -50,14 +57,14 @@ export async function POST(request: NextRequest) {
         where: { userId },
         create: {
           userId,
-          plan: plan ?? "NEGOCIO_FAMILIAR",
+          plan,
           stripeSubscriptionId: sub.id,
           stripeCustomerId: sub.customer as string,
           status,
           currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
         },
         update: {
-          ...(plan ? { plan } : {}),
+          plan,
           stripeSubscriptionId: sub.id,
           stripeCustomerId: sub.customer as string,
           status,

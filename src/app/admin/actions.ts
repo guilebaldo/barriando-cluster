@@ -220,7 +220,19 @@ export type AdminUserRow = {
     logoUrl: string;
     address: string;
     category: string;
+    rfc: string;
+    razonSocial: string;
+    regimenFiscal: string;
+    usoCfdi: string;
+    billingStreet: string;
+    billingColonia: string;
+    billingCiudad: string;
+    billingEstado: string;
+    billingPais: string;
+    billingCodigoPostal: string;
+    billingAddressFull: string;
   } | null;
+  requestedBusinessName: string | null;
 };
 
 export async function approveLinkage(userId: string): Promise<ActionResult> {
@@ -281,12 +293,27 @@ const BASE_SOCIO_PROFILE_SELECT = {
   logoUrl: true,
 } as const;
 
+const EXTENDED_BILLING_SELECT = {
+  rfc: true,
+  razonSocial: true,
+  regimenFiscal: true,
+  usoCfdi: true,
+  billingStreet: true,
+  billingColonia: true,
+  billingCiudad: true,
+  billingEstado: true,
+  billingPais: true,
+  billingCodigoPostal: true,
+  billingAddressFull: true,
+} as const;
+
 const EXTENDED_SOCIO_PROFILE_SELECT = {
   ...BASE_SOCIO_PROFILE_SELECT,
   linkageStatus: true,
   isManualEntry: true,
   address: true,
   category: true,
+  ...EXTENDED_BILLING_SELECT,
 } as const;
 
 const SUBSCRIPTION_ADMIN_SELECT = {
@@ -328,6 +355,17 @@ type AdminUserRecord = {
     isManualEntry?: boolean | null;
     address?: string | null;
     category?: string | null;
+    rfc?: string | null;
+    razonSocial?: string | null;
+    regimenFiscal?: string | null;
+    usoCfdi?: string | null;
+    billingStreet?: string | null;
+    billingColonia?: string | null;
+    billingCiudad?: string | null;
+    billingEstado?: string | null;
+    billingPais?: string | null;
+    billingCodigoPostal?: string | null;
+    billingAddressFull?: string | null;
   } | null;
 };
 
@@ -375,12 +413,16 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
     const businessName = user.socioProfile?.businessName ?? catalogSocio?.name ?? null;
     const plan = user.subscription?.plan ?? "TURISTA";
 
+    const requestedBusinessName =
+      user.socioProfile?.businessName?.trim() || catalogSocio?.name || null;
+
     return {
       id: user.id,
       nombre: user.nombre ?? user.email ?? "—",
       email: user.email ?? "—",
       socioId: user.socioId,
       socioName: businessName,
+      requestedBusinessName,
       plan,
       planLabel: getPlanLabel(plan),
       status: user.subscription?.status ?? "inactive",
@@ -398,6 +440,17 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
             logoUrl: user.socioProfile.logoUrl ?? "",
             address: user.socioProfile.address ?? "",
             category: user.socioProfile.category ?? "",
+            rfc: user.socioProfile.rfc ?? "",
+            razonSocial: user.socioProfile.razonSocial ?? "",
+            regimenFiscal: user.socioProfile.regimenFiscal ?? "",
+            usoCfdi: user.socioProfile.usoCfdi ?? "",
+            billingStreet: user.socioProfile.billingStreet ?? "",
+            billingColonia: user.socioProfile.billingColonia ?? "",
+            billingCiudad: user.socioProfile.billingCiudad ?? "",
+            billingEstado: user.socioProfile.billingEstado ?? "",
+            billingPais: user.socioProfile.billingPais ?? "",
+            billingCodigoPostal: user.socioProfile.billingCodigoPostal ?? "",
+            billingAddressFull: user.socioProfile.billingAddressFull ?? "",
           }
         : null,
     };

@@ -8,8 +8,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 
 const links = [
   { href: "/", label: "Inicio" },
-  { href: "/documenta", label: "Documenta", badge: "Nuevo" },
-  { href: "/map", label: "Ruta MAP" },
+  { href: "/map", label: "MAP" },
   { href: "/socios", label: "Socios" },
   { href: "/equipo", label: "Equipo" },
 ] as const;
@@ -228,11 +227,6 @@ export default function Navbar() {
                     }`}
                   >
                     {link.label}
-                    {"badge" in link && link.badge && (
-                      <span className="ml-2 text-[9px] bg-amber-500 text-neutral-950 px-1.5 py-0.5 rounded-full normal-case">
-                        {link.badge}
-                      </span>
-                    )}
                   </Link>
                 );
               })}

@@ -112,6 +112,17 @@ model SocioProfile {
   isManualEntry     Boolean  @default(false)
   address           String?
   category          String?
+  rfc               String?
+  razonSocial       String?
+  regimenFiscal     String?
+  usoCfdi           String?
+  billingStreet     String?
+  billingColonia    String?
+  billingCiudad     String?
+  billingEstado     String?
+  billingPais       String?
+  billingCodigoPostal String?
+  billingAddressFull  String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }

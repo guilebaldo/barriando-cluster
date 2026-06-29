@@ -2,7 +2,7 @@ import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
-import { MEMBERSHIP_PLANS, PAID_PLANS } from "@/lib/membresia";
+import { MEMBERSHIP_PLANS, PAID_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
 import { registroUrl } from "@/lib/plan-routing";
 import { Check } from "lucide-react";
 
@@ -66,6 +66,9 @@ function PlanCard({
         </span>
       )}
       <h2 className="font-bold text-slate-950 text-sm">{plan.label}</h2>
+      <p className="text-lg font-black text-[#27366D] mt-2">
+        {plan.isPaid ? formatPlanPriceMxn(planId as Parameters<typeof formatPlanPriceMxn>[0]) : "Gratis"}
+      </p>
       <p className="text-[11px] text-amber-700 font-semibold mt-0.5">{plan.tagline}</p>
       <p className="text-xs text-slate-500 mt-3 mb-4 font-light leading-relaxed flex-1">{plan.description}</p>
       <ul className="space-y-2 mb-6">

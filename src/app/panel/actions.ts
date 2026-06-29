@@ -17,7 +17,17 @@ const profileSchema = z.object({
     .trim()
     .url("Ingresa una URL válida de Google My Business.")
     .max(500),
-  logoUrl: z.string().trim().max(500).optional(),
+  rfc: z.string().trim().min(12, "RFC inválido.").max(13),
+  razonSocial: z.string().trim().min(3, "Ingresa la razón social.").max(200),
+  regimenFiscal: z.string().trim().min(3, "Selecciona el régimen fiscal.").max(120),
+  usoCfdi: z.string().trim().min(3, "Selecciona el uso de CFDI.").max(80),
+  billingStreet: z.string().trim().min(3, "Ingresa calle y número.").max(200),
+  billingColonia: z.string().trim().min(2, "Ingresa la colonia.").max(120),
+  billingCiudad: z.string().trim().min(2, "Ingresa ciudad o municipio.").max(120),
+  billingEstado: z.string().trim().min(2, "Ingresa el estado.").max(80),
+  billingPais: z.string().trim().min(2, "Ingresa el país.").max(80),
+  billingCodigoPostal: z.string().trim().min(4, "Ingresa el C.P.").max(10),
+  billingAddressFull: z.string().trim().min(5, "Ingresa la dirección completa.").max(400),
 });
 
 const manualBusinessSchema = z.object({
@@ -239,7 +249,17 @@ export async function updateSocioProfile(input: {
   businessName: string;
   website: string;
   googleBusinessUrl: string;
-  logoUrl?: string;
+  rfc: string;
+  razonSocial: string;
+  regimenFiscal: string;
+  usoCfdi: string;
+  billingStreet: string;
+  billingColonia: string;
+  billingCiudad: string;
+  billingEstado: string;
+  billingPais: string;
+  billingCodigoPostal: string;
+  billingAddressFull: string;
 }): Promise<UpdateProfileResult> {
   try {
     const session = await requireSession();
@@ -253,35 +273,20 @@ export async function updateSocioProfile(input: {
       return { ok: false, error: "Vincula tu negocio antes de editar el perfil." };
     }
 
-    const { businessName, website, googleBusinessUrl, logoUrl } = parsed.data;
-
-    if (logoUrl && logoUrl.length > 0) {
-      try {
-        new URL(logoUrl);
-      } catch {
-        return { ok: false, error: "Ingresa una URL pública de imagen válida." };
-      }
-    }
+    const data = parsed.data;
 
     await prisma.socioProfile.upsert({
       where: { userId: session.id },
       create: {
         userId: session.id,
-        businessName,
-        website,
-        googleBusinessUrl,
-        logoUrl: logoUrl || null,
+        ...data,
         linkageStatus: "pending",
       },
-      update: {
-        businessName,
-        website,
-        googleBusinessUrl,
-        logoUrl: logoUrl || null,
-      },
+      update: data,
     });
 
     revalidatePath("/panel");
+    revalidatePath("/admin");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

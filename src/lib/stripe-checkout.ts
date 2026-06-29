@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getStripe, getStripePriceId } from "@/lib/stripe";
 import type { PaidMembershipPlan } from "@/lib/membresia";
+import type { MembershipPlan } from "@/generated/prisma/client";
 
 export async function createStripeCheckoutUrl(
   userId: string,
@@ -30,16 +31,19 @@ export async function createStripeCheckoutUrl(
       customerId = customer.id;
     }
 
+    const existingPlan: MembershipPlan = user.subscription?.plan ?? "TURISTA";
+    const existingStatus = user.subscription?.status ?? "inactive";
+
+    // No promover plan hasta webhook exitoso: solo persistir customer de Stripe.
     await prisma.subscription.upsert({
       where: { userId },
       create: {
         userId,
-        plan,
-        status: "inactive",
+        plan: existingPlan,
+        status: existingStatus,
         stripeCustomerId: customerId,
       },
       update: {
-        plan,
         stripeCustomerId: customerId,
       },
     });
@@ -50,7 +54,7 @@ export async function createStripeCheckoutUrl(
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${appUrl}/panel?pago=exitoso&bienvenida=1`,
-      cancel_url: `${appUrl}/planes?pago=cancelado`,
+      cancel_url: `${appUrl}/panel?pago=cancelado`,
       metadata: { userId, plan },
     });
 

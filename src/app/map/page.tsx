@@ -55,11 +55,29 @@ export default async function MapPage() {
                 ¿Cómo funciona?
               </h2>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed font-light">
-              El algoritmo traza un circuito tipo cuadrante (O→P, N→S, P→O, S→N) usando distancia
-              Haversine. Si activas tu ubicación, preseleccionamos el hito más cercano como punto de
-              partida. Los socios <strong>Gran Empresa</strong> activos aparecen como paradas premium.
-            </p>
+            <ol className="text-sm text-slate-600 leading-relaxed font-light space-y-3 list-decimal list-inside">
+              <li>
+                El sistema utiliza el <strong className="text-slate-800">GPS en tiempo real</strong> de tu
+                celular para detectar tu ubicación y preseleccionar automáticamente el hito del MAP más
+                cercano, para que inicies tu recorrido sin complicaciones.
+              </li>
+              <li>
+                Los <strong className="text-slate-800">hitos históricos</strong> (iglesias, museos y
+                monumentos) tendrán códigos QR oficiales en sus entradas o fachadas para certificar tu
+                visita en el pasaporte.
+              </li>
+              <li>
+                Los <strong className="text-slate-800">establecimientos certificados</strong> entregarán su
+                código QR al comensal al finalizar su consumo.
+              </li>
+              <li>
+                <strong className="text-amber-700">¡Edición Especial de Temporada!</strong> Los sellos de
+                Chiles en Nogada son exclusivos de la temporada y se entregan junto con el platillo. Lucen un
+                color <strong className="text-amber-600">dorado</strong> único, como homenaje al capeado de
+                huevo barroco que representaba el oro. Al concluir la temporada, esos QR especiales salen de
+                circulación y los establecimientos vuelven al código QR estándar disponible todo el año.
+              </li>
+            </ol>
           </div>
           <div className="bg-gradient-to-br from-[#27366D] to-[#1e2b58] text-white rounded-2xl p-6 border border-amber-400/20">
             <h2 className="text-sm font-bold text-amber-400 uppercase tracking-widest mb-3">
