@@ -2,6 +2,7 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 import type { PaidMembershipPlan } from "@/lib/membresia";
 
 const PRICE_ENV: Record<PaidMembershipPlan, string> = {
+  VECINO: "STRIPE_PRICE_ID_VECINO",
   NEGOCIO_FAMILIAR: "STRIPE_PRICE_ID_NEGOCIO_FAMILIAR",
   MEDIANA_EMPRESA: "STRIPE_PRICE_ID_MEDIANA_EMPRESA",
   GRAN_EMPRESA: "STRIPE_PRICE_ID_GRAN_EMPRESA",
@@ -16,7 +17,7 @@ export function getStripePriceId(plan: PaidMembershipPlan): string | null {
 export function isStripeConfiguredForPlan(plan: MembershipPlan): boolean {
   if (!process.env.STRIPE_SECRET_KEY?.trim()) return false;
   if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()) return false;
-  if (plan === "VECINO") return true;
+  if (plan === "TURISTA") return true;
   return Boolean(getStripePriceId(plan));
 }
 

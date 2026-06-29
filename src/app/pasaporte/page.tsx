@@ -5,8 +5,8 @@ import PasaporteClient from "./PasaporteClient";
 import { getSession } from "@/lib/auth-utils";
 import {
   getParticipatingRestaurants,
-  getPoblanoProgress,
-  getPoblanoTier,
+  getPassportProgress,
+  getPassportRank,
   restaurantSlug,
 } from "@/lib/pasaporte";
 import { countUserStamps, loadUserStampSummaries } from "@/lib/pasaporte-stamps";
@@ -32,8 +32,9 @@ export default async function PasaportePage() {
     );
   }
 
-  const tier = getPoblanoTier(totalStamps);
-  const progress = getPoblanoProgress(totalStamps);
+  const uniqueStamped = Object.values(stampMap).filter((s) => s.count > 0).length;
+  const rank = getPassportRank(uniqueStamped, restaurants.length);
+  const progress = getPassportProgress(uniqueStamped, restaurants.length);
 
   return (
     <SiteShell>
@@ -45,8 +46,9 @@ export default async function PasaportePage() {
           restaurants={restaurants}
           stampMap={stampMap}
           totalStamps={totalStamps}
-          tierLabel={tier.label}
-          tierId={tier.id}
+          tierLabel={rank.label}
+          tierId={rank.id}
+          isPoblanoComplete={rank.isComplete}
           progress={progress}
         />
       </main>

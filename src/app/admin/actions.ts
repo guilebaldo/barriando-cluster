@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/auth-utils";
 import { isAdminEmail } from "@/lib/admin";
 import { listaSocios } from "@/app/data/socios";
 import { getPlanLabel } from "@/lib/membresia";
-import { addOneMonthFrom } from "@/lib/subscription-lifecycle";
+import { addThirtyDaysFrom } from "@/lib/subscription-lifecycle";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -28,7 +28,7 @@ export async function approveManualCertification(userId: string): Promise<Action
       where: { userId },
       data: {
         status: "manual_active",
-        currentPeriodEnd: addOneMonthFrom(),
+        currentPeriodEnd: addThirtyDaysFrom(),
       },
     });
 
@@ -78,7 +78,7 @@ const adminUpdateSchema = z.object({
   userId: z.string().min(1),
   nombre: z.string().trim().max(120).optional(),
   socioId: z.number().int().positive().nullable().optional(),
-  plan: z.enum(["VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"]).optional(),
+  plan: z.enum(["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"]).optional(),
   status: z.string().trim().max(40).optional(),
   businessName: z.string().trim().max(120).optional(),
   website: z.string().trim().max(500).optional(),
@@ -126,16 +126,16 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
         where: { userId },
         create: {
           userId,
-          plan: plan ?? "VECINO",
+          plan: plan ?? "TURISTA",
           status: status ?? "inactive",
-          ...(status === "manual_active" ? { currentPeriodEnd: addOneMonthFrom() } : {}),
+          ...(status === "manual_active" ? { currentPeriodEnd: addThirtyDaysFrom() } : {}),
         },
         update: {
           ...(plan !== undefined ? { plan } : {}),
           ...(status !== undefined
             ? {
                 status,
-                ...(status === "manual_active" ? { currentPeriodEnd: addOneMonthFrom() } : {}),
+                ...(status === "manual_active" ? { currentPeriodEnd: addThirtyDaysFrom() } : {}),
               }
             : {}),
         },
@@ -373,7 +373,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
   return users.map((user) => {
     const catalogSocio = user.socioId ? listaSocios.find((s) => s.id === user.socioId) : null;
     const businessName = user.socioProfile?.businessName ?? catalogSocio?.name ?? null;
-    const plan = user.subscription?.plan ?? "VECINO";
+    const plan = user.subscription?.plan ?? "TURISTA";
 
     return {
       id: user.id,

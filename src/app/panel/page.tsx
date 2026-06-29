@@ -8,7 +8,7 @@ import { getSession } from "@/lib/auth-utils";
 import { isStripeConfigured } from "@/lib/stripe";
 import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
 import { expireManualSubscriptionsIfNeeded } from "@/lib/subscription-lifecycle";
-import { canAccessPanel, hasCommercialAccess, isVecinoPlan } from "@/lib/membresia";
+import { canAccessPanel, hasCommercialAccess, isTuristaPlan } from "@/lib/membresia";
 import { isAdminEmail } from "@/lib/admin";
 import {
   loadPanelUser,
@@ -62,7 +62,7 @@ export default async function PanelPage({
     const createdAtMs = panelUser.createdAt ? new Date(panelUser.createdAt).getTime() : NaN;
     const isNewUser = Number.isFinite(createdAtMs) && Date.now() - createdAtMs < 5 * 60 * 1000;
     const showWelcome =
-      params.bienvenida === "1" || (isNewUser && isVecinoPlan(refreshedSub.plan));
+      params.bienvenida === "1" || (isNewUser && isTuristaPlan(refreshedSub.plan));
 
     let paymentNotice: string | null = null;
     const hasPaidAccess = hasCommercialAccess(refreshedSub.plan, refreshedSub.status);

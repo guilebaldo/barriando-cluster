@@ -13,7 +13,7 @@ import {
   getSubscriptionStatusLabel,
   getUpgradePlans,
   hasCommercialAccess,
-  isVecinoPlan,
+  isTuristaPlan,
   canLinkSocioAccount,
   isSubscriptionStatusPending,
   type PaidMembershipPlan,
@@ -120,10 +120,10 @@ export default function PanelDashboard({
   const [dismissedNotice, setDismissedNotice] = useState(false);
   const [localPaymentNotice, setLocalPaymentNotice] = useState<string | null>(null);
 
-  const plan = subscription?.plan ?? "VECINO";
+  const plan = subscription?.plan ?? "TURISTA";
   const status = subscription?.status ?? "inactive";
 
-  const isVecino = isVecinoPlan(plan);
+  const isTurista = isTuristaPlan(plan);
   const commercial = hasCommercialAccess(plan, status);
   const canLink = canLinkSocioAccount(status);
   const pendingValidation = isSubscriptionStatusPending(status);
@@ -136,7 +136,7 @@ export default function PanelDashboard({
   });
   const renewalLabel = formatRenewalDisplay(status, subscription?.stripeSubscriptionId);
   const upgradePlans =
-    commercial && !isVecino ? getUpgradePlans(plan) : [];
+    commercial && !isTurista ? getUpgradePlans(plan) : [];
 
   const linkagePending = isLinkagePending(socioProfile?.linkageStatus);
   const linkageApproved = isLinkageApproved(socioProfile?.linkageStatus);
@@ -308,12 +308,12 @@ export default function PanelDashboard({
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-            {isVecino ? "Mi comunidad Barriando" : "Panel del socio"}
+            {isTurista ? "Mi comunidad Barriando" : "Panel del socio"}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
             Bienvenido, {user.nombre} · Plan{" "}
             <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>
-            {!isVecino && (
+            {!isTurista && (
               <>
                 {" "}
                 · Estado{" "}
@@ -335,7 +335,7 @@ export default function PanelDashboard({
         )}
       </div>
 
-      {isVecino ? (
+      {isTurista ? (
         <>
           <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
             <h2 className="text-sm font-bold text-[#27366D] uppercase tracking-widest mb-2">
@@ -344,7 +344,7 @@ export default function PanelDashboard({
             <p className="text-sm text-slate-600 font-light leading-relaxed">
               Como <strong>Vecino</strong> recibirás noticias, invitaciones a eventos y festivales del
               Centro Histórico. Para desbloquear herramientas comerciales —mapa, carrusel, blog y
-              MUAAP— sube de nivel a cualquiera de los planes de pago.
+              MAP — sube de nivel a cualquiera de los planes de pago.
             </p>
           </section>
 
@@ -538,7 +538,7 @@ export default function PanelDashboard({
                   <CreditCard className="w-4 h-4 text-[#27366D]" />
                   <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Membresía</h2>
                 </div>
-                {commercial && !isVecino && (
+                {commercial && !isTurista && (
                   <button
                     type="button"
                     disabled={cancelLoading}
@@ -590,7 +590,7 @@ export default function PanelDashboard({
                     {stripeButtonLabel}
                   </button>
                 )}
-                {!commercial && plan !== "VECINO" && (
+                {!commercial && plan !== "TURISTA" && (
                   <TransferPaymentSection
                     plan={plan}
                     onConfirm={handleManualPayment}

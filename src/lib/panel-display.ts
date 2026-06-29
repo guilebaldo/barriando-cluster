@@ -2,6 +2,7 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 import { formatPlanPriceMxn, type PaidMembershipPlan } from "@/lib/membresia";
 
 const PAID_PLANS = new Set<MembershipPlan>([
+  "VECINO",
   "NEGOCIO_FAMILIAR",
   "MEDIANA_EMPRESA",
   "GRAN_EMPRESA",
@@ -31,7 +32,7 @@ export function getRenewalModeLabel(mode: RenewalMode): string | null {
 }
 
 export const EXPIRY_DISPLAY_FALLBACK = "Sin fecha de vencimiento";
-export const EXPIRY_PENDING_APPROVAL = "Pendiente de aprobación";
+export const EXPIRY_PENDING_APPROVAL = "Pendiente de validación";
 export const RENEWAL_DISPLAY_FALLBACK = "Plan no iniciado";
 
 export function addMonthsFromDate(base: Date | string, months: number): Date {

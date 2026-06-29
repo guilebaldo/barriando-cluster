@@ -17,6 +17,7 @@ enum UserRole {
 }
 
 enum MembershipPlan {
+  TURISTA
   VECINO
   NEGOCIO_FAMILIAR
   MEDIANA_EMPRESA
@@ -89,7 +90,7 @@ model Subscription {
   id                   String         @id @default(cuid())
   userId               String         @unique
   user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan                 MembershipPlan @default(VECINO)
+  plan                 MembershipPlan @default(TURISTA)
   stripeCustomerId     String?        @unique
   stripeSubscriptionId String?        @unique
   status               String         @default("inactive")
@@ -148,34 +149,35 @@ model Stamp {
 }
 
 // ======================
-// MUAAP — Museo Urbano Andante Abierto de Puebla
+// MAP — Museo Abierto de Puebla
 // ======================
 
 model Business {
-  id         Int              @id
+  id         Int             @id
   name       String
   category   String?
   website    String?
   mapsUrl    String?
   latitude   Float?
   longitude  Float?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  milestones MuaapMilestone[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  milestones MapMilestone[]
 }
 
-model MuaapMilestone {
-  id         String   @id @default(cuid())
-  name       String   @unique
+model MapMilestone {
+  id         String    @id @default(cuid())
+  name       String    @unique
   latitude   Float
   longitude  Float
   mapsUrl    String
-  active     Boolean  @default(true)
+  active     Boolean   @default(true)
   zone       Int?
   businessId Int?
   business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([active])
+  @@map("MapMilestone")
 }

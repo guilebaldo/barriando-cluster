@@ -10,6 +10,13 @@ export {
   type RenewalMode,
 } from "@/lib/panel-display";
 
+/** Suma 30 días desde la fecha indicada (aprobaciones manuales). */
+export function addThirtyDaysFrom(from = new Date()): Date {
+  const d = new Date(from);
+  d.setDate(d.getDate() + 30);
+  return d;
+}
+
 /** Suma un mes calendario desde la fecha indicada. */
 export function addOneMonthFrom(from = new Date()): Date {
   const d = new Date(from);

@@ -15,7 +15,7 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 import {
   canAccessPanel,
   hasCommercialAccess,
-  isVecinoPlan,
+  isTuristaPlan,
   type PaidMembershipPlan,
 } from "@/lib/membresia";
 
@@ -29,11 +29,11 @@ export async function clearPendingPlanCookie() {
   jar.delete(PENDING_PLAN_COOKIE);
 }
 
-async function ensureVecinoSubscription(userId: string) {
+async function ensureTuristaSubscription(userId: string) {
   await prisma.subscription.upsert({
     where: { userId },
-    create: { userId, plan: "VECINO", status: "inactive" },
-    update: { plan: "VECINO" },
+    create: { userId, plan: "TURISTA", status: "inactive" },
+    update: {},
   });
 }
 
@@ -76,8 +76,8 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
     await createStripeCheckoutRedirect(session.user.id, pending as PaidMembershipPlan);
   }
 
-  if (!sub || isVecinoPlan(sub.plan)) {
-    await ensureVecinoSubscription(session.user.id);
+  if (!sub || isTuristaPlan(sub.plan)) {
+    await ensureTuristaSubscription(session.user.id);
     redirect("/panel?bienvenida=1");
   }
 

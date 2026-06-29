@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
-const PLANS: MembershipPlan[] = ["VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
+const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
 type AdminTab = "all" | "pending";
 type ResolvedAction = "approved" | "rejected";
@@ -420,7 +420,7 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                               <span className="font-bold text-slate-500 uppercase tracking-wider">Plan</span>
                               <select
                                 className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                                value={editForm.plan ?? "VECINO"}
+                                value={editForm.plan ?? "TURISTA"}
                                 onChange={(e) => setEditForm((f) => ({ ...f, plan: e.target.value }))}
                               >
                                 {PLANS.map((p) => (

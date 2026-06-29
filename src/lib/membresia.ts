@@ -1,7 +1,7 @@
 import type { MembershipPlan } from "@/generated/prisma/client";
 import type { Socio } from "@/app/data/socios";
 
-export type PaidMembershipPlan = Exclude<MembershipPlan, "VECINO">;
+export type PaidMembershipPlan = Exclude<MembershipPlan, "TURISTA">;
 
 export interface PlanDefinition {
   id: MembershipPlan;
@@ -14,17 +14,32 @@ export interface PlanDefinition {
 }
 
 export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
-  VECINO: {
-    id: "VECINO",
-    label: "Vecino",
-    tagline: "Comunidad Barriando",
+  TURISTA: {
+    id: "TURISTA",
+    label: "Turista",
+    tagline: "Visitante del Centro Histórico",
     description:
-      "Plan gratuito para recibir noticias, invitaciones a eventos y formar parte de la comunidad del Centro Histórico.",
+      "Perfil gratuito para explorar Puebla, recibir novedades del Clúster y participar en el Pasaporte MAP.",
     isPaid: false,
     benefits: [
       "Boletín y novedades del Clúster",
-      "Invitaciones a eventos y festivales",
-      "Acceso a la comunidad digital",
+      "Pasaporte digital MAP y sellos de temporada",
+      "Acceso al mapa e itinerario peatonal",
+    ],
+  },
+  VECINO: {
+    id: "VECINO",
+    label: "Vecino",
+    tagline: "Residente local certificado",
+    description:
+      "Suscripción mensual para residentes del Centro Histórico con beneficios exclusivos y reconocimiento comunitario.",
+    isPaid: true,
+    highlight: "Para quienes viven y transitan el barrio cada día",
+    benefits: [
+      "Insignia de vecino certificado en tu perfil",
+      "Descuentos y convocatorias exclusivas para residentes",
+      "Prioridad en eventos barriales del Clúster",
+      "Acceso al Pasaporte MAP y rutas oficiales",
     ],
   },
   NEGOCIO_FAMILIAR: {
@@ -38,7 +53,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
       "Aparecer en el mapa y directorio de socios",
       "Logo en el carrusel de la página principal",
       "Publicar entradas en el blog del Clúster",
-      "Formar parte del MUAAP",
+      "Formar parte del MAP",
     ],
   },
   MEDIANA_EMPRESA: {
@@ -66,13 +81,14 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     benefits: [
       "Todo lo de los planes anteriores",
       "Posicionamiento premium en el carrusel",
-      "Presencia destacada en rutas MUAAP",
+      "Presencia destacada en rutas MAP",
       "Beneficios exclusivos para anfitriones del destino",
     ],
   },
 };
 
 export const PAID_PLANS: PaidMembershipPlan[] = [
+  "VECINO",
   "NEGOCIO_FAMILIAR",
   "MEDIANA_EMPRESA",
   "GRAN_EMPRESA",
@@ -80,6 +96,7 @@ export const PAID_PLANS: PaidMembershipPlan[] = [
 
 /** Precios mensuales en MXN (mostrar en panel / planes). */
 export const PLAN_PRICES_MXN: Record<PaidMembershipPlan, number> = {
+  VECINO: 350,
   NEGOCIO_FAMILIAR: 600,
   MEDIANA_EMPRESA: 950,
   GRAN_EMPRESA: 1500,
@@ -95,7 +112,7 @@ export const COMMERCIAL_BENEFITS = [
   "Aparecer en el mapa y directorio de socios",
   "Mostrar tu logotipo en el carrusel de la página principal",
   "Redactar entradas en el blog del Clúster",
-  "Formar parte del MUAAP (Museo Urbano Andante Abierto de Puebla)",
+  "Formar parte del MAP (Museo Abierto de Puebla)",
 ];
 
 /** Asigna nivel de pago según categoría del catálogo estático de socios. */
@@ -109,12 +126,17 @@ export function getPlanForSocio(socio: Socio): PaidMembershipPlan {
   return "NEGOCIO_FAMILIAR";
 }
 
+export function isTuristaPlan(plan: MembershipPlan): boolean {
+  return plan === "TURISTA";
+}
+
+/** @deprecated Usar isTuristaPlan */
 export function isVecinoPlan(plan: MembershipPlan): boolean {
-  return plan === "VECINO";
+  return isTuristaPlan(plan);
 }
 
 export function hasCommercialAccess(plan: MembershipPlan, status: string): boolean {
-  if (plan === "VECINO") return false;
+  if (plan === "TURISTA") return false;
   return status === "active" || status === "manual_active";
 }
 
@@ -124,7 +146,7 @@ export function canAccessPanel(
   status: string,
   opts?: { stripeSubscriptionId?: string | null; stripeCustomerId?: string | null }
 ): boolean {
-  if (isVecinoPlan(plan)) return true;
+  if (isTuristaPlan(plan)) return true;
   if (hasCommercialAccess(plan, status)) return true;
   if (status === "manual_pending") return true;
   if (opts?.stripeSubscriptionId || opts?.stripeCustomerId) return true;
@@ -137,7 +159,7 @@ export function canLinkSocioAccount(status: string): boolean {
 }
 
 export function getUpgradePlans(current: MembershipPlan): PaidMembershipPlan[] {
-  if (current === "VECINO" || !PAID_PLANS.includes(current as PaidMembershipPlan)) {
+  if (current === "TURISTA" || !PAID_PLANS.includes(current as PaidMembershipPlan)) {
     return [];
   }
   const idx = PAID_PLANS.indexOf(current as PaidMembershipPlan);
@@ -151,7 +173,7 @@ export function getPlanLabel(plan: MembershipPlan): string {
 
 export function getSubscriptionStatusLabel(status: string): string {
   if (status === "active" || status === "manual_active") return "Activa";
-  if (status === "manual_pending") return "Pendiente de Validación";
+  if (status === "manual_pending") return "Pendiente de validación";
   if (status === "manual_rejected") return "Rechazada";
   return "Inactiva / pendiente";
 }

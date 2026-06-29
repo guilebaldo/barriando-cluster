@@ -9,7 +9,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 const links = [
   { href: "/", label: "Inicio" },
   { href: "/documenta", label: "Documenta", badge: "Nuevo" },
-  { href: "/muaap", label: "Ruta MUAAP" },
+  { href: "/map", label: "Ruta MAP" },
   { href: "/socios", label: "Socios" },
   { href: "/equipo", label: "Equipo" },
 ] as const;
@@ -23,7 +23,7 @@ function navLinkClass(pathname: string, href: string) {
   const active = isNavActive(pathname, href);
   return active
     ? "text-amber-400"
-    : "text-white hover:text-amber-400 transition-colors duration-200";
+    : "text-white hover:text-amber-400 active:text-red-300 transition-colors duration-200";
 }
 
 function UserMenu({ mobile = false }: { mobile?: boolean }) {
@@ -172,12 +172,12 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-[#27366D] border-b border-[#1e2b58] sticky top-0 z-50 safe-area-top">
+    <nav className="bg-[#27366D] border-b border-[#1e2b58] sticky top-0 z-[50] safe-area-top">
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
         <Link
           href="/"
           onClick={() => window.scrollTo(0, 0)}
-          className="text-white font-black tracking-tight text-lg transition min-w-0 group"
+          className="text-white font-black tracking-tight text-lg transition min-w-0 group active:opacity-80"
         >
           <span className="text-white group-hover:text-amber-400 transition-colors duration-200">Barriando</span>
           <span className="text-slate-300 text-[10px] font-semibold block sm:inline sm:ml-2 sm:text-xs normal-case tracking-normal">

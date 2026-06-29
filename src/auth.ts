@@ -99,7 +99,7 @@ async function enrichTokenFromDb(userId: string) {
     socioId: dbUser.socioId ?? null,
     role: dbUser.role,
     nombre: dbUser.nombre ?? "",
-    plan: (dbUser.subscription?.plan ?? "VECINO") as MembershipPlan,
+    plan: (dbUser.subscription?.plan ?? "TURISTA") as MembershipPlan,
   };
 }
 
@@ -206,7 +206,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         session.user.socioId = (token.socioId as number | null) ?? null;
         session.user.role = (token.role as UserRole) ?? "SOCIO";
-        session.user.plan = (token.plan as MembershipPlan) ?? "VECINO";
+        session.user.plan = (token.plan as MembershipPlan) ?? "TURISTA";
         if (token.nombre) session.user.name = token.nombre as string;
       }
       return session;
@@ -236,7 +236,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         await prisma.subscription.upsert({
           where: { userId: user.id },
-          create: { userId: user.id, plan: "VECINO", status: "inactive" },
+          create: { userId: user.id, plan: "TURISTA", status: "inactive" },
           update: {},
         });
       } catch (error) {

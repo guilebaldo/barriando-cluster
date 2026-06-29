@@ -5,7 +5,7 @@ export interface Hito {
   socioId?: number;
 }
 
-/** Inventario MUAAP alineado con data/barriando-muaap-hitos.csv */
+/** Inventario MAP alineado con data/barriando-muaap-hitos.csv */
 export const listaHitos: Hito[] = [
   { id: 1, nombre: "Teatro Principal", zona: 1 },
   { id: 2, nombre: "Mesón del Cristo", zona: 1 },

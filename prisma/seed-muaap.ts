@@ -37,7 +37,7 @@ async function seedMilestones(csvPath: string) {
   let inserted = 0;
 
   for (const row of rows) {
-    await prisma.muaapMilestone.upsert({
+    await prisma.mapMilestone.upsert({
       where: { name: row.name },
       create: {
         name: row.name,
@@ -61,7 +61,7 @@ async function seedMilestones(csvPath: string) {
   }
 
   const csvNames = rows.map((r) => r.name);
-  const deactivated = await prisma.muaapMilestone.updateMany({
+  const deactivated = await prisma.mapMilestone.updateMany({
     where: { name: { notIn: csvNames } },
     data: { active: false },
   });

@@ -293,16 +293,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* MUAAP */}
+      {/* MAP */}
       <section className="py-20 px-6 max-w-5xl mx-auto">
         <div className="grid md:grid-cols-12 gap-12 items-center">
           <Reveal className="md:col-span-7">
             <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Proyecto insignia</span>
             <h2 className="text-2xl md:text-4xl font-extrabold mt-1 mb-6 text-slate-950 font-serif-cluster uppercase tracking-wide">
-              MUAAP: Museo Urbano Andante Abierto de Puebla
+              MAP: Museo Abierto de Puebla
             </h2>
             <p className="text-slate-600 text-sm leading-relaxed mb-4 font-light">
-              El MUAAP transforma el espacio público del Centro Histórico y sus barrios tradicionales en galerías vivas.
+              El MAP transforma el espacio público del Centro Histórico y sus barrios tradicionales en galerías vivas.
               La historia se camina, se observa en las fachadas y se saborea en negocios certificados del Clúster.
             </p>
             <p className="text-slate-600 text-sm leading-relaxed font-light">
@@ -311,10 +311,10 @@ export default function Home() {
               4 zonas conecta herencia virreinal con desarrollo comunitario y oferta turística verificada.
             </p>
             <a
-              href="/muaap"
-              className="inline-flex items-center gap-1 mt-6 text-xs font-bold text-[#27366D] hover:text-amber-500 transition uppercase tracking-wider"
+              href="/map"
+              className="inline-flex items-center gap-1 mt-6 text-xs font-bold text-[#27366D] hover:text-amber-500 active:text-red-800 transition-all uppercase tracking-wider"
             >
-              Explorar inventario MUAAP <ArrowUpRight className="w-3.5 h-3.5" />
+              Explorar ruta MAP <ArrowUpRight className="w-3.5 h-3.5" />
             </a>
           </Reveal>
 

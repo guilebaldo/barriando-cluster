@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { listaSocios } from "@/app/data/socios";
-import { canLinkSocioAccount, getPlanLabel, isVecinoPlan } from "@/lib/membresia";
+import { canLinkSocioAccount, getPlanLabel, isTuristaPlan } from "@/lib/membresia";
 import { getStripe } from "@/lib/stripe";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
@@ -197,7 +197,7 @@ export async function cancelMembership(): Promise<CancelMembershipResult> {
   try {
     const session = await requireSession();
     const subscription = await prisma.subscription.findUnique({ where: { userId: session.id } });
-    if (!subscription || isVecinoPlan(subscription.plan)) {
+    if (!subscription || isTuristaPlan(subscription.plan)) {
       return { ok: false, error: "No tienes una membresía de pago activa." };
     }
 
@@ -298,7 +298,7 @@ export async function reportManualPayment(
   try {
     const session = await requireSession();
 
-    if (plan === "VECINO") {
+    if (plan === "TURISTA") {
       return { ok: false, error: "Selecciona un plan de pago." };
     }
 

@@ -1,7 +1,7 @@
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
-import { hasCommercialAccess, isVecinoPlan } from "@/lib/membresia";
+import { hasCommercialAccess, isTuristaPlan } from "@/lib/membresia";
 
 const PAID_PLANS = new Set<MembershipPlan>([
   "NEGOCIO_FAMILIAR",
@@ -31,7 +31,7 @@ export async function syncStripeSubscriptionForUser(userId: string): Promise<boo
     include: { subscription: true },
   });
   const sub = user?.subscription;
-  if (!sub || isVecinoPlan(sub.plan)) return false;
+  if (!sub || isTuristaPlan(sub.plan)) return false;
 
   try {
     if (sub.stripeSubscriptionId) {

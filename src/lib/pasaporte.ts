@@ -32,32 +32,41 @@ export function findRestaurantBySlug(slug: string | null | undefined): Socio | n
   return byId ?? null;
 }
 
-export type PoblanoTier = {
-  id: "visitante" | "cepa" | "heroe";
+export type PassportRank = {
+  id: "turista" | "poblano";
   label: string;
-  minStamps: number;
-  maxStamps: number | null;
+  isComplete: boolean;
 };
 
-export const POBLANO_TIERS: PoblanoTier[] = [
-  { id: "visitante", label: "Visitante", minStamps: 0, maxStamps: 2 },
-  { id: "cepa", label: "Poblano de Cepa", minStamps: 3, maxStamps: 5 },
-  { id: "heroe", label: "Héroe del Ejército Trigarante", minStamps: 6, maxStamps: null },
-];
-
-export function getPoblanoTier(totalStamps: number): PoblanoTier {
-  if (totalStamps >= 6) return POBLANO_TIERS[2];
-  if (totalStamps >= 3) return POBLANO_TIERS[1];
-  return POBLANO_TIERS[0];
+export function getPassportRank(
+  uniqueRestaurantsStamped: number,
+  totalParticipating: number
+): PassportRank {
+  if (totalParticipating > 0 && uniqueRestaurantsStamped >= totalParticipating) {
+    return { id: "poblano", label: "Poblano", isComplete: true };
+  }
+  return { id: "turista", label: "Turista", isComplete: false };
 }
 
-export function getPoblanoProgress(totalStamps: number): number {
-  const tier = getPoblanoTier(totalStamps);
-  if (tier.id === "heroe") return 100;
-  if (tier.id === "cepa") {
-    return Math.min(100, Math.round(((totalStamps - 2) / 3) * 100));
-  }
-  return Math.min(100, Math.round((totalStamps / 2) * 100));
+export function getPassportProgress(
+  uniqueRestaurantsStamped: number,
+  totalParticipating: number
+): number {
+  if (totalParticipating <= 0) return 0;
+  return Math.min(100, Math.round((uniqueRestaurantsStamped / totalParticipating) * 100));
+}
+
+/** @deprecated Usar getPassportRank */
+export type PoblanoTier = PassportRank & { minStamps: number; maxStamps: number | null };
+
+/** @deprecated */
+export function getPoblanoTier(totalStamps: number): PassportRank {
+  return getPassportRank(totalStamps, 6);
+}
+
+/** @deprecated */
+export function getPoblanoProgress(uniqueStamped: number, total = 6): number {
+  return getPassportProgress(uniqueStamped, total);
 }
 
 export type StampSummary = {

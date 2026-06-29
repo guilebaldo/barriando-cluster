@@ -22,8 +22,8 @@ export default function PlanesPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
-          <PlanCard planId="VECINO" cta="Empezar Gratis" href={registroUrl("VECINO")} featured={false} />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+          <PlanCard planId="TURISTA" cta="Empezar Gratis" href={registroUrl("TURISTA")} featured={false} />
 
           {PAID_PLANS.map((planId) => (
             <PlanCard

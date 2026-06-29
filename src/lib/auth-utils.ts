@@ -22,7 +22,7 @@ export async function getSession(): Promise<SessionUser | null> {
     nombre: session.user.name ?? "",
     role: session.user.role as UserRole,
     socioId: session.user.socioId ?? null,
-    plan: session.user.plan ?? "VECINO",
+    plan: session.user.plan ?? "TURISTA",
   };
 }
 

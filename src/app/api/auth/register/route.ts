@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         nombre: data.nombre,
         subscription: {
           create: {
-            plan: "VECINO",
+            plan: "TURISTA",
             status: "inactive",
           },
         },

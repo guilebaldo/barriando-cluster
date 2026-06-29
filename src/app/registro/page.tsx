@@ -7,6 +7,6 @@ export default async function RegistroPage({
   searchParams: Promise<{ plan?: string }>;
 }) {
   const params = await searchParams;
-  const plan = parsePlanSlug(params.plan) ?? "VECINO";
+  const plan = parsePlanSlug(params.plan) ?? "TURISTA";
   return <RegistroClient plan={plan} />;
 }

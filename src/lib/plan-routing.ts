@@ -1,11 +1,12 @@
 import type { MembershipPlan } from "@/generated/prisma/client";
-import { isVecinoPlan } from "@/lib/membresia";
+import { isTuristaPlan } from "@/lib/membresia";
 
 export const PENDING_PLAN_COOKIE = "barriando_pending_plan";
 export const ONBOARDING_CONTINUE_PATH = "/api/onboarding/continue";
 
 /** Slugs usados en `/registro?plan=...` */
 export const PLAN_SLUGS = {
+  turista: "TURISTA",
   vecino: "VECINO",
   negocio_familiar: "NEGOCIO_FAMILIAR",
   mediana_empresa: "MEDIANA_EMPRESA",
@@ -15,6 +16,7 @@ export const PLAN_SLUGS = {
 export type PlanSlug = keyof typeof PLAN_SLUGS;
 
 const SLUG_BY_PLAN: Record<MembershipPlan, PlanSlug> = {
+  TURISTA: "turista",
   VECINO: "vecino",
   NEGOCIO_FAMILIAR: "negocio_familiar",
   MEDIANA_EMPRESA: "mediana_empresa",
@@ -36,7 +38,13 @@ export function parsePlanSlug(raw?: string | null): MembershipPlan | null {
     return PLAN_SLUGS[key as PlanSlug];
   }
   const upper = raw.trim().toUpperCase();
-  const plans: MembershipPlan[] = ["VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
+  const plans: MembershipPlan[] = [
+    "TURISTA",
+    "VECINO",
+    "NEGOCIO_FAMILIAR",
+    "MEDIANA_EMPRESA",
+    "GRAN_EMPRESA",
+  ];
   if (plans.includes(upper as MembershipPlan)) {
     return upper as MembershipPlan;
   }
@@ -44,5 +52,5 @@ export function parsePlanSlug(raw?: string | null): MembershipPlan | null {
 }
 
 export function isPaidMembershipPlan(plan: MembershipPlan): boolean {
-  return !isVecinoPlan(plan);
+  return !isTuristaPlan(plan);
 }

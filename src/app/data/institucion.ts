@@ -91,10 +91,10 @@ export const proyectosDestacados = [
     enlace: "#contacto",
   },
   {
-    titulo: "MUAAP — Museo Urbano Andante Abierto de Puebla",
+    titulo: "MAP — Museo Abierto de Puebla",
     descripcion:
       "Ruta patrimonial con {hitos} hitos históricos que conectan el Centro Histórico con barrios fundacionales e integran negocios certificados.",
-    enlace: "/muaap",
+    enlace: "/map",
   },
   {
     titulo: "Red de Socios Certificados",
@@ -106,7 +106,7 @@ export const proyectosDestacados = [
 
 export const indicadoresImpacto = [
   { valor: "{socios}", etiqueta: "Empresas socias activas", contexto: "Red certificada de hospedaje, gastronomía, tours, museos y servicios" },
-  { valor: "{hitos}", etiqueta: "Hitos patrimoniales MUAAP", contexto: "Puntos históricos verificados en el Centro y barrios tradicionales" },
+  { valor: "{hitos}", etiqueta: "Hitos patrimoniales MAP", contexto: "Puntos históricos verificados en el Centro y barrios tradicionales" },
   { valor: "3+", etiqueta: "Festivales emblemáticos", contexto: "Festival Fundacional, Cabalgata de Iturbide y Cinco de Mayo Fest" },
   { valor: "6", etiqueta: "Equipo directivo", contexto: "Liderazgo que coordina productos, eventos y operación del Clúster" },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -20,7 +20,8 @@ interface PasaporteClientProps {
   stampMap: Record<number, { count: number; lastStampAt: string }>;
   totalStamps: number;
   tierLabel: string;
-  tierId: "visitante" | "cepa" | "heroe";
+  tierId: "turista" | "poblano";
+  isPoblanoComplete: boolean;
   progress: number;
 }
 
@@ -38,9 +39,19 @@ function PasaporteInner({
   totalStamps,
   tierLabel,
   tierId,
+  isPoblanoComplete,
   progress,
 }: PasaporteClientProps) {
   const searchParams = useSearchParams();
+  const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
+
+  useEffect(() => {
+    if (isPoblanoComplete) {
+      setShowPoblanoCelebration(true);
+      const t = setTimeout(() => setShowPoblanoCelebration(false), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [isPoblanoComplete]);
 
   const notice = useMemo(() => {
     const sello = searchParams.get("sello");
@@ -68,7 +79,7 @@ function PasaporteInner({
   }, [searchParams]);
 
   const tierAccent =
-    tierId === "heroe" ? "text-amber-700" : tierId === "cepa" ? "text-emerald-800" : "text-stone-600";
+    tierId === "poblano" ? "text-amber-600" : "text-stone-600";
 
   return (
     <div className="min-h-[80vh] bg-gradient-to-b from-amber-50 via-orange-50/40 to-amber-100/60 py-10 px-4 sm:px-6">
@@ -117,27 +128,55 @@ function PasaporteInner({
             )}
           </div>
 
-          {/* Poblanómetro */}
+          {/* Rango de temporada */}
           <div className="relative px-6 sm:px-10 py-6 border-b border-amber-200/50 bg-white/40">
+            {showPoblanoCelebration && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-amber-100/90 backdrop-blur-sm animate-pulse rounded-none">
+                <div className="text-center px-6 py-4">
+                  <span className="text-4xl block mb-2">👑</span>
+                  <p className="text-lg font-black font-serif-cluster text-amber-800 uppercase tracking-wide">
+                    ¡Eres un verdadero Poblano!
+                  </p>
+                  <p className="text-xs text-amber-900/80 mt-1">
+                    Completaste todos los restaurantes de la temporada
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
-                  Poblanómetro
+                  Rango MAP · Chiles en Nogada
                 </p>
-                <p className={`text-lg font-bold font-serif-cluster ${tierAccent}`}>{tierLabel}</p>
+                <p className={`text-lg font-bold font-serif-cluster flex items-center gap-2 ${tierAccent}`}>
+                  {tierId === "poblano" && (
+                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-600 text-white text-sm shadow-md ring-2 ring-amber-400/50">
+                      ★
+                    </span>
+                  )}
+                  {tierLabel}
+                </p>
               </div>
               <p className="text-xs text-stone-500">
-                <strong className="text-stone-800">{totalStamps}</strong> chiles registrados
+                <strong className="text-stone-800">{totalStamps}</strong> sellos ·{" "}
+                <strong className="text-stone-800">
+                  {Object.values(stampMap).filter((s) => s.count > 0).length}
+                </strong>{" "}
+                restaurantes visitados
               </p>
             </div>
             <div className="h-2.5 rounded-full bg-stone-200/80 overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-600 via-red-600 to-blue-800 transition-all duration-700"
+                className={`h-full rounded-full transition-all duration-700 ${
+                  tierId === "poblano"
+                    ? "bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"
+                    : "bg-gradient-to-r from-stone-400 to-[#27366D]"
+                }`}
                 style={{ width: `${progress}%` }}
               />
             </div>
             <p className="text-[10px] text-stone-400 mt-2">
-              0–2 Visitante · 3–5 Poblano de Cepa · 6+ Héroe del Ejército Trigarante
+              Empiezas como Turista · Completa todos los restaurantes para la insignia dorada Poblano
             </p>
           </div>
 
@@ -159,7 +198,7 @@ function PasaporteInner({
                   >
                     <div className="relative">
                       <div
-                        className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-dashed flex flex-col items-center justify-center p-2 transition ${
+                        className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-dashed flex flex-col items-center justify-center p-2 transition-all active:scale-95 ${
                           hasStamp
                             ? `bg-gradient-to-br ${colorClass} text-white shadow-md rotate-[-8deg]`
                             : "border-stone-300 bg-stone-100/50 text-stone-400"

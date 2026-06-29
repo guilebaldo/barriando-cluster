@@ -8,7 +8,7 @@ import {
 } from "@/lib/pending-plan-cookie";
 
 function attachPendingPlanCookie(request: NextRequest, response: NextResponse) {
-  const plan = parsePlanSlug(request.nextUrl.searchParams.get("plan")) ?? "VECINO";
+  const plan = parsePlanSlug(request.nextUrl.searchParams.get("plan")) ?? "TURISTA";
   response.cookies.set(PENDING_PLAN_COOKIE, pendingPlanCookieValue(plan), pendingPlanCookieOptions());
   return response;
 }

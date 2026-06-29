@@ -23,7 +23,7 @@ export type SafeSocioProfile = {
 };
 
 export const DEFAULT_PANEL_SUBSCRIPTION: SafePanelSubscription = {
-  plan: "VECINO",
+  plan: "TURISTA",
   status: "inactive",
   currentPeriodEnd: null,
   stripeSubscriptionId: null,
@@ -63,7 +63,7 @@ export function normalizePanelSubscription(
   }
 
   return {
-    plan: isMembershipPlan(sub.plan) ? sub.plan : "VECINO",
+    plan: isMembershipPlan(sub.plan) ? sub.plan : "TURISTA",
     status: typeof sub.status === "string" && sub.status.trim() ? sub.status : "inactive",
     currentPeriodEnd,
     stripeSubscriptionId: sub.stripeSubscriptionId ?? null,
