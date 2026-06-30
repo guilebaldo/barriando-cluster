@@ -179,13 +179,7 @@ export default function PanelDashboard({
     razonSocial: socioProfile?.razonSocial ?? "",
     regimenFiscal: socioProfile?.regimenFiscal ?? "",
     usoCfdi: socioProfile?.usoCfdi ?? "",
-    billingStreet: socioProfile?.billingStreet ?? "",
-    billingColonia: socioProfile?.billingColonia ?? "",
-    billingCiudad: socioProfile?.billingCiudad ?? "",
-    billingEstado: socioProfile?.billingEstado ?? "",
-    billingPais: socioProfile?.billingPais ?? "México",
     billingCodigoPostal: socioProfile?.billingCodigoPostal ?? "",
-    billingAddressFull: socioProfile?.billingAddressFull ?? "",
   };
 
   async function refreshSession() {
@@ -338,7 +332,8 @@ export default function PanelDashboard({
               </h2>
               <p className="text-sm text-slate-200 mt-2 font-light">
                 Bienvenido/a, <strong className="text-white">{user.nombre}</strong>. Ya formas parte
-                oficial de la comunidad Barriando como miembro <strong>Vecino</strong>.
+                oficial de la comunidad Barriando como{" "}
+                <strong>{isTurista ? "Turista" : getPlanLabel(plan)}</strong>.
               </p>
             </div>
           </div>

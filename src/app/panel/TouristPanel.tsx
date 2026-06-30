@@ -49,6 +49,7 @@ export default function TouristPanel({ user, milestonesVisited, totalMilestones 
       <section className="grid sm:grid-cols-2 gap-4">
         <Link
           href="/map"
+          prefetch={false}
           className="group flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:border-[#27366D]/30 hover:shadow-md transition"
         >
           <div className="w-10 h-10 rounded-lg bg-[#27366D]/10 flex items-center justify-center">
@@ -63,6 +64,7 @@ export default function TouristPanel({ user, milestonesVisited, totalMilestones 
         </Link>
         <Link
           href="/pasaporte"
+          prefetch={false}
           className="group flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:border-amber-400/50 hover:shadow-md transition"
         >
           <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -103,6 +105,15 @@ export default function TouristPanel({ user, milestonesVisited, totalMilestones 
         </p>
         <p className="text-sm text-slate-500 font-light">
           Colección de Sellos Dorados de Temporada (Chile en Nogada)
+        </p>
+      </section>
+
+      <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <p className="text-[11px] text-slate-500 text-center leading-relaxed">
+          ¿Quieres certificar tu negocio en el Centro Histórico?{" "}
+          <Link href="/planes" className="text-[#27366D]/80 hover:text-[#27366D] hover:underline">
+            Ver planes de membresía
+          </Link>
         </p>
       </section>
 

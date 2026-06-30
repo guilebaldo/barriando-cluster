@@ -58,6 +58,31 @@ async function createStripeCheckoutRedirect(userId: string, plan: PaidMembership
   redirect(url);
 }
 
+/** Cambia el plan de un usuario ya autenticado (p. ej. desde /planes tras certificación). */
+export async function selectMembershipPlanForUser(plan: MembershipPlan) {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/login");
+
+  await syncStripeSubscriptionForUser(session.user.id);
+  const sub = await loadSubscription(session.user.id);
+
+  if (sub && hasCommercialAccess(sub.plan, sub.status) && sub.plan === plan) {
+    redirect("/panel");
+  }
+
+  if (isTuristaPlan(plan)) {
+    await ensureTuristaSubscription(session.user.id);
+    redirect("/panel");
+  }
+
+  if (isPaidMembershipPlan(plan)) {
+    await ensurePendingPaidPlan(session.user.id, plan as PaidMembershipPlan);
+    redirect("/certificacion/pago");
+  }
+
+  redirect("/planes");
+}
+
 /** Tras autenticación: turista → panel; plan de pago → pantalla de certificación. */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();

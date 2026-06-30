@@ -9,26 +9,25 @@ import { canLinkSocioAccount, getPlanLabel, isTuristaPlan } from "@/lib/membresi
 import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
 import { getStripe } from "@/lib/stripe";
 import type { MembershipPlan } from "@/generated/prisma/client";
+import { normalizeWebsiteUrl, parseWebsiteUrl } from "@/lib/url-utils";
+
+const urlField = z
+  .string()
+  .trim()
+  .min(1, "Ingresa una URL válida.")
+  .max(500)
+  .transform((v) => normalizeWebsiteUrl(v))
+  .refine((v) => parseWebsiteUrl(v) !== null, "Ingresa una URL válida.");
 
 const profileSchema = z.object({
   businessName: z.string().trim().max(120).optional(),
-  website: z.string().trim().url("Ingresa una URL válida para el sitio web.").max(500),
-  googleBusinessUrl: z
-    .string()
-    .trim()
-    .url("Ingresa una URL válida de Google My Business.")
-    .max(500),
+  website: urlField,
+  googleBusinessUrl: urlField,
   rfc: z.string().trim().min(12, "RFC inválido.").max(13),
   razonSocial: z.string().trim().min(3, "Ingresa la razón social.").max(200),
   regimenFiscal: z.string().trim().min(3, "Selecciona el régimen fiscal.").max(120),
   usoCfdi: z.string().trim().min(3, "Selecciona el uso de CFDI.").max(80),
-  billingStreet: z.string().trim().min(3, "Ingresa calle y número.").max(200),
-  billingColonia: z.string().trim().min(2, "Ingresa la colonia.").max(120),
-  billingCiudad: z.string().trim().min(2, "Ingresa ciudad o municipio.").max(120),
-  billingEstado: z.string().trim().min(2, "Ingresa el estado.").max(80),
-  billingPais: z.string().trim().min(2, "Ingresa el país.").max(80),
   billingCodigoPostal: z.string().trim().min(4, "Ingresa el C.P.").max(10),
-  billingAddressFull: z.string().trim().min(5, "Ingresa la dirección completa.").max(400),
 });
 
 const manualBusinessSchema = z.object({
@@ -42,6 +41,7 @@ const manualBusinessSchema = z.object({
   razonSocial: z.string().trim().min(3, "Ingresa la razón social.").max(200),
   regimenFiscal: z.string().trim().min(3, "Selecciona el régimen fiscal.").max(120),
   usoCfdi: z.string().trim().min(3, "Selecciona el uso de CFDI.").max(80),
+  billingCodigoPostal: z.string().trim().min(4, "Ingresa el C.P.").max(10),
 });
 
 export type LinkSocioResult =
@@ -75,6 +75,7 @@ async function upsertPendingProfile(
     razonSocial?: string | null;
     regimenFiscal?: string | null;
     usoCfdi?: string | null;
+    billingCodigoPostal?: string | null;
   }
 ) {
   await prisma.socioProfile.upsert({
@@ -94,6 +95,7 @@ async function upsertPendingProfile(
       razonSocial: data.razonSocial ?? null,
       regimenFiscal: data.regimenFiscal ?? null,
       usoCfdi: data.usoCfdi ?? null,
+      billingCodigoPostal: data.billingCodigoPostal ?? null,
     },
     update: {
       businessName: data.businessName,
@@ -109,6 +111,7 @@ async function upsertPendingProfile(
       razonSocial: data.razonSocial ?? null,
       regimenFiscal: data.regimenFiscal ?? null,
       usoCfdi: data.usoCfdi ?? null,
+      billingCodigoPostal: data.billingCodigoPostal ?? null,
     },
   });
 }
@@ -177,6 +180,7 @@ export async function registerManualBusiness(input: {
   razonSocial: string;
   regimenFiscal: string;
   usoCfdi: string;
+  billingCodigoPostal: string;
 }): Promise<LinkSocioResult> {
   try {
     const session = await requireSession();
@@ -199,15 +203,15 @@ export async function registerManualBusiness(input: {
       razonSocial,
       regimenFiscal,
       usoCfdi,
+      billingCodigoPostal,
     } = parsed.data;
     let websiteUrl: string | null = null;
     if (website?.trim()) {
-      try {
-        new URL(website.trim());
-        websiteUrl = website.trim();
-      } catch {
+      const parsedUrl = parseWebsiteUrl(website);
+      if (!parsedUrl) {
         return { ok: false, error: "Ingresa una URL de sitio web válida o déjala vacía." };
       }
+      websiteUrl = parsedUrl;
     }
 
     await upsertPendingProfile(session.id, {
@@ -222,6 +226,7 @@ export async function registerManualBusiness(input: {
       razonSocial,
       regimenFiscal,
       usoCfdi,
+      billingCodigoPostal,
     });
 
     revalidatePath("/panel");
@@ -301,13 +306,7 @@ export async function updateSocioProfile(input: {
   razonSocial: string;
   regimenFiscal: string;
   usoCfdi: string;
-  billingStreet: string;
-  billingColonia: string;
-  billingCiudad: string;
-  billingEstado: string;
-  billingPais: string;
   billingCodigoPostal: string;
-  billingAddressFull: string;
 }): Promise<UpdateProfileResult> {
   try {
     const session = await requireSession();

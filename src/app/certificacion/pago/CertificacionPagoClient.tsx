@@ -163,7 +163,7 @@ export default function CertificacionPagoClient({
           </p>
 
           <Link
-            href="/planes"
+            href="/planes?cambio=1"
             className="block text-center text-xs text-[#27366D] hover:underline"
           >
             Cambiar plan

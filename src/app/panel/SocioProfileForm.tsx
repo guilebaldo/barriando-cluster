@@ -3,8 +3,9 @@
 import { useCallback, useMemo, useState } from "react";
 import { Building2, Save } from "lucide-react";
 import { updateSocioProfile } from "./actions";
-import BillingPlacesAutocomplete, { type ParsedBillingAddress } from "./BillingPlacesAutocomplete";
+import GmbPlacesAutocomplete from "./GmbPlacesAutocomplete";
 import { REGIMEN_OPTIONS, CFDI_OPTIONS } from "@/lib/fiscal-options";
+import { normalizeWebsiteUrl } from "@/lib/url-utils";
 
 export interface SocioProfileFormInitial {
   businessName: string;
@@ -14,13 +15,7 @@ export interface SocioProfileFormInitial {
   razonSocial: string;
   regimenFiscal: string;
   usoCfdi: string;
-  billingStreet: string;
-  billingColonia: string;
-  billingCiudad: string;
-  billingEstado: string;
-  billingPais: string;
   billingCodigoPostal: string;
-  billingAddressFull: string;
 }
 
 interface SocioProfileFormProps {
@@ -31,6 +26,7 @@ interface SocioProfileFormProps {
 
 export default function SocioProfileForm({ initial, disabled, hideBusinessName }: SocioProfileFormProps) {
   const [form, setForm] = useState(initial);
+  const [gmbLabel, setGmbLabel] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -42,8 +38,8 @@ export default function SocioProfileForm({ initial, disabled, hideBusinessName }
   const set = (key: keyof SocioProfileFormInitial, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const onAddressSelected = useCallback((parsed: ParsedBillingAddress) => {
-    setForm((prev) => ({ ...prev, ...parsed }));
+  const normalizeUrlField = useCallback((key: "website" | "googleBusinessUrl") => {
+    setForm((prev) => ({ ...prev, [key]: normalizeWebsiteUrl(prev[key]) }));
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,12 +47,18 @@ export default function SocioProfileForm({ initial, disabled, hideBusinessName }
     if (!isDirty) return;
     setMsg("");
     setLoading(true);
-    const result = await updateSocioProfile(form);
+    const payload = {
+      ...form,
+      website: normalizeWebsiteUrl(form.website),
+      googleBusinessUrl: normalizeWebsiteUrl(form.googleBusinessUrl),
+    };
+    const result = await updateSocioProfile(payload);
     setLoading(false);
     if (!result.ok) {
       setMsg(result.error);
       return;
     }
+    setForm(payload);
     setMsg("Perfil y datos fiscales guardados correctamente.");
   }
 
@@ -90,33 +92,41 @@ export default function SocioProfileForm({ initial, disabled, hideBusinessName }
         <label className="block">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sitio web</span>
           <input
-            type="url"
+            type="text"
             required
             disabled={disabled || loading}
             value={form.website}
             onChange={(e) => set("website", e.target.value)}
-            placeholder="https://"
+            onBlur={() => normalizeUrlField("website")}
+            placeholder="tunegocio.com"
             className={`${inputClass} mt-1`}
           />
         </label>
-        <label className="block">
+        <label className="block sm:col-span-2">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             Google My Business
           </span>
-          <input
-            type="url"
-            required
+          <GmbPlacesAutocomplete
+            value={gmbLabel || form.googleBusinessUrl}
+            onChange={setGmbLabel}
+            onPlaceSelected={(parsed) => {
+              setGmbLabel(parsed.label);
+              set("googleBusinessUrl", parsed.googleBusinessUrl);
+            }}
             disabled={disabled || loading}
-            value={form.googleBusinessUrl}
-            onChange={(e) => set("googleBusinessUrl", e.target.value)}
-            placeholder="https://maps.google.com/..."
             className={`${inputClass} mt-1`}
           />
+          {form.googleBusinessUrl && (
+            <p className="text-[10px] text-slate-400 mt-1 truncate">{form.googleBusinessUrl}</p>
+          )}
         </label>
 
         <div className="sm:col-span-2 pt-2 border-t border-slate-100">
-          <p className="text-[10px] font-bold text-[#27366D] uppercase tracking-widest mb-3">
-            Datos de facturación
+          <p className="text-[10px] font-bold text-[#27366D] uppercase tracking-widest mb-1">
+            Domicilio fiscal
+          </p>
+          <p className="text-[10px] text-slate-400 font-light">
+            Solo el código postal fiscal. La ubicación del negocio se gestiona aparte.
           </p>
         </div>
 
@@ -183,92 +193,10 @@ export default function SocioProfileForm({ initial, disabled, hideBusinessName }
             ))}
           </select>
         </label>
-
-        <label className="block sm:col-span-2">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Buscar dirección fiscal (Google Places)
-          </span>
-          <BillingPlacesAutocomplete
-            disabled={disabled || loading}
-            onAddressSelected={onAddressSelected}
-            className={`${inputClass} mt-1`}
-          />
-        </label>
-
-        <label className="block sm:col-span-2">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Dirección completa
-          </span>
-          <input
-            type="text"
-            required
-            disabled={disabled || loading}
-            value={form.billingAddressFull}
-            onChange={(e) => set("billingAddressFull", e.target.value)}
-            className={`${inputClass} mt-1`}
-          />
-        </label>
         <label className="block">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Calle y número
+            Código postal fiscal
           </span>
-          <input
-            type="text"
-            required
-            disabled={disabled || loading}
-            value={form.billingStreet}
-            onChange={(e) => set("billingStreet", e.target.value)}
-            className={`${inputClass} mt-1`}
-          />
-        </label>
-        <label className="block">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Colonia</span>
-          <input
-            type="text"
-            required
-            disabled={disabled || loading}
-            value={form.billingColonia}
-            onChange={(e) => set("billingColonia", e.target.value)}
-            className={`${inputClass} mt-1`}
-          />
-        </label>
-        <label className="block">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Ciudad / Municipio
-          </span>
-          <input
-            type="text"
-            required
-            disabled={disabled || loading}
-            value={form.billingCiudad}
-            onChange={(e) => set("billingCiudad", e.target.value)}
-            className={`${inputClass} mt-1`}
-          />
-        </label>
-        <label className="block">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Estado</span>
-          <input
-            type="text"
-            required
-            disabled={disabled || loading}
-            value={form.billingEstado}
-            onChange={(e) => set("billingEstado", e.target.value)}
-            className={`${inputClass} mt-1`}
-          />
-        </label>
-        <label className="block">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">País</span>
-          <input
-            type="text"
-            required
-            disabled={disabled || loading}
-            value={form.billingPais}
-            onChange={(e) => set("billingPais", e.target.value)}
-            className={`${inputClass} mt-1`}
-          />
-        </label>
-        <label className="block">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">C.P.</span>
           <input
             type="text"
             required
@@ -277,6 +205,7 @@ export default function SocioProfileForm({ initial, disabled, hideBusinessName }
             onChange={(e) => set("billingCodigoPostal", e.target.value)}
             className={`${inputClass} mt-1`}
             maxLength={10}
+            inputMode="numeric"
           />
         </label>
 

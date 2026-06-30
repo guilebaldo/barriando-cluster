@@ -27,6 +27,8 @@ import { listaHitos } from "../data/hitos";
 import { getBarriandoPaymentDetails } from "@/lib/payment";
 import { loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 
+export const dynamic = "force-dynamic";
+
 export default async function PanelPage({
   searchParams,
 }: {
@@ -112,7 +114,7 @@ export default async function PanelPage({
           <PanelDashboard
             user={{
               id: panelUser.id,
-              nombre: panelUser.nombre?.trim() || session.nombre || "Vecino",
+              nombre: panelUser.nombre?.trim() || session.nombre || "Turista",
               email: panelUser.email ?? session.email ?? "",
               image: panelUser.image ?? null,
               socioId: panelUser.socioId ?? null,
@@ -151,7 +153,7 @@ export default async function PanelPage({
       <SiteShell>
         <Navbar />
         <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
-          <PanelFallback nombre={session.nombre || session.email || "Vecino"} />
+          <PanelFallback nombre={session.nombre || session.email || "Turista"} />
         </main>
         <Footer />
       </SiteShell>

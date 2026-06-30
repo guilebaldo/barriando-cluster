@@ -6,6 +6,7 @@ import { linkSocioAccount, registerManualBusiness } from "./actions";
 import BusinessPlacesAutocomplete from "./BusinessPlacesAutocomplete";
 import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
 import { REGIMEN_OPTIONS, CFDI_OPTIONS } from "@/lib/fiscal-options";
+import { normalizeWebsiteUrl } from "@/lib/url-utils";
 
 const NOT_LISTED_ID = -1;
 
@@ -37,6 +38,7 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
   const [manualRazonSocial, setManualRazonSocial] = useState("");
   const [manualRegimen, setManualRegimen] = useState("");
   const [manualUsoCfdi, setManualUsoCfdi] = useState("");
+  const [manualCodigoPostal, setManualCodigoPostal] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isManual = selectedId === NOT_LISTED_ID;
@@ -89,13 +91,14 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
           businessName: manualName,
           address: manualAddress,
           category: manualCategory,
-          website: manualWebsite || undefined,
+          website: manualWebsite ? normalizeWebsiteUrl(manualWebsite) : undefined,
           latitude: manualLat,
           longitude: manualLng,
           rfc: manualRfc,
           razonSocial: manualRazonSocial,
           regimenFiscal: manualRegimen,
           usoCfdi: manualUsoCfdi,
+          billingCodigoPostal: manualCodigoPostal,
         });
         if (!result.ok) {
           setLinkMsg(result.error);
@@ -257,11 +260,12 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               Sitio web (opcional)
             </span>
             <input
-              type="url"
+              type="text"
               value={manualWebsite}
               onChange={(e) => setManualWebsite(e.target.value)}
+              onBlur={() => setManualWebsite((v) => normalizeWebsiteUrl(v))}
               className={`${inputClass} mt-1`}
-              placeholder="https://"
+              placeholder="tunegocio.com"
             />
           </label>
 
@@ -325,6 +329,19 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
                 </option>
               ))}
             </select>
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Código postal fiscal
+            </span>
+            <input
+              type="text"
+              value={manualCodigoPostal}
+              onChange={(e) => setManualCodigoPostal(e.target.value)}
+              className={`${inputClass} mt-1`}
+              maxLength={10}
+              inputMode="numeric"
+            />
           </label>
         </div>
       )}

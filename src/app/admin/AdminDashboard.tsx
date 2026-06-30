@@ -70,12 +70,6 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
       razonSocial: user.profile?.razonSocial ?? "",
       regimenFiscal: user.profile?.regimenFiscal ?? "",
       usoCfdi: user.profile?.usoCfdi ?? "",
-      billingAddressFull: user.profile?.billingAddressFull ?? user.profile?.address ?? "",
-      billingStreet: user.profile?.billingStreet ?? "",
-      billingColonia: user.profile?.billingColonia ?? "",
-      billingCiudad: user.profile?.billingCiudad ?? "",
-      billingEstado: user.profile?.billingEstado ?? "",
-      billingPais: user.profile?.billingPais ?? "",
       billingCodigoPostal: user.profile?.billingCodigoPostal ?? "",
     });
   }
@@ -149,12 +143,6 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
       razonSocial: editForm.razonSocial,
       regimenFiscal: editForm.regimenFiscal,
       usoCfdi: editForm.usoCfdi,
-      billingAddressFull: editForm.billingAddressFull,
-      billingStreet: editForm.billingStreet,
-      billingColonia: editForm.billingColonia,
-      billingCiudad: editForm.billingCiudad,
-      billingEstado: editForm.billingEstado,
-      billingPais: editForm.billingPais,
       billingCodigoPostal: editForm.billingCodigoPostal,
     });
     setLoadingId(null);
@@ -231,9 +219,9 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
         </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden max-w-full">
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[900px]">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -mx-6 sm:mx-0">
+        <div className="w-full overflow-x-auto overscroll-x-contain">
+          <table className="w-full text-left text-xs min-w-[1100px]">
             <thead className="bg-slate-50 border-b border-slate-200 text-[#27366D] uppercase tracking-wider">
               <tr>
                 <th className="px-4 py-3 font-bold">Nombre</th>
@@ -244,7 +232,9 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                 <th className="px-4 py-3 font-bold">Membresía</th>
                 <th className="px-4 py-3 font-bold text-center">Pago validado</th>
                 <th className="px-4 py-3 font-bold text-center">Vinculación aprobada</th>
-                <th className="px-4 py-3 font-bold text-right">Acciones</th>
+                <th className="px-4 py-3 font-bold text-right sticky right-0 bg-slate-50 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -405,7 +395,7 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                           <span className="text-slate-300">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 sticky right-0 bg-white z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
                         <div className="flex justify-end flex-wrap gap-1.5 items-center">
                           <button
                             type="button"
@@ -538,15 +528,15 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                                       onChange={(e) => setEditForm((f) => ({ ...f, usoCfdi: e.target.value }))}
                                     />
                                   </label>
-                                  <label className="block sm:col-span-2">
+                                  <label className="block">
                                     <span className="font-bold text-slate-500 uppercase tracking-wider">
-                                      Dirección fiscal
+                                      Código postal fiscal
                                     </span>
                                     <input
                                       className="mt-1 w-full border border-slate-200 rounded-lg p-2"
-                                      value={editForm.billingAddressFull ?? ""}
+                                      value={editForm.billingCodigoPostal ?? ""}
                                       onChange={(e) =>
-                                        setEditForm((f) => ({ ...f, billingAddressFull: e.target.value }))
+                                        setEditForm((f) => ({ ...f, billingCodigoPostal: e.target.value }))
                                       }
                                     />
                                   </label>
