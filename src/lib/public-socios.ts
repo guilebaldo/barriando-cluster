@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { listaSocios, type Socio } from "@/app/data/socios";
 import { getPlanForSocio, hasCommercialAccess } from "@/lib/membresia";
+import { isVisibleInCarousel } from "@/lib/plan-visibility";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const BUSINESS_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
-const CAROUSEL_PLANS: MembershipPlan[] = ["MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 const ACTIVE_STATUSES = ["active", "manual_active"] as const;
 
 function slugFromName(name: string): string {
@@ -139,13 +139,13 @@ export async function getPublicSociosList(): Promise<Socio[]> {
 export async function getCarouselSocios(): Promise<Socio[]> {
   const publishedUsers = await loadPublishedBusinessUsers();
   const fromDb = publishedUsers
-    .filter((u) => u.subscription && CAROUSEL_PLANS.includes(u.subscription.plan))
+    .filter((u) => u.subscription && isVisibleInCarousel(u.subscription.plan))
     .map(userToSocio)
     .filter(Boolean) as Socio[];
 
   const staticEligible = listaSocios.filter((s) => {
     const plan = getPlanForSocio(s);
-    return plan === "MEDIANA_EMPRESA" || plan === "GRAN_EMPRESA";
+    return isVisibleInCarousel(plan);
   });
 
   const seen = new Set<number>();

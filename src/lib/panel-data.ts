@@ -19,6 +19,8 @@ export type SafeSocioProfile = {
   linkageStatus: string;
   isManualEntry: boolean;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
   category: string;
   rfc: string;
   razonSocial: string;
@@ -92,6 +94,8 @@ export function normalizeSocioProfile(
     linkageStatus?: string | null;
     isManualEntry?: boolean | null;
     address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     category?: string | null;
     rfc?: string | null;
     razonSocial?: string | null;
@@ -115,6 +119,8 @@ export function normalizeSocioProfile(
     linkageStatus: profile.linkageStatus?.trim() ?? "",
     isManualEntry: Boolean(profile.isManualEntry),
     address: profile.address?.trim() ?? "",
+    latitude: profile.latitude ?? null,
+    longitude: profile.longitude ?? null,
     category: profile.category?.trim() ?? "",
     rfc: profile.rfc?.trim() ?? "",
     razonSocial: profile.razonSocial?.trim() ?? "",
@@ -166,6 +172,7 @@ export async function cleanupOrphanSocioProfile(userId: string, socioId: number 
     const profile = await prisma.socioProfile.findUnique({ where: { userId } });
     if (!profile) return;
     if (profile.linkageStatus === "pending" && profile.businessName?.trim()) return;
+    if (profile.linkageStatus === "approved") return;
     await prisma.socioProfile.delete({ where: { userId } });
   } catch (error) {
     console.error("[panel] cleanupOrphanSocioProfile failed:", error);

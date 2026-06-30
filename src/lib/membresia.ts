@@ -24,7 +24,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     benefits: [
       "Boletín y novedades del Clúster",
       "Pasaporte digital MAP y sellos de temporada",
-      "Acceso al mapa e itinerario peatonal",
+      "Acceso al itinerario peatonal MAP",
     ],
   },
   VECINO: {
@@ -50,10 +50,9 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     isPaid: true,
     highlight: "Ideal para cafés, tiendas y talleres de barrio",
     benefits: [
-      "Aparecer en el mapa y directorio de socios",
-      "Logo en el carrusel de la página principal",
+      "Aparecer en el directorio oficial de socios",
       "Publicar entradas en el blog del Clúster",
-      "Formar parte del MAP",
+      "Perfil certificado en la guía Barriando",
     ],
   },
   MEDIANA_EMPRESA: {
@@ -65,9 +64,9 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     highlight: "Museos, escuelas y servicios consolidados",
     benefits: [
       "Todo lo del plan Negocio Familiar",
+      "Logo en el carrusel de la página principal",
       "Mayor prioridad en el directorio",
       "Destacado en campañas del Clúster",
-      "Acceso preferente a alianzas institucionales",
     ],
   },
   GRAN_EMPRESA: {
@@ -81,7 +80,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     benefits: [
       "Todo lo de los planes anteriores",
       "Posicionamiento premium en el carrusel",
-      "Presencia destacada en rutas MAP",
+      "Presencia en la ruta MAP interactiva",
       "Beneficios exclusivos para anfitriones del destino",
     ],
   },
@@ -140,16 +139,24 @@ export function hasCommercialAccess(plan: MembershipPlan, status: string): boole
   return status === "active" || status === "manual_active";
 }
 
-/** Permite entrar al panel sin rebotar al onboarding (p. ej. webhook pendiente). */
-export function canAccessPanel(
-  plan: MembershipPlan,
-  status: string,
-  opts?: { stripeSubscriptionId?: string | null; stripeCustomerId?: string | null }
-): boolean {
+/** Pago por transferencia enviado, esperando revisión del administrador. */
+export function isTransferPaymentPending(status: string): boolean {
+  return status === "manual_pending";
+}
+
+/** Socio con plan de pago pero sin certificación activa (ni transferencia en revisión). */
+export function needsCertificationPayment(plan: MembershipPlan, status: string): boolean {
+  if (isTuristaPlan(plan)) return false;
+  if (hasCommercialAccess(plan, status)) return false;
+  if (isTransferPaymentPending(status)) return false;
+  return true;
+}
+
+/** Puede entrar al panel: turista, pago activo o transferencia en revisión. */
+export function canAccessPanel(plan: MembershipPlan, status: string): boolean {
   if (isTuristaPlan(plan)) return true;
   if (hasCommercialAccess(plan, status)) return true;
-  if (status === "manual_pending") return true;
-  if (opts?.stripeSubscriptionId || opts?.stripeCustomerId) return true;
+  if (isTransferPaymentPending(status)) return true;
   return false;
 }
 

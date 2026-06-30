@@ -5,9 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
-  COMMERCIAL_BENEFITS,
   MEMBERSHIP_PLANS,
-  PAID_PLANS,
   formatPlanPriceMxn,
   getPlanLabel,
   getSubscriptionStatusLabel,
@@ -16,6 +14,7 @@ import {
   isTuristaPlan,
   canLinkSocioAccount,
   isSubscriptionStatusPending,
+  isTransferPaymentPending,
   type PaidMembershipPlan,
 } from "@/lib/membresia";
 import {
@@ -30,14 +29,13 @@ import { reportManualPayment, cancelMembership } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
 import LinkSocioSection from "./LinkSocioSection";
+import TouristPanel from "./TouristPanel";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import {
   Building2,
   CreditCard,
-  MapPin,
   Sparkles,
   Upload,
-  CheckCircle2,
   Shield,
   ArrowUpCircle,
   X,
@@ -54,6 +52,7 @@ interface PanelProps {
     id: string;
     nombre: string;
     email: string;
+    image: string | null;
     socioId: number | null;
   };
   isAdmin: boolean;
@@ -84,6 +83,8 @@ interface PanelProps {
     billingPais: string;
     billingCodigoPostal: string;
     billingAddressFull: string;
+    latitude: number | null;
+    longitude: number | null;
   } | null;
   catalogSocio: {
     name: string;
@@ -103,6 +104,8 @@ interface PanelProps {
     bankLabel: string;
     paymentEmail: string;
   };
+  totalMilestones: number;
+  milestonesVisited: number;
 }
 
 export default function PanelDashboard({
@@ -118,10 +121,11 @@ export default function PanelDashboard({
   socios = [],
   takenSocioIds = [],
   paymentDetails,
+  totalMilestones,
+  milestonesVisited,
 }: PanelProps) {
   const router = useRouter();
   const { update } = useSession();
-  const [activeTab, setActiveTab] = useState<PaidMembershipPlan>("NEGOCIO_FAMILIAR");
   const [logoMsg, setLogoMsg] = useState("");
   const [payMsg, setPayMsg] = useState("");
   const [manualMsg, setManualMsg] = useState("");
@@ -130,6 +134,7 @@ export default function PanelDashboard({
   const [cancelLoading, setCancelLoading] = useState(false);
   const [dismissedNotice, setDismissedNotice] = useState(false);
   const [localPaymentNotice, setLocalPaymentNotice] = useState<string | null>(null);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   const plan = subscription?.plan ?? "TURISTA";
   const status = subscription?.status ?? "inactive";
@@ -138,6 +143,7 @@ export default function PanelDashboard({
   const commercial = hasCommercialAccess(plan, status);
   const canLink = canLinkSocioAccount(status);
   const pendingValidation = isSubscriptionStatusPending(status);
+  const transferPending = isTransferPaymentPending(status);
   const paymentRejected = status === "manual_rejected";
   const expiryLabel = resolveMembershipExpiryLabel({
     status,
@@ -152,9 +158,11 @@ export default function PanelDashboard({
   const linkagePending = isLinkagePending(socioProfile?.linkageStatus);
   const linkageApproved = isLinkageApproved(socioProfile?.linkageStatus);
   const linkageRejected = isLinkageRejected(socioProfile?.linkageStatus);
+  const hasBusinessEstablished =
+    linkageApproved && Boolean(user.socioId || socioProfile?.businessName?.trim());
   const hasBusinessLinked = Boolean(user.socioId && linkageApproved);
-  const showLinkSection = canLink && !user.socioId && !linkagePending;
-  const showLinkageFirst = canLink && !user.socioId && !linkagePending && !linkageApproved;
+  const showLinkSection = canLink && !hasBusinessEstablished && !linkagePending;
+  const showLinkageFirst = canLink && !hasBusinessEstablished && !linkagePending && !linkageApproved;
   const autoRenewal =
     getRenewalMode(status, subscription?.stripeSubscriptionId) === "automatic";
   const nextChargeDate = formatNextChargeDate(subscription?.currentPeriodEnd);
@@ -298,8 +306,18 @@ export default function PanelDashboard({
 
       {pendingValidation && (
         <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-xs">
-          Tu pago por transferencia o efectivo está <strong>Pendiente de Validación</strong>. Te
-          avisaremos por correo cuando quede activo.
+          Tu pago por transferencia está <strong>Pendiente de Revisión</strong>. Te avisaremos por correo
+          cuando quede activo.
+        </div>
+      )}
+
+      {transferPending && !linkageApproved && (
+        <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-5 text-sm leading-relaxed">
+          <p className="font-bold text-[#27366D] mb-2">Pago pendiente de revisión</p>
+          <p className="text-xs font-light">
+            Tu pago por transferencia está siendo revisado por el administrador. Una vez confirmado, se
+            habilitarán las herramientas para dar de alta o vincular tu negocio.
+          </p>
         </div>
       )}
 
@@ -358,103 +376,23 @@ export default function PanelDashboard({
       </div>
 
       {isTurista ? (
-        <>
-          <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-            <h2 className="text-sm font-bold text-[#27366D] uppercase tracking-widest mb-2">
-              Eres miembro oficial de la comunidad
-            </h2>
-            <p className="text-sm text-slate-600 font-light leading-relaxed">
-              Como <strong>Turista</strong> recibirás novedades del Centro Histórico y acceso al Pasaporte MAP.
-              Para desbloquear herramientas comerciales —mapa, carrusel, blog y rutas oficiales— elige un plan de socio.
-            </p>
-          </section>
-
-          <section className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4">
-              <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                Sube de nivel y desbloquea beneficios comerciales
-              </h2>
-              <ul className="mt-3 grid sm:grid-cols-2 gap-2">
-                {COMMERCIAL_BENEFITS.map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-2 text-xs text-slate-600">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                    {benefit}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="flex flex-wrap gap-2 p-4 border-b border-slate-100 bg-white">
-              {PAID_PLANS.map((planId) => (
-                <button
-                  key={planId}
-                  type="button"
-                  onClick={() => setActiveTab(planId)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-                    activeTab === planId
-                      ? "bg-[#27366D] text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {MEMBERSHIP_PLANS[planId].label}
-                </button>
-              ))}
-            </div>
-
-            <div className="p-6">
-              {(() => {
-                const plan = MEMBERSHIP_PLANS[activeTab];
-                const price = formatPlanPriceMxn(activeTab);
-                return (
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">
-                        {plan.tagline}
-                      </p>
-                      <h3 className="text-lg font-bold text-slate-950 mt-1">{plan.label}</h3>
-                      <p className="text-2xl font-black text-[#27366D] mt-2">{price}</p>
-                      {plan.highlight && (
-                        <p className="text-xs text-amber-700 mt-1">{plan.highlight}</p>
-                      )}
-                      <p className="text-sm text-slate-600 mt-2 font-light">{plan.description}</p>
-                    </div>
-                    <ul className="space-y-2">
-                      {plan.benefits.map((b) => (
-                        <li key={b} className="flex items-start gap-2 text-xs text-slate-600">
-                          <MapPin className="w-3.5 h-3.5 text-[#27366D] shrink-0 mt-0.5" />
-                          {b}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex flex-col gap-3 pt-2">
-                      {stripeConfigured ? (
-                        <button
-                          type="button"
-                          onClick={() => handleStripePay(activeTab)}
-                          className="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition w-fit"
-                        >
-                          <CreditCard className="w-4 h-4" />
-                          Pagar de forma Segura
-                        </button>
-                      ) : null}
-                      <TransferPaymentSection
-                        plan={activeTab}
-                        onConfirm={handleManualPayment}
-                        disabled={pendingValidation}
-                        clabe={paymentDetails.clabe}
-                        bankLabel={paymentDetails.bankLabel}
-                        paymentEmail={paymentDetails.paymentEmail}
-                      />
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-            {(payMsg || manualMsg) && (
-              <p className="px-6 pb-4 text-xs text-slate-600">{payMsg || manualMsg}</p>
-            )}
-          </section>
-        </>
+        <TouristPanel
+          user={{
+            nombre: user.nombre,
+            email: user.email,
+            image: user.image,
+          }}
+          milestonesVisited={milestonesVisited}
+          totalMilestones={totalMilestones}
+        />
+      ) : transferPending && !canLink ? (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-sm text-slate-700">
+          <p className="font-bold text-[#27366D] mb-2">Panel bloqueado</p>
+          <p className="text-xs font-light leading-relaxed">
+            Tu pago por transferencia está siendo revisado por el administrador. Una vez confirmado, se
+            habilitarán las herramientas para dar de alta o vincular tu negocio.
+          </p>
+        </div>
       ) : showLinkageFirst ? (
         <div className="space-y-6">
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-sm text-emerald-900">
@@ -486,13 +424,90 @@ export default function PanelDashboard({
             </div>
           )}
 
+          {hasBusinessEstablished && (
+            <section className="bg-white border border-emerald-200 rounded-xl p-6 shadow-sm md:col-span-2">
+              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#27366D]" />
+                  <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+                    Vista de Control del Negocio
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingProfile((v) => !v)}
+                  className="text-[10px] font-bold uppercase tracking-wider text-[#27366D] border border-[#27366D]/20 px-3 py-2 rounded-lg hover:bg-slate-50 transition"
+                >
+                  {editingProfile ? "Cerrar edición" : "Modificar Datos"}
+                </button>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Nombre</p>
+                  <p className="font-semibold text-slate-900 mt-0.5">{displayName}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Giro</p>
+                  <p className="text-slate-700 mt-0.5">
+                    {socioProfile?.category || catalogSocio?.categoria || "—"}
+                  </p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Ubicación</p>
+                  <p className="text-slate-700 mt-0.5">
+                    {socioProfile?.address || catalogSocio?.direccion || socioProfile?.googleBusinessUrl || "—"}
+                  </p>
+                </div>
+                {socioProfile?.website && (
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Sitio web</p>
+                    <p className="text-slate-700 mt-0.5">{socioProfile.website}</p>
+                  </div>
+                )}
+                {socioProfile?.rfc && (
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">RFC</p>
+                    <p className="text-slate-700 mt-0.5">{socioProfile.rfc}</p>
+                  </div>
+                )}
+                {socioProfile?.razonSocial && (
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">Razón social</p>
+                    <p className="text-slate-700 mt-0.5">{socioProfile.razonSocial}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Plan</p>
+                  <p className="text-amber-700 font-bold mt-0.5">{getPlanLabel(plan)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Estado</p>
+                  <p className="text-green-700 font-bold mt-0.5">Verificado</p>
+                </div>
+              </div>
+              {displayLogo && (
+                <div className="mt-4 h-24 w-40 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img
+                    src={displayLogo}
+                    alt={displayName ?? "Logo"}
+                    className="max-h-full max-w-full object-contain p-2"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
+            </section>
+          )}
+
           <div className="grid md:grid-cols-2 gap-6">
+            {!hasBusinessEstablished && (
             <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <Building2 className="w-4 h-4 text-[#27366D]" />
                 <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Tu negocio</h2>
               </div>
-              {hasBusinessLinked || displayName ? (
+              {displayName ? (
                 <div>
                   <p className="font-bold text-slate-950">{displayName}</p>
                   {(catalogSocio?.categoria || socioProfile?.category) && (
@@ -512,21 +527,6 @@ export default function PanelDashboard({
                       Estado: {getLinkageStatusLabel(socioProfile.linkageStatus as "pending" | "approved" | "rejected")}
                     </p>
                   )}
-                  <p className="text-xs text-amber-700 mt-2 font-bold">
-                    Plan: {getPlanLabel(plan)}
-                  </p>
-                  {displayLogo && linkageApproved && (
-                    <div className="mt-4 h-24 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
-                      <img
-                        src={displayLogo}
-                        alt={displayName ?? "Logo"}
-                        className="max-h-full max-w-full object-contain p-2"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
               ) : (
                 <p className="text-xs text-slate-500">
@@ -536,6 +536,7 @@ export default function PanelDashboard({
                 </p>
               )}
             </section>
+            )}
 
             <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
@@ -563,7 +564,9 @@ export default function PanelDashboard({
               {logoMsg && <p className="text-xs mt-3 text-slate-600">{logoMsg}</p>}
             </section>
 
-            {(user.socioId || socioProfile?.businessName) && linkageApproved && (
+            {(hasBusinessEstablished || user.socioId || socioProfile?.businessName) &&
+              linkageApproved &&
+              editingProfile && (
               <SocioProfileForm
                 initial={profileDefaults}
                 disabled={!linkageApproved}

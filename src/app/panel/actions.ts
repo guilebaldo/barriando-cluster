@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { listaSocios } from "@/app/data/socios";
 import { canLinkSocioAccount, getPlanLabel, isTuristaPlan } from "@/lib/membresia";
+import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
 import { getStripe } from "@/lib/stripe";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
@@ -33,8 +34,14 @@ const profileSchema = z.object({
 const manualBusinessSchema = z.object({
   businessName: z.string().trim().min(2, "Ingresa el nombre del negocio.").max(120),
   address: z.string().trim().min(5, "Ingresa la dirección del negocio.").max(300),
-  category: z.string().trim().min(2, "Indica el giro del negocio.").max(80),
+  category: z.enum(BUSINESS_CATEGORY_OPTIONS, { message: "Selecciona el giro del negocio." }),
   website: z.string().trim().max(500).optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  rfc: z.string().trim().min(12, "RFC inválido.").max(13),
+  razonSocial: z.string().trim().min(3, "Ingresa la razón social.").max(200),
+  regimenFiscal: z.string().trim().min(3, "Selecciona el régimen fiscal.").max(120),
+  usoCfdi: z.string().trim().min(3, "Selecciona el uso de CFDI.").max(80),
 });
 
 export type LinkSocioResult =
@@ -61,7 +68,13 @@ async function upsertPendingProfile(
     googleBusinessUrl?: string | null;
     isManualEntry: boolean;
     address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     category?: string | null;
+    rfc?: string | null;
+    razonSocial?: string | null;
+    regimenFiscal?: string | null;
+    usoCfdi?: string | null;
   }
 ) {
   await prisma.socioProfile.upsert({
@@ -74,7 +87,13 @@ async function upsertPendingProfile(
       linkageStatus: "pending",
       isManualEntry: data.isManualEntry,
       address: data.address ?? null,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
       category: data.category ?? null,
+      rfc: data.rfc ?? null,
+      razonSocial: data.razonSocial ?? null,
+      regimenFiscal: data.regimenFiscal ?? null,
+      usoCfdi: data.usoCfdi ?? null,
     },
     update: {
       businessName: data.businessName,
@@ -83,7 +102,13 @@ async function upsertPendingProfile(
       linkageStatus: "pending",
       isManualEntry: data.isManualEntry,
       address: data.address ?? null,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
       category: data.category ?? null,
+      rfc: data.rfc ?? null,
+      razonSocial: data.razonSocial ?? null,
+      regimenFiscal: data.regimenFiscal ?? null,
+      usoCfdi: data.usoCfdi ?? null,
     },
   });
 }
@@ -146,6 +171,12 @@ export async function registerManualBusiness(input: {
   address: string;
   category: string;
   website?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  rfc: string;
+  razonSocial: string;
+  regimenFiscal: string;
+  usoCfdi: string;
 }): Promise<LinkSocioResult> {
   try {
     const session = await requireSession();
@@ -157,7 +188,18 @@ export async function registerManualBusiness(input: {
     const linkCheck = await assertCanLink(session.id);
     if (!linkCheck.ok) return linkCheck;
 
-    const { businessName, address, category, website } = parsed.data;
+    const {
+      businessName,
+      address,
+      category,
+      website,
+      latitude,
+      longitude,
+      rfc,
+      razonSocial,
+      regimenFiscal,
+      usoCfdi,
+    } = parsed.data;
     let websiteUrl: string | null = null;
     if (website?.trim()) {
       try {
@@ -173,7 +215,13 @@ export async function registerManualBusiness(input: {
       address,
       category,
       website: websiteUrl,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
       isManualEntry: true,
+      rfc,
+      razonSocial,
+      regimenFiscal,
+      usoCfdi,
     });
 
     revalidatePath("/panel");
@@ -288,7 +336,7 @@ export async function updateSocioProfile(input: {
         userId: session.id,
         ...data,
         businessName,
-        linkageStatus: "pending",
+        linkageStatus: profile?.linkageStatus ?? "pending",
       },
       update: {
         ...data,

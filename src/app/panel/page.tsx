@@ -8,7 +8,12 @@ import { getSession } from "@/lib/auth-utils";
 import { isStripeConfigured } from "@/lib/stripe";
 import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
 import { expireManualSubscriptionsIfNeeded } from "@/lib/subscription-lifecycle";
-import { canAccessPanel, hasCommercialAccess, isTuristaPlan } from "@/lib/membresia";
+import {
+  canAccessPanel,
+  hasCommercialAccess,
+  isTuristaPlan,
+  needsCertificationPayment,
+} from "@/lib/membresia";
 import { isAdminEmail } from "@/lib/admin";
 import {
   loadPanelUser,
@@ -18,7 +23,9 @@ import {
   cleanupOrphanSocioProfile,
 } from "@/lib/panel-data";
 import { listaSocios } from "../data/socios";
+import { listaHitos } from "../data/hitos";
 import { getBarriandoPaymentDetails } from "@/lib/payment";
+import { loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 
 export default async function PanelPage({
   searchParams,
@@ -48,13 +55,15 @@ export default async function PanelPage({
 
     const refreshedSub = normalizePanelSubscription(panelUser?.subscription);
 
-    const panelAllowed = canAccessPanel(refreshedSub.plan, refreshedSub.status, {
-      stripeSubscriptionId: refreshedSub.stripeSubscriptionId,
-      stripeCustomerId: refreshedSub.stripeCustomerId,
-    });
-
-    if (!panelAllowed) {
+    if (!canAccessPanel(refreshedSub.plan, refreshedSub.status)) {
+      if (needsCertificationPayment(refreshedSub.plan, refreshedSub.status)) {
+        redirect("/certificacion/pago");
+      }
       redirect("/planes?pago=requiere_plan");
+    }
+
+    if (needsCertificationPayment(refreshedSub.plan, refreshedSub.status)) {
+      redirect("/certificacion/pago");
     }
 
     const takenSocioIds = await loadTakenSocioIds(session.id);
@@ -90,6 +99,12 @@ export default async function PanelPage({
 
     const paymentDetails = getBarriandoPaymentDetails();
 
+    let milestonesVisited = 0;
+    if (isTuristaPlan(refreshedSub.plan)) {
+      const summaries = await loadUserStampSummaries(session.id);
+      milestonesVisited = summaries.length;
+    }
+
     return (
       <SiteShell>
         <Navbar />
@@ -99,6 +114,7 @@ export default async function PanelPage({
               id: panelUser.id,
               nombre: panelUser.nombre?.trim() || session.nombre || "Vecino",
               email: panelUser.email ?? session.email ?? "",
+              image: panelUser.image ?? null,
               socioId: panelUser.socioId ?? null,
             }}
             isAdmin={isAdminEmail(panelUser.email ?? session.email)}
@@ -122,6 +138,8 @@ export default async function PanelPage({
             socios={sociosList}
             takenSocioIds={takenSocioIds}
             paymentDetails={paymentDetails}
+            totalMilestones={listaHitos.length}
+            milestonesVisited={milestonesVisited}
           />
         </main>
         <Footer />

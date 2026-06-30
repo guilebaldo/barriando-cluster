@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Link2, Search } from "lucide-react";
 import { linkSocioAccount, registerManualBusiness } from "./actions";
+import BusinessPlacesAutocomplete from "./BusinessPlacesAutocomplete";
+import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
+import { REGIMEN_OPTIONS, CFDI_OPTIONS } from "@/lib/fiscal-options";
 
 const NOT_LISTED_ID = -1;
 
@@ -26,8 +29,14 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
   const [linkLoading, setLinkLoading] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualAddress, setManualAddress] = useState("");
+  const [manualLat, setManualLat] = useState<number | null>(null);
+  const [manualLng, setManualLng] = useState<number | null>(null);
   const [manualCategory, setManualCategory] = useState("");
   const [manualWebsite, setManualWebsite] = useState("");
+  const [manualRfc, setManualRfc] = useState("");
+  const [manualRazonSocial, setManualRazonSocial] = useState("");
+  const [manualRegimen, setManualRegimen] = useState("");
+  const [manualUsoCfdi, setManualUsoCfdi] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isManual = selectedId === NOT_LISTED_ID;
@@ -81,6 +90,12 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
           address: manualAddress,
           category: manualCategory,
           website: manualWebsite || undefined,
+          latitude: manualLat,
+          longitude: manualLng,
+          rfc: manualRfc,
+          razonSocial: manualRazonSocial,
+          regimenFiscal: manualRegimen,
+          usoCfdi: manualUsoCfdi,
         });
         if (!result.ok) {
           setLinkMsg(result.error);
@@ -126,7 +141,7 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
       <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
         Busca tu establecimiento en la lista. Si no lo encuentras, desplázate hasta el final y selecciona
         la opción <strong className="text-[#27366D]">&quot;Mi negocio no está listado&quot;</strong> para
-        registrarlo desde cero.
+        registrarlo desde cero con ubicación precisa y datos fiscales.
       </p>
 
       <div ref={containerRef} className="relative mb-4">
@@ -194,7 +209,9 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
       {isManual && (
         <div className="grid sm:grid-cols-2 gap-3 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
           <label className="block sm:col-span-2">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nombre del negocio</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Nombre del negocio
+            </span>
             <input
               type="text"
               value={manualName}
@@ -204,27 +221,41 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
             />
           </label>
           <label className="block sm:col-span-2">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dirección</span>
-            <input
-              type="text"
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Ubicación (Google Places)
+            </span>
+            <BusinessPlacesAutocomplete
               value={manualAddress}
-              onChange={(e) => setManualAddress(e.target.value)}
+              onChange={setManualAddress}
+              onLocationSelected={(loc) => {
+                setManualAddress(loc.address);
+                setManualLat(loc.latitude);
+                setManualLng(loc.longitude);
+              }}
               className={`${inputClass} mt-1`}
-              placeholder="Calle, número, colonia"
             />
           </label>
           <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Giro</span>
-            <input
-              type="text"
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Giro del negocio
+            </span>
+            <select
               value={manualCategory}
               onChange={(e) => setManualCategory(e.target.value)}
               className={`${inputClass} mt-1`}
-              placeholder="Ej. Restaurante, Hotel..."
-            />
+            >
+              <option value="">Selecciona…</option>
+              {BUSINESS_CATEGORY_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sitio web (opcional)</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Sitio web (opcional)
+            </span>
             <input
               type="url"
               value={manualWebsite}
@@ -232,6 +263,68 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               className={`${inputClass} mt-1`}
               placeholder="https://"
             />
+          </label>
+
+          <div className="sm:col-span-2 pt-2 border-t border-slate-200">
+            <p className="text-[10px] font-bold text-[#27366D] uppercase tracking-widest mb-3">
+              Datos fiscales (CFDI 4.0)
+            </p>
+          </div>
+
+          <label className="block">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">RFC</span>
+            <input
+              type="text"
+              value={manualRfc}
+              onChange={(e) => setManualRfc(e.target.value.toUpperCase())}
+              className={`${inputClass} mt-1 uppercase`}
+              maxLength={13}
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Razón social
+            </span>
+            <input
+              type="text"
+              value={manualRazonSocial}
+              onChange={(e) => setManualRazonSocial(e.target.value)}
+              className={`${inputClass} mt-1`}
+            />
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Régimen fiscal
+            </span>
+            <select
+              value={manualRegimen}
+              onChange={(e) => setManualRegimen(e.target.value)}
+              className={`${inputClass} mt-1`}
+            >
+              <option value="">Selecciona…</option>
+              {REGIMEN_OPTIONS.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Uso de CFDI
+            </span>
+            <select
+              value={manualUsoCfdi}
+              onChange={(e) => setManualUsoCfdi(e.target.value)}
+              className={`${inputClass} mt-1`}
+            >
+              <option value="">Selecciona…</option>
+              {CFDI_OPTIONS.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
       )}

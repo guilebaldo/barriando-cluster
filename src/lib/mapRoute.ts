@@ -201,19 +201,23 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
   try {
     const users = await prisma.user.findMany({
       where: {
-        socioId: { not: null },
         subscription: {
           plan: "GRAN_EMPRESA",
           status: { in: ["active", "manual_active"] },
         },
-        OR: [
-          { socioProfile: { linkageStatus: "approved" } },
-          { socioProfile: null },
-        ],
+        socioProfile: { linkageStatus: "approved" },
       },
       select: {
         socioId: true,
-        socioProfile: { select: { businessName: true, linkageStatus: true } },
+        socioProfile: {
+          select: {
+            businessName: true,
+            linkageStatus: true,
+            latitude: true,
+            longitude: true,
+            address: true,
+          },
+        },
       },
     });
 
@@ -221,24 +225,41 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
     const seen = new Set<number>();
 
     for (const user of users) {
-      const socioId = user.socioId;
-      if (socioId == null || seen.has(socioId)) continue;
-      if (user.socioProfile && user.socioProfile.linkageStatus !== "approved") continue;
+      const profile = user.socioProfile;
+      if (!profile || profile.linkageStatus !== "approved") continue;
 
-      const catalog = listaSocios.find((s) => s.id === socioId);
-      const coord = sociosCoords[socioId];
-      if (!catalog || !coord) continue;
+      if (user.socioId != null && !seen.has(user.socioId)) {
+        const catalog = listaSocios.find((s) => s.id === user.socioId);
+        const coord = sociosCoords[user.socioId];
+        if (catalog && coord) {
+          seen.add(user.socioId);
+          points.push({
+            id: `premium-${user.socioId}`,
+            name: profile.businessName?.trim() || catalog.name,
+            latitude: coord.lat,
+            longitude: coord.lng,
+            mapsUrl: catalog.direccion || `https://www.google.com/maps?q=${coord.lat},${coord.lng}`,
+            kind: "premium_business",
+            category: catalog.categoria,
+          });
+        }
+        continue;
+      }
 
-      seen.add(socioId);
-      points.push({
-        id: `premium-${socioId}`,
-        name: user.socioProfile?.businessName?.trim() || catalog.name,
-        latitude: coord.lat,
-        longitude: coord.lng,
-        mapsUrl: catalog.direccion || `https://www.google.com/maps?q=${coord.lat},${coord.lng}`,
-        kind: "premium_business",
-        category: catalog.categoria,
-      });
+      if (profile.latitude != null && profile.longitude != null) {
+        const id = `premium-manual-${user.socioId ?? profile.businessName}`;
+        points.push({
+          id,
+          name: profile.businessName?.trim() || "Socio certificado",
+          latitude: profile.latitude,
+          longitude: profile.longitude,
+          mapsUrl:
+            profile.address?.trim() ||
+            `https://www.google.com/maps?q=${profile.latitude},${profile.longitude}`,
+          kind: "premium_business",
+          category: "Negocio certificado",
+        });
+      }
     }
 
     return points;

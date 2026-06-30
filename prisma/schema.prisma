@@ -111,6 +111,8 @@ model SocioProfile {
   linkageStatus     String   @default("pending")
   isManualEntry     Boolean  @default(false)
   address           String?
+  latitude          Float?
+  longitude         Float?
   category          String?
   rfc               String?
   razonSocial       String?

@@ -13,7 +13,6 @@ import {
 import { PENDING_PLAN_COOKIE } from "@/lib/pending-plan-cookie";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import {
-  canAccessPanel,
   hasCommercialAccess,
   isTuristaPlan,
   type PaidMembershipPlan,
@@ -37,6 +36,14 @@ async function ensureTuristaSubscription(userId: string) {
   });
 }
 
+async function ensurePendingPaidPlan(userId: string, plan: PaidMembershipPlan) {
+  await prisma.subscription.upsert({
+    where: { userId },
+    create: { userId, plan, status: "inactive" },
+    update: { plan, status: "inactive" },
+  });
+}
+
 async function loadSubscription(userId: string) {
   const dbUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -47,11 +54,11 @@ async function loadSubscription(userId: string) {
 
 async function createStripeCheckoutRedirect(userId: string, plan: PaidMembershipPlan) {
   const url = await createStripeCheckoutUrl(userId, plan);
-  if (!url) redirect("/panel?pago=stripe_no_configurado");
+  if (!url) redirect("/certificacion/pago?pago=stripe_no_configurado");
   redirect(url);
 }
 
-/** Tras autenticación: bifurca Vecino → panel o plan de pago → Stripe Checkout. */
+/** Tras autenticación: turista → panel; plan de pago → pantalla de certificación. */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -67,13 +74,8 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   }
 
   if (pending && isPaidMembershipPlan(pending)) {
-    if (!isStripeConfiguredForPlan(pending)) {
-      redirect("/panel?pago=stripe_no_configurado");
-    }
-    if (sub?.stripeSubscriptionId || sub?.stripeCustomerId) {
-      redirect("/panel?pago=procesando");
-    }
-    await createStripeCheckoutRedirect(session.user.id, pending as PaidMembershipPlan);
+    await ensurePendingPaidPlan(session.user.id, pending as PaidMembershipPlan);
+    redirect("/certificacion/pago");
   }
 
   if (!sub || isTuristaPlan(sub.plan)) {
@@ -81,17 +83,11 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
     redirect("/panel?bienvenida=1");
   }
 
-  if (
-    canAccessPanel(sub.plan, sub.status, {
-      stripeSubscriptionId: sub.stripeSubscriptionId,
-      stripeCustomerId: sub.stripeCustomerId,
-    })
-  ) {
-    redirect("/panel?pago=procesando");
-  }
-
-  if (isPaidMembershipPlan(sub.plan) && isStripeConfiguredForPlan(sub.plan)) {
-    await createStripeCheckoutRedirect(session.user.id, sub.plan as PaidMembershipPlan);
+  if (sub && isPaidMembershipPlan(sub.plan) && !hasCommercialAccess(sub.plan, sub.status)) {
+    if (sub.status === "manual_pending") {
+      redirect("/panel");
+    }
+    redirect("/certificacion/pago");
   }
 
   redirect("/planes?pago=requiere_plan");
