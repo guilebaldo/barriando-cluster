@@ -10,7 +10,7 @@ import { getStripe } from "@/lib/stripe";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const profileSchema = z.object({
-  businessName: z.string().trim().min(2, "Ingresa el nombre del negocio.").max(120),
+  businessName: z.string().trim().max(120).optional(),
   website: z.string().trim().url("Ingresa una URL válida para el sitio web.").max(500),
   googleBusinessUrl: z
     .string()
@@ -263,9 +263,14 @@ export async function updateSocioProfile(input: {
 }): Promise<UpdateProfileResult> {
   try {
     const session = await requireSession();
+    const subscription = await prisma.subscription.findUnique({ where: { userId: session.id } });
     const parsed = profileSchema.safeParse(input);
     if (!parsed.success) {
       return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    if (subscription?.plan !== "VECINO" && !parsed.data.businessName?.trim()) {
+      return { ok: false, error: "Ingresa el nombre del negocio." };
     }
 
     const profile = await prisma.socioProfile.findUnique({ where: { userId: session.id } });
@@ -274,19 +279,26 @@ export async function updateSocioProfile(input: {
     }
 
     const data = parsed.data;
+    const businessName =
+      data.businessName?.trim() || profile?.businessName?.trim() || null;
 
     await prisma.socioProfile.upsert({
       where: { userId: session.id },
       create: {
         userId: session.id,
         ...data,
+        businessName,
         linkageStatus: "pending",
       },
-      update: data,
+      update: {
+        ...data,
+        businessName,
+      },
     });
 
     revalidatePath("/panel");
     revalidatePath("/admin");
+    revalidatePath("/socios");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

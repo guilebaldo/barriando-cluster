@@ -66,6 +66,17 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
       website: user.profile?.website ?? "",
       googleBusinessUrl: user.profile?.googleBusinessUrl ?? "",
       logoUrl: user.profile?.logoUrl ?? "",
+      rfc: user.profile?.rfc ?? "",
+      razonSocial: user.profile?.razonSocial ?? "",
+      regimenFiscal: user.profile?.regimenFiscal ?? "",
+      usoCfdi: user.profile?.usoCfdi ?? "",
+      billingAddressFull: user.profile?.billingAddressFull ?? user.profile?.address ?? "",
+      billingStreet: user.profile?.billingStreet ?? "",
+      billingColonia: user.profile?.billingColonia ?? "",
+      billingCiudad: user.profile?.billingCiudad ?? "",
+      billingEstado: user.profile?.billingEstado ?? "",
+      billingPais: user.profile?.billingPais ?? "",
+      billingCodigoPostal: user.profile?.billingCodigoPostal ?? "",
     });
   }
 
@@ -134,6 +145,17 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
       website: editForm.website,
       googleBusinessUrl: editForm.googleBusinessUrl,
       logoUrl: editForm.logoUrl,
+      rfc: editForm.rfc,
+      razonSocial: editForm.razonSocial,
+      regimenFiscal: editForm.regimenFiscal,
+      usoCfdi: editForm.usoCfdi,
+      billingAddressFull: editForm.billingAddressFull,
+      billingStreet: editForm.billingStreet,
+      billingColonia: editForm.billingColonia,
+      billingCiudad: editForm.billingCiudad,
+      billingEstado: editForm.billingEstado,
+      billingPais: editForm.billingPais,
+      billingCodigoPostal: editForm.billingCodigoPostal,
     });
     setLoadingId(null);
     if (!result.ok) {
@@ -473,48 +495,63 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                                 onChange={(e) => setEditForm((f) => ({ ...f, businessName: e.target.value }))}
                               />
                             </label>
-                            {user.profile && (
-                              <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-white p-4 text-xs space-y-2">
+                            <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-white p-4 text-xs space-y-3">
                                 <p className="font-bold text-[#27366D] uppercase tracking-wider text-[10px]">
                                   Datos fiscales (CFDI 4.0)
                                 </p>
-                                <p>
-                                  <span className="text-slate-500">RFC:</span>{" "}
-                                  {user.profile.rfc || "—"}
-                                </p>
-                                <p>
-                                  <span className="text-slate-500">Razón social:</span>{" "}
-                                  {user.profile.razonSocial || "—"}
-                                </p>
-                                <p>
-                                  <span className="text-slate-500">Régimen:</span>{" "}
-                                  {user.profile.regimenFiscal || "—"}
-                                </p>
-                                <p>
-                                  <span className="text-slate-500">Uso CFDI:</span>{" "}
-                                  {user.profile.usoCfdi || "—"}
-                                </p>
-                                <p>
-                                  <span className="text-slate-500">Dirección:</span>{" "}
-                                  {user.profile.billingAddressFull || user.profile.address || "—"}
-                                </p>
-                                {(user.profile.billingStreet || user.profile.billingCodigoPostal) && (
-                                  <p className="text-slate-600">
-                                    {[
-                                      user.profile.billingStreet,
-                                      user.profile.billingColonia,
-                                      user.profile.billingCiudad,
-                                      user.profile.billingEstado,
-                                      user.profile.billingPais,
-                                      user.profile.billingCodigoPostal &&
-                                        `C.P. ${user.profile.billingCodigoPostal}`,
-                                    ]
-                                      .filter(Boolean)
-                                      .join(", ")}
-                                  </p>
-                                )}
+                                <div className="grid sm:grid-cols-2 gap-3">
+                                  <label className="block">
+                                    <span className="font-bold text-slate-500 uppercase tracking-wider">RFC</span>
+                                    <input
+                                      className="mt-1 w-full border border-slate-200 rounded-lg p-2 uppercase"
+                                      value={editForm.rfc ?? ""}
+                                      onChange={(e) => setEditForm((f) => ({ ...f, rfc: e.target.value }))}
+                                    />
+                                  </label>
+                                  <label className="block">
+                                    <span className="font-bold text-slate-500 uppercase tracking-wider">
+                                      Razón social
+                                    </span>
+                                    <input
+                                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                      value={editForm.razonSocial ?? ""}
+                                      onChange={(e) => setEditForm((f) => ({ ...f, razonSocial: e.target.value }))}
+                                    />
+                                  </label>
+                                  <label className="block">
+                                    <span className="font-bold text-slate-500 uppercase tracking-wider">
+                                      Régimen fiscal
+                                    </span>
+                                    <input
+                                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                      value={editForm.regimenFiscal ?? ""}
+                                      onChange={(e) => setEditForm((f) => ({ ...f, regimenFiscal: e.target.value }))}
+                                    />
+                                  </label>
+                                  <label className="block">
+                                    <span className="font-bold text-slate-500 uppercase tracking-wider">
+                                      Uso de CFDI
+                                    </span>
+                                    <input
+                                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                      value={editForm.usoCfdi ?? ""}
+                                      onChange={(e) => setEditForm((f) => ({ ...f, usoCfdi: e.target.value }))}
+                                    />
+                                  </label>
+                                  <label className="block sm:col-span-2">
+                                    <span className="font-bold text-slate-500 uppercase tracking-wider">
+                                      Dirección fiscal
+                                    </span>
+                                    <input
+                                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                                      value={editForm.billingAddressFull ?? ""}
+                                      onChange={(e) =>
+                                        setEditForm((f) => ({ ...f, billingAddressFull: e.target.value }))
+                                      }
+                                    />
+                                  </label>
+                                </div>
                               </div>
-                            )}
                             <div className="sm:col-span-2 lg:col-span-3">
                               <button
                                 type="button"

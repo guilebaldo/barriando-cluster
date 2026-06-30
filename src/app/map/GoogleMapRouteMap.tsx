@@ -13,19 +13,82 @@ const LeafletMapFallback = dynamic(() => import("./MapRouteMap"), {
   ),
 });
 
+function buildInfoWindowContent(
+  point: MapRoutePoint,
+  idx: number,
+  total: number,
+  onNavigate: (direction: "prev" | "next") => void
+): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.className = "text-xs min-w-[11rem] max-w-[16rem]";
+
+  const title = document.createElement("p");
+  title.className = "font-bold text-slate-900 leading-snug";
+  title.textContent = point.name;
+  wrapper.appendChild(title);
+
+  if (point.category) {
+    const category = document.createElement("p");
+    category.className = "text-slate-500 mt-1";
+    category.textContent = point.category;
+    wrapper.appendChild(category);
+  }
+
+  const nav = document.createElement("div");
+  nav.className = "flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100";
+
+  const prevBtn = document.createElement("button");
+  prevBtn.type = "button";
+  prevBtn.textContent = "⬅️";
+  prevBtn.title = "Anterior";
+  prevBtn.className = "px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40";
+  prevBtn.disabled = idx <= 0;
+  prevBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (idx > 0) onNavigate("prev");
+  });
+
+  const counter = document.createElement("span");
+  counter.className = "text-[10px] text-slate-400 font-medium";
+  counter.textContent = `${point.order} / ${total}`;
+
+  const nextBtn = document.createElement("button");
+  nextBtn.type = "button";
+  nextBtn.textContent = "➡️";
+  nextBtn.title = "Siguiente";
+  nextBtn.className = "px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40";
+  nextBtn.disabled = idx >= total - 1;
+  nextBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (idx < total - 1) onNavigate("next");
+  });
+
+  nav.append(prevBtn, counter, nextBtn);
+  wrapper.appendChild(nav);
+
+  return wrapper;
+}
+
 export default function GoogleMapRouteMap({
   points,
   highlightedId = null,
   fullScreen = false,
+  onPointSelect,
 }: {
   points: MapRoutePoint[];
   highlightedId?: string | null;
   fullScreen?: boolean;
+  onPointSelect?: (id: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const onSelectRef = useRef(onPointSelect);
+  onSelectRef.current = onPointSelect;
   const [error, setError] = useState<string | null>(null);
   const [useLeafletFallback, setUseLeafletFallback] = useState(false);
 
@@ -52,6 +115,10 @@ export default function GoogleMapRouteMap({
         markersRef.current.forEach((m) => m.setMap(null));
         markersRef.current = [];
 
+        if (!infoWindowRef.current) {
+          infoWindowRef.current = new google.maps.InfoWindow();
+        }
+
         const bounds = new google.maps.LatLngBounds();
         points.forEach((point, idx) => {
           const isStart = idx === 0;
@@ -74,15 +141,38 @@ export default function GoogleMapRouteMap({
             },
             zIndex: isHighlight ? 1000 : idx,
           });
+
+          marker.addListener("click", () => {
+            onSelectRef.current?.(point.id);
+            const content = buildInfoWindowContent(point, idx, points.length, (dir) => {
+              const nextIdx = dir === "prev" ? idx - 1 : idx + 1;
+              const next = points[nextIdx];
+              if (next) onSelectRef.current?.(next.id);
+            });
+            infoWindowRef.current?.setContent(content);
+            infoWindowRef.current?.open({ map, anchor: marker });
+          });
+
           markersRef.current.push(marker);
           bounds.extend({ lat: point.latitude, lng: point.longitude });
         });
 
         if (highlightedId) {
           const hp = points.find((p) => p.id === highlightedId);
-          if (hp) {
+          const hi = points.findIndex((p) => p.id === highlightedId);
+          if (hp && hi >= 0) {
             map.panTo({ lat: hp.latitude, lng: hp.longitude });
             map.setZoom(17);
+            const marker = markersRef.current[hi];
+            if (marker) {
+              const content = buildInfoWindowContent(hp, hi, points.length, (dir) => {
+                const nextIdx = dir === "prev" ? hi - 1 : hi + 1;
+                const next = points[nextIdx];
+                if (next) onSelectRef.current?.(next.id);
+              });
+              infoWindowRef.current?.setContent(content);
+              infoWindowRef.current?.open({ map, anchor: marker });
+            }
           }
         } else {
           map.fitBounds(bounds, { top: 48, right: 48, bottom: 48, left: 48 });
@@ -130,7 +220,11 @@ export default function GoogleMapRouteMap({
         <p className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
           Mapa alternativo (OpenStreetMap). Para Google Maps, verifica la API key y haz redeploy en Vercel.
         </p>
-        <LeafletMapFallback points={points} highlightedId={highlightedId} />
+        <LeafletMapFallback
+          points={points}
+          highlightedId={highlightedId}
+          onPointSelect={onPointSelect}
+        />
       </div>
     );
   }

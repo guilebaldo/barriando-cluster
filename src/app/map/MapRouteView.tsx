@@ -40,9 +40,9 @@ function ViewTabs({
   className?: string;
 }) {
   const tabs: { id: ItineraryView; label: string; icon: React.ReactNode }[] = [
-    { id: "list", label: "Lista", icon: <List className="w-3.5 h-3.5" /> },
-    { id: "card", label: "Ficha", icon: null },
     { id: "map", label: "Mapa", icon: <MapIcon className="w-3.5 h-3.5" /> },
+    { id: "card", label: "Fichas", icon: null },
+    { id: "list", label: "Lista", icon: <List className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -69,7 +69,7 @@ function ViewTabs({
 export default function MapRouteView({ route: initialRoute }: { route: MapRouteResult }) {
   const [route, setRoute] = useState(initialRoute);
   const [selectedId, setSelectedId] = useState<string | null>(initialRoute.points[0]?.id ?? null);
-  const [view, setView] = useState<ItineraryView>("list");
+  const [view, setView] = useState<ItineraryView>("map");
   const [cardIndex, setCardIndex] = useState(0);
   const [geoNote, setGeoNote] = useState<string | null>(null);
 
@@ -241,7 +241,12 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
       {/* Móvil: una vista a la vez */}
       <div className="lg:hidden space-y-4">
         {view === "map" && (
-          <GoogleMapRouteMap points={route.points} highlightedId={selectedId} fullScreen />
+          <GoogleMapRouteMap
+            points={route.points}
+            highlightedId={selectedId}
+            fullScreen
+            onPointSelect={selectPoint}
+          />
         )}
         {view === "list" && (
           <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">{listView}</div>
@@ -255,7 +260,11 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
       {/* Escritorio: mapa + panel lateral */}
       <section className="hidden lg:grid lg:grid-cols-5 gap-6 items-start">
         <div className="lg:col-span-3 space-y-4 relative z-0">
-          <GoogleMapRouteMap points={route.points} highlightedId={selectedId} />
+          <GoogleMapRouteMap
+            points={route.points}
+            highlightedId={selectedId}
+            onPointSelect={selectPoint}
+          />
           {legend}
         </div>
         <aside className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">

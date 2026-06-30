@@ -564,7 +564,11 @@ export default function PanelDashboard({
             </section>
 
             {(user.socioId || socioProfile?.businessName) && linkageApproved && (
-              <SocioProfileForm initial={profileDefaults} disabled={!linkageApproved} />
+              <SocioProfileForm
+                initial={profileDefaults}
+                disabled={!linkageApproved}
+                hideBusinessName={plan === "VECINO"}
+              />
             )}
 
             <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm md:col-span-2 relative">

@@ -43,9 +43,10 @@ export interface SocioProfileFormInitial {
 interface SocioProfileFormProps {
   initial: SocioProfileFormInitial;
   disabled?: boolean;
+  hideBusinessName?: boolean;
 }
 
-export default function SocioProfileForm({ initial, disabled }: SocioProfileFormProps) {
+export default function SocioProfileForm({ initial, disabled, hideBusinessName }: SocioProfileFormProps) {
   const [form, setForm] = useState(initial);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -88,19 +89,21 @@ export default function SocioProfileForm({ initial, disabled }: SocioProfileForm
         </h2>
       </div>
       <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
-        <label className="block sm:col-span-2">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Nombre del negocio
-          </span>
-          <input
-            type="text"
-            required
-            disabled={disabled || loading}
-            value={form.businessName}
-            onChange={(e) => set("businessName", e.target.value)}
-            className={`${inputClass} mt-1`}
-          />
-        </label>
+        {!hideBusinessName && (
+          <label className="block sm:col-span-2">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Nombre del negocio
+            </span>
+            <input
+              type="text"
+              required
+              disabled={disabled || loading}
+              value={form.businessName}
+              onChange={(e) => set("businessName", e.target.value)}
+              className={`${inputClass} mt-1`}
+            />
+          </label>
+        )}
         <label className="block">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Sitio web</span>
           <input

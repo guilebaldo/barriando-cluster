@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-import { listaSocios } from "../data/socios";
+import type { Socio } from "../data/socios";
 import { Map } from "lucide-react";
 
 const SociosMap = dynamic(() => import("../components/SociosMap"), {
@@ -11,7 +11,7 @@ const SociosMap = dynamic(() => import("../components/SociosMap"), {
   ),
 });
 
-export default function SociosMapSection() {
+export default function SociosMapSection({ socios }: { socios: Socio[] }) {
   return (
     <section className="mb-12">
       <div className="flex items-center gap-2 mb-4">
@@ -21,10 +21,10 @@ export default function SociosMapSection() {
         </h2>
       </div>
       <p className="text-xs text-slate-500 mb-4 font-light max-w-2xl">
-        {listaSocios.length} puntos de la red Barriando en el mapa. Cada marcador corresponde a un miembro
+        {socios.length} puntos de la red Barriando en el mapa. Cada marcador corresponde a un miembro
         certificado del Clúster en nuestra zona de influencia turística.
       </p>
-      <SociosMap socios={listaSocios} />
+      <SociosMap socios={socios} />
     </section>
   );
 }

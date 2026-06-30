@@ -81,10 +81,16 @@ function RouteMarker({
   point,
   idx,
   highlighted,
+  total,
+  onNavigate,
+  onSelect,
 }: {
   point: MapRoutePoint;
   idx: number;
   highlighted: boolean;
+  total: number;
+  onNavigate: (direction: "prev" | "next") => void;
+  onSelect?: (id: string) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
   const kind = idx === 0 ? "start" : point.kind === "premium_business" ? "premium" : "milestone";
@@ -109,14 +115,42 @@ function RouteMarker({
           }}
         />
       )}
-      <Marker ref={markerRef} position={[point.latitude, point.longitude]} icon={icon} zIndexOffset={highlighted ? 500 : 0}>
+      <Marker
+        ref={markerRef}
+        position={[point.latitude, point.longitude]}
+        icon={icon}
+        zIndexOffset={highlighted ? 500 : 0}
+        eventHandlers={{
+          click: () => onSelect?.(point.id),
+        }}
+      >
         <Popup>
           <div className="text-xs min-w-[10rem]">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Parada {point.order}
-            </p>
             <p className="font-bold text-slate-900 mt-0.5">{point.name}</p>
             {point.category && <p className="text-slate-500 mt-1">{point.category}</p>}
+            <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={idx <= 0}
+                onClick={() => onNavigate("prev")}
+                className="px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
+                aria-label="Anterior"
+              >
+                ⬅️
+              </button>
+              <span className="text-[10px] text-slate-400 font-medium">
+                {point.order} / {total}
+              </span>
+              <button
+                type="button"
+                disabled={idx >= total - 1}
+                onClick={() => onNavigate("next")}
+                className="px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
+                aria-label="Siguiente"
+              >
+                ➡️
+              </button>
+            </div>
             <a
               href={point.mapsUrl}
               target="_blank"
@@ -136,10 +170,12 @@ export default function MapRouteMap({
   points,
   walkPath,
   highlightedId = null,
+  onPointSelect,
 }: {
   points: MapRoutePoint[];
   walkPath?: Array<[number, number]>;
   highlightedId?: string | null;
+  onPointSelect?: (id: string) => void;
 }) {
   const polyline = useMemo(() => {
     if (walkPath?.length) return walkPath;
@@ -179,6 +215,13 @@ export default function MapRouteMap({
             point={point}
             idx={idx}
             highlighted={highlightedId === point.id}
+            total={points.length}
+            onSelect={onPointSelect}
+            onNavigate={(direction) => {
+              const nextIdx = direction === "prev" ? idx - 1 : idx + 1;
+              const next = points[nextIdx];
+              if (next) onPointSelect?.(next.id);
+            }}
           />
         ))}
       </MapContainer>

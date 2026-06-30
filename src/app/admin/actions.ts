@@ -34,6 +34,7 @@ export async function approveManualCertification(userId: string): Promise<Action
 
     revalidatePath("/admin");
     revalidatePath("/panel");
+    revalidatePath("/socios");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -84,6 +85,17 @@ const adminUpdateSchema = z.object({
   website: z.string().trim().max(500).optional(),
   googleBusinessUrl: z.string().trim().max(500).optional(),
   logoUrl: z.string().trim().max(500).optional(),
+  rfc: z.string().trim().max(13).optional(),
+  razonSocial: z.string().trim().max(200).optional(),
+  regimenFiscal: z.string().trim().max(120).optional(),
+  usoCfdi: z.string().trim().max(80).optional(),
+  billingAddressFull: z.string().trim().max(400).optional(),
+  billingStreet: z.string().trim().max(200).optional(),
+  billingColonia: z.string().trim().max(120).optional(),
+  billingCiudad: z.string().trim().max(120).optional(),
+  billingEstado: z.string().trim().max(80).optional(),
+  billingPais: z.string().trim().max(80).optional(),
+  billingCodigoPostal: z.string().trim().max(10).optional(),
 });
 
 export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>): Promise<ActionResult> {
@@ -98,8 +110,28 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
       return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
     }
 
-    const { userId, nombre, socioId, plan, status, businessName, website, googleBusinessUrl, logoUrl } =
-      parsed.data;
+    const {
+      userId,
+      nombre,
+      socioId,
+      plan,
+      status,
+      businessName,
+      website,
+      googleBusinessUrl,
+      logoUrl,
+      rfc,
+      razonSocial,
+      regimenFiscal,
+      usoCfdi,
+      billingAddressFull,
+      billingStreet,
+      billingColonia,
+      billingCiudad,
+      billingEstado,
+      billingPais,
+      billingCodigoPostal,
+    } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return { ok: false, error: "Usuario no encontrado." };
@@ -146,7 +178,18 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
       businessName !== undefined ||
       website !== undefined ||
       googleBusinessUrl !== undefined ||
-      logoUrl !== undefined
+      logoUrl !== undefined ||
+      rfc !== undefined ||
+      razonSocial !== undefined ||
+      regimenFiscal !== undefined ||
+      usoCfdi !== undefined ||
+      billingAddressFull !== undefined ||
+      billingStreet !== undefined ||
+      billingColonia !== undefined ||
+      billingCiudad !== undefined ||
+      billingEstado !== undefined ||
+      billingPais !== undefined ||
+      billingCodigoPostal !== undefined
     ) {
       await prisma.socioProfile.upsert({
         where: { userId },
@@ -156,18 +199,41 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
           website: website ?? null,
           googleBusinessUrl: googleBusinessUrl ?? null,
           logoUrl: logoUrl ?? null,
+          rfc: rfc ?? null,
+          razonSocial: razonSocial ?? null,
+          regimenFiscal: regimenFiscal ?? null,
+          usoCfdi: usoCfdi ?? null,
+          billingAddressFull: billingAddressFull ?? null,
+          billingStreet: billingStreet ?? null,
+          billingColonia: billingColonia ?? null,
+          billingCiudad: billingCiudad ?? null,
+          billingEstado: billingEstado ?? null,
+          billingPais: billingPais ?? null,
+          billingCodigoPostal: billingCodigoPostal ?? null,
         },
         update: {
           ...(businessName !== undefined ? { businessName } : {}),
           ...(website !== undefined ? { website } : {}),
           ...(googleBusinessUrl !== undefined ? { googleBusinessUrl } : {}),
           ...(logoUrl !== undefined ? { logoUrl } : {}),
+          ...(rfc !== undefined ? { rfc } : {}),
+          ...(razonSocial !== undefined ? { razonSocial } : {}),
+          ...(regimenFiscal !== undefined ? { regimenFiscal } : {}),
+          ...(usoCfdi !== undefined ? { usoCfdi } : {}),
+          ...(billingAddressFull !== undefined ? { billingAddressFull } : {}),
+          ...(billingStreet !== undefined ? { billingStreet } : {}),
+          ...(billingColonia !== undefined ? { billingColonia } : {}),
+          ...(billingCiudad !== undefined ? { billingCiudad } : {}),
+          ...(billingEstado !== undefined ? { billingEstado } : {}),
+          ...(billingPais !== undefined ? { billingPais } : {}),
+          ...(billingCodigoPostal !== undefined ? { billingCodigoPostal } : {}),
         },
       });
     }
 
     revalidatePath("/admin");
     revalidatePath("/panel");
+    revalidatePath("/socios");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -254,6 +320,7 @@ export async function approveLinkage(userId: string): Promise<ActionResult> {
 
     revalidatePath("/admin");
     revalidatePath("/panel");
+    revalidatePath("/socios");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
