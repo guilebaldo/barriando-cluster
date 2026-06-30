@@ -65,18 +65,19 @@ export function loadGoogleMapsApi(): Promise<typeof google> {
         return;
       }
 
-      const callbackName = "__barriandoMapsInit";
-      window.__barriandoMapsCallback = () => {
-        delete window.__barriandoMapsCallback;
+      const callbackName = "__barriandoMapsCallback";
+      (window as Window & { __barriandoMapsCallback?: () => void })[callbackName] = () => {
+        delete (window as Window & { __barriandoMapsCallback?: () => void })[callbackName];
         if (window.google?.maps) {
           resolve(window.google);
         } else {
+          loadPromise = null;
           reject(new Error("Google Maps no disponible tras callback"));
         }
       };
 
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=geometry,places&callback=__barriandoMapsCallback&v=weekly`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=geometry,places&callback=${callbackName}&v=weekly`;
       script.async = true;
       script.defer = true;
       script.onerror = () => {

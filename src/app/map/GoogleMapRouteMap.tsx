@@ -1,9 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { loadGoogleMapsApi } from "@/lib/google-maps-loader";
 import { buildGoogleWalkingPath } from "@/lib/google-walking-path";
 import type { MapRoutePoint } from "@/lib/map-route-client";
+
+const LeafletMapFallback = dynamic(() => import("./MapRouteMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[min(70vh,520px)] rounded-2xl border border-slate-200 bg-slate-100 animate-pulse" />
+  ),
+});
 
 export default function GoogleMapRouteMap({
   points,
@@ -19,9 +27,10 @@ export default function GoogleMapRouteMap({
   const markersRef = useRef<google.maps.Marker[]>([]);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [useLeafletFallback, setUseLeafletFallback] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current || points.length === 0) return;
+    if (useLeafletFallback || !containerRef.current || points.length === 0) return;
     let cancelled = false;
 
     loadGoogleMapsApi()
@@ -99,21 +108,29 @@ export default function GoogleMapRouteMap({
       })
       .catch((err) => {
         console.error("[map] Google Maps failed:", err);
-        const detail = err instanceof Error ? err.message : "Error desconocido";
-        setError(
-          `No se pudo cargar el mapa (${detail}). Activa Maps JavaScript API y Directions API en Google Cloud, habilita facturación y autoriza el dominio barriandopuebla.com en la clave.`
-        );
+        setUseLeafletFallback(true);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [points, highlightedId, fullScreen]);
+  }, [points, highlightedId, fullScreen, useLeafletFallback]);
 
   if (points.length === 0) {
     return (
       <div className="h-[480px] rounded-2xl border border-slate-200 bg-slate-100 flex items-center justify-center text-sm text-slate-500">
         No hay puntos de ruta disponibles.
+      </div>
+    );
+  }
+
+  if (useLeafletFallback) {
+    return (
+      <div className="space-y-2">
+        <p className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          Mapa alternativo (OpenStreetMap). Para Google Maps, verifica la API key y haz redeploy en Vercel.
+        </p>
+        <LeafletMapFallback points={points} highlightedId={highlightedId} />
       </div>
     );
   }
