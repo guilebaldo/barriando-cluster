@@ -1,4 +1,8 @@
-export type PanelNoticeKey = "payment_confirmed" | "linkage_cta";
+export type PanelNoticeKey =
+  | "payment_confirmed"
+  | "linkage_cta"
+  | "payment_rejected"
+  | "linkage_rejected";
 
 function storageKey(userId: string, notice: PanelNoticeKey): string {
   return `barriando.panel.notice.${userId}.${notice}`;

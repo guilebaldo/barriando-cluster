@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import CertificacionPagoClient from "./CertificacionPagoClient";
 import { getSession } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
-import { isStripeConfigured } from "@/lib/stripe";
+import { isStripeConfiguredForPlan } from "@/lib/stripe";
 import { getBarriandoPaymentDetails } from "@/lib/payment";
 import {
   hasCommercialAccess,
@@ -51,7 +51,7 @@ export default async function CertificacionPagoPage({
   return (
     <CertificacionPagoClient
       plan={sub.plan}
-      stripeConfigured={isStripeConfigured()}
+      stripeConfigured={isStripeConfiguredForPlan(sub.plan)}
       paymentDetails={getBarriandoPaymentDetails()}
       cancelNotice={cancelNotice}
     />

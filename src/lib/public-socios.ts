@@ -135,7 +135,7 @@ export async function getPublicSociosList(): Promise<Socio[]> {
   return merged.sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
-/** Carrusel destacado: solo Mediana Empresa o Gran Empresa. */
+/** Carrusel destacado: solo Gran Empresa. */
 export async function getCarouselSocios(): Promise<Socio[]> {
   const publishedUsers = await loadPublishedBusinessUsers();
   const fromDb = publishedUsers

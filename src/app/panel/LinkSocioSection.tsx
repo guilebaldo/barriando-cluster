@@ -45,6 +45,7 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
   const [manualRegimen, setManualRegimen] = useState("");
   const [manualUsoCfdi, setManualUsoCfdi] = useState("");
   const [manualCodigoPostal, setManualCodigoPostal] = useState("");
+  const [manualMapsUrl, setManualMapsUrl] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isManual = selectedId === NOT_LISTED_ID;
@@ -98,6 +99,7 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
           address: manualAddress,
           category: manualCategory,
           website: manualWebsite ? normalizeWebsiteUrl(manualWebsite) : undefined,
+          googleBusinessUrl: manualMapsUrl || undefined,
           latitude: manualLat,
           longitude: manualLng,
           rfc: manualRfc,
@@ -246,6 +248,7 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
                 setManualAddress(loc.address);
                 setManualLat(loc.latitude);
                 setManualLng(loc.longitude);
+                setManualMapsUrl(loc.mapsUrl ?? "");
               }}
               className={`${inputClass} mt-1`}
             />

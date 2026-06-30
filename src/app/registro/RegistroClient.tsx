@@ -5,9 +5,11 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import { OAuthButtons } from "../components/OAuthButtons";
-import { MEMBERSHIP_PLANS } from "@/lib/membresia";
+import { MEMBERSHIP_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
+import { getUpgradePitch } from "@/lib/plan-upgrade";
+import { registroUrl } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
-import { Building2, MapPin, UserPlus } from "lucide-react";
+import { ArrowUpCircle, MapPin, UserPlus } from "lucide-react";
 
 interface RegistroClientProps {
   plan: MembershipPlan;
@@ -16,6 +18,7 @@ interface RegistroClientProps {
 export default function RegistroClient({ plan }: RegistroClientProps) {
   const planDef = MEMBERSHIP_PLANS[plan];
   const isTurista = plan === "TURISTA";
+  const upgradePitch = !isTurista ? getUpgradePitch(plan) : null;
 
   return (
     <SiteShell>
@@ -49,6 +52,9 @@ export default function RegistroClient({ plan }: RegistroClientProps) {
                   Plan seleccionado
                 </p>
                 <p className="text-sm font-bold text-slate-900">{planDef.label}</p>
+                <p className="text-lg font-black text-[#27366D] mt-1">
+                  {formatPlanPriceMxn(plan as Parameters<typeof formatPlanPriceMxn>[0])}
+                </p>
                 <p className="text-xs text-slate-600 mt-2 font-light leading-relaxed">
                   {planDef.description}
                 </p>
@@ -57,24 +63,31 @@ export default function RegistroClient({ plan }: RegistroClientProps) {
 
             <OAuthButtons />
 
-            <div className="mt-8 rounded-xl border border-[#27366D]/15 bg-gradient-to-br from-slate-50 to-amber-50/40 p-5">
-              <div className="flex items-start gap-3">
-                <Building2 className="w-5 h-5 text-[#27366D] shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-bold text-[#27366D]">¿Tienes un negocio?</p>
-                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed font-light">
-                    Contamos con planes especiales para certificar tu establecimiento, obtener exposición
-                    extra en el sitio y formar parte de las rutas oficiales del MAP.
-                  </p>
-                  <Link
-                    href="/planes"
-                    className="inline-flex mt-4 items-center justify-center w-full sm:w-auto bg-[#27366D] hover:bg-[#1e2b58] active:scale-95 text-amber-400 text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition-all"
-                  >
-                    Ver planes para socios
-                  </Link>
+            {upgradePitch && (
+              <div className="mt-8 rounded-xl border border-amber-200/80 bg-gradient-to-br from-amber-50/80 to-white p-5">
+                <div className="flex items-start gap-3">
+                  <ArrowUpCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-[#27366D]">
+                      ¿Necesitas más visibilidad? Conoce {upgradePitch.label}
+                    </p>
+                    <ul className="mt-2 space-y-1.5">
+                      {upgradePitch.benefits.map((b) => (
+                        <li key={b} className="text-[11px] text-slate-600 leading-relaxed">
+                          · {b}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={registroUrl(upgradePitch.nextPlan)}
+                      className="inline-flex mt-4 items-center justify-center w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition-all"
+                    >
+                      Ver plan {upgradePitch.label}
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <p className="text-xs text-slate-500 mt-6 text-center">
               ¿Ya tienes cuenta?{" "}

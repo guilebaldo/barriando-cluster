@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -219,26 +219,13 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
         </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden -mx-6 sm:mx-0">
-        <div className="w-full overflow-x-auto overscroll-x-contain">
-          <table className="w-full text-left text-xs min-w-[1100px]">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[#27366D] uppercase tracking-wider">
-              <tr>
-                <th className="px-4 py-3 font-bold">Nombre</th>
-                <th className="px-4 py-3 font-bold">Correo</th>
-                <th className="px-4 py-3 font-bold">Plan activo</th>
-                <th className="px-4 py-3 font-bold">Negocio solicitado</th>
-                <th className="px-4 py-3 font-bold">Estado negocio</th>
-                <th className="px-4 py-3 font-bold">Membresía</th>
-                <th className="px-4 py-3 font-bold text-center">Pago validado</th>
-                <th className="px-4 py-3 font-bold text-center">Vinculación aprobada</th>
-                <th className="px-4 py-3 font-bold text-right sticky right-0 bg-slate-50 z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.08)]">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {visibleUsers.map((user) => {
+      <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+        {visibleUsers.length === 0 ? (
+          <p className="col-span-full p-8 text-sm text-slate-500 text-center bg-white border border-slate-200 rounded-xl">
+            {tab === "pending" ? "No hay vinculaciones pendientes." : "No hay usuarios registrados."}
+          </p>
+        ) : (
+          visibleUsers.map((user) => {
                 const pendingPayment = user.status === "manual_pending";
                 const pendingLink = hasPendingLinkageRequest(user);
                 const linkageOutcome =
@@ -256,20 +243,59 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                       ? "rejected"
                       : null);
                 const isEditing = editingId === user.id;
-                const expiry = formatMembershipExpiry(user.currentPeriodEnd);
 
                 return (
-                  <Fragment key={user.id}>
-                    <tr className="hover:bg-slate-50/50">
-                      <td className="px-4 py-3 font-medium text-slate-900">{user.nombre}</td>
-                      <td className="px-4 py-3 text-slate-600">{user.email}</td>
-                      <td className="px-4 py-3 text-slate-700">{user.planLabel}</td>
-                      <td className="px-4 py-3 text-slate-800 font-medium max-w-[10rem]">
-                        {user.requestedBusinessName ?? (
-                          <span className="text-slate-400 font-normal">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
+                  <div
+                    key={user.id}
+                    className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 text-xs space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-bold text-slate-900">{user.nombre}</p>
+                        <p className="text-slate-500 mt-0.5 break-all">{user.email}</p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          type="button"
+                          title={isEditing ? "Cerrar" : "Editar"}
+                          onClick={() => (isEditing ? setEditingId(null) : openEdit(user))}
+                          className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
+                        >
+                          {isEditing ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                        </button>
+                        <button
+                          type="button"
+                          title="Eliminar"
+                          disabled={loadingId === user.id}
+                          onClick={() => {
+                            if (!confirm(`¿Eliminar la cuenta de ${user.nombre}?`)) return;
+                            runAction(user.id, () => deleteSocioUser(user.id), "Socio eliminado.");
+                          }}
+                          className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <p>
+                        <span className="text-slate-400 uppercase tracking-wider text-[9px]">Plan</span>
+                        <br />
+                        {user.planLabel}
+                      </p>
+                      <p>
+                        <span className="text-slate-400 uppercase tracking-wider text-[9px]">Membresía</span>
+                        <br />
+                        {getSubscriptionStatusLabel(user.status)}
+                      </p>
+                      <p className="col-span-2">
+                        <span className="text-slate-400 uppercase tracking-wider text-[9px]">Negocio</span>
+                        <br />
+                        {user.requestedBusinessName ?? "—"}
+                      </p>
+                      <p className="col-span-2">
+                        <span className="text-slate-400 uppercase tracking-wider text-[9px]">Estado negocio</span>
+                        <br />
                         <span
                           className={
                             pendingLink
@@ -281,149 +307,102 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                         >
                           {businessStatus(user)}
                         </span>
-                        {user.isManualEntry && user.profile?.address && (
-                          <p className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[12rem]">
-                            {user.profile.address}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
-                        {getSubscriptionStatusLabel(user.status)}
-                        {user.currentPeriodEnd && (
-                          <span className="block text-[10px] text-slate-400">Vence: {expiry}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {paymentOutcome === "approved" && (
-                          <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50">
-                            Sí
-                          </span>
-                        )}
-                        {paymentOutcome === "rejected" && (
-                          <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50">
-                            Rechazado
-                          </span>
-                        )}
-                        {pendingPayment && !paymentOutcome && (
-                          <div className="flex justify-center gap-1">
-                            <button
-                              type="button"
-                              title="Aprobar pago manual"
-                              disabled={loadingId === user.id}
-                              onClick={() =>
-                                runPaymentAction(
-                                  user.id,
-                                  () => approveManualCertification(user.id),
-                                  "approved",
-                                  "Certificación aprobada."
-                                )
-                              }
-                              className="p-2 rounded-lg text-[#27366D] hover:bg-slate-100 disabled:opacity-50"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              title="Rechazar pago manual"
-                              disabled={loadingId === user.id}
-                              onClick={() =>
-                                runPaymentAction(
-                                  user.id,
-                                  () => rejectManualCertification(user.id),
-                                  "rejected",
-                                  "Certificación rechazada."
-                                )
-                              }
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        {!pendingPayment && !paymentOutcome && (
-                          <span className="text-slate-300">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {linkageOutcome === "approved" && (
-                          <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50">
-                            Sí
-                          </span>
-                        )}
-                        {linkageOutcome === "rejected" && (
-                          <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50">
-                            Rechazado
-                          </span>
-                        )}
-                        {pendingLink && !linkageOutcome && (
-                          <div className="flex justify-center gap-1">
-                            <button
-                              type="button"
-                              title="Aprobar vinculación"
-                              disabled={loadingId === user.id}
-                              onClick={() =>
-                                runLinkageAction(
-                                  user.id,
-                                  () => approveLinkage(user.id),
-                                  "approved",
-                                  "Vinculación aprobada."
-                                )
-                              }
-                              className="p-2 rounded-lg text-green-700 hover:bg-green-50 disabled:opacity-50"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              title="Rechazar vinculación"
-                              disabled={loadingId === user.id}
-                              onClick={() =>
-                                runLinkageAction(
-                                  user.id,
-                                  () => rejectLinkage(user.id),
-                                  "rejected",
-                                  "Vinculación rechazada."
-                                )
-                              }
-                              className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        {!pendingLink && !linkageOutcome && (
-                          <span className="text-slate-300">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 sticky right-0 bg-white z-10 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.06)]">
-                        <div className="flex justify-end flex-wrap gap-1.5 items-center">
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                      <span className="text-[9px] font-bold uppercase text-slate-400 w-full">Pago</span>
+                      {paymentOutcome === "approved" && (
+                        <span className="px-2 py-1 rounded-lg text-[10px] font-bold text-green-700 bg-green-50">
+                          Validado
+                        </span>
+                      )}
+                      {paymentOutcome === "rejected" && (
+                        <span className="px-2 py-1 rounded-lg text-[10px] font-bold text-red-700 bg-red-50">
+                          Rechazado
+                        </span>
+                      )}
+                      {pendingPayment && !paymentOutcome && (
+                        <>
                           <button
                             type="button"
-                            title={isEditing ? "Cerrar" : "Editar"}
-                            onClick={() => (isEditing ? setEditingId(null) : openEdit(user))}
-                            className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
-                          >
-                            {isEditing ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
-                          </button>
-                          <button
-                            type="button"
-                            title="Eliminar"
                             disabled={loadingId === user.id}
-                            onClick={() => {
-                              if (!confirm(`¿Eliminar la cuenta de ${user.nombre}?`)) return;
-                              runAction(user.id, () => deleteSocioUser(user.id), "Socio eliminado.");
-                            }}
-                            className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+                            onClick={() =>
+                              runPaymentAction(
+                                user.id,
+                                () => approveManualCertification(user.id),
+                                "approved",
+                                "Certificación aprobada."
+                              )
+                            }
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-green-700 bg-green-50 hover:bg-green-100"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Aprobar
                           </button>
-                        </div>
-                      </td>
-                    </tr>
+                          <button
+                            type="button"
+                            disabled={loadingId === user.id}
+                            onClick={() =>
+                              runPaymentAction(
+                                user.id,
+                                () => rejectManualCertification(user.id),
+                                "rejected",
+                                "Certificación rechazada."
+                              )
+                            }
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-700 bg-red-50 hover:bg-red-100"
+                          >
+                            <XCircle className="w-3.5 h-3.5" /> Rechazar
+                          </button>
+                        </>
+                      )}
+                      <span className="text-[9px] font-bold uppercase text-slate-400 w-full mt-1">Vinculación</span>
+                      {linkageOutcome === "approved" && (
+                        <span className="px-2 py-1 rounded-lg text-[10px] font-bold text-green-700 bg-green-50">
+                          Aprobada
+                        </span>
+                      )}
+                      {linkageOutcome === "rejected" && (
+                        <span className="px-2 py-1 rounded-lg text-[10px] font-bold text-red-700 bg-red-50">
+                          Rechazada
+                        </span>
+                      )}
+                      {pendingLink && !linkageOutcome && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={loadingId === user.id}
+                            onClick={() =>
+                              runLinkageAction(
+                                user.id,
+                                () => approveLinkage(user.id),
+                                "approved",
+                                "Vinculación aprobada."
+                              )
+                            }
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-green-700 bg-green-50 hover:bg-green-100"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Aprobar
+                          </button>
+                          <button
+                            type="button"
+                            disabled={loadingId === user.id}
+                            onClick={() =>
+                              runLinkageAction(
+                                user.id,
+                                () => rejectLinkage(user.id),
+                                "rejected",
+                                "Vinculación rechazada."
+                              )
+                            }
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-700 bg-red-50 hover:bg-red-100"
+                          >
+                            <XCircle className="w-3.5 h-3.5" /> Rechazar
+                          </button>
+                        </>
+                      )}
+                    </div>
                     {isEditing && (
-                      <tr className="bg-slate-50">
-                        <td colSpan={9} className="px-4 py-4">
-                          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div className="pt-3 border-t border-slate-100 grid sm:grid-cols-2 gap-3">
                             <label className="block">
                               <span className="font-bold text-slate-500 uppercase tracking-wider">Nombre</span>
                               <input
@@ -553,19 +532,10 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
                               </button>
                             </div>
                           </div>
-                        </td>
-                      </tr>
                     )}
-                  </Fragment>
+                  </div>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {visibleUsers.length === 0 && (
-          <p className="p-8 text-sm text-slate-500 text-center">
-            {tab === "pending" ? "No hay vinculaciones pendientes." : "No hay usuarios registrados."}
-          </p>
+              })
         )}
       </div>
     </div>

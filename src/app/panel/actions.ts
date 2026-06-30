@@ -11,23 +11,36 @@ import { getStripe } from "@/lib/stripe";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { normalizeWebsiteUrl, parseWebsiteUrl } from "@/lib/url-utils";
 
-const urlField = z
+const optionalUrlField = z
   .string()
   .trim()
-  .min(1, "Ingresa una URL válida.")
   .max(500)
-  .transform((v) => normalizeWebsiteUrl(v))
-  .refine((v) => parseWebsiteUrl(v) !== null, "Ingresa una URL válida.");
+  .optional()
+  .transform((v) => {
+    if (!v?.trim()) return "";
+    return normalizeWebsiteUrl(v.trim());
+  })
+  .refine((v) => !v || parseWebsiteUrl(v) !== null, "URL inválida.");
 
 const profileSchema = z.object({
   businessName: z.string().trim().max(120).optional(),
-  website: urlField,
-  googleBusinessUrl: urlField,
-  rfc: z.string().trim().min(12, "RFC inválido.").max(13),
-  razonSocial: z.string().trim().min(3, "Ingresa la razón social.").max(200),
-  regimenFiscal: z.string().trim().min(3, "Selecciona el régimen fiscal.").max(120),
-  usoCfdi: z.string().trim().min(3, "Selecciona el uso de CFDI.").max(80),
-  billingCodigoPostal: z.string().trim().min(4, "Ingresa el C.P.").max(10),
+  website: optionalUrlField,
+  googleBusinessUrl: optionalUrlField,
+  category: z.string().trim().max(80).optional(),
+  address: z.string().trim().max(300).optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
+  rfc: z.string().trim().min(12, "RFC obligatorio (12–13 caracteres).").max(13),
+  razonSocial: z.string().trim().min(3, "Razón social obligatoria.").max(200),
+  regimenFiscal: z.string().trim().min(3, "Régimen fiscal obligatorio.").max(120),
+  usoCfdi: z.string().trim().min(3, "Uso de CFDI obligatorio.").max(80),
+  billingStreet: z.string().trim().max(200).optional(),
+  billingColonia: z.string().trim().max(120).optional(),
+  billingCiudad: z.string().trim().max(120).optional(),
+  billingEstado: z.string().trim().max(80).optional(),
+  billingPais: z.string().trim().max(80).optional(),
+  billingCodigoPostal: z.string().trim().min(4, "Código postal fiscal obligatorio.").max(10),
+  billingAddressFull: z.string().trim().max(400).optional(),
 });
 
 const manualBusinessSchema = z.object({
@@ -174,6 +187,7 @@ export async function registerManualBusiness(input: {
   address: string;
   category: string;
   website?: string;
+  googleBusinessUrl?: string;
   latitude?: number | null;
   longitude?: number | null;
   rfc: string;
@@ -219,6 +233,7 @@ export async function registerManualBusiness(input: {
       address,
       category,
       website: websiteUrl,
+      googleBusinessUrl: input.googleBusinessUrl?.trim() || null,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
       isManualEntry: true,
@@ -302,18 +317,29 @@ export async function updateSocioProfile(input: {
   businessName: string;
   website: string;
   googleBusinessUrl: string;
+  category: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
   rfc: string;
   razonSocial: string;
   regimenFiscal: string;
   usoCfdi: string;
+  billingStreet: string;
+  billingColonia: string;
+  billingCiudad: string;
+  billingEstado: string;
+  billingPais: string;
   billingCodigoPostal: string;
+  billingAddressFull: string;
 }): Promise<UpdateProfileResult> {
   try {
     const session = await requireSession();
     const subscription = await prisma.subscription.findUnique({ where: { userId: session.id } });
     const parsed = profileSchema.safeParse(input);
     if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+      const labels = parsed.error.issues.map((i) => i.message).join(" · ");
+      return { ok: false, error: `Faltan datos obligatorios: ${labels}` };
     }
 
     if (subscription?.plan !== "VECINO" && !parsed.data.businessName?.trim()) {

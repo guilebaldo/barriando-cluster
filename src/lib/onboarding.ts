@@ -32,7 +32,7 @@ async function ensureTuristaSubscription(userId: string) {
   await prisma.subscription.upsert({
     where: { userId },
     create: { userId, plan: "TURISTA", status: "inactive" },
-    update: {},
+    update: { plan: "TURISTA", status: "inactive" },
   });
 }
 

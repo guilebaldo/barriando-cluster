@@ -27,8 +27,12 @@ function navLinkClass(pathname: string, href: string) {
 
 function UserMenu({ mobile = false }: { mobile?: boolean }) {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const onCertificacion = pathname.startsWith("/certificacion");
+  const panelHref = onCertificacion ? "/certificacion/pago" : "/panel";
+  const panelLabel = onCertificacion ? "Completar certificación" : "Mi Panel";
 
   const displayName = session?.user?.name?.trim() || "Mi cuenta";
 
@@ -52,10 +56,10 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
           🎟️ Mi Pasaporte
         </Link>
         <Link
-          href="/panel"
+          href={panelHref}
           className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
         >
-          Mi Panel
+          {panelLabel}
         </Link>
         <button
           type="button"
@@ -100,12 +104,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
               🎟️ Mi Pasaporte
             </Link>
             <Link
-              href="/panel"
+              href={panelHref}
               role="menuitem"
               className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
               onClick={() => setOpen(false)}
             >
-              Mi Panel
+              {panelLabel}
             </Link>
             <button
               type="button"

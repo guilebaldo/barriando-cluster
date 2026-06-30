@@ -8,9 +8,12 @@ const PRICE_ENV: Record<PaidMembershipPlan, string> = {
   GRAN_EMPRESA: "STRIPE_PRICE_ID_GRAN_EMPRESA",
 };
 
+const VECINO_FALLBACK_PRICE_ID = "price_1To9tAPfUUsx84z9imooOqbi";
+
 export function getStripePriceId(plan: PaidMembershipPlan): string | null {
   const specific = process.env[PRICE_ENV[plan]]?.trim();
   if (specific) return specific;
+  if (plan === "VECINO") return VECINO_FALLBACK_PRICE_ID;
   return process.env.STRIPE_PRICE_ID?.trim() || null;
 }
 
@@ -24,8 +27,6 @@ export function isStripeConfiguredForPlan(plan: MembershipPlan): boolean {
 export function isStripeConfigured(): boolean {
   return Boolean(
     process.env.STRIPE_SECRET_KEY?.trim() &&
-      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim() &&
-      (process.env.STRIPE_PRICE_ID?.trim() ||
-        process.env.STRIPE_PRICE_ID_NEGOCIO_FAMILIAR?.trim())
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
   );
 }

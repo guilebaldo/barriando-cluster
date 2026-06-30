@@ -81,12 +81,16 @@ function waitForPlacesLibrary(google: typeof globalThis.google, timeoutMs = 10_0
 }
 
 interface BillingPlacesAutocompleteProps {
+  value?: string;
+  onChange?: (value: string) => void;
   onAddressSelected: (parsed: ParsedBillingAddress) => void;
   disabled?: boolean;
   className?: string;
 }
 
 export default function BillingPlacesAutocomplete({
+  value = "",
+  onChange,
   onAddressSelected,
   disabled,
   className,
@@ -120,6 +124,7 @@ export default function BillingPlacesAutocomplete({
             const place = autocomplete?.getPlace();
             const formatted = place?.formatted_address?.trim();
             if (!formatted) return;
+            onChange?.(formatted);
             onSelectRef.current(parseAddressComponents(place?.address_components, formatted));
           } catch (err) {
             console.warn("[places] place_changed handler failed:", err);
@@ -140,6 +145,8 @@ export default function BillingPlacesAutocomplete({
     <input
       ref={inputRef}
       type="text"
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
       disabled={disabled}
       placeholder="Escribe y selecciona tu dirección fiscal..."
       className={className}

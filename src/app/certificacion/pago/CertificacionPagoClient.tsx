@@ -126,7 +126,7 @@ export default function CertificacionPagoClient({
                 className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition disabled:opacity-50"
               >
                 <CreditCard className="w-4 h-4" />
-                {loading ? "Redirigiendo a Stripe..." : "Pagar con tarjeta (Stripe)"}
+                {loading ? "Redirigiendo..." : "Pagar con tarjeta bancaria"}
               </button>
             ) : (
               <p className="text-xs text-amber-700 text-center">

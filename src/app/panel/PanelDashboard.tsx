@@ -25,6 +25,7 @@ import {
   safePlanPriceLabel,
 } from "@/lib/panel-display";
 import { getLinkageStatusLabel, isLinkageApproved, isLinkagePending, isLinkageRejected } from "@/lib/linkage";
+import ConfirmDialog from "@/app/components/ConfirmDialog";
 import {
   hasSeenPanelNotice,
   markPanelNoticeSeen,
@@ -141,6 +142,13 @@ export default function PanelDashboard({
   const [linkageCtaSeen, setLinkageCtaSeen] = useState(() =>
     hasSeenPanelNotice(user.id, "linkage_cta")
   );
+  const [paymentRejectedDismissed, setPaymentRejectedDismissed] = useState(() =>
+    hasSeenPanelNotice(user.id, "payment_rejected")
+  );
+  const [linkageRejectedDismissed, setLinkageRejectedDismissed] = useState(() =>
+    hasSeenPanelNotice(user.id, "linkage_rejected")
+  );
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const plan = subscription?.plan ?? "TURISTA";
   const status = subscription?.status ?? "inactive";
@@ -180,12 +188,22 @@ export default function PanelDashboard({
   const profileDefaults = {
     businessName: socioProfile?.businessName ?? catalogSocio?.name ?? "",
     website: socioProfile?.website ?? catalogSocio?.url ?? "",
-    googleBusinessUrl: socioProfile?.googleBusinessUrl ?? catalogSocio?.direccion ?? "",
+    googleBusinessUrl: socioProfile?.googleBusinessUrl ?? "",
+    category: socioProfile?.category ?? catalogSocio?.categoria ?? "",
+    address: socioProfile?.address ?? catalogSocio?.direccion ?? "",
+    latitude: socioProfile?.latitude ?? null,
+    longitude: socioProfile?.longitude ?? null,
     rfc: socioProfile?.rfc ?? "",
     razonSocial: socioProfile?.razonSocial ?? "",
     regimenFiscal: socioProfile?.regimenFiscal ?? "",
     usoCfdi: socioProfile?.usoCfdi ?? "",
+    billingStreet: socioProfile?.billingStreet ?? "",
+    billingColonia: socioProfile?.billingColonia ?? "",
+    billingCiudad: socioProfile?.billingCiudad ?? "",
+    billingEstado: socioProfile?.billingEstado ?? "",
+    billingPais: socioProfile?.billingPais ?? "",
     billingCodigoPostal: socioProfile?.billingCodigoPostal ?? "",
+    billingAddressFull: socioProfile?.billingAddressFull ?? "",
   };
 
   async function refreshSession() {
@@ -221,13 +239,11 @@ export default function PanelDashboard({
   }
 
   async function handleCancelMembership() {
-    if (!confirm("¿Cancelar tu membresía? Seguirás con acceso hasta el fin del periodo facturado.")) {
-      return;
-    }
     setCancelMsg("");
     setCancelLoading(true);
     const result = await cancelMembership();
     setCancelLoading(false);
+    setShowCancelDialog(false);
     if (!result.ok) {
       setCancelMsg(result.error);
       return;
@@ -236,7 +252,7 @@ export default function PanelDashboard({
     await refreshSession();
   }
 
-  const stripeButtonLabel = commercial ? "Renovar Membresía" : "Pagar de forma Segura";
+  const stripeButtonLabel = commercial ? "Domiciliar membresía" : "Pagar con tarjeta bancaria";
 
   useEffect(() => {
     if (hasBusinessEstablished) {
@@ -317,10 +333,55 @@ export default function PanelDashboard({
       )}
 
       {(paymentRejected || linkageRejected) && (
-        <div className="bg-red-50 border border-red-200 text-red-900 rounded-xl p-4 text-xs leading-relaxed">
-          Tu {paymentRejected && linkageRejected ? "pago y vinculación" : paymentRejected ? "pago" : "vinculación"} no
-          fue aprobado por el administrador. Por favor, verifica tus datos y reenvía la solicitud.
-        </div>
+        <>
+          {paymentRejected && !paymentRejectedDismissed && (
+            <div className="relative bg-red-50 border border-red-200 text-red-900 rounded-xl p-4 text-xs leading-relaxed">
+              <button
+                type="button"
+                onClick={() => {
+                  markPanelNoticeSeen(user.id, "payment_rejected");
+                  setPaymentRejectedDismissed(true);
+                }}
+                className="absolute top-3 right-3 text-red-700 hover:text-red-900"
+                aria-label="Cerrar aviso"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <p className="font-bold mb-1 pr-6">Tu pago fue rechazado</p>
+              <p>
+                Intenta de nuevo con otro método de pago o reenvía la foto de tu comprobante a{" "}
+                <a href="mailto:guilebaldoruiz@gmail.com" className="underline font-semibold">
+                  guilebaldoruiz@gmail.com
+                </a>
+                .
+              </p>
+            </div>
+          )}
+          {linkageRejected && !linkageRejectedDismissed && (
+            <div className="relative bg-red-50 border border-red-200 text-red-900 rounded-xl p-4 text-xs leading-relaxed">
+              <button
+                type="button"
+                onClick={() => {
+                  markPanelNoticeSeen(user.id, "linkage_rejected");
+                  setLinkageRejectedDismissed(true);
+                }}
+                className="absolute top-3 right-3 text-red-700 hover:text-red-900"
+                aria-label="Cerrar aviso"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <p className="font-bold mb-1 pr-6">Tu vinculación o alta fue rechazada</p>
+              <p>
+                Revisa los datos y vuelve a enviar la solicitud con la información correcta. Si necesitas
+                ayuda, escribe a{" "}
+                <a href="mailto:guilebaldoruiz@gmail.com" className="underline font-semibold">
+                  guilebaldoruiz@gmail.com
+                </a>
+                .
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {showWelcome && (
@@ -499,6 +560,7 @@ export default function PanelDashboard({
                 </p>
                 <SocioProfileForm
                   initial={profileDefaults}
+                  email={user.email}
                   disabled={!linkageApproved}
                   hideBusinessName={plan === "VECINO"}
                   embedded
@@ -574,7 +636,7 @@ export default function PanelDashboard({
                   <button
                     type="button"
                     disabled={cancelLoading}
-                    onClick={handleCancelMembership}
+                    onClick={() => setShowCancelDialog(true)}
                     className="text-[10px] text-slate-400 hover:text-red-600 underline underline-offset-2 transition shrink-0"
                   >
                     Cancelar membresía
@@ -645,12 +707,19 @@ export default function PanelDashboard({
                     {upgradePlans.map((planId) => (
                       <div
                         key={planId}
-                        className="border border-slate-200 rounded-lg p-4 bg-slate-50 min-w-[10rem]"
+                        className="border border-slate-200 rounded-lg p-4 bg-slate-50 min-w-[10rem] flex-1"
                       >
                         <p className="font-bold text-slate-900 text-sm">{MEMBERSHIP_PLANS[planId].label}</p>
                         <p className="text-xs text-[#27366D] font-semibold mt-1">
                           {formatPlanPriceMxn(planId)}
                         </p>
+                        <ul className="mt-2 space-y-1">
+                          {MEMBERSHIP_PLANS[planId].benefits.slice(0, 3).map((b) => (
+                            <li key={b} className="text-[10px] text-slate-600 leading-snug">
+                              · {b}
+                            </li>
+                          ))}
+                        </ul>
                         {stripeConfigured && (
                           <button
                             type="button"
@@ -672,6 +741,16 @@ export default function PanelDashboard({
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={showCancelDialog}
+        title="Cancelar membresía"
+        message="¿Cancelar tu membresía? Seguirás con acceso hasta el fin del periodo facturado."
+        confirmLabel="Sí, cancelar"
+        cancelLabel="Volver"
+        loading={cancelLoading}
+        onConfirm={handleCancelMembership}
+        onCancel={() => setShowCancelDialog(false)}
+      />
     </div>
   );
 }

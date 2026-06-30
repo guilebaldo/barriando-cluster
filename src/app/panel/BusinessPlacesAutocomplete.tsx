@@ -7,7 +7,21 @@ export type ParsedBusinessLocation = {
   address: string;
   latitude: number | null;
   longitude: number | null;
+  mapsUrl: string | null;
 };
+
+function buildMapsUrl(place: google.maps.places.PlaceResult): string | null {
+  const direct = place.url?.trim();
+  if (direct) return direct;
+  const placeId = place.place_id?.trim();
+  if (placeId) return `https://www.google.com/maps/place/?q=place_id:${placeId}`;
+  const loc = place.geometry?.location;
+  const name = place.name?.trim() || place.formatted_address?.trim();
+  if (loc && name) {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}&query_place_id=${placeId ?? ""}`;
+  }
+  return null;
+}
 
 function waitForPlacesLibrary(google: typeof globalThis.google, timeoutMs = 10_000): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -66,7 +80,7 @@ export default function BusinessPlacesAutocomplete({
 
         autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
           componentRestrictions: { country: "mx" },
-          fields: ["formatted_address", "geometry", "name"],
+          fields: ["formatted_address", "geometry", "name", "place_id", "url"],
           types: ["establishment", "geocode"],
         });
 
@@ -81,6 +95,7 @@ export default function BusinessPlacesAutocomplete({
               address: formatted,
               latitude: lat,
               longitude: lng,
+              mapsUrl: place ? buildMapsUrl(place) : null,
             });
           } catch (err) {
             console.warn("[places] business place_changed failed:", err);
