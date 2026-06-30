@@ -39,7 +39,11 @@ export function proxy(request: NextRequest) {
     return attachPendingPlanCookie(request, NextResponse.next());
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  if (pathname === "/panel" || pathname.startsWith("/panel/")) {
+    response.headers.set("Cache-Control", "no-store, must-revalidate");
+  }
+  return response;
 }
 
 export const config = {

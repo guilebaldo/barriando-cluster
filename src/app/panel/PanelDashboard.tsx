@@ -281,10 +281,12 @@ export default function PanelDashboard({
   }, [hasPaidAccess]);
 
   const activePaymentNotice = localPaymentNotice ?? paymentNotice;
+  const showTransferPendingBanner = transferPending && !linkageApproved;
+  const suppressTopPaymentNotice = dismissedNotice || showLinkageFirst;
 
   return (
     <div className="space-y-6">
-      {activePaymentNotice && !dismissedNotice && (
+      {activePaymentNotice && !suppressTopPaymentNotice && (
         <div className="relative bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 pr-10 text-xs">
           <button
             type="button"
@@ -298,17 +300,10 @@ export default function PanelDashboard({
         </div>
       )}
 
-      {pendingValidation && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-xs">
-          Tu pago por transferencia está <strong>Pendiente de Revisión</strong>. Te avisaremos por correo
-          cuando quede activo.
-        </div>
-      )}
-
-      {transferPending && !linkageApproved && (
-        <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-5 text-sm leading-relaxed">
-          <p className="font-bold text-[#27366D] mb-2">Pago pendiente de revisión</p>
-          <p className="text-xs font-light">
+      {showTransferPendingBanner && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-sm">
+          <p className="font-bold text-[#27366D] mb-1">Pago pendiente de revisión</p>
+          <p className="text-xs font-light leading-relaxed">
             Tu pago por transferencia está siendo revisado por el administrador. Una vez confirmado, se
             habilitarán las herramientas para dar de alta o vincular tu negocio.
           </p>
@@ -381,17 +376,26 @@ export default function PanelDashboard({
           totalMilestones={totalMilestones}
         />
       ) : transferPending && !canLink ? (
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 text-sm text-slate-700">
-          <p className="font-bold text-[#27366D] mb-2">Panel bloqueado</p>
-          <p className="text-xs font-light leading-relaxed">
-            Tu pago por transferencia está siendo revisado por el administrador. Una vez confirmado, se
-            habilitarán las herramientas para dar de alta o vincular tu negocio.
+        <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <CreditCard className="w-4 h-4 text-[#27366D]" />
+            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Membresía</h2>
+          </div>
+          <p className="text-sm text-slate-700 mb-1">
+            Plan <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>
           </p>
-        </div>
+          <p className="text-sm text-slate-700">
+            Estado:{" "}
+            <strong className="text-amber-600">{getSubscriptionStatusLabel(status)}</strong>
+          </p>
+          <p className="text-xs text-slate-500 mt-3 font-light">
+            Te avisaremos por correo cuando confirmemos tu pago.
+          </p>
+        </section>
       ) : showLinkageFirst ? (
         <div className="space-y-6">
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-sm text-emerald-900">
-            <p className="font-bold mb-1">¡Pago verificado! Siguiente paso: vincula tu negocio</p>
+            <p className="font-bold mb-1">¡Pago confirmado! Siguiente paso: vincula tu negocio</p>
             <p className="text-xs font-light leading-relaxed">
               Tu membresía está activa. Completa la vinculación para aparecer en el directorio y rutas MAP.
             </p>

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getCsrfToken, signIn, signOut } from "next-auth/react";
+import { getCsrfToken, signIn, signOut, useSession } from "next-auth/react";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 
 async function submitOAuthForm(csrfToken: string, callbackUrl: string) {
@@ -36,6 +36,7 @@ export function OAuthButtons() {
 
 function OAuthButtonsInner() {
   const searchParams = useSearchParams();
+  const { status } = useSession();
   const [csrfToken, setCsrfToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -79,8 +80,10 @@ function OAuthButtonsInner() {
     setLoading(true);
 
     try {
-      // Evita OAuthAccountNotLinked por sesión JWT previa de otro usuario.
-      await signOut({ redirect: false });
+      // Solo cerrar sesión previa si hay una activa (evita romper el picker en móvil).
+      if (status === "authenticated") {
+        await signOut({ redirect: false });
+      }
 
       const result = await signIn("google", {
         redirectTo: redirectAfterLogin,

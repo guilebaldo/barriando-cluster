@@ -4,6 +4,7 @@ import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import PanelDashboard from "./PanelDashboard";
 import PanelFallback from "./PanelFallback";
+import PanelAuthGate from "./PanelAuthGate";
 import { getSession } from "@/lib/auth-utils";
 import { isStripeConfigured } from "@/lib/stripe";
 import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
@@ -36,7 +37,17 @@ export default async function PanelPage({
 }) {
   const params = await searchParams;
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) {
+    return (
+      <SiteShell>
+        <Navbar />
+        <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
+          <PanelAuthGate />
+        </main>
+        <Footer />
+      </SiteShell>
+    );
+  }
 
   try {
     await expireManualSubscriptionsIfNeeded();

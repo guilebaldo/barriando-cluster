@@ -57,6 +57,11 @@ function buildProviders(): Provider[] {
         allowDangerousEmailAccountLinking: true,
         // Sin PKCE ni state: evita InvalidCheck si el navegador bloquea cookies en el callback OAuth.
         checks: ["none"],
+        authorization: {
+          params: {
+            prompt: "select_account",
+          },
+        },
       })
     );
   } else if (isProduction) {
