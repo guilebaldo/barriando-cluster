@@ -7,6 +7,12 @@ import BusinessPlacesAutocomplete from "./BusinessPlacesAutocomplete";
 import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
 import { REGIMEN_OPTIONS, CFDI_OPTIONS } from "@/lib/fiscal-options";
 import { normalizeWebsiteUrl } from "@/lib/url-utils";
+import {
+  formFieldInputClass,
+  formFieldLabelClass,
+  formFieldLegendClass,
+  formFieldSelectClass,
+} from "@/lib/form-field-styles";
 
 const NOT_LISTED_ID = -1;
 
@@ -132,8 +138,7 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
     }
   }
 
-  const inputClass =
-    "w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#27366D]/20";
+  const inputClass = formFieldInputClass;
 
   return (
     <section className="bg-white border border-amber-200 rounded-xl p-6 shadow-sm md:col-span-2">
@@ -148,30 +153,33 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
       </p>
 
       <div ref={containerRef} className="relative mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelectedId(null);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            placeholder="Escribe para buscar por nombre o categoría..."
-            className={`${inputClass} pl-9 pr-9`}
-            autoComplete="off"
-          />
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
-            aria-label="Abrir lista"
-          >
-            <ChevronDown className="w-4 h-4" />
-          </button>
-        </div>
+        <label className={formFieldLabelClass}>
+          <span className={formFieldLegendClass}>Buscar negocio en el catálogo</span>
+          <div className="relative mt-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setSelectedId(null);
+                setOpen(true);
+              }}
+              onFocus={() => setOpen(true)}
+              placeholder="Escribe para buscar por nombre o categoría..."
+              className={`${inputClass} pl-9 pr-9`}
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+              aria-label="Abrir lista"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+        </label>
 
         {open && (
           <ul className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg text-xs">
@@ -183,7 +191,11 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
                 <button
                   type="button"
                   onClick={() => pickOption(s.id, `${s.name} — ${s.categoria}`)}
-                  className="w-full text-left px-3 py-2.5 hover:bg-slate-50 border-b border-slate-50 last:border-0"
+                  className={`w-full text-left px-3 py-2.5 border-b border-slate-50 last:border-0 transition ${
+                    selectedId === s.id
+                      ? "bg-[#27366D]/10 border-l-2 border-l-[#27366D] font-semibold"
+                      : "hover:bg-slate-50"
+                  }`}
                 >
                   <span className="font-semibold text-slate-900">{s.name}</span>
                   <span className="text-slate-500 ml-2">{s.categoria}</span>
@@ -194,7 +206,11 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               <button
                 type="button"
                 onClick={() => pickOption(NOT_LISTED_ID, "Mi negocio no está listado")}
-                className="w-full text-left px-3 py-2.5 hover:bg-amber-50 text-amber-800 font-semibold border-t border-amber-100"
+                className={`w-full text-left px-3 py-2.5 border-t border-amber-100 transition ${
+                  isManual
+                    ? "bg-amber-100 text-amber-900 font-semibold border-l-2 border-l-amber-600"
+                    : "hover:bg-amber-50 text-amber-800 font-semibold"
+                }`}
               >
                 Mi negocio no está listado
               </button>
@@ -211,10 +227,8 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
 
       {isManual && (
         <div className="grid sm:grid-cols-2 gap-3 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-          <label className="block sm:col-span-2">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Nombre del negocio
-            </span>
+          <label className={`${formFieldLabelClass} sm:col-span-2`}>
+            <span className={formFieldLegendClass}>Nombre del negocio</span>
             <input
               type="text"
               value={manualName}
@@ -223,10 +237,8 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               placeholder="Ej. Café del Centro"
             />
           </label>
-          <label className="block sm:col-span-2">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Ubicación (Google Places)
-            </span>
+          <label className={`${formFieldLabelClass} sm:col-span-2`}>
+            <span className={formFieldLegendClass}>Ubicación (Google Places)</span>
             <BusinessPlacesAutocomplete
               value={manualAddress}
               onChange={setManualAddress}
@@ -238,14 +250,12 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               className={`${inputClass} mt-1`}
             />
           </label>
-          <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Giro del negocio
-            </span>
+          <label className={formFieldLabelClass}>
+            <span className={formFieldLegendClass}>Giro del negocio</span>
             <select
               value={manualCategory}
               onChange={(e) => setManualCategory(e.target.value)}
-              className={`${inputClass} mt-1`}
+              className={`${formFieldSelectClass} mt-1`}
             >
               <option value="">Selecciona…</option>
               {BUSINESS_CATEGORY_OPTIONS.map((c) => (
@@ -254,11 +264,12 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
                 </option>
               ))}
             </select>
+            {manualCategory && (
+              <p className="text-[10px] text-[#27366D] mt-1 font-medium">Seleccionado: {manualCategory}</p>
+            )}
           </label>
-          <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Sitio web (opcional)
-            </span>
+          <label className={formFieldLabelClass}>
+            <span className={formFieldLegendClass}>Sitio web (opcional)</span>
             <input
               type="text"
               value={manualWebsite}
@@ -275,8 +286,8 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
             </p>
           </div>
 
-          <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">RFC</span>
+          <label className={formFieldLabelClass}>
+            <span className={formFieldLegendClass}>RFC</span>
             <input
               type="text"
               value={manualRfc}
@@ -285,10 +296,8 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               maxLength={13}
             />
           </label>
-          <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Razón social
-            </span>
+          <label className={formFieldLabelClass}>
+            <span className={formFieldLegendClass}>Razón social</span>
             <input
               type="text"
               value={manualRazonSocial}
@@ -296,14 +305,12 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               className={`${inputClass} mt-1`}
             />
           </label>
-          <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Régimen fiscal
-            </span>
+          <label className={formFieldLabelClass}>
+            <span className={formFieldLegendClass}>Régimen fiscal</span>
             <select
               value={manualRegimen}
               onChange={(e) => setManualRegimen(e.target.value)}
-              className={`${inputClass} mt-1`}
+              className={`${formFieldSelectClass} mt-1`}
             >
               <option value="">Selecciona…</option>
               {REGIMEN_OPTIONS.map((o) => (
@@ -313,14 +320,12 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               ))}
             </select>
           </label>
-          <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Uso de CFDI
-            </span>
+          <label className={formFieldLabelClass}>
+            <span className={formFieldLegendClass}>Uso de CFDI</span>
             <select
               value={manualUsoCfdi}
               onChange={(e) => setManualUsoCfdi(e.target.value)}
-              className={`${inputClass} mt-1`}
+              className={`${formFieldSelectClass} mt-1`}
             >
               <option value="">Selecciona…</option>
               {CFDI_OPTIONS.map((o) => (
@@ -330,10 +335,8 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               ))}
             </select>
           </label>
-          <label className="block">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Código postal fiscal
-            </span>
+          <label className={formFieldLabelClass}>
+            <span className={formFieldLegendClass}>Código postal fiscal</span>
             <input
               type="text"
               value={manualCodigoPostal}

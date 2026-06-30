@@ -25,6 +25,10 @@ import {
   safePlanPriceLabel,
 } from "@/lib/panel-display";
 import { getLinkageStatusLabel, isLinkageApproved, isLinkagePending, isLinkageRejected } from "@/lib/linkage";
+import {
+  hasSeenPanelNotice,
+  markPanelNoticeSeen,
+} from "@/lib/panel-notices-storage";
 import { reportManualPayment, cancelMembership } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
@@ -126,15 +130,17 @@ export default function PanelDashboard({
 }: PanelProps) {
   const router = useRouter();
   const { update } = useSession();
-  const [logoMsg, setLogoMsg] = useState("");
   const [payMsg, setPayMsg] = useState("");
   const [manualMsg, setManualMsg] = useState("");
-  const [loading, setLoading] = useState(false);
   const [cancelMsg, setCancelMsg] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
-  const [dismissedNotice, setDismissedNotice] = useState(false);
+  const [dismissedNotice, setDismissedNotice] = useState(() =>
+    hasSeenPanelNotice(user.id, "payment_confirmed")
+  );
   const [localPaymentNotice, setLocalPaymentNotice] = useState<string | null>(null);
-  const [editingProfile, setEditingProfile] = useState(false);
+  const [linkageCtaSeen, setLinkageCtaSeen] = useState(() =>
+    hasSeenPanelNotice(user.id, "linkage_cta")
+  );
 
   const plan = subscription?.plan ?? "TURISTA";
   const status = subscription?.status ?? "inactive";
@@ -214,26 +220,6 @@ export default function PanelDashboard({
     }
   }
 
-  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setLoading(true);
-    setLogoMsg("");
-    const formData = new FormData();
-    formData.append("logo", file);
-    try {
-      const res = await fetch("/api/socio/logo", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setLogoMsg("Logo actualizado correctamente.");
-      router.refresh();
-    } catch (err) {
-      setLogoMsg(err instanceof Error ? err.message : "Error al subir logo");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function handleCancelMembership() {
     if (!confirm("¿Cancelar tu membresía? Seguirás con acceso hasta el fin del periodo facturado.")) {
       return;
@@ -253,6 +239,19 @@ export default function PanelDashboard({
   const stripeButtonLabel = commercial ? "Renovar Membresía" : "Pagar de forma Segura";
 
   useEffect(() => {
+    if (hasBusinessEstablished) {
+      markPanelNoticeSeen(user.id, "payment_confirmed");
+      markPanelNoticeSeen(user.id, "linkage_cta");
+      setDismissedNotice(true);
+      setLinkageCtaSeen(true);
+    }
+  }, [hasBusinessEstablished, user.id]);
+
+  useEffect(() => {
+    if (hasSeenPanelNotice(user.id, "payment_confirmed")) {
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const pago = params.get("pago");
     const success = params.get("success");
@@ -278,11 +277,18 @@ export default function PanelDashboard({
       "",
       qs ? `${window.location.pathname}?${qs}` : window.location.pathname
     );
-  }, [hasPaidAccess]);
+  }, [hasPaidAccess, user.id]);
+
+  function dismissPaymentNotice() {
+    markPanelNoticeSeen(user.id, "payment_confirmed");
+    setDismissedNotice(true);
+  }
 
   const activePaymentNotice = localPaymentNotice ?? paymentNotice;
   const showTransferPendingBanner = transferPending && !linkageApproved;
-  const suppressTopPaymentNotice = dismissedNotice || showLinkageFirst;
+  const showLinkageCtaBanner = showLinkageFirst && !linkageCtaSeen;
+  const suppressTopPaymentNotice =
+    dismissedNotice || showLinkageCtaBanner || hasBusinessEstablished;
 
   return (
     <div className="space-y-6">
@@ -290,7 +296,7 @@ export default function PanelDashboard({
         <div className="relative bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 pr-10 text-xs">
           <button
             type="button"
-            onClick={() => setDismissedNotice(true)}
+            onClick={dismissPaymentNotice}
             className="absolute top-3 right-3 text-emerald-700 hover:text-emerald-900 transition"
             aria-label="Cerrar aviso"
           >
@@ -394,12 +400,27 @@ export default function PanelDashboard({
         </section>
       ) : showLinkageFirst ? (
         <div className="space-y-6">
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-sm text-emerald-900">
-            <p className="font-bold mb-1">¡Pago confirmado! Siguiente paso: vincula tu negocio</p>
-            <p className="text-xs font-light leading-relaxed">
-              Tu membresía está activa. Completa la vinculación para aparecer en el directorio y rutas MAP.
-            </p>
-          </div>
+          {showLinkageCtaBanner && (
+            <div className="relative bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-sm text-emerald-900">
+              <button
+                type="button"
+                onClick={() => {
+                  markPanelNoticeSeen(user.id, "linkage_cta");
+                  markPanelNoticeSeen(user.id, "payment_confirmed");
+                  setLinkageCtaSeen(true);
+                  setDismissedNotice(true);
+                }}
+                className="absolute top-3 right-3 text-emerald-700 hover:text-emerald-900 transition"
+                aria-label="Cerrar aviso"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <p className="font-bold mb-1 pr-6">¡Pago confirmado! Siguiente paso: vincula tu negocio</p>
+              <p className="text-xs font-light leading-relaxed">
+                Tu membresía está activa. Completa la vinculación para aparecer en el directorio y rutas MAP.
+              </p>
+            </div>
+          )}
           <LinkSocioSection
             socios={socios ?? []}
             takenSocioIds={takenSocioIds ?? []}
@@ -432,60 +453,35 @@ export default function PanelDashboard({
                     Vista de Control del Negocio
                   </h2>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setEditingProfile((v) => !v)}
-                  className="text-[10px] font-bold uppercase tracking-wider text-[#27366D] border border-[#27366D]/20 px-3 py-2 rounded-lg hover:bg-slate-50 transition"
-                >
-                  {editingProfile ? "Cerrar edición" : "Modificar Datos"}
-                </button>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Nombre</p>
-                  <p className="font-semibold text-slate-900 mt-0.5">{displayName}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Giro</p>
-                  <p className="text-slate-700 mt-0.5">
-                    {socioProfile?.category || catalogSocio?.categoria || "—"}
-                  </p>
-                </div>
-                <div className="sm:col-span-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Ubicación</p>
-                  <p className="text-slate-700 mt-0.5">
-                    {socioProfile?.address || catalogSocio?.direccion || socioProfile?.googleBusinessUrl || "—"}
-                  </p>
-                </div>
-                {socioProfile?.website && (
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Sitio web</p>
-                    <p className="text-slate-700 mt-0.5">{socioProfile.website}</p>
-                  </div>
-                )}
-                {socioProfile?.rfc && (
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">RFC</p>
-                    <p className="text-slate-700 mt-0.5">{socioProfile.rfc}</p>
-                  </div>
-                )}
-                {socioProfile?.razonSocial && (
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Razón social</p>
-                    <p className="text-slate-700 mt-0.5">{socioProfile.razonSocial}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Plan</p>
-                  <p className="text-amber-700 font-bold mt-0.5">{getPlanLabel(plan)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Estado</p>
-                  <p className="text-green-700 font-bold mt-0.5">Verificado</p>
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <span className="text-amber-700 font-bold">Plan: {getPlanLabel(plan)}</span>
+                  <span className="text-green-700 font-bold">Estado: Verificado</span>
                 </div>
               </div>
+
+              {(socioProfile?.category || catalogSocio?.categoria || socioProfile?.address) && (
+                <div className="grid sm:grid-cols-2 gap-3 mb-5 p-3 bg-slate-50 rounded-lg border border-slate-100 text-xs">
+                  {(socioProfile?.category || catalogSocio?.categoria) && (
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Giro</p>
+                      <p className="text-slate-700 mt-0.5">
+                        {socioProfile?.category || catalogSocio?.categoria}
+                      </p>
+                    </div>
+                  )}
+                  {(socioProfile?.address || catalogSocio?.direccion) && (
+                    <div className="sm:col-span-2">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Ubicación</p>
+                      <p className="text-slate-700 mt-0.5">
+                        {socioProfile?.address || catalogSocio?.direccion}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {displayLogo && (
-                <div className="mt-4 h-24 w-40 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="mb-5 h-24 w-40 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
                   <img
                     src={displayLogo}
                     alt={displayName ?? "Logo"}
@@ -496,6 +492,18 @@ export default function PanelDashboard({
                   />
                 </div>
               )}
+
+              <div className="pt-4 border-t border-slate-100">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                  Editar datos del negocio y facturación
+                </p>
+                <SocioProfileForm
+                  initial={profileDefaults}
+                  disabled={!linkageApproved}
+                  hideBusinessName={plan === "VECINO"}
+                  embedded
+                />
+              </div>
             </section>
           )}
 
@@ -537,41 +545,24 @@ export default function PanelDashboard({
             </section>
             )}
 
-            <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+            <section className="bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-sm opacity-90">
               <div className="flex items-center gap-2 mb-4">
-                <Upload className="w-4 h-4 text-[#27366D]" />
-                <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Actualizar logo</h2>
+                <Upload className="w-4 h-4 text-slate-400" />
+                <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Actualizar logo</h2>
               </div>
-              <p className="text-xs text-slate-500 mb-4 font-light">PNG, JPG o WebP. Máximo 2 MB.</p>
+              <p className="text-xs text-slate-500 mb-3 font-light leading-relaxed">
+                La actualización de logotipo estará disponible próximamente. Por ahora tu logo se muestra desde
+                el catálogo oficial o el que registraste al vincular tu negocio.
+              </p>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                onChange={handleLogoUpload}
-                disabled={!commercial || !linkageApproved || loading}
-                className="text-xs w-full"
+                disabled
+                className="text-xs w-full opacity-40 cursor-not-allowed"
+                aria-disabled
               />
-              {!linkageApproved && hasBusinessLinked && (
-                <p className="text-xs text-amber-600 mt-2">
-                  Podrás subir tu logo cuando el administrador apruebe tu vinculación.
-                </p>
-              )}
-              {!commercial && (
-                <p className="text-xs text-amber-600 mt-2">
-                  Activa tu membresía de pago para subir tu logo al carrusel.
-                </p>
-              )}
-              {logoMsg && <p className="text-xs mt-3 text-slate-600">{logoMsg}</p>}
+              <p className="text-[10px] text-amber-700 mt-2 font-medium">Próximamente habilitado</p>
             </section>
-
-            {(hasBusinessEstablished || user.socioId || socioProfile?.businessName) &&
-              linkageApproved &&
-              editingProfile && (
-              <SocioProfileForm
-                initial={profileDefaults}
-                disabled={!linkageApproved}
-                hideBusinessName={plan === "VECINO"}
-              />
-            )}
 
             <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm md:col-span-2 relative">
               <div className="flex items-start justify-between gap-4 mb-4">
