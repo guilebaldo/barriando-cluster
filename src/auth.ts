@@ -105,6 +105,7 @@ async function enrichTokenFromDb(userId: string) {
     role: dbUser.role,
     nombre: dbUser.nombre ?? "",
     plan: (dbUser.subscription?.plan ?? "TURISTA") as MembershipPlan,
+    subscriptionStatus: dbUser.subscription?.status ?? "inactive",
   };
 }
 
@@ -197,6 +198,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.role = enriched.role;
             token.nombre = enriched.nombre;
             token.plan = enriched.plan;
+            token.subscriptionStatus = enriched.subscriptionStatus;
           }
         } catch (error) {
           // No tumbar OAuth si Neon tarda en el primer callback
@@ -212,6 +214,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.socioId = (token.socioId as number | null) ?? null;
         session.user.role = (token.role as UserRole) ?? "SOCIO";
         session.user.plan = (token.plan as MembershipPlan) ?? "TURISTA";
+        session.user.subscriptionStatus = (token.subscriptionStatus as string) ?? "inactive";
         if (token.nombre) session.user.name = token.nombre as string;
       }
       return session;

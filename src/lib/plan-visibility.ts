@@ -1,7 +1,7 @@
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const DIRECTORY_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
-const CAROUSEL_PLANS: MembershipPlan[] = ["GRAN_EMPRESA"];
+const CAROUSEL_PLANS: MembershipPlan[] = ["MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 const MAP_PLANS: MembershipPlan[] = ["GRAN_EMPRESA"];
 
 /** Visible en el directorio /socios. */

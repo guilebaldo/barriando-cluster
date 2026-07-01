@@ -3,7 +3,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import { MEMBERSHIP_PLANS, PAID_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
-import { registroUrl, planToSlug } from "@/lib/plan-routing";
+import PlanSelectButton from "./PlanSelectButton";
+import { registroUrl } from "@/lib/plan-routing";
 import { getSession } from "@/lib/auth-utils";
 import { Check } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -109,19 +110,15 @@ function PlanCard({
         ))}
       </ul>
       {useDirectSelect ? (
-        <form action="/api/onboarding/select-plan" method="POST">
-          <input type="hidden" name="plan" value={planToSlug(planId as MembershipPlan)} />
-          <button
-            type="submit"
-            className={`block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
-              plan.isPaid
-                ? "bg-[#27366D] hover:bg-[#1e2b58] text-white"
-                : "bg-amber-500 hover:bg-amber-400 text-slate-950"
-            }`}
-          >
-            {isPlanChange ? "Seleccionar" : cta}
-          </button>
-        </form>
+        <PlanSelectButton
+          planId={planId as MembershipPlan}
+          label={isPlanChange ? "Seleccionar" : cta}
+          className={`block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
+            plan.isPaid
+              ? "bg-[#27366D] hover:bg-[#1e2b58] text-white"
+              : "bg-amber-500 hover:bg-amber-400 text-slate-950"
+          }`}
+        />
       ) : (
         <Link
           href={registroUrl(planId as MembershipPlan)}

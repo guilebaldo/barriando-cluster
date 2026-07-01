@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminUser } from "@/lib/admin";
 import { listaSocios } from "@/app/data/socios";
 import { getPlanLabel } from "@/lib/membresia";
 import { addThirtyDaysFrom } from "@/lib/subscription-lifecycle";
@@ -15,7 +15,7 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 export async function approveManualCertification(userId: string): Promise<ActionResult> {
   try {
     const session = await requireSession();
-    if (!isAdminEmail(session.email)) {
+    if (!isAdminUser(session)) {
       return { ok: false, error: "No autorizado." };
     }
 
@@ -47,7 +47,7 @@ export async function approveManualCertification(userId: string): Promise<Action
 export async function rejectManualCertification(userId: string): Promise<ActionResult> {
   try {
     const session = await requireSession();
-    if (!isAdminEmail(session.email)) {
+    if (!isAdminUser(session)) {
       return { ok: false, error: "No autorizado." };
     }
 
@@ -96,12 +96,15 @@ const adminUpdateSchema = z.object({
   billingEstado: z.string().trim().max(80).optional(),
   billingPais: z.string().trim().max(80).optional(),
   billingCodigoPostal: z.string().trim().max(10).optional(),
+  address: z.string().trim().max(300).optional(),
+  category: z.string().trim().max(120).optional(),
+  role: z.enum(["SOCIO", "ADMIN"]).optional(),
 });
 
 export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>): Promise<ActionResult> {
   try {
     const session = await requireSession();
-    if (!isAdminEmail(session.email)) {
+    if (!isAdminUser(session)) {
       return { ok: false, error: "No autorizado." };
     }
 
@@ -131,6 +134,9 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
       billingEstado,
       billingPais,
       billingCodigoPostal,
+      address,
+      category,
+      role,
     } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -145,11 +151,16 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
       if (taken) return { ok: false, error: "Ese negocio ya está vinculado a otra cuenta." };
     }
 
+    if (role !== undefined && session.id === userId && role === "SOCIO") {
+      return { ok: false, error: "No puedes quitarte permisos de administrador." };
+    }
+
     await prisma.user.update({
       where: { id: userId },
       data: {
         ...(nombre !== undefined ? { nombre } : {}),
         ...(socioId !== undefined ? { socioId } : {}),
+        ...(role !== undefined ? { role } : {}),
       },
     });
 
@@ -179,6 +190,8 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
       website !== undefined ||
       googleBusinessUrl !== undefined ||
       logoUrl !== undefined ||
+      address !== undefined ||
+      category !== undefined ||
       rfc !== undefined ||
       razonSocial !== undefined ||
       regimenFiscal !== undefined ||
@@ -199,6 +212,8 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
           website: website ?? null,
           googleBusinessUrl: googleBusinessUrl ?? null,
           logoUrl: logoUrl ?? null,
+          address: address ?? null,
+          category: category ?? null,
           rfc: rfc ?? null,
           razonSocial: razonSocial ?? null,
           regimenFiscal: regimenFiscal ?? null,
@@ -216,6 +231,8 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
           ...(website !== undefined ? { website } : {}),
           ...(googleBusinessUrl !== undefined ? { googleBusinessUrl } : {}),
           ...(logoUrl !== undefined ? { logoUrl } : {}),
+          ...(address !== undefined ? { address } : {}),
+          ...(category !== undefined ? { category } : {}),
           ...(rfc !== undefined ? { rfc } : {}),
           ...(razonSocial !== undefined ? { razonSocial } : {}),
           ...(regimenFiscal !== undefined ? { regimenFiscal } : {}),
@@ -246,7 +263,7 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
 export async function deleteSocioUser(userId: string): Promise<ActionResult> {
   try {
     const session = await requireSession();
-    if (!isAdminEmail(session.email)) {
+    if (!isAdminUser(session)) {
       return { ok: false, error: "No autorizado." };
     }
     if (session.id === userId) {
@@ -269,6 +286,7 @@ export type AdminUserRow = {
   nombre: string;
   email: string;
   socioId: number | null;
+  role: "SOCIO" | "ADMIN";
   socioName: string | null;
   plan: MembershipPlan;
   planLabel: string;
@@ -304,7 +322,7 @@ export type AdminUserRow = {
 export async function approveLinkage(userId: string): Promise<ActionResult> {
   try {
     const session = await requireSession();
-    if (!isAdminEmail(session.email)) {
+    if (!isAdminUser(session)) {
       return { ok: false, error: "No autorizado." };
     }
 
@@ -333,7 +351,7 @@ export async function approveLinkage(userId: string): Promise<ActionResult> {
 export async function rejectLinkage(userId: string): Promise<ActionResult> {
   try {
     const session = await requireSession();
-    if (!isAdminEmail(session.email)) {
+    if (!isAdminUser(session)) {
       return { ok: false, error: "No autorizado." };
     }
 
@@ -396,6 +414,7 @@ const USER_ADMIN_BASE_SELECT = {
   email: true,
   nombre: true,
   socioId: true,
+  role: true,
   createdAt: true,
   subscription: { select: SUBSCRIPTION_ADMIN_SELECT },
 } as const;
@@ -405,6 +424,7 @@ type AdminUserRecord = {
   email: string | null;
   nombre: string | null;
   socioId: number | null;
+  role: "SOCIO" | "ADMIN";
   createdAt: Date;
   subscription: {
     plan: MembershipPlan;
@@ -469,7 +489,7 @@ async function fetchAdminUserRecords(): Promise<AdminUserRecord[]> {
 
 export async function listAdminUsers(): Promise<AdminUserRow[]> {
   const session = await requireSession();
-  if (!isAdminEmail(session.email)) {
+  if (!isAdminUser(session)) {
     throw new Error("FORBIDDEN");
   }
 
@@ -488,6 +508,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
       nombre: user.nombre ?? user.email ?? "—",
       email: user.email ?? "—",
       socioId: user.socioId,
+      role: user.role,
       socioName: businessName,
       requestedBusinessName,
       plan,

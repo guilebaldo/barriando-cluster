@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
@@ -15,7 +16,7 @@ import {
   isTuristaPlan,
   needsCertificationPayment,
 } from "@/lib/membresia";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminUser } from "@/lib/admin";
 import {
   loadPanelUser,
   loadTakenSocioIds,
@@ -130,7 +131,7 @@ export default async function PanelPage({
               image: panelUser.image ?? null,
               socioId: panelUser.socioId ?? null,
             }}
-            isAdmin={isAdminEmail(panelUser.email ?? session.email)}
+            isAdmin={isAdminUser({ email: panelUser.email ?? session.email, role: panelUser.role })}
             subscription={refreshedSub}
             socioProfile={profile}
             catalogSocio={
@@ -159,6 +160,7 @@ export default async function PanelPage({
       </SiteShell>
     );
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     console.error("[panel] render failed:", error);
     return (
       <SiteShell>

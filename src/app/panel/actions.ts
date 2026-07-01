@@ -46,7 +46,7 @@ const profileSchema = z.object({
 const manualBusinessSchema = z.object({
   businessName: z.string().trim().min(2, "Ingresa el nombre del negocio.").max(120),
   address: z.string().trim().min(5, "Ingresa la dirección del negocio.").max(300),
-  category: z.enum(BUSINESS_CATEGORY_OPTIONS, { message: "Selecciona el giro del negocio." }),
+  category: z.enum(BUSINESS_CATEGORY_OPTIONS, { message: "Selecciona la categoría del negocio." }),
   website: z.string().trim().max(500).optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),

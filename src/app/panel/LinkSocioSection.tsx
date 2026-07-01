@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Link2, Search } from "lucide-react";
 import { linkSocioAccount, registerManualBusiness } from "./actions";
 import BusinessPlacesAutocomplete from "./BusinessPlacesAutocomplete";
-import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
+import { categorySelectOptions } from "@/lib/business-categories";
 import { REGIMEN_OPTIONS, CFDI_OPTIONS } from "@/lib/fiscal-options";
 import { normalizeWebsiteUrl } from "@/lib/url-utils";
 import {
@@ -254,22 +254,19 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Giro del negocio</span>
+            <span className={formFieldLegendClass}>Categoría</span>
             <select
               value={manualCategory}
               onChange={(e) => setManualCategory(e.target.value)}
               className={`${formFieldSelectClass} mt-1`}
             >
               <option value="">Selecciona…</option>
-              {BUSINESS_CATEGORY_OPTIONS.map((c) => (
+              {categorySelectOptions(manualCategory).map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
               ))}
             </select>
-            {manualCategory && (
-              <p className="text-[10px] text-[#27366D] mt-1 font-medium">Seleccionado: {manualCategory}</p>
-            )}
           </label>
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>Sitio web (opcional)</span>

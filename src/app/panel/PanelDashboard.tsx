@@ -507,11 +507,11 @@ export default function PanelDashboard({
 
           {hasBusinessEstablished && (
             <section className="bg-white border border-emerald-200 rounded-xl p-6 shadow-sm md:col-span-2">
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
                 <div className="flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-[#27366D]" />
                   <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                    Vista de Control del Negocio
+                    Vista de control del negocio
                   </h2>
                 </div>
                 <div className="flex flex-wrap gap-3 text-xs">
@@ -520,44 +520,41 @@ export default function PanelDashboard({
                 </div>
               </div>
 
-              {(socioProfile?.category || catalogSocio?.categoria || socioProfile?.address) && (
-                <div className="grid sm:grid-cols-2 gap-3 mb-5 p-3 bg-slate-50 rounded-lg border border-slate-100 text-xs">
-                  {(socioProfile?.category || catalogSocio?.categoria) && (
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Giro</p>
-                      <p className="text-slate-700 mt-0.5">
-                        {socioProfile?.category || catalogSocio?.categoria}
-                      </p>
-                    </div>
-                  )}
-                  {(socioProfile?.address || catalogSocio?.direccion) && (
-                    <div className="sm:col-span-2">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Ubicación</p>
-                      <p className="text-slate-700 mt-0.5">
-                        {socioProfile?.address || catalogSocio?.direccion}
-                      </p>
-                    </div>
+              <div className="mb-6 flex flex-wrap items-start gap-6">
+                <div className="h-28 w-44 shrink-0 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+                  {displayLogo ? (
+                    <img
+                      src={displayLogo}
+                      alt={displayName ?? "Logo"}
+                      className="max-h-full max-w-full object-contain p-2"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <Building2 className="w-10 h-10 text-slate-300" aria-hidden />
                   )}
                 </div>
-              )}
-
-              {displayLogo && (
-                <div className="mb-5 h-24 w-40 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img
-                    src={displayLogo}
-                    alt={displayName ?? "Logo"}
-                    className="max-h-full max-w-full object-contain p-2"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
+                <div className="flex-1 min-w-[12rem] max-w-md">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    Logotipo
+                  </p>
+                  <p className="text-xs text-slate-500 mb-3 font-light leading-relaxed">
+                    La actualización de logotipo estará disponible próximamente. Por ahora se muestra el del
+                    catálogo oficial o el que registraste al vincular tu negocio.
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    disabled
+                    className="text-xs w-full opacity-40 cursor-not-allowed"
+                    aria-disabled
                   />
+                  <p className="text-[10px] text-amber-700 mt-2 font-medium">Próximamente habilitado</p>
                 </div>
-              )}
+              </div>
 
               <div className="pt-4 border-t border-slate-100">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-                  Editar datos del negocio y facturación
-                </p>
                 <SocioProfileForm
                   initial={profileDefaults}
                   email={user.email}
@@ -607,6 +604,7 @@ export default function PanelDashboard({
             </section>
             )}
 
+            {!hasBusinessEstablished && (
             <section className="bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-sm opacity-90">
               <div className="flex items-center gap-2 mb-4">
                 <Upload className="w-4 h-4 text-slate-400" />
@@ -625,6 +623,7 @@ export default function PanelDashboard({
               />
               <p className="text-[10px] text-amber-700 mt-2 font-medium">Próximamente habilitado</p>
             </section>
+            )}
 
             <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm md:col-span-2 relative">
               <div className="flex items-start justify-between gap-4 mb-4">

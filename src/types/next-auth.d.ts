@@ -10,6 +10,7 @@ declare module "next-auth" {
       socioId: number | null;
       role: UserRole;
       plan: MembershipPlan;
+      subscriptionStatus?: string;
     };
   }
 }
@@ -21,5 +22,6 @@ declare module "next-auth/jwt" {
     role?: UserRole;
     nombre?: string;
     plan?: MembershipPlan;
+    subscriptionStatus?: string;
   }
 }

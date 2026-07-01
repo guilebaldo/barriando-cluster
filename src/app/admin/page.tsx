@@ -4,13 +4,13 @@ import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import AdminDashboard from "./AdminDashboard";
 import { getSession } from "@/lib/auth-utils";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminUser } from "@/lib/admin";
 import { listAdminUsers } from "./actions";
 
 export default async function AdminPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (!isAdminEmail(session.email)) redirect("/panel");
+  if (!isAdminUser(session)) redirect("/panel");
 
   const users = await listAdminUsers();
 

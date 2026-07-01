@@ -6,7 +6,9 @@ import { isStripeConfiguredForPlan } from "@/lib/stripe";
 import { secureError, secureJson } from "@/lib/api";
 
 const bodySchema = z.object({
-  plan: z.enum(["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"]).optional(),
+  plan: z
+    .enum(["VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"])
+    .optional(),
 });
 
 export async function POST(request: NextRequest) {

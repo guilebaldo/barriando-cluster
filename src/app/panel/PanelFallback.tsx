@@ -8,6 +8,17 @@ const SUPPORT_EMAIL = "guilebaldoruiz@gmail.com";
 export default function PanelFallback({ nombre }: { nombre: string }) {
   const router = useRouter();
 
+  function handleRetry() {
+    router.refresh();
+    window.setTimeout(() => {
+      if (window.location.pathname === "/panel") {
+        window.location.reload();
+      } else {
+        window.location.assign("/panel");
+      }
+    }, 150);
+  }
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm max-w-lg mx-auto text-center space-y-4">
       <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
@@ -27,7 +38,7 @@ export default function PanelFallback({ nombre }: { nombre: string }) {
       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
         <button
           type="button"
-          onClick={() => router.refresh()}
+          onClick={handleRetry}
           className="inline-flex items-center justify-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg transition"
         >
           <RefreshCw className="w-4 h-4" />

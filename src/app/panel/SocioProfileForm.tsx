@@ -5,7 +5,7 @@ import { Save } from "lucide-react";
 import { updateSocioProfile } from "./actions";
 import BusinessPlacesAutocomplete from "./BusinessPlacesAutocomplete";
 import BillingPlacesAutocomplete, { type ParsedBillingAddress } from "./BillingPlacesAutocomplete";
-import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
+import { BUSINESS_CATEGORY_OPTIONS, categorySelectOptions } from "@/lib/business-categories";
 import { REGIMEN_OPTIONS, CFDI_OPTIONS } from "@/lib/fiscal-options";
 import { normalizeWebsiteUrl } from "@/lib/url-utils";
 import {
@@ -98,6 +98,8 @@ export default function SocioProfileForm({
     setMsg("Cambios guardados correctamente.");
   }
 
+  const categoryOptions = useMemo(() => categorySelectOptions(form.category), [form.category]);
+
   const formBody = (
     <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
       <label className={`${formFieldLabelClass} sm:col-span-2`}>
@@ -125,7 +127,7 @@ export default function SocioProfileForm({
       )}
 
       <label className={formFieldLabelClass}>
-        <span className={formFieldLegendClass}>Giro del negocio *</span>
+        <span className={formFieldLegendClass}>Categoría *</span>
         <select
           required
           disabled={disabled || loading}
@@ -134,7 +136,7 @@ export default function SocioProfileForm({
           className={`${formFieldSelectClass} mt-1`}
         >
           <option value="">Selecciona…</option>
-          {BUSINESS_CATEGORY_OPTIONS.map((c) => (
+          {categoryOptions.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>

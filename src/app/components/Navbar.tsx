@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, ChevronDown } from "lucide-react";
+import { getAccountNavItem } from "@/lib/nav-account";
+import type { MembershipPlan } from "@/generated/prisma/client";
 
 const links = [
   { href: "/", label: "Inicio" },
@@ -30,9 +32,11 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const onCertificacion = pathname.startsWith("/certificacion");
-  const panelHref = onCertificacion ? "/certificacion/pago" : "/panel";
-  const panelLabel = onCertificacion ? "Completar certificación" : "Mi Panel";
+  const accountNav = getAccountNavItem(
+    session?.user?.plan as MembershipPlan | undefined,
+    session?.user?.subscriptionStatus,
+    pathname
+  );
 
   const displayName = session?.user?.name?.trim() || "Mi cuenta";
 
@@ -56,10 +60,10 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
           🎟️ Mi Pasaporte
         </Link>
         <Link
-          href={panelHref}
+          href={accountNav.href}
           className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
         >
-          {panelLabel}
+          {accountNav.label}
         </Link>
         <button
           type="button"
@@ -104,12 +108,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
               🎟️ Mi Pasaporte
             </Link>
             <Link
-              href={panelHref}
+              href={accountNav.href}
               role="menuitem"
               className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
               onClick={() => setOpen(false)}
             >
-              {panelLabel}
+              {accountNav.label}
             </Link>
             <button
               type="button"

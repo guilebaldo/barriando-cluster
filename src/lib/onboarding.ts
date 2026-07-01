@@ -58,29 +58,35 @@ async function createStripeCheckoutRedirect(userId: string, plan: PaidMembership
   redirect(url);
 }
 
-/** Cambia el plan de un usuario ya autenticado (p. ej. desde /planes tras certificación). */
-export async function selectMembershipPlanForUser(plan: MembershipPlan) {
+/** Cambia el plan de un usuario ya autenticado; devuelve la ruta destino. */
+export async function resolvePlanSelectionPath(plan: MembershipPlan): Promise<string> {
   const session = await auth();
-  if (!session?.user?.id) redirect("/login");
+  if (!session?.user?.id) return "/login";
 
   await syncStripeSubscriptionForUser(session.user.id);
   const sub = await loadSubscription(session.user.id);
 
   if (sub && hasCommercialAccess(sub.plan, sub.status) && sub.plan === plan) {
-    redirect("/panel");
+    return "/panel";
   }
 
   if (isTuristaPlan(plan)) {
     await ensureTuristaSubscription(session.user.id);
-    redirect("/panel");
+    return "/panel";
   }
 
   if (isPaidMembershipPlan(plan)) {
     await ensurePendingPaidPlan(session.user.id, plan as PaidMembershipPlan);
-    redirect("/certificacion/pago");
+    return "/certificacion/pago";
   }
 
-  redirect("/planes");
+  return "/planes";
+}
+
+/** @deprecated Usar resolvePlanSelectionPath + redirect en el caller */
+export async function selectMembershipPlanForUser(plan: MembershipPlan) {
+  const path = await resolvePlanSelectionPath(plan);
+  redirect(path);
 }
 
 /** Tras autenticación: turista → panel; plan de pago → pantalla de certificación. */
