@@ -14,6 +14,11 @@ export function isVisibleInCarousel(plan: MembershipPlan): boolean {
   return CAROUSEL_PLANS.includes(plan);
 }
 
+/** Aparece en el carrusel de Mediana Empresa de la landing. */
+export function isMedianaCarouselPlan(plan: MembershipPlan): boolean {
+  return plan === "MEDIANA_EMPRESA";
+}
+
 /** Aparece como negocio premium en la ruta MAP interactiva. */
 export function isVisibleOnMap(plan: MembershipPlan): boolean {
   return MAP_PLANS.includes(plan);

@@ -1,22 +1,14 @@
 import HomePage from "./HomePage";
-import { getCarouselSocios } from "@/lib/public-socios";
 import { getLiveStats } from "@/lib/get-live-stats";
-import { getPublishedTestimonials, getActiveHomePromo } from "@/lib/home-content";
+import { getActiveHomePromo } from "@/lib/home-content";
+import { getCarouselSocios } from "@/lib/public-socios";
 
 export default async function Page() {
-  const [carouselSocios, liveStats, testimonials, homePromo] = await Promise.all([
-    getCarouselSocios(),
+  const [liveStats, homePromo, carouselSocios] = await Promise.all([
     getLiveStats(),
-    getPublishedTestimonials(),
     getActiveHomePromo(),
+    getCarouselSocios(),
   ]);
 
-  return (
-    <HomePage
-      carouselSocios={carouselSocios}
-      liveStats={liveStats}
-      testimonials={testimonials}
-      homePromo={homePromo}
-    />
-  );
+  return <HomePage liveStats={liveStats} homePromo={homePromo} carouselSocios={carouselSocios} />;
 }

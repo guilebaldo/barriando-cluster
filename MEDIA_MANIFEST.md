@@ -29,6 +29,16 @@ If a file is missing, a styled placeholder is shown at build/runtime without bre
 | `equipo-abril-cantu` | image | `/equipo/abril-cantu.jpg` | Abril Cantú — Digital Content Manager |
 | `equipo-guilebaldo-ruiz` | image | `/equipo/guilebaldo-ruiz.jpg` | Guilebaldo Ruiz — Director de Tecnología |
 
+## Festividades (landing)
+
+| Slot ID | Type | Path | Description |
+|---------|------|------|-------------|
+| `fest-fundacional` | image | `/festividades/festival-fundacional.jpg` | Festival Fundacional |
+| `fest-cinco-mayo` | image | `/festividades/cinco-de-mayo-fest.jpg` | Cinco de Mayo Fest |
+| `fest-cabalgata` | image | `/festividades/cabalgata-iturbide.jpg` | Cabalgata de Iturbide |
+| `fest-paseo-almas` | image | `/festividades/paseo-almas-thriller.jpg` | Paseo de las Almas & Banda Thriller |
+| `fest-mercado-oficios` | image | `/festividades/mercado-oficios-mi-barrio-fest.jpg` | Mercado de Oficios & Mi Barrio Fest |
+
 ## Testimonials (optional, via admin)
 
 Testimonial photos are stored as `photoUrl` in the database (admin-managed), not as MediaSlots.

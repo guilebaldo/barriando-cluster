@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { listaSocios, type Socio } from "@/app/data/socios";
 import { getPlanForSocio, hasCommercialAccess } from "@/lib/membresia";
-import { isVisibleInCarousel } from "@/lib/plan-visibility";
+import { isVisibleInCarousel, isMedianaCarouselPlan } from "@/lib/plan-visibility";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const BUSINESS_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
@@ -135,7 +135,7 @@ export async function getPublicSociosList(): Promise<Socio[]> {
   return merged.sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
-/** Carrusel destacado: solo Gran Empresa. */
+/** Carrusel destacado: Mediana y Gran Empresa. */
 export async function getCarouselSocios(): Promise<Socio[]> {
   const publishedUsers = await loadPublishedBusinessUsers();
   const fromDb = publishedUsers
@@ -147,6 +147,28 @@ export async function getCarouselSocios(): Promise<Socio[]> {
     const plan = getPlanForSocio(s);
     return isVisibleInCarousel(plan);
   });
+
+  const seen = new Set<number>();
+  const merged: Socio[] = [];
+
+  for (const socio of [...fromDb, ...staticEligible]) {
+    if (seen.has(socio.id)) continue;
+    seen.add(socio.id);
+    merged.push(socio);
+  }
+
+  return merged.sort((a, b) => a.name.localeCompare(b.name, "es"));
+}
+
+/** Carrusel de la landing: solo Mediana Empresa. */
+export async function getMedianaCarouselSocios(): Promise<Socio[]> {
+  const publishedUsers = await loadPublishedBusinessUsers();
+  const fromDb = publishedUsers
+    .filter((u) => u.subscription && isMedianaCarouselPlan(u.subscription.plan))
+    .map(userToSocio)
+    .filter(Boolean) as Socio[];
+
+  const staticEligible = listaSocios.filter((s) => isMedianaCarouselPlan(getPlanForSocio(s)));
 
   const seen = new Set<number>();
   const merged: Socio[] = [];

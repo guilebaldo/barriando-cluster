@@ -51,6 +51,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     highlight: "Ideal para cafés, tiendas y talleres de barrio",
     benefits: [
       "Presencia en el directorio oficial de socios (/socios)",
+      "Activación en el Pasaporte Digital del Barrio desde este plan inicial ($600 MXN)",
       "Publicar entradas en el blog del Clúster",
       "Perfil certificado en la guía Barriando",
     ],
@@ -79,7 +80,6 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     highlight: "Máxima visibilidad en el MAP y rutas oficiales",
     benefits: [
       "Presencia destacada en el mapa interactivo y rutas oficiales del MAP",
-      "Vinculación con el Corredor de Oficios Vivos ($1,300 MDP en Barrios Fundacionales)",
       "Todo lo de los planes anteriores",
       "Posicionamiento premium en el carrusel y directorio",
       "Beneficios exclusivos para anfitriones del destino",

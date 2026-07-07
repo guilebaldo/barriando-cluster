@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, ChevronDown } from "lucide-react";
@@ -10,9 +11,10 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 
 const links = [
   { href: "/", label: "Inicio" },
-  { href: "/map", label: "MAP" },
   { href: "/socios", label: "Socios" },
   { href: "/equipo", label: "Equipo" },
+  { href: "/map", label: "MAP" },
+  { href: "/pasaporte-info", label: "Pasaporte" },
 ] as const;
 
 function isNavActive(pathname: string, href: string) {
@@ -162,7 +164,7 @@ export default function Navbar() {
               : "text-white hover:text-amber-400 transition-colors duration-200 text-xs uppercase tracking-wider font-bold"
           }
         >
-          Iniciar sesión
+          Iniciar Sesión
         </Link>
         <Link
           href="/planes"
@@ -172,7 +174,7 @@ export default function Navbar() {
               : "bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider font-bold"
           }
         >
-          Súmate al Barrio
+          Hazte Barrio
         </Link>
       </div>
     );
@@ -184,10 +186,18 @@ export default function Navbar() {
         <Link
           href="/"
           onClick={() => window.scrollTo(0, 0)}
-          className="text-white font-black tracking-tight text-lg transition min-w-0 group active:opacity-80"
+          className="flex items-center gap-2 sm:gap-3 min-w-0 group active:opacity-80"
         >
-          <span className="text-white group-hover:text-amber-400 transition-colors duration-200">Barriando</span>
-          <span className="text-slate-300 text-[10px] font-semibold block sm:inline sm:ml-2 sm:text-xs normal-case tracking-normal">
+          <Image
+            src="/logobarriando.png"
+            alt="Barriando"
+            width={140}
+            height={32}
+            className="h-7 sm:h-8 w-auto object-contain object-left"
+            priority
+            unoptimized
+          />
+          <span className="text-slate-300 text-[10px] font-semibold hidden sm:block normal-case tracking-normal leading-tight">
             Clúster Turístico · Puebla
           </span>
         </Link>
