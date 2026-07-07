@@ -1,65 +1,68 @@
-"use client";
-
-import React from "react";
+import Link from "next/link";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import { listaSocios } from "./data/socios";
-import { listaHitos } from "./data/hitos";
-import {
-  definicionInstitucional,
-  propuestaValor,
-  ejesEstrategicos,
-  festivalesDestacados,
-  proyectosDestacados,
-  indicadoresImpacto,
-  alianzasEstrategicas,
-} from "./data/institucion";
-import {
-  MapPin,
-  ArrowUpRight,
-  Compass,
-  Building2,
-  Handshake,
-  Target,
-  TrendingUp,
-  Users,
-  Briefcase,
-  Landmark,
-  Utensils,
-  Lightbulb,
-  Globe,
-  Sparkles,
-} from "lucide-react";
+import MediaSlot from "./components/MediaSlot";
+import HomePromoBanner from "./components/HomePromoBanner";
 import ContactForm from "./components/ContactForm";
-import DestacadoBanner from "./components/DestacadoBanner";
 import CountUp from "./components/CountUp";
 import Reveal from "./components/Reveal";
 import SociosCarousel from "./components/SociosCarousel";
-import { destacadoActual } from "./data/destacados";
+import { definicionInstitucional } from "./data/institucion";
+import { MEMBERSHIP_PLANS, PAID_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
+import { planToSlug } from "@/lib/plan-routing";
+import type { LiveStats } from "@/lib/get-live-stats";
+import type { HomePromoPublic, TestimonialPublic } from "@/lib/home-content";
 import type { Socio } from "./data/socios";
+import {
+  ArrowUpRight,
+  Check,
+  Globe,
+  MapPin,
+  Navigation,
+  QrCode,
+  Stamp,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 
-const iconoValor: Record<string, React.ReactNode> = {
-  building: <Building2 className="w-5 h-5" />,
-  handshake: <Handshake className="w-5 h-5" />,
-  compass: <Compass className="w-5 h-5" />,
+const LINK_BARRIOS =
+  "https://espaciolibrepuebla.com/proyecto-de-los-barrios-fundacionales-de-puebla-arrancara-este-ano-tendra-una-inversion-de-mil-300-mdp-garcia-parra/";
+const LINK_VISITANTES =
+  "https://realestatemarket.com.mx/noticias/turismo/49833-turismo-en-puebla-crece-en-2025-mas-visitantes-y-mayor-derrama-economica";
+const LINK_AEROPUERTO =
+  "https://www.urbanopuebla.com.mx/gobierno/recibe-puebla-a-pasajeros-de-las-12-nuevas-rutas-aereas-en-el-aeropuerto-internacional-hermanos-serdan/";
+
+type HomePageProps = {
+  carouselSocios: Socio[];
+  liveStats: LiveStats;
+  testimonials: TestimonialPublic[];
+  homePromo: HomePromoPublic | null;
 };
 
-function sustituirVars(texto: string, socios: number, hitos: number) {
-  return texto.replace("{socios}", String(socios)).replace("{hitos}", String(hitos));
+function totalActiveSubscriptions(stats: LiveStats): number {
+  return Object.values(stats.subscriptionsByPlan).reduce((sum, n) => sum + (n ?? 0), 0);
 }
 
-export default function HomePage({ carouselSocios }: { carouselSocios: Socio[] }) {
-  const totalSocios = listaSocios.length;
-  const totalHitos = listaHitos.length;
+export default function HomePage({ carouselSocios, liveStats, testimonials, homePromo }: HomePageProps) {
+  const activeMembers = totalActiveSubscriptions(liveStats);
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-amber-200">
       <Navbar />
 
-      {/* HERO — Definición institucional clara */}
-      <header className="bg-[#27366D] text-white py-24 px-6 border-b border-[#1e2b58] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-        <div className="max-w-5xl mx-auto text-center relative z-10">
+      {/* HERO */}
+      <header className="relative bg-[#27366D] text-white min-h-[28rem] md:min-h-[32rem] flex items-center overflow-hidden border-b border-[#1e2b58]">
+        <div className="absolute inset-0">
+          <MediaSlot
+            id="hero-background"
+            type="video"
+            expectedPath="/videos/hero-barriando.mp4"
+            description="Video de fondo del hero Barriando"
+            className="w-full h-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#27366D]/80 via-[#27366D]/70 to-[#1e2b58]" />
+        </div>
+        <div className="relative z-10 max-w-5xl mx-auto text-center px-6 py-24 w-full">
           <Reveal>
             <span className="bg-amber-400/10 text-amber-400 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full border border-amber-400/20 inline-flex items-center gap-1.5">
               <Globe className="w-3.5 h-3.5" /> {definicionInstitucional.figuraLegal}
@@ -71,101 +74,70 @@ export default function HomePage({ carouselSocios }: { carouselSocios: Socio[] }
             </h1>
           </Reveal>
           <Reveal delay={140}>
-            <p className="text-sm text-amber-400/90 font-medium max-w-2xl mx-auto mb-4 leading-relaxed">
-              {definicionInstitucional.razonSocial}
-            </p>
-          </Reveal>
-          <Reveal delay={200}>
             <p className="text-base md:text-lg text-slate-200 max-w-3xl mx-auto font-light leading-relaxed">
               {definicionInstitucional.definicion}
             </p>
           </Reveal>
-          <Reveal delay={280}>
+          <Reveal delay={220}>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <a
-              href="/socios"
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg transition shadow-sm"
-            >
-              Explorar la red de socios
-            </a>
-            <a
-              href="/equipo"
-              className="bg-[#1e2b58] hover:bg-[#151f40] text-white text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg transition border border-[#314385]"
-            >
-              Conocer al equipo directivo
-            </a>
+              <Link
+                href="/planes?plan=gran_empresa"
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg transition shadow-sm"
+              >
+                Aparecer en el MAP
+              </Link>
+              <Link
+                href="/planes"
+                className="bg-[#1e2b58] hover:bg-[#151f40] text-white text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg transition border border-[#314385]"
+              >
+                Ver membresías
+              </Link>
             </div>
           </Reveal>
         </div>
       </header>
 
-      <DestacadoBanner destacado={destacadoActual} />
+      {homePromo && <HomePromoBanner promo={homePromo} />}
 
-      {/* PROPUESTA DE VALOR */}
-      <section className="py-20 px-6 bg-slate-50 border-b border-slate-200">
+      {/* LIVE STATS */}
+      <section className="py-16 px-6 bg-slate-50 border-b border-slate-200">
         <div className="max-w-5xl mx-auto">
-          <Reveal className="text-center mb-12">
-            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">¿Por qué existimos?</span>
+          <Reveal className="text-center mb-10">
+            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Datos en tiempo real</span>
             <h2 className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
-              Propuesta de valor
+              El ecosistema en números
             </h2>
-            <p className="text-slate-600 text-sm max-w-2xl mx-auto mt-3 font-light leading-relaxed">
-              {definicionInstitucional.mision}
-            </p>
           </Reveal>
-          <div className="grid md:grid-cols-3 gap-6">
-            {propuestaValor.map((item, i) => (
-              <Reveal key={item.titulo} delay={i * 90}>
-              <div
-                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition h-full"
-              >
-                <div className="w-10 h-10 bg-[#27366D]/10 text-[#27366D] rounded-lg flex items-center justify-center mb-4">
-                  {iconoValor[item.icono]}
-                </div>
-                <h3 className="font-bold text-slate-950 text-sm mb-2">{item.titulo}</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-light">
-                  {sustituirVars(item.descripcion, totalSocios, totalHitos)}
-                </p>
-              </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* IMPACTO Y CREDIBILIDAD */}
-      <section className="py-20 px-6 max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-12 gap-12 items-start">
-          <div className="md:col-span-5">
-            <Reveal>
-              <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Resultados medibles</span>
-              <h2 className="text-2xl md:text-3xl font-extrabold mt-2 mb-4 text-slate-950 font-serif-cluster uppercase tracking-wide">
-                Impacto del Clúster
-              </h2>
-              <p className="text-slate-600 text-sm leading-relaxed font-light mb-6">
-                Más que un directorio de empresas: una red activa que articula patrimonio, negocios y comunidad
-                para generar desarrollo turístico y económico en Puebla.
-              </p>
-              <a
-                href="/equipo"
-                className="text-xs font-bold text-[#27366D] hover:text-amber-500 transition flex items-center gap-1 group uppercase tracking-wider"
-              >
-                Ver equipo directivo <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </a>
-            </Reveal>
-          </div>
-          <div className="md:col-span-7 grid grid-cols-2 gap-4">
-            {indicadoresImpacto.map((ind, i) => (
-              <Reveal key={ind.etiqueta} delay={i * 100}>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 h-full">
-                  <p className="text-3xl font-black text-[#27366D]">
-                    <CountUp
-                      value={sustituirVars(ind.valor, totalSocios, totalHitos)}
-                      className="tabular-nums"
-                    />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                value: String(liveStats.approvedSocios),
+                label: "Socios certificados",
+                context: "Negocios con vinculación aprobada en la red Barriando.",
+              },
+              {
+                value: String(liveStats.stampsLast30Days),
+                label: "Sellos MAP (30 días)",
+                context: "Interacciones recientes en el Pasaporte digital.",
+              },
+              {
+                value: String(activeMembers),
+                label: "Membresías activas",
+                context: "Suscripciones comerciales vigentes en la plataforma.",
+              },
+              {
+                value: String(liveStats.subscriptionsByPlan.GRAN_EMPRESA ?? 0),
+                label: "Presencia en el MAP",
+                context: "Socios Gran Empresa con visibilidad premium en rutas.",
+              },
+            ].map((stat, i) => (
+              <Reveal key={stat.label} delay={i * 80}>
+                <div className="bg-white border border-slate-200 rounded-xl p-5 h-full text-center">
+                  <p className="text-3xl font-black text-[#27366D] tabular-nums">
+                    <CountUp value={stat.value} />
                   </p>
-                  <p className="text-xs font-bold text-slate-800 mt-1">{ind.etiqueta}</p>
-                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{ind.contexto}</p>
+                  <p className="text-xs font-bold text-slate-800 mt-2">{stat.label}</p>
+                  <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{stat.context}</p>
                 </div>
               </Reveal>
             ))}
@@ -173,202 +145,245 @@ export default function HomePage({ carouselSocios }: { carouselSocios: Socio[] }
         </div>
       </section>
 
-      {/* EJES ESTRATÉGICOS — Narrativa ampliada */}
-      <section className="py-20 px-6 bg-[#27366D] text-white">
-        <div className="max-w-5xl mx-auto">
-          <Reveal className="text-center mb-12">
-            <span className="text-amber-400 text-xs font-bold uppercase tracking-widest">Posicionamiento</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold mt-2 font-serif-cluster uppercase tracking-wide">
-              Puebla, destino integral
-            </h2>
-            <p className="text-slate-300 text-sm max-w-2xl mx-auto mt-3 font-light leading-relaxed">
-              Desarrollamos productos y servicios turísticos, festivales con marching bands y danza folklórica,
-              y experiencias que generan derrama económica en el Centro Histórico de Puebla.
-            </p>
-          </Reveal>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ejesEstrategicos.map((eje, i) => {
-              const iconos = [Sparkles, Landmark, Utensils, Lightbulb, Target];
-              const Icon = iconos[i] ?? Compass;
-              return (
-                <Reveal key={eje.titulo} delay={i * 70}>
-                <div
-                  className="bg-[#1e2b58]/50 border border-[#314385]/50 rounded-xl p-5 hover:border-amber-400/30 transition h-full"
-                >
-                  <Icon className="w-4 h-4 text-amber-400 mb-3" />
-                  <h3 className="font-bold text-sm text-white mb-1.5">{eje.titulo}</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed font-light">{eje.descripcion}</p>
-                </div>
-                </Reveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* FESTIVALES EMBLEMÁTICOS */}
-      <section className="py-20 px-6 bg-slate-50 border-y border-slate-200">
-        <div className="max-w-5xl mx-auto">
-          <Reveal className="text-center mb-12">
-            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Eventos que activan la ciudad</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
-              Festivales y desfiles
-            </h2>
-            <p className="text-slate-600 text-sm max-w-2xl mx-auto mt-3 font-light leading-relaxed">
-              Marching bands y grupos de danza folklórica en el Centro Histórico, invitando a locales y turistas
-              a consumir cultura poblana, gastronomía, arte, hospedaje y tours.
-            </p>
-          </Reveal>
-          <div className="grid md:grid-cols-3 gap-6">
-            {festivalesDestacados.map((fest, i) => (
-              <Reveal key={fest.titulo} delay={i * 90}>
-              <div
-                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition h-full"
-              >
-                <Sparkles className="w-4 h-4 text-amber-500 mb-3" />
-                <h3 className="font-bold text-slate-950 text-sm mb-2">{fest.titulo}</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-light">{fest.descripcion}</p>
-              </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* PROYECTOS DESTACADOS */}
+      {/* MAP ANCHOR */}
       <section className="py-20 px-6 max-w-5xl mx-auto">
-        <Reveal className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-10">
-          <div>
-            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Vida de Barriando</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
-              Proyectos y actividades
-            </h2>
-          </div>
-          <p className="text-xs text-slate-500 max-w-sm font-light leading-relaxed">
-            Personas, alianzas y resultados concretos que dan dinamismo a nuestra operación institucional.
+        <Reveal className="text-center mb-14">
+          <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Proyecto insignia</span>
+          <h2 className="text-2xl md:text-4xl font-extrabold mt-2 text-slate-950 font-serif-cluster uppercase tracking-wide">
+            Y tú, ¿ya estás en el MAP?
+          </h2>
+          <p className="text-sm text-slate-600 max-w-2xl mx-auto mt-3 font-light leading-relaxed">
+            Museo Abierto de Puebla: patrimonio caminable, negocios certificados y experiencias que conectan turistas con el Centro Histórico.
           </p>
         </Reveal>
-        <div className="grid md:grid-cols-2 gap-6">
-          {proyectosDestacados.map((proyecto, i) => (
-            <Reveal key={proyecto.titulo} delay={i * 80}>
-            <a
-              href={proyecto.enlace}
-              target={proyecto.enlace.startsWith("http") ? "_blank" : undefined}
-              rel={proyecto.enlace.startsWith("http") ? "noreferrer" : undefined}
-              className="group bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow hover:border-amber-400/40 transition flex flex-col justify-between h-full"
-            >
-              <div>
-                <h3 className="font-bold text-slate-950 text-sm mb-2 group-hover:text-[#27366D] transition">
-                  {proyecto.titulo}
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-light">
-                  {sustituirVars(proyecto.descripcion, totalSocios, totalHitos)}
-                </p>
-              </div>
-              <span className="pt-4 mt-4 border-t border-slate-100 flex items-center text-[11px] font-bold text-[#27366D] group-hover:gap-2 transition-all">
-                Conocer más <ArrowUpRight className="w-3 h-3 ml-1" />
-              </span>
-            </a>
-            </Reveal>
-          ))}
-        </div>
-      </section>
 
-      {/* ALIANZAS */}
-      <section className="py-16 px-6 bg-slate-50 border-y border-slate-200">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <Handshake className="w-5 h-5 text-[#27366D]" />
-            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Alianzas estratégicas</h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {alianzasEstrategicas.map((alianza) => (
-              <span
-                key={alianza}
-                className="bg-white border border-slate-200 text-slate-700 text-[11px] font-medium px-4 py-2 rounded-full"
-              >
-                {alianza}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* MAP */}
-      <section className="py-20 px-6 max-w-5xl mx-auto">
-        <div className="grid md:grid-cols-12 gap-12 items-center">
-          <Reveal className="md:col-span-7">
-            <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Proyecto insignia</span>
-            <h2 className="text-2xl md:text-4xl font-extrabold mt-1 mb-6 text-slate-950 font-serif-cluster uppercase tracking-wide">
-              MAP: Museo Abierto de Puebla
-            </h2>
-            <p className="text-slate-600 text-sm leading-relaxed mb-4 font-light">
-              El MAP transforma el espacio público del Centro Histórico y sus barrios tradicionales en galerías vivas.
-              La historia se camina, se observa en las fachadas y se saborea en negocios certificados del Clúster.
-            </p>
-            <p className="text-slate-600 text-sm leading-relaxed font-light">
-              Un inventario de{" "}
-              <strong className="text-slate-900 font-semibold">{totalHitos} hitos patrimoniales</strong> en
-              4 zonas conecta herencia virreinal con desarrollo comunitario y oferta turística verificada.
-            </p>
-            <a
-              href="/map"
-              className="inline-flex items-center gap-1 mt-6 text-xs font-bold text-[#27366D] hover:text-amber-500 active:text-red-800 transition-all uppercase tracking-wider"
-            >
-              Explorar ruta MAP <ArrowUpRight className="w-3.5 h-3.5" />
-            </a>
-          </Reveal>
-
-          <Reveal className="md:col-span-5" delay={120}>
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-premium text-center h-full">
-            <div className="w-12 h-12 bg-amber-400/10 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3">
-              <MapPin className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-slate-950 text-base font-serif-cluster uppercase tracking-wider mb-1">
-              Oficinas Barriando
-            </h3>
-            <p className="text-xs text-slate-700 font-medium mb-1">Av 5 Ote 612, Centro, 72000</p>
-            <p className="text-[11px] text-slate-400 font-mono mb-4">2RR4+63 Heroica Puebla de Zaragoza, Pue.</p>
-            <div className="rounded-xl overflow-hidden border border-slate-200 aspect-video shadow-sm bg-slate-200">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.5259224754777!2d-98.19734212395751!3d19.040600853081273!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85cfc14fde640c67%3A0x3b4790246cb5c7a6!2sCasa%20Zul%20Hostalgia%20Puebla!5e0!3m2!1ses!2smx!4v1781737977073!5m2!1ses!2smx"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen={true}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Ubicación Oficinas Barriando Centro Histórico"
+        <div className="grid lg:grid-cols-2 gap-10 mb-16">
+          <Reveal>
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-[#27366D] uppercase tracking-widest">Circuito actual</h3>
+              <MediaSlot
+                id="map-bloque-hoy"
+                type="image"
+                expectedPath="/map/bloque-hoy.jpg"
+                aspectRatio="4/3"
+                description="Ruta peatonal MAP, Pasaporte y sellos QR"
+                className="w-full rounded-xl border border-slate-200"
               />
+              <p className="text-sm text-slate-600 font-light leading-relaxed">
+                Recorre la ruta peatonal interactiva en{" "}
+                <Link href="/map" className="text-[#27366D] font-semibold hover:text-amber-600 underline-offset-2 hover:underline">
+                  /map
+                </Link>
+                , acumula sellos con el{" "}
+                <Link href="/pasaporte" className="text-[#27366D] font-semibold hover:text-amber-600 underline-offset-2 hover:underline">
+                  Pasaporte digital
+                </Link>{" "}
+                y valida visitas con GPS y códigos QR en negocios certificados.
+              </p>
+              <ul className="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                <li className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                  <Navigation className="w-3.5 h-3.5 text-amber-500" /> Ruta GPS
+                </li>
+                <li className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                  <QrCode className="w-3.5 h-3.5 text-amber-500" /> Sellos QR
+                </li>
+                <li className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                  <Stamp className="w-3.5 h-3.5 text-amber-500" /> Pasaporte
+                </li>
+                <li className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                  <MapPin className="w-3.5 h-3.5 text-amber-500" /> Hitos patrimoniales
+                </li>
+              </ul>
+              <Link
+                href="/map"
+                className="inline-flex items-center gap-1.5 bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg transition"
+              >
+                Probar el MAP ahora <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-          </div>
+          </Reveal>
+
+          <Reveal delay={100}>
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-[#27366D] uppercase tracking-widest">Visión: Corredor de Oficios Vivos</h3>
+              <MediaSlot
+                id="map-bloque-desarrollo"
+                type="image"
+                expectedPath="/map/bloque-desarrollo.jpg"
+                aspectRatio="4/3"
+                description="Corredor de Oficios Vivos — Barrios Fundacionales"
+                className="w-full rounded-xl border border-slate-200"
+              />
+              <p className="text-sm text-slate-600 font-light leading-relaxed">
+                Puebla tiene en marcha un proyecto de rescate patrimonial de los Barrios Fundacionales, respaldado por el Gobierno del Estado en gestión con FONATUR, con una inversión histórica de{" "}
+                <a
+                  href={LINK_BARRIOS}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#27366D] font-semibold hover:text-amber-600 underline-offset-2 hover:underline"
+                >
+                  $1,300 millones de pesos
+                </a>
+                . Desde Barriando impulsamos una propuesta ciudadana que conecta este corredor con negocios certificados y rutas oficiales del MAP.
+              </p>
+              <div className="grid gap-2 text-xs">
+                <a
+                  href={LINK_BARRIOS}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 hover:border-amber-400/50 transition group"
+                >
+                  <span className="font-black text-[#27366D] shrink-0">$1,300 MDP</span>
+                  <span className="text-slate-600 group-hover:text-slate-800">Inversión en Barrios Fundacionales — Espacio Libre Puebla</span>
+                </a>
+                <a
+                  href={LINK_VISITANTES}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 hover:border-amber-400/50 transition group"
+                >
+                  <span className="font-black text-[#27366D] shrink-0">17.6 M</span>
+                  <span className="text-slate-600 group-hover:text-slate-800">Visitantes en Puebla 2025 (+5.3% vs. 2024) — Real Estate Market</span>
+                </a>
+                <a
+                  href={LINK_AEROPUERTO}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-start gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 hover:border-amber-400/50 transition group"
+                >
+                  <span className="font-black text-[#27366D] shrink-0">12 rutas</span>
+                  <span className="text-slate-600 group-hover:text-slate-800">Nuevas rutas aéreas en el Aeropuerto Hermanos Serdán — Urbano Puebla</span>
+                </a>
+              </div>
+            </div>
           </Reveal>
         </div>
-      </section>
 
-      {/* CARRUSEL DE SOCIOS */}
-      <section className="py-16 bg-slate-50 border-y border-slate-200 overflow-hidden relative">
-        <div className="max-w-5xl mx-auto px-6 mb-10 flex justify-between items-center">
-          <div>
-            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest flex items-center gap-2">
-              <TrendingUp className="w-3.5 h-3.5" /> Red empresarial en acción
-            </h2>
-            <p className="text-xs text-slate-400 font-light mt-0.5">
-              {totalSocios} empresas que generan empleo, experiencias y valor territorial.
-            </p>
-          </div>
-          <a
-            href="/socios"
-            className="text-xs font-bold text-[#27366D] hover:text-amber-500 transition flex items-center gap-1 group uppercase tracking-wider"
+        <Reveal className="text-center bg-[#27366D] text-white rounded-2xl p-8 md:p-10">
+          <h3 className="text-lg md:text-xl font-bold font-serif-cluster uppercase tracking-wide mb-3">
+            Tu negocio en el corazón del destino
+          </h3>
+          <p className="text-sm text-slate-300 max-w-xl mx-auto font-light leading-relaxed mb-6">
+            El plan Gran Empresa te posiciona en el mapa interactivo y en las rutas oficiales del MAP, vinculado al desarrollo de los Barrios Fundacionales.
+          </p>
+          <Link
+            href="/planes?plan=gran_empresa"
+            className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3.5 rounded-lg transition"
           >
-            Ver directorio <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </a>
-        </div>
-
-        <SociosCarousel socios={carouselSocios} />
+            Quiero aparecer en el MAP <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </Reveal>
       </section>
 
-      {/* CONTACTO */}
+      {/* TESTIMONIALS */}
+      {testimonials.length > 0 && (
+        <section className="py-16 px-6 bg-slate-50 border-y border-slate-200">
+          <div className="max-w-5xl mx-auto">
+            <Reveal className="text-center mb-10">
+              <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Confianza</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold mt-2 font-serif-cluster uppercase tracking-wide text-slate-950">
+                Voces de la red
+              </h2>
+            </Reveal>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {testimonials.map((t, i) => (
+                <Reveal key={t.id} delay={i * 70}>
+                  <blockquote className="bg-white border border-slate-200 rounded-xl p-6 h-full flex flex-col shadow-sm">
+                    <p className="text-sm text-slate-700 leading-relaxed font-light flex-1">&ldquo;{t.quote}&rdquo;</p>
+                    <footer className="mt-4 pt-4 border-t border-slate-100">
+                      <p className="font-bold text-slate-900 text-sm">{t.authorName}</p>
+                      <p className="text-[11px] text-slate-500">{t.businessName}</p>
+                      <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mt-1">{t.planTier}</p>
+                    </footer>
+                  </blockquote>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* MEMBERSHIPS */}
+      <section className="py-20 px-6 max-w-5xl mx-auto">
+        <Reveal className="text-center mb-12">
+          <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Membresías comerciales</span>
+          <h2 className="text-2xl md:text-3xl font-extrabold mt-2 font-serif-cluster uppercase tracking-wide text-slate-950">
+            Elige tu nivel de visibilidad
+          </h2>
+          <p className="text-sm text-slate-600 max-w-2xl mx-auto mt-3 font-light">
+            Desde el directorio de socios hasta la presencia premium en el MAP y el carrusel de la página principal.
+          </p>
+        </Reveal>
+        <div className="grid md:grid-cols-3 gap-6">
+          {PAID_PLANS.filter((p) => p !== "VECINO").map((planId, i) => {
+            const plan = MEMBERSHIP_PLANS[planId];
+            const featured = planId === "GRAN_EMPRESA";
+            return (
+              <Reveal key={planId} delay={i * 90}>
+                <div
+                  className={`flex flex-col rounded-xl border p-6 bg-white shadow-sm h-full ${
+                    featured ? "border-amber-400 ring-2 ring-amber-400/30" : "border-slate-200"
+                  }`}
+                >
+                  {featured && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-3">
+                      Presencia en el MAP
+                    </span>
+                  )}
+                  <h3 className="font-bold text-slate-950">{plan.label}</h3>
+                  <p className="text-xl font-black text-[#27366D] mt-2">
+                    {formatPlanPriceMxn(planId)}
+                  </p>
+                  <p className="text-[11px] text-amber-700 font-semibold mt-0.5">{plan.tagline}</p>
+                  <ul className="space-y-2 mt-4 mb-6 flex-1">
+                    {plan.benefits.slice(0, 4).map((b) => (
+                      <li key={b} className="flex gap-2 text-[11px] text-slate-600">
+                        <Check className="w-3.5 h-3.5 text-[#27366D] shrink-0 mt-0.5" />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={planId === "GRAN_EMPRESA" ? "/planes?plan=gran_empresa" : `/planes?plan=${planToSlug(planId)}`}
+                    className={`block text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
+                      featured
+                        ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
+                        : "bg-[#27366D] hover:bg-[#1e2b58] text-white"
+                    }`}
+                  >
+                    Elegir {plan.label}
+                  </Link>
+                </div>
+              </Reveal>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* CARRUSEL */}
+      {carouselSocios.length > 0 && (
+        <section className="py-16 bg-slate-50 border-y border-slate-200 overflow-hidden relative">
+          <div className="max-w-5xl mx-auto px-6 mb-10 flex justify-between items-center">
+            <div>
+              <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5" /> Socios destacados
+              </h2>
+              <p className="text-xs text-slate-400 font-light mt-0.5">
+                Mediana y Gran Empresa en el carrusel de la página principal.
+              </p>
+            </div>
+            <Link
+              href="/socios"
+              className="text-xs font-bold text-[#27366D] hover:text-amber-500 transition flex items-center gap-1 group uppercase tracking-wider"
+            >
+              Ver directorio <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </Link>
+          </div>
+          <SociosCarousel socios={carouselSocios} />
+        </section>
+      )}
+
+      {/* CONTACT */}
       <section id="contacto" className="py-20 bg-white px-6">
         <Reveal className="max-w-xl mx-auto bg-white p-8 rounded-2xl border border-slate-200 shadow-premium">
           <div className="flex items-center gap-2 mb-1">
@@ -378,8 +393,7 @@ export default function HomePage({ carouselSocios }: { carouselSocios: Socio[] }
             </h3>
           </div>
           <p className="text-slate-500 text-xs mb-6 font-light">
-            ¿Eres empresa turística, institución o aliado estratégico? Escríbenos para explorar afiliación,
-            convenios o colaboración en proyectos.
+            ¿Eres empresa turística, institución o aliado estratégico? Escríbenos para explorar afiliación y colaboración.
           </p>
           <ContactForm />
         </Reveal>

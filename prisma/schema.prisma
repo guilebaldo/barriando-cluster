@@ -194,3 +194,31 @@ model MapMilestone {
   @@index([active])
   @@map("MapMilestone")
 }
+
+// ======================
+// HOME / LANDING CONTENT
+// ======================
+
+model Testimonial {
+  id           String   @id @default(cuid())
+  authorName   String
+  businessName String
+  planTier     String
+  quote        String
+  photoUrl     String?
+  published    Boolean  @default(false)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model HomePromo {
+  id        String    @id @default(cuid())
+  headline  String
+  body      String
+  ctaLabel  String
+  ctaHref   String
+  active    Boolean   @default(false)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime  @default(now())
+}

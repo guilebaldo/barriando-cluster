@@ -11,6 +11,8 @@ import {
   rejectManualCertification,
   updateSocioAdmin,
   type AdminUserRow,
+  type TestimonialRow,
+  type HomePromoRow,
 } from "./actions";
 import { listaSocios } from "@/app/data/socios";
 import { needsCertificationPayment } from "@/lib/membresia";
@@ -28,10 +30,11 @@ import {
   XCircle,
 } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
+import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContentSection";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
-type AdminTab = "all" | "pending";
+type AdminTab = "all" | "pending" | "content";
 type ResolvedAction = "approved" | "rejected";
 type HealthStatus = "ok" | "pending" | "expired";
 
@@ -181,7 +184,15 @@ function ReviewActions({
   );
 }
 
-export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
+export default function AdminDashboard({
+  users,
+  testimonials,
+  homePromos,
+}: {
+  users: AdminUserRow[];
+  testimonials: TestimonialRow[];
+  homePromos: HomePromoRow[];
+}) {
   const router = useRouter();
   const [tab, setTab] = useState<AdminTab>("all");
   const [query, setQuery] = useState("");
@@ -384,8 +395,23 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
           <Clock className="w-3.5 h-3.5" />
           Pendientes ({pendingLinkages.length})
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("content")}
+          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+            tab === "content" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          Contenido Home
+        </button>
       </div>
 
+      {tab === "content" ? (
+        <div className="space-y-10">
+          <AdminTestimonialsSection testimonials={testimonials} />
+          <AdminHomePromosSection promos={homePromos} />
+        </div>
+      ) : (
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 min-w-0">
@@ -519,6 +545,7 @@ export default function AdminDashboard({ users }: { users: AdminUserRow[] }) {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 }

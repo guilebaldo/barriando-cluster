@@ -552,3 +552,274 @@ export async function listTakenSocioIds(): Promise<number[]> {
   });
   return rows.map((r) => r.socioId!).filter(Boolean);
 }
+
+// ======================
+// TESTIMONIALS
+// ======================
+
+export type TestimonialRow = {
+  id: string;
+  authorName: string;
+  businessName: string;
+  planTier: string;
+  quote: string;
+  photoUrl: string | null;
+  published: boolean;
+  order: number;
+  createdAt: string;
+};
+
+const testimonialSchema = z.object({
+  authorName: z.string().trim().min(1).max(120),
+  businessName: z.string().trim().min(1).max(120),
+  planTier: z.string().trim().min(1).max(60),
+  quote: z.string().trim().min(1).max(1000),
+  photoUrl: z.string().trim().max(500).nullable().optional(),
+  published: z.boolean().optional(),
+  order: z.number().int().min(0).optional(),
+});
+
+export async function listTestimonials(): Promise<TestimonialRow[]> {
+  const session = await requireSession();
+  if (!isAdminUser(session)) throw new Error("FORBIDDEN");
+
+  const rows = await prisma.testimonial.findMany({
+    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+  });
+  return rows.map((r) => ({
+    ...r,
+    createdAt: r.createdAt.toISOString(),
+  }));
+}
+
+export async function createTestimonial(
+  input: z.infer<typeof testimonialSchema>
+): Promise<ActionResult & { id?: string }> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = testimonialSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const row = await prisma.testimonial.create({ data: parsed.data });
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { ok: true, id: row.id };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo crear el testimonio." };
+  }
+}
+
+export async function updateTestimonial(
+  id: string,
+  input: z.infer<typeof testimonialSchema>
+): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = testimonialSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    await prisma.testimonial.update({ where: { id }, data: parsed.data });
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo actualizar el testimonio." };
+  }
+}
+
+export async function deleteTestimonial(id: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    await prisma.testimonial.delete({ where: { id } });
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo eliminar el testimonio." };
+  }
+}
+
+export async function toggleTestimonialPublished(id: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const row = await prisma.testimonial.findUnique({ where: { id } });
+    if (!row) return { ok: false, error: "Testimonio no encontrado." };
+
+    await prisma.testimonial.update({
+      where: { id },
+      data: { published: !row.published },
+    });
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo cambiar el estado." };
+  }
+}
+
+// ======================
+// HOME PROMOS
+// ======================
+
+export type HomePromoRow = {
+  id: string;
+  headline: string;
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+  active: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdAt: string;
+};
+
+const homePromoSchema = z.object({
+  headline: z.string().trim().min(1).max(200),
+  body: z.string().trim().min(1).max(2000),
+  ctaLabel: z.string().trim().min(1).max(80),
+  ctaHref: z.string().trim().min(1).max(500),
+  active: z.boolean().optional(),
+  startsAt: z.string().nullable().optional(),
+  endsAt: z.string().nullable().optional(),
+});
+
+export async function listHomePromos(): Promise<HomePromoRow[]> {
+  const session = await requireSession();
+  if (!isAdminUser(session)) throw new Error("FORBIDDEN");
+
+  const rows = await prisma.homePromo.findMany({ orderBy: { createdAt: "desc" } });
+  return rows.map((r) => ({
+    ...r,
+    startsAt: r.startsAt?.toISOString() ?? null,
+    endsAt: r.endsAt?.toISOString() ?? null,
+    createdAt: r.createdAt.toISOString(),
+  }));
+}
+
+export async function createHomePromo(
+  input: z.infer<typeof homePromoSchema>
+): Promise<ActionResult & { id?: string }> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = homePromoSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const { startsAt, endsAt, ...rest } = parsed.data;
+    const row = await prisma.homePromo.create({
+      data: {
+        ...rest,
+        startsAt: startsAt ? new Date(startsAt) : null,
+        endsAt: endsAt ? new Date(endsAt) : null,
+      },
+    });
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { ok: true, id: row.id };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo crear la promoción." };
+  }
+}
+
+export async function updateHomePromo(
+  id: string,
+  input: z.infer<typeof homePromoSchema>
+): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = homePromoSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const { startsAt, endsAt, ...rest } = parsed.data;
+    await prisma.homePromo.update({
+      where: { id },
+      data: {
+        ...rest,
+        startsAt: startsAt ? new Date(startsAt) : null,
+        endsAt: endsAt ? new Date(endsAt) : null,
+      },
+    });
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo actualizar la promoción." };
+  }
+}
+
+export async function deleteHomePromo(id: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    await prisma.homePromo.delete({ where: { id } });
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo eliminar la promoción." };
+  }
+}
+
+export async function toggleHomePromoActive(id: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const row = await prisma.homePromo.findUnique({ where: { id } });
+    if (!row) return { ok: false, error: "Promoción no encontrada." };
+
+    await prisma.homePromo.update({
+      where: { id },
+      data: { active: !row.active },
+    });
+    revalidatePath("/admin");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo cambiar el estado." };
+  }
+}

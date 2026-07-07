@@ -5,7 +5,7 @@ import SiteShell from "../components/SiteShell";
 import AdminDashboard from "./AdminDashboard";
 import { getSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
-import { listAdminUsers } from "./actions";
+import { listAdminUsers, listTestimonials, listHomePromos } from "./actions";
 
 export default async function AdminPage() {
   const session = await getSession();
@@ -13,12 +13,14 @@ export default async function AdminPage() {
   if (!isAdminUser(session)) redirect("/panel");
 
   const users = await listAdminUsers();
+  const testimonials = await listTestimonials();
+  const homePromos = await listHomePromos();
 
   return (
     <SiteShell>
       <Navbar />
       <main className="flex-1 max-w-6xl mx-auto py-12 px-6 w-full">
-        <AdminDashboard users={users} />
+        <AdminDashboard users={users} testimonials={testimonials} homePromos={homePromos} />
       </main>
       <Footer />
     </SiteShell>

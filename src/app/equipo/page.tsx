@@ -1,14 +1,42 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { listaEquipo } from "../data/equipo";
+import MediaSlot from "../components/MediaSlot";
+import {
+  listaEquipo,
+  EQUIPO_TOTAL,
+  GRUPO_EQUIPO_LABELS,
+  type EquipoGrupo,
+} from "../data/equipo";
 import { definicionInstitucional } from "../data/institucion";
 import { Users, Mail } from "lucide-react";
 
-export default function EquipoPage() {
-  const direccion = listaEquipo.filter((m) => m.grupo === "direccion");
-  const operacion = listaEquipo.filter((m) => m.grupo === "operacion");
+const GRUPOS: EquipoGrupo[] = ["consejo", "operacion", "comunicacion"];
 
+function MiembroCard({ miembro }: { miembro: (typeof listaEquipo)[number] }) {
+  return (
+    <article className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow transition">
+      <MediaSlot
+        id={`equipo-${miembro.slug}`}
+        type="image"
+        expectedPath={`/equipo/${miembro.slug}.jpg`}
+        aspectRatio="4/3"
+        description={`Foto de ${miembro.nombre}`}
+        className="w-full"
+      />
+      <div className="p-5 text-center">
+        <h3 className="font-bold text-slate-950 text-sm">{miembro.nombre}</h3>
+        <p className="text-[11px] font-bold text-amber-600 uppercase tracking-wider mt-1">{miembro.cargo}</p>
+        {miembro.empresa && (
+          <p className="text-[11px] text-[#27366D] font-medium mt-0.5">{miembro.empresa}</p>
+        )}
+        <p className="text-xs text-slate-600 leading-relaxed font-light mt-3">{miembro.descripcion}</p>
+      </div>
+    </article>
+  );
+}
+
+export default function EquipoPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
       <Navbar />
@@ -22,64 +50,35 @@ export default function EquipoPage() {
             Equipo directivo
           </h1>
           <p className="text-slate-200 text-sm max-w-2xl mx-auto font-light leading-relaxed">
-            {listaEquipo.length} personas lideran la operación de {definicionInstitucional.razonSocial},{" "}
+            {EQUIPO_TOTAL} personas lideran la operación de {definicionInstitucional.razonSocial},{" "}
             {definicionInstitucional.figuraLegal}, coordinando productos turísticos, festivales y la red de socios del Centro Histórico.
           </p>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto py-12 px-6 space-y-16">
-        <section>
-          <div className="flex items-center gap-2 mb-6">
-            <Users className="w-4 h-4 text-[#27366D]" />
-            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Dirección</h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {direccion.map((miembro) => (
-              <article
-                key={miembro.id}
-                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition text-center"
+        {GRUPOS.map((grupo) => {
+          const miembros = listaEquipo.filter((m) => m.grupo === grupo);
+          return (
+            <section key={grupo}>
+              <div className="flex items-center gap-2 mb-6">
+                <Users className="w-4 h-4 text-[#27366D]" />
+                <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+                  {GRUPO_EQUIPO_LABELS[grupo]}
+                </h2>
+              </div>
+              <div
+                className={`grid gap-6 ${
+                  grupo === "operacion" ? "sm:grid-cols-1 max-w-md mx-auto" : "sm:grid-cols-2 lg:grid-cols-3"
+                }`}
               >
-                <div className="w-16 h-16 bg-[#27366D] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-lg font-black">
-                  {miembro.iniciales}
-                </div>
-                <h3 className="font-bold text-slate-950 text-sm">{miembro.nombre}</h3>
-                <p className="text-[11px] font-bold text-amber-600 uppercase tracking-wider mt-1 mb-3">
-                  {miembro.cargo}
-                </p>
-                <p className="text-xs text-slate-600 leading-relaxed font-light">{miembro.descripcion}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <div className="flex items-center gap-2 mb-6">
-            <Users className="w-4 h-4 text-[#27366D]" />
-            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Comunicación, contenido y tecnología</h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {operacion.map((miembro) => (
-              <article
-                key={miembro.id}
-                className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow transition"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-slate-100 text-[#27366D] rounded-full flex items-center justify-center shrink-0 text-sm font-black">
-                    {miembro.iniciales}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-950 text-sm">{miembro.nombre}</h3>
-                    <p className="text-[11px] font-bold text-[#27366D] uppercase tracking-wider mt-0.5 mb-2">
-                      {miembro.cargo}
-                    </p>
-                    <p className="text-xs text-slate-600 leading-relaxed font-light">{miembro.descripcion}</p>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+                {miembros.map((miembro) => (
+                  <MiembroCard key={miembro.id} miembro={miembro} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
 
         <section className="bg-[#27366D] text-white rounded-xl p-6 sm:p-8">
           <div className="flex flex-col items-center text-center max-w-lg mx-auto">

@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import { MEMBERSHIP_PLANS, PAID_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
 import PlanSelectButton from "./PlanSelectButton";
-import { registroUrl } from "@/lib/plan-routing";
+import { registroUrl, planToSlug, parsePlanSlug } from "@/lib/plan-routing";
 import { getSession } from "@/lib/auth-utils";
 import { Check } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -12,11 +12,12 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 export default async function PlanesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cambio?: string }>;
+  searchParams: Promise<{ cambio?: string; plan?: string }>;
 }) {
   const params = await searchParams;
   const session = await getSession();
   const isPlanChange = params.cambio === "1" && Boolean(session);
+  const highlightPlan = parsePlanSlug(params.plan);
 
   return (
     <SiteShell>
@@ -47,6 +48,7 @@ export default async function PlanesPage({
             planId="TURISTA"
             cta="Empezar Gratis"
             featured={false}
+            highlighted={false}
             isAuthenticated={Boolean(session)}
             isPlanChange={isPlanChange}
           />
@@ -55,8 +57,9 @@ export default async function PlanesPage({
             <PlanCard
               key={planId}
               planId={planId}
-              cta="Elegir Plan"
-              featured={planId === "NEGOCIO_FAMILIAR"}
+              cta={planId === "GRAN_EMPRESA" ? "Aparecer en el MAP" : "Elegir Plan"}
+              featured={planId === "GRAN_EMPRESA"}
+              highlighted={highlightPlan === planId}
               isAuthenticated={Boolean(session)}
               isPlanChange={isPlanChange}
             />
@@ -72,27 +75,31 @@ function PlanCard({
   planId,
   cta,
   featured,
+  highlighted,
   isAuthenticated,
   isPlanChange,
 }: {
   planId: keyof typeof MEMBERSHIP_PLANS;
   cta: string;
   featured: boolean;
+  highlighted: boolean;
   isAuthenticated: boolean;
   isPlanChange: boolean;
 }) {
   const plan = MEMBERSHIP_PLANS[planId];
   const useDirectSelect = isAuthenticated && (isPlanChange || plan.isPaid);
+  const isEmphasized = featured || highlighted;
 
   return (
     <div
-      className={`flex flex-col rounded-xl border p-6 bg-white shadow-sm h-full ${
-        featured ? "border-amber-400 ring-1 ring-amber-400/30" : "border-slate-200"
+      id={planId === "GRAN_EMPRESA" ? "gran_empresa" : undefined}
+      className={`flex flex-col rounded-xl border p-6 bg-white shadow-sm h-full scroll-mt-24 ${
+        isEmphasized ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-200"
       }`}
     >
       {featured && (
         <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-3">
-          Popular
+          Presencia en el MAP
         </span>
       )}
       <h2 className="font-bold text-slate-950 text-sm">{plan.label}</h2>
@@ -115,7 +122,9 @@ function PlanCard({
           label={isPlanChange ? "Seleccionar" : cta}
           className={`block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
             plan.isPaid
-              ? "bg-[#27366D] hover:bg-[#1e2b58] text-white"
+              ? planId === "GRAN_EMPRESA"
+                ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
+                : "bg-[#27366D] hover:bg-[#1e2b58] text-white"
               : "bg-amber-500 hover:bg-amber-400 text-slate-950"
           }`}
         />
@@ -124,7 +133,9 @@ function PlanCard({
           href={registroUrl(planId as MembershipPlan)}
           className={`block text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
             plan.isPaid
-              ? "bg-[#27366D] hover:bg-[#1e2b58] text-white"
+              ? planId === "GRAN_EMPRESA"
+                ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
+                : "bg-[#27366D] hover:bg-[#1e2b58] text-white"
               : "bg-amber-500 hover:bg-amber-400 text-slate-950"
           }`}
         >

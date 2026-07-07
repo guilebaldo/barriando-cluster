@@ -50,7 +50,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     isPaid: true,
     highlight: "Ideal para cafés, tiendas y talleres de barrio",
     benefits: [
-      "Aparecer en el directorio oficial de socios",
+      "Presencia en el directorio oficial de socios (/socios)",
       "Publicar entradas en el blog del Clúster",
       "Perfil certificado en la guía Barriando",
     ],
@@ -64,8 +64,8 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     highlight: "Museos, escuelas y servicios consolidados",
     benefits: [
       "Todo lo del plan Negocio Familiar",
-      "Logo en el carrusel de la página principal",
-      "Mayor prioridad en el directorio",
+      "Logo destacado en el carrusel de la página principal",
+      "Mayor prioridad en el directorio de socios",
       "Destacado en campañas del Clúster",
     ],
   },
@@ -74,13 +74,14 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     label: "Gran Empresa",
     tagline: "Hoteles y restaurantes grandes",
     description:
-      "Diseñado para hoteles y restaurantes consolidados con más de 20 empleados que requieren máxima visibilidad.",
+      "Diseñado para hoteles y restaurantes consolidados con más de 20 empleados que requieren máxima visibilidad en el MAP.",
     isPaid: true,
-    highlight: "Máxima visibilidad y beneficios exclusivos",
+    highlight: "Máxima visibilidad en el MAP y rutas oficiales",
     benefits: [
+      "Presencia destacada en el mapa interactivo y rutas oficiales del MAP",
+      "Vinculación con el Corredor de Oficios Vivos ($1,300 MDP en Barrios Fundacionales)",
       "Todo lo de los planes anteriores",
-      "Posicionamiento premium en el carrusel",
-      "Presencia en la ruta MAP interactiva",
+      "Posicionamiento premium en el carrusel y directorio",
       "Beneficios exclusivos para anfitriones del destino",
     ],
   },
@@ -108,10 +109,10 @@ export function formatPlanPriceMxn(plan: PaidMembershipPlan): string {
 }
 
 export const COMMERCIAL_BENEFITS = [
-  "Aparecer en el mapa y directorio de socios",
-  "Mostrar tu logotipo en el carrusel de la página principal",
+  "Presencia en el directorio oficial de socios (/socios)",
+  "Logo destacado en el carrusel de la página principal (Mediana y Gran Empresa)",
+  "Presencia destacada en el mapa interactivo y rutas oficiales del MAP (Gran Empresa)",
   "Redactar entradas en el blog del Clúster",
-  "Formar parte del MAP (Museo Abierto de Puebla)",
 ];
 
 /** Asigna nivel de pago según categoría del catálogo estático de socios. */
