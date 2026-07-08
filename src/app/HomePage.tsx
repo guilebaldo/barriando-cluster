@@ -124,7 +124,7 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
         <div className="max-w-5xl mx-auto text-center">
           <Reveal>
             <h2 className="text-3xl md:text-5xl font-black font-serif-cluster uppercase tracking-wide leading-tight text-slate-950">
-              Abre tu Pasaporte; conviértete en Pipope.
+              Abre tu Pasaporte; hazte poblano.
             </h2>
           </Reveal>
           <Reveal delay={80}>
