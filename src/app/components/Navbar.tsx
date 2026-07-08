@@ -155,14 +155,14 @@ export default function Navbar() {
     return (
       <div className={mobile ? "mt-2 pt-2 border-t border-[#314385]/60" : undefined}>
         <Link
-          href="/planes"
+          href="/entrar"
           className={
             mobile
               ? "block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold bg-amber-500 text-slate-950 text-center hover:bg-amber-400 transition"
               : "bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider font-bold"
           }
         >
-          Hazte Barrio
+          Entrar
         </Link>
       </div>
     );

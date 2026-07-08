@@ -84,6 +84,18 @@ function PasaporteInner({
   return (
     <div className="min-h-[80vh] bg-gradient-to-b from-amber-50 via-orange-50/40 to-amber-100/60 py-6 sm:py-10 px-3 sm:px-6">
       <div className="max-w-5xl mx-auto">
+        <div className="sm:hidden sticky top-2 z-20 mb-3">
+          <div className="rounded-xl border border-amber-200 bg-white/95 backdrop-blur px-3 py-2 shadow-sm">
+            <div className="flex items-center justify-between text-[11px] text-stone-700 font-semibold">
+              <span>{totalStamps} sellos</span>
+              <span>{progress}% completado</span>
+            </div>
+            <div className="mt-1.5 h-2 rounded-full bg-stone-200 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-amber-400 to-[#27366D]" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+        </div>
+
         {/* Pasaporte cover */}
         <div className="relative rounded-2xl border border-amber-200/80 bg-[#faf6ef] shadow-[0_8px_30px_rgba(120,80,30,0.12)] overflow-hidden">
           <div
