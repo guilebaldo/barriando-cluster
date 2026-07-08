@@ -1,6 +1,7 @@
 export const definicionInstitucional = {
   nombreComercial: "Barriando",
-  razonSocial: "Clúster Turístico y Asociación de Empresarios del Centro Histórico",
+  razonSocial:
+    "Clúster Turístico y Asociación de Empresarios del Centro Histórico de Puebla A.C.",
   figuraLegal: "Asociación Civil (A.C.)",
   nombre: "Barriando",
   definicion:

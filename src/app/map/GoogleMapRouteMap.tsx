@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { loadGoogleMapsApi } from "@/lib/google-maps-loader";
 import { buildGoogleWalkingPath } from "@/lib/google-walking-path";
+import { buildMapMarkerPopupContent } from "@/lib/map-point-stamp";
 import type { MapRoutePoint } from "@/lib/map-route-client";
 
 const LeafletMapFallback = dynamic(() => import("./MapRouteMap"), {
@@ -13,78 +14,30 @@ const LeafletMapFallback = dynamic(() => import("./MapRouteMap"), {
   ),
 });
 
-function buildInfoWindowContent(
-  point: MapRoutePoint,
-  idx: number,
-  total: number,
-  onNavigate: (direction: "prev" | "next") => void
-): HTMLElement {
-  const wrapper = document.createElement("div");
-  wrapper.className = "text-xs min-w-[11rem] max-w-[16rem]";
-
-  const title = document.createElement("p");
-  title.className = "font-bold text-slate-900 leading-snug";
-  title.textContent = point.name;
-  wrapper.appendChild(title);
-
-  if (point.category) {
-    const category = document.createElement("p");
-    category.className = "text-slate-500 mt-1";
-    category.textContent = point.category;
-    wrapper.appendChild(category);
-  }
-
-  const nav = document.createElement("div");
-  nav.className = "flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100";
-
-  const prevBtn = document.createElement("button");
-  prevBtn.type = "button";
-  prevBtn.textContent = "⬅️";
-  prevBtn.title = "Anterior";
-  prevBtn.className = "px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40";
-  prevBtn.disabled = idx <= 0;
-  prevBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (idx > 0) onNavigate("prev");
-  });
-
-  const counter = document.createElement("span");
-  counter.className = "text-[10px] text-slate-400 font-medium";
-  counter.textContent = `${point.order} / ${total}`;
-
-  const nextBtn = document.createElement("button");
-  nextBtn.type = "button";
-  nextBtn.textContent = "➡️";
-  nextBtn.title = "Siguiente";
-  nextBtn.className = "px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40";
-  nextBtn.disabled = idx >= total - 1;
-  nextBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (idx < total - 1) onNavigate("next");
-  });
-
-  nav.append(prevBtn, counter, nextBtn);
-  wrapper.appendChild(nav);
-
-  return wrapper;
-}
+export type UserMapLocation = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+};
 
 export default function GoogleMapRouteMap({
   points,
   highlightedId = null,
   fullScreen = false,
+  userLocation = null,
   onPointSelect,
 }: {
   points: MapRoutePoint[];
   highlightedId?: string | null;
   fullScreen?: boolean;
+  userLocation?: UserMapLocation | null;
   onPointSelect?: (id: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const userMarkerRef = useRef<google.maps.Marker | null>(null);
+  const userAccuracyRef = useRef<google.maps.Circle | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const onSelectRef = useRef(onPointSelect);
@@ -100,14 +53,18 @@ export default function GoogleMapRouteMap({
       .then(async (google) => {
         if (cancelled || !containerRef.current) return;
 
-        const center = { lat: points[0].latitude, lng: points[0].longitude };
+        const center = userLocation
+          ? { lat: userLocation.latitude, lng: userLocation.longitude }
+          : { lat: points[0].latitude, lng: points[0].longitude };
+
         if (!mapRef.current) {
           mapRef.current = new google.maps.Map(containerRef.current, {
             center,
-            zoom: 15,
+            zoom: 16,
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: !fullScreen,
+            zoomControl: true,
           });
         }
 
@@ -120,6 +77,10 @@ export default function GoogleMapRouteMap({
         }
 
         const bounds = new google.maps.LatLngBounds();
+        if (userLocation) {
+          bounds.extend({ lat: userLocation.latitude, lng: userLocation.longitude });
+        }
+
         points.forEach((point, idx) => {
           const isStart = idx === 0;
           const isHighlight = point.id === highlightedId;
@@ -129,11 +90,11 @@ export default function GoogleMapRouteMap({
             position: { lat: point.latitude, lng: point.longitude },
             title: point.name,
             label: isHighlight
-              ? { text: String(point.order), color: "#1e293b", fontWeight: "bold" }
+              ? { text: String(point.order), color: "#1e293b", fontWeight: "bold", fontSize: "11px" }
               : undefined,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
-              scale: isHighlight ? 11 : isStart ? 9 : 7,
+              scale: isHighlight ? 12 : isStart ? 10 : isPremium ? 8 : 7,
               fillColor: isStart ? "#fbbf24" : isPremium ? "#27366D" : "#64748b",
               fillOpacity: 1,
               strokeColor: isHighlight ? "#fbbf24" : "#ffffff",
@@ -144,12 +105,7 @@ export default function GoogleMapRouteMap({
 
           marker.addListener("click", () => {
             onSelectRef.current?.(point.id);
-            const content = buildInfoWindowContent(point, idx, points.length, (dir) => {
-              const nextIdx = dir === "prev" ? idx - 1 : idx + 1;
-              const next = points[nextIdx];
-              if (next) onSelectRef.current?.(next.id);
-            });
-            infoWindowRef.current?.setContent(content);
+            infoWindowRef.current?.setContent(buildMapMarkerPopupContent(point));
             infoWindowRef.current?.open({ map, anchor: marker });
           });
 
@@ -157,24 +113,59 @@ export default function GoogleMapRouteMap({
           bounds.extend({ lat: point.latitude, lng: point.longitude });
         });
 
+        if (userLocation) {
+          const userPos = { lat: userLocation.latitude, lng: userLocation.longitude };
+          if (!userMarkerRef.current) {
+            userMarkerRef.current = new google.maps.Marker({
+              map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 9,
+                fillColor: "#3b82f6",
+                fillOpacity: 1,
+                strokeColor: "#ffffff",
+                strokeWeight: 3,
+              },
+              zIndex: 2000,
+              title: "Tu ubicación",
+            });
+          }
+          userMarkerRef.current.setPosition(userPos);
+          userMarkerRef.current.setMap(map);
+
+          if (userLocation.accuracy && userLocation.accuracy > 0) {
+            if (!userAccuracyRef.current) {
+              userAccuracyRef.current = new google.maps.Circle({
+                map,
+                fillColor: "#3b82f6",
+                fillOpacity: 0.12,
+                strokeColor: "#3b82f6",
+                strokeOpacity: 0.35,
+                strokeWeight: 1,
+              });
+            }
+            userAccuracyRef.current.setCenter(userPos);
+            userAccuracyRef.current.setRadius(userLocation.accuracy);
+            userAccuracyRef.current.setMap(map);
+          }
+        } else {
+          userMarkerRef.current?.setMap(null);
+          userAccuracyRef.current?.setMap(null);
+        }
+
         if (highlightedId) {
           const hp = points.find((p) => p.id === highlightedId);
           const hi = points.findIndex((p) => p.id === highlightedId);
           if (hp && hi >= 0) {
             map.panTo({ lat: hp.latitude, lng: hp.longitude });
-            map.setZoom(17);
+            if (!userLocation) map.setZoom(17);
             const marker = markersRef.current[hi];
             if (marker) {
-              const content = buildInfoWindowContent(hp, hi, points.length, (dir) => {
-                const nextIdx = dir === "prev" ? hi - 1 : hi + 1;
-                const next = points[nextIdx];
-                if (next) onSelectRef.current?.(next.id);
-              });
-              infoWindowRef.current?.setContent(content);
+              infoWindowRef.current?.setContent(buildMapMarkerPopupContent(hp));
               infoWindowRef.current?.open({ map, anchor: marker });
             }
           }
-        } else {
+        } else if (!userLocation) {
           map.fitBounds(bounds, { top: 48, right: 48, bottom: 48, left: 48 });
         }
 
@@ -188,9 +179,19 @@ export default function GoogleMapRouteMap({
           polylineRef.current = new google.maps.Polyline({
             map,
             path: walkPath.map(([lat, lng]) => ({ lat, lng })),
-            strokeColor: "#27366D",
-            strokeOpacity: 0.9,
-            strokeWeight: 4,
+            strokeOpacity: 0,
+            icons: [
+              {
+                icon: {
+                  path: "M 0,-1 0,1",
+                  strokeOpacity: 1,
+                  strokeColor: "#27366D",
+                  scale: 3,
+                },
+                offset: "0",
+                repeat: "16px",
+              },
+            ],
           });
         } catch (pathErr) {
           console.warn("[map] Ruta peatonal no disponible, mostrando solo marcadores:", pathErr);
@@ -204,7 +205,7 @@ export default function GoogleMapRouteMap({
     return () => {
       cancelled = true;
     };
-  }, [points, highlightedId, fullScreen, useLeafletFallback]);
+  }, [points, highlightedId, fullScreen, useLeafletFallback, userLocation]);
 
   if (points.length === 0) {
     return (
@@ -223,6 +224,7 @@ export default function GoogleMapRouteMap({
         <LeafletMapFallback
           points={points}
           highlightedId={highlightedId}
+          userLocation={userLocation}
           onPointSelect={onPointSelect}
         />
       </div>
@@ -232,7 +234,7 @@ export default function GoogleMapRouteMap({
   return (
     <div
       className={`relative z-0 overflow-hidden border border-slate-200 shadow-lg ${
-        fullScreen ? "h-[min(85vh,640px)] rounded-none md:rounded-2xl" : "h-[min(70vh,520px)] rounded-2xl"
+        fullScreen ? "h-[min(78vh,640px)] rounded-none md:rounded-2xl" : "h-[min(70vh,520px)] rounded-2xl"
       }`}
     >
       <div ref={containerRef} className="h-full w-full" />

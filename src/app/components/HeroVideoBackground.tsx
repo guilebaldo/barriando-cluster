@@ -8,7 +8,13 @@ export default function HeroVideoBackground() {
       <iframe
         title="Video de fondo Barriando"
         src={embedSrc}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300%] h-[300%] max-w-none border-0 opacity-70"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 opacity-70 pointer-events-none"
+        style={{
+          width: "100vw",
+          height: "56.25vw",
+          minHeight: "100%",
+          minWidth: "177.78vh",
+        }}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         referrerPolicy="strict-origin-when-cross-origin"
       />

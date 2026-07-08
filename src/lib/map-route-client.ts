@@ -10,6 +10,8 @@ export type MapRoutePoint = {
   order: number;
   category?: string;
   zone?: number;
+  socioId?: number;
+  hasSeasonalStamp?: boolean;
 };
 
 export type MapRouteResult = {
@@ -52,6 +54,70 @@ export function findNearestRoutePoint(
     }
   }
   return best;
+}
+
+const PREMIUM_DETOUR_RADIUS_KM = 0.4;
+
+/** Itinerario peatonal: desde el hito más cercano, prioriza Gran Empresa cercanos y luego el siguiente punto más próximo. */
+export function buildWalkingItinerary(
+  location: { latitude: number; longitude: number },
+  route: MapRouteResult
+): MapRouteResult {
+  if (route.points.length === 0) return route;
+
+  const start = findNearestRoutePoint(location, route.points);
+  if (!start) return route;
+
+  const unvisited = new Map(route.points.map((p) => [p.id, p]));
+  const ordered: MapRoutePoint[] = [];
+  let current = start;
+  let currentLoc = { latitude: current.latitude, longitude: current.longitude };
+
+  unvisited.delete(current.id);
+  ordered.push({ ...current, order: 1, category: "Punto de partida" });
+
+  while (unvisited.size > 0) {
+    const candidates = [...unvisited.values()];
+
+    const nearbyPremium = candidates
+      .filter((p) => p.kind === "premium_business")
+      .map((p) => ({ p, d: haversineDistanceKm(currentLoc, p) }))
+      .filter((x) => x.d <= PREMIUM_DETOUR_RADIUS_KM)
+      .sort((a, b) => a.d - b.d);
+
+    let next: MapRoutePoint;
+    if (nearbyPremium.length > 0) {
+      next = nearbyPremium[0].p;
+    } else {
+      next = candidates.reduce((best, p) => {
+        const d = haversineDistanceKm(currentLoc, p);
+        const bestD = haversineDistanceKm(currentLoc, best);
+        return d < bestD ? p : best;
+      });
+    }
+
+    unvisited.delete(next.id);
+    ordered.push({
+      ...next,
+      order: ordered.length + 1,
+      category:
+        next.category === "Punto de partida"
+          ? next.kind === "premium_business"
+            ? next.category
+            : "Hito patrimonial"
+          : next.category,
+    });
+    currentLoc = { latitude: next.latitude, longitude: next.longitude };
+  }
+
+  const walkPath = ordered.map((p) => [p.latitude, p.longitude] as [number, number]);
+
+  return {
+    ...route,
+    startName: ordered[0]?.name ?? route.startName,
+    points: ordered,
+    walkPath,
+  };
 }
 
 export function reorderRouteFromPoint(

@@ -60,7 +60,7 @@ export default function SociosPageClient({ socios }: { socios: Socio[] }) {
               placeholder="Buscar por nombre o giro comercial..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-[#27366D] transition-colors focus:bg-white text-slate-800 placeholder:text-slate-400 font-medium"
+              className="w-full pl-11 pr-4 py-3 md:py-4 bg-slate-50 border border-slate-200 rounded-lg text-sm md:text-base focus:outline-[#27366D] transition-colors focus:bg-white text-slate-800 placeholder:text-slate-400 font-medium"
             />
           </div>
 

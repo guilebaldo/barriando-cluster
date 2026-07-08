@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { listaSocios, type Socio } from "@/app/data/socios";
-import { getPlanForSocio, hasCommercialAccess } from "@/lib/membresia";
+import { compareSociosByPlan, getPlanForSocio, hasCommercialAccess } from "@/lib/membresia";
 import { isVisibleInCarousel, isMedianaCarouselPlan } from "@/lib/plan-visibility";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
@@ -132,7 +132,7 @@ export async function getPublicSociosList(): Promise<Socio[]> {
     if (idx >= 0 && refreshed) merged[idx] = refreshed;
   }
 
-  return merged.sort((a, b) => a.name.localeCompare(b.name, "es"));
+  return merged.sort(compareSociosByPlan);
 }
 
 /** Carrusel destacado: Mediana y Gran Empresa. */

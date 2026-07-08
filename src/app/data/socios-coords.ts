@@ -172,8 +172,8 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "name": "SACRISTÍA"
   },
   "34": {
-    "lat": 19.0415954,
-    "lng": -98.2751442,
+    "lat": 19.0415737,
+    "lng": -98.2002252,
     "name": "IL GUSTO"
   },
   "35": {

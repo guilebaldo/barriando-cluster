@@ -8,9 +8,10 @@ import { readFileSync } from "fs";
 import path from "path";
 import type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 import { haversineDistanceKm } from "@/lib/map-route-client";
+import { getPlanForSocio } from "@/lib/membresia";
 
 export type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
-export { findNearestRoutePoint, reorderRouteFromPoint } from "@/lib/map-route-client";
+export { findNearestRoutePoint, reorderRouteFromPoint, buildWalkingItinerary } from "@/lib/map-route-client";
 
 /** Teatro Principal — punto de partida canónico del MAP. */
 export const MAP_ROUTE_START = {
@@ -197,6 +198,43 @@ async function loadActiveMilestones(): Promise<RawPoint[]> {
   }
 }
 
+/** Socios Gran Empresa del catálogo + aliados destacados en el corredor MAP (p. ej. Cosme Tortas). */
+const FEATURED_ROUTE_SOCIO_IDS = new Set([11]); // Cosme Tortas
+
+function loadCatalogRouteBusinesses(): RawPoint[] {
+  const points: RawPoint[] = [];
+  const seenNames = new Set<string>();
+
+  for (const socio of listaSocios) {
+    const coord = sociosCoords[socio.id];
+    if (!coord) continue;
+
+    const plan = getPlanForSocio(socio);
+    const featured = FEATURED_ROUTE_SOCIO_IDS.has(socio.id);
+    if (plan !== "GRAN_EMPRESA" && !featured) continue;
+
+    const nameKey = normalizeName(socio.name);
+    if (seenNames.has(nameKey)) continue;
+    seenNames.add(nameKey);
+
+    points.push({
+      id: `premium-catalog-${socio.id}`,
+      name: socio.name,
+      latitude: coord.lat,
+      longitude: coord.lng,
+      mapsUrl: socio.direccion?.startsWith("http")
+        ? socio.direccion
+        : `https://www.google.com/maps?q=${coord.lat},${coord.lng}`,
+      kind: "premium_business",
+      category: featured ? `${socio.categoria} · Socio destacado` : socio.categoria,
+      socioId: socio.id,
+      hasSeasonalStamp: socio.categoria === "Alimentos y Bebidas",
+    });
+  }
+
+  return points;
+}
+
 async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
   try {
     const users = await prisma.user.findMany({
@@ -241,6 +279,8 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
             mapsUrl: catalog.direccion || `https://www.google.com/maps?q=${coord.lat},${coord.lng}`,
             kind: "premium_business",
             category: catalog.categoria,
+            socioId: user.socioId,
+            hasSeasonalStamp: catalog.categoria === "Alimentos y Bebidas",
           });
         }
         continue;
@@ -270,10 +310,17 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
 }
 
 export async function buildMapRoute(): Promise<MapRouteResult> {
-  const [milestones, premium] = await Promise.all([
+  const [milestones, premiumDb, premiumCatalog] = await Promise.all([
     loadActiveMilestones(),
     loadPremiumGranEmpresaBusinesses(),
+    Promise.resolve(loadCatalogRouteBusinesses()),
   ]);
+
+  const premiumByName = new Map<string, RawPoint>();
+  for (const p of [...premiumDb, ...premiumCatalog]) {
+    premiumByName.set(normalizeName(p.name), p);
+  }
+  const premium = [...premiumByName.values()];
 
   const startInList = milestones.find(
     (m) => normalizeName(m.name) === normalizeName(MAP_ROUTE_START.name)
@@ -283,9 +330,16 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
     ? { latitude: startInList.latitude, longitude: startInList.longitude }
     : { latitude: MAP_ROUTE_START.latitude, longitude: MAP_ROUTE_START.longitude };
 
-  const pool = [...milestones, ...premium].filter(
-    (p) => normalizeName(p.name) !== normalizeName(MAP_ROUTE_START.name)
-  );
+  const pool = [...milestones, ...premium].filter((p) => {
+    if (normalizeName(p.name) === normalizeName(MAP_ROUTE_START.name)) return false;
+    // Evitar duplicar hito y socio con el mismo nombre en el pool.
+    const nameKey = normalizeName(p.name);
+    if (p.kind === "premium_business") {
+      const milestoneDup = milestones.some((m) => normalizeName(m.name) === nameKey);
+      if (milestoneDup) return false;
+    }
+    return true;
+  });
 
   const ordered = quadrantPedestrianOrder(start, pool);
 

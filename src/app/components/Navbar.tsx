@@ -9,21 +9,41 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { getAccountNavItem } from "@/lib/nav-account";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
-const links = [
-  { href: "/", label: "Inicio" },
-  { href: "/socios", label: "Socios" },
-  { href: "/equipo", label: "Equipo" },
-  { href: "/map", label: "MAP" },
-  { href: "/pasaporte-info", label: "Pasaporte" },
-] as const;
+type NavLink = {
+  href: string;
+  label: string;
+  isActive?: (pathname: string) => boolean;
+};
 
-function isNavActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
+function getPasaporteHref(isAuthenticated: boolean) {
+  return isAuthenticated ? "/pasaporte" : "/pasaporte-info";
 }
 
-function navLinkClass(pathname: string, href: string) {
-  const active = isNavActive(pathname, href);
+function getNavLinks(isAuthenticated: boolean): NavLink[] {
+  return [
+    { href: "/", label: "Inicio" },
+    { href: "/socios", label: "Socios" },
+    { href: "/equipo", label: "Equipo" },
+    { href: "/map", label: "MAP" },
+    {
+      href: getPasaporteHref(isAuthenticated),
+      label: "Pasaporte",
+      isActive: (pathname) =>
+        pathname === "/pasaporte-info" ||
+        pathname === "/pasaporte" ||
+        pathname.startsWith("/pasaporte/"),
+    },
+  ];
+}
+
+function isNavActive(pathname: string, link: NavLink) {
+  if (link.isActive) return link.isActive(pathname);
+  if (link.href === "/") return pathname === "/";
+  return pathname === link.href || pathname.startsWith(`${link.href}/`);
+}
+
+function navLinkClass(pathname: string, link: NavLink) {
+  const active = isNavActive(pathname, link);
   return active
     ? "text-amber-400"
     : "text-white hover:text-amber-400 active:text-red-300 transition-colors duration-200";
@@ -155,22 +175,12 @@ export default function Navbar() {
     }
 
     return (
-      <div className={mobile ? "flex flex-col gap-2 mt-2 pt-2 border-t border-[#314385]/60" : "flex items-center gap-3"}>
-        <Link
-          href="/login"
-          className={
-            mobile
-              ? "py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-              : "text-white hover:text-amber-400 transition-colors duration-200 text-xs uppercase tracking-wider font-bold"
-          }
-        >
-          Iniciar Sesión
-        </Link>
+      <div className={mobile ? "mt-2 pt-2 border-t border-[#314385]/60" : undefined}>
         <Link
           href="/planes"
           className={
             mobile
-              ? "py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold bg-amber-500 text-slate-950 text-center hover:bg-amber-400 transition"
+              ? "block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold bg-amber-500 text-slate-950 text-center hover:bg-amber-400 transition"
               : "bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg transition text-xs uppercase tracking-wider font-bold"
           }
         >
@@ -179,6 +189,8 @@ export default function Navbar() {
       </div>
     );
   }
+
+  const navLinks = getNavLinks(Boolean(isAuthenticated));
 
   return (
     <nav className="bg-[#27366D] border-b border-[#1e2b58] sticky top-0 z-[50] safe-area-top">
@@ -203,8 +215,8 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex flex-wrap justify-end items-center gap-5 text-xs uppercase tracking-wider font-bold">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href} className={navLinkClass(pathname, link.href)}>
+          {navLinks.map((link) => (
+            <Link key={link.label} href={link.href} className={navLinkClass(pathname, link)}>
               {link.label}
             </Link>
           ))}
@@ -232,11 +244,11 @@ export default function Navbar() {
           />
           <div className="md:hidden absolute left-0 right-0 top-full z-50 border-b border-[#1e2b58] bg-[#1e2b58] shadow-xl">
             <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col gap-1">
-              {links.map((link) => {
-                const active = isNavActive(pathname, link.href);
+              {navLinks.map((link) => {
+                const active = isNavActive(pathname, link);
                 return (
                   <Link
-                    key={link.href}
+                    key={link.label}
                     href={link.href}
                     className={`py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold transition ${
                       active

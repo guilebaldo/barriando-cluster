@@ -115,6 +115,20 @@ export const COMMERCIAL_BENEFITS = [
   "Redactar entradas en el blog del Clúster",
 ];
 
+const PLAN_DISPLAY_ORDER: Record<PaidMembershipPlan, number> = {
+  GRAN_EMPRESA: 0,
+  MEDIANA_EMPRESA: 1,
+  NEGOCIO_FAMILIAR: 2,
+  VECINO: 3,
+};
+
+/** Ordena socios: Gran Empresa → Mediana → Negocio Familiar, luego alfabético. */
+export function compareSociosByPlan(a: Socio, b: Socio): number {
+  const orderDiff = PLAN_DISPLAY_ORDER[getPlanForSocio(a)] - PLAN_DISPLAY_ORDER[getPlanForSocio(b)];
+  if (orderDiff !== 0) return orderDiff;
+  return a.name.localeCompare(b.name, "es");
+}
+
 /** Asigna nivel de pago según categoría del catálogo estático de socios. */
 export function getPlanForSocio(socio: Socio): PaidMembershipPlan {
   if (socio.categoria === "Hospedaje" || socio.categoria === "Hospital") {

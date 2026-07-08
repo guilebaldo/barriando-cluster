@@ -43,26 +43,32 @@ export default async function PlanesPage({
           )}
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-          <PlanCard
-            planId="TURISTA"
-            cta="Empezar Gratis"
-            featured={false}
-            highlighted={false}
-            isAuthenticated={Boolean(session)}
-            isPlanChange={isPlanChange}
-          />
-
-          {PAID_PLANS.map((planId) => (
+        <div className="flex flex-wrap justify-center gap-5">
+          <div className="w-full md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] xl:w-[240px] max-w-[320px]">
             <PlanCard
-              key={planId}
-              planId={planId}
-              cta={planId === "GRAN_EMPRESA" ? "Aparecer en el MAP" : "Elegir Plan"}
-              featured={planId === "GRAN_EMPRESA"}
-              highlighted={highlightPlan === planId}
+              planId="TURISTA"
+              cta="Empezar Gratis"
+              featured={false}
+              highlighted={false}
               isAuthenticated={Boolean(session)}
               isPlanChange={isPlanChange}
             />
+          </div>
+
+          {PAID_PLANS.map((planId) => (
+            <div
+              key={planId}
+              className="w-full md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] xl:w-[240px] max-w-[320px]"
+            >
+              <PlanCard
+                planId={planId}
+                cta={planId === "GRAN_EMPRESA" ? "Aparecer en el MAP" : "Elegir Plan"}
+                featured={planId === "GRAN_EMPRESA"}
+                highlighted={highlightPlan === planId}
+                isAuthenticated={Boolean(session)}
+                isPlanChange={isPlanChange}
+              />
+            </div>
           ))}
         </div>
       </main>

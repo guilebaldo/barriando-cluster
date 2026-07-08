@@ -5,6 +5,8 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { MapRoutePoint } from "@/lib/map-route-client";
+import type { UserMapLocation } from "./GoogleMapRouteMap";
+import MapMarkerPopup from "./MapMarkerPopup";
 
 function FitRouteBounds({
   points,
@@ -79,21 +81,16 @@ function makeIcon(kind: "start" | "milestone" | "premium", highlighted: boolean)
 
 function RouteMarker({
   point,
-  idx,
   highlighted,
-  total,
-  onNavigate,
   onSelect,
 }: {
   point: MapRoutePoint;
-  idx: number;
   highlighted: boolean;
-  total: number;
-  onNavigate: (direction: "prev" | "next") => void;
   onSelect?: (id: string) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
-  const kind = idx === 0 ? "start" : point.kind === "premium_business" ? "premium" : "milestone";
+  const kind =
+    point.order === 1 ? "start" : point.kind === "premium_business" ? "premium" : "milestone";
   const icon = useMemo(() => makeIcon(kind, highlighted), [kind, highlighted]);
 
   useEffect(() => {
@@ -125,41 +122,15 @@ function RouteMarker({
         }}
       >
         <Popup>
-          <div className="text-xs min-w-[10rem]">
-            <p className="font-bold text-slate-900 mt-0.5">{point.name}</p>
-            {point.category && <p className="text-slate-500 mt-1">{point.category}</p>}
-            <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                disabled={idx <= 0}
-                onClick={() => onNavigate("prev")}
-                className="px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
-                aria-label="Anterior"
-              >
-                ⬅️
-              </button>
-              <span className="text-[10px] text-slate-400 font-medium">
-                {point.order} / {total}
-              </span>
-              <button
-                type="button"
-                disabled={idx >= total - 1}
-                onClick={() => onNavigate("next")}
-                className="px-2 py-1 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40"
-                aria-label="Siguiente"
-              >
-                ➡️
-              </button>
-            </div>
-            <a
-              href={point.mapsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[#27366D] font-semibold underline mt-2 inline-block"
-            >
-              Abrir en Google Maps
-            </a>
-          </div>
+          <MapMarkerPopup point={point} />
+          <a
+            href={point.mapsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[#27366D] font-semibold underline mt-2 inline-block text-[11px]"
+          >
+            Abrir en Google Maps
+          </a>
         </Popup>
       </Marker>
     </>
@@ -170,11 +141,13 @@ export default function MapRouteMap({
   points,
   walkPath,
   highlightedId = null,
+  userLocation = null,
   onPointSelect,
 }: {
   points: MapRoutePoint[];
   walkPath?: Array<[number, number]>;
   highlightedId?: string | null;
+  userLocation?: UserMapLocation | null;
   onPointSelect?: (id: string) => void;
 }) {
   const polyline = useMemo(() => {
@@ -207,21 +180,38 @@ export default function MapRouteMap({
         <FocusHighlightedPoint points={points} highlightedId={highlightedId} />
         <Polyline
           positions={polyline}
-          pathOptions={{ color: "#27366D", weight: 4, opacity: 0.85 }}
+          pathOptions={{ color: "#27366D", weight: 4, opacity: 0.85, dashArray: "10 12" }}
         />
-        {points.map((point, idx) => (
+        {userLocation && (
+          <>
+            <Circle
+              center={[userLocation.latitude, userLocation.longitude]}
+              radius={userLocation.accuracy ?? 25}
+              pathOptions={{
+                color: "#3b82f6",
+                fillColor: "#3b82f6",
+                fillOpacity: 0.12,
+                weight: 1,
+              }}
+            />
+            <Circle
+              center={[userLocation.latitude, userLocation.longitude]}
+              radius={8}
+              pathOptions={{
+                color: "#ffffff",
+                fillColor: "#3b82f6",
+                fillOpacity: 1,
+                weight: 3,
+              }}
+            />
+          </>
+        )}
+        {points.map((point) => (
           <RouteMarker
             key={point.id}
             point={point}
-            idx={idx}
             highlighted={highlightedId === point.id}
-            total={points.length}
             onSelect={onPointSelect}
-            onNavigate={(direction) => {
-              const nextIdx = direction === "prev" ? idx - 1 : idx + 1;
-              const next = points[nextIdx];
-              if (next) onPointSelect?.(next.id);
-            }}
           />
         ))}
       </MapContainer>
