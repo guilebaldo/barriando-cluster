@@ -6,8 +6,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, ChevronDown } from "lucide-react";
-import { getAccountNavItem } from "@/lib/nav-account";
-import type { MembershipPlan } from "@/generated/prisma/client";
 
 type NavLink = {
   href: string;
@@ -51,14 +49,8 @@ function navLinkClass(pathname: string, link: NavLink) {
 
 function UserMenu({ mobile = false }: { mobile?: boolean }) {
   const { data: session } = useSession();
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const accountNav = getAccountNavItem(
-    session?.user?.plan as MembershipPlan | undefined,
-    session?.user?.subscriptionStatus,
-    pathname
-  );
 
   const displayName = session?.user?.name?.trim() || "Mi cuenta";
 
@@ -76,16 +68,10 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
       <div className="mt-2 pt-2 border-t border-[#314385]/60">
         <p className="px-3 py-2 text-sm font-bold text-amber-400">{displayName}</p>
         <Link
-          href="/pasaporte"
+          href="/barrid"
           className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
         >
-          🎟️ Mi Pasaporte
-        </Link>
-        <Link
-          href={accountNav.href}
-          className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-        >
-          {accountNav.label}
+          BarrID
         </Link>
         <button
           type="button"
@@ -122,20 +108,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
         >
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
             <Link
-              href="/pasaporte"
+              href="/barrid"
               role="menuitem"
               className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
               onClick={() => setOpen(false)}
             >
-              🎟️ Mi Pasaporte
-            </Link>
-            <Link
-              href={accountNav.href}
-              role="menuitem"
-              className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-              onClick={() => setOpen(false)}
-            >
-              {accountNav.label}
+              BarrID
             </Link>
             <button
               type="button"

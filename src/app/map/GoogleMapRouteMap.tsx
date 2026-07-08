@@ -24,12 +24,14 @@ export default function GoogleMapRouteMap({
   points,
   highlightedId = null,
   fullScreen = false,
+  immersive = false,
   userLocation = null,
   onPointSelect,
 }: {
   points: MapRoutePoint[];
   highlightedId?: string | null;
   fullScreen?: boolean;
+  immersive?: boolean;
   userLocation?: UserMapLocation | null;
   onPointSelect?: (id: string) => void;
 }) {
@@ -37,6 +39,8 @@ export default function GoogleMapRouteMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
+  const userPulseRef = useRef<google.maps.Circle | null>(null);
+  const userPulseIntervalRef = useRef<number | null>(null);
   const userAccuracyRef = useRef<google.maps.Circle | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
@@ -133,6 +137,32 @@ export default function GoogleMapRouteMap({
           userMarkerRef.current.setPosition(userPos);
           userMarkerRef.current.setMap(map);
 
+          if (!userPulseRef.current) {
+            userPulseRef.current = new google.maps.Circle({
+              map,
+              fillColor: "#3b82f6",
+              fillOpacity: 0.2,
+              strokeColor: "#3b82f6",
+              strokeOpacity: 0.45,
+              strokeWeight: 1,
+            });
+          }
+          userPulseRef.current.setCenter(userPos);
+          userPulseRef.current.setMap(map);
+
+          if (!userPulseIntervalRef.current) {
+            let expanded = false;
+            userPulseIntervalRef.current = window.setInterval(() => {
+              if (!userPulseRef.current) return;
+              expanded = !expanded;
+              userPulseRef.current.setRadius(expanded ? 28 : 10);
+              userPulseRef.current.setOptions({
+                fillOpacity: expanded ? 0.08 : 0.22,
+                strokeOpacity: expanded ? 0.2 : 0.45,
+              });
+            }, 900);
+          }
+
           if (userLocation.accuracy && userLocation.accuracy > 0) {
             if (!userAccuracyRef.current) {
               userAccuracyRef.current = new google.maps.Circle({
@@ -150,6 +180,11 @@ export default function GoogleMapRouteMap({
           }
         } else {
           userMarkerRef.current?.setMap(null);
+          userPulseRef.current?.setMap(null);
+          if (userPulseIntervalRef.current) {
+            window.clearInterval(userPulseIntervalRef.current);
+            userPulseIntervalRef.current = null;
+          }
           userAccuracyRef.current?.setMap(null);
         }
 
@@ -158,15 +193,26 @@ export default function GoogleMapRouteMap({
           const hi = points.findIndex((p) => p.id === highlightedId);
           if (hp && hi >= 0) {
             map.panTo({ lat: hp.latitude, lng: hp.longitude });
+            if (immersive) {
+              const verticalOffset = Math.round((containerRef.current?.clientHeight ?? 680) * 0.35);
+              map.panBy(0, verticalOffset);
+            }
             if (!userLocation) map.setZoom(17);
             const marker = markersRef.current[hi];
             if (marker) {
               infoWindowRef.current?.setContent(buildMapMarkerPopupContent(hp));
               infoWindowRef.current?.open({ map, anchor: marker });
+              if (immersive) {
+                window.setTimeout(() => {
+                  const verticalOffset = Math.round((containerRef.current?.clientHeight ?? 680) * 0.35);
+                  map.panBy(0, verticalOffset);
+                }, 90);
+              }
             }
           }
         } else if (!userLocation) {
-          map.fitBounds(bounds, { top: 48, right: 48, bottom: 48, left: 48 });
+          const bottomPad = immersive ? 280 : 48;
+          map.fitBounds(bounds, { top: 48, right: 48, bottom: bottomPad, left: 48 });
         }
 
         setError(null);
@@ -204,8 +250,12 @@ export default function GoogleMapRouteMap({
 
     return () => {
       cancelled = true;
+      if (userPulseIntervalRef.current) {
+        window.clearInterval(userPulseIntervalRef.current);
+        userPulseIntervalRef.current = null;
+      }
     };
-  }, [points, highlightedId, fullScreen, useLeafletFallback, userLocation]);
+  }, [points, highlightedId, fullScreen, immersive, useLeafletFallback, userLocation]);
 
   if (points.length === 0) {
     return (
@@ -233,8 +283,12 @@ export default function GoogleMapRouteMap({
 
   return (
     <div
-      className={`relative z-0 overflow-hidden border border-slate-200 shadow-lg ${
-        fullScreen ? "h-[min(78vh,640px)] rounded-none md:rounded-2xl" : "h-[min(70vh,520px)] rounded-2xl"
+      className={`relative z-0 overflow-hidden ${
+        immersive
+          ? "h-full w-full border-0 shadow-none rounded-none"
+          : fullScreen
+            ? "h-[min(78vh,640px)] rounded-none md:rounded-2xl border border-slate-200 shadow-lg"
+            : "h-[min(70vh,520px)] rounded-2xl border border-slate-200 shadow-lg"
       }`}
     >
       <div ref={containerRef} className="h-full w-full" />

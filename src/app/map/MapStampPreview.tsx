@@ -5,7 +5,7 @@ export default function MapStampPreview({ stamp }: { stamp: StampDisplayInfo }) 
   return (
     <div className="flex items-center gap-4 mt-3 p-3 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/80 border border-amber-200/80">
       <div
-        className="shrink-0 w-[5.5rem] h-[5.5rem] rounded-full flex flex-col items-center justify-center p-2 -rotate-6 shadow-lg border-[3px] border-amber-700"
+        className="shrink-0 w-[5.5rem] h-[5.5rem] rounded-full flex flex-col items-center justify-center p-2 -rotate-6 shadow-lg border-[3px] border-amber-700 animate-float-y"
         style={{
           background: "linear-gradient(145deg, #fbbf24 0%, #f59e0b 45%, #d97706 100%)",
         }}
@@ -19,7 +19,7 @@ export default function MapStampPreview({ stamp }: { stamp: StampDisplayInfo }) 
           unoptimized
         />
         <span className="text-[7px] font-extrabold uppercase tracking-wider text-amber-950/80 mt-0.5">
-          Barriando
+          Temporada
         </span>
         <span className="text-[8px] font-black text-stone-900 leading-tight text-center">
           {stamp.subtitle}

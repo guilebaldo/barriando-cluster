@@ -6,9 +6,9 @@ import SiteShell from "../components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
 
 export const metadata = {
-  title: "Pasaporte Digital del Barrio | Barriando",
+  title: "Abre tu Pasaporte | Barriando",
   description:
-    "Conoce cómo funciona el Pasaporte Digital del Barrio: sellos QR con validación GPS, niveles y ediciones limitadas de temporada.",
+    "Identifícate con Google para entrar directo a tu Pasaporte y ver tus sellos.",
 };
 
 export default async function PasaporteInfoPage() {
@@ -18,62 +18,27 @@ export default async function PasaporteInfoPage() {
   return (
     <SiteShell>
       <Navbar />
-      <main className="flex-1 max-w-5xl mx-auto px-6 py-14 w-full">
-        <section className="bg-[#27366D] text-white rounded-2xl p-8 md:p-10 border border-[#1e2b58]">
-          <p className="text-xs font-bold uppercase tracking-widest text-amber-400">Tu identificación en el barrio</p>
-          <h1 className="text-3xl md:text-4xl font-black font-serif-cluster uppercase tracking-wide mt-3">
-            Pasaporte Digital del Barrio
+      <main className="flex-1 max-w-3xl mx-auto px-6 py-16 w-full flex items-center">
+        <section className="w-full bg-[#27366D] text-white rounded-2xl p-8 md:p-10 border border-[#1e2b58] text-center">
+          <h1 className="text-3xl md:text-4xl font-black font-serif-cluster uppercase tracking-wide">
+            Abre tu Pasaporte
           </h1>
-          <p className="mt-4 text-sm text-slate-200 max-w-2xl font-light leading-relaxed">
-            El Pasaporte es tu identificación dentro del ecosistema Barriando. Inicia sesión o crea una cuenta
-            gratuita para activarlo y empezar a coleccionar sellos en el MAP.
+          <p className="mt-3 text-sm text-slate-200 font-light leading-relaxed max-w-xl mx-auto">
+            Guarda tus sellos del MAP, sigue tu progreso en temporada y desbloquea recompensas del barrio.
+            Continúa con Google para crear o activar tu cuenta en un solo paso.
           </p>
-        </section>
-
-        <section className="grid md:grid-cols-2 gap-6 mt-8">
-          <article className="bg-white border border-slate-200 rounded-xl p-6">
-            <h2 className="text-sm font-bold text-[#27366D] uppercase tracking-widest">Cómo funciona</h2>
-            <ol className="mt-4 text-sm text-slate-600 font-light space-y-3 leading-relaxed list-decimal list-inside">
-              <li>Te registras gratis en plan Turista.</li>
-              <li>Abres el MAP y eliges la ruta peatonal por el Centro Histórico.</li>
-              <li>En cada punto certificado escaneas QR oficiales.</li>
-              <li>La validación GPS confirma tu visita real para emitir el sello.</li>
-            </ol>
-          </article>
-
-          <article className="bg-white border border-slate-200 rounded-xl p-6">
-            <h2 className="text-sm font-bold text-[#27366D] uppercase tracking-widest">Niveles y recompensas</h2>
-            <p className="mt-4 text-sm text-slate-600 font-light leading-relaxed">
-              Tu progreso se acumula por cantidad y variedad de sellos. A mayor nivel, desbloqueas reconocimientos,
-              dinámicas especiales y beneficios en comercios del ecosistema.
-            </p>
-            <p className="mt-3 text-sm text-slate-600 font-light leading-relaxed">
-              También existen ediciones limitadas de temporada (Todos Santos, Navidad y festividades locales)
-              con sellos exclusivos y vigencia temporal.
-            </p>
-          </article>
-        </section>
-
-        <section className="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-7 text-center">
-          <h3 className="text-xl font-black text-slate-900 font-serif-cluster uppercase tracking-wide">
-            Activa tu Pasaporte
-          </h3>
-          <p className="text-sm text-slate-700 mt-3 max-w-2xl mx-auto font-light">
-            Si ya tienes cuenta, inicia sesión. Si eres nuevo, regístrate gratis como Turista y comienza a
-            coleccionar sellos en el MAP.
-          </p>
-          <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="mt-8 flex justify-center">
             <Link
               href="/login?callbackUrl=/pasaporte"
-              className="w-full sm:w-auto inline-flex items-center justify-center bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg transition"
+              className="inline-flex items-center gap-3 bg-white hover:bg-slate-100 text-slate-900 text-sm font-bold px-6 py-3.5 rounded-lg transition active:scale-[0.98]"
             >
-              Iniciar sesión
-            </Link>
-            <Link
-              href="/registro?plan=turista"
-              className="w-full sm:w-auto inline-flex items-center justify-center border border-[#27366D] text-[#27366D] hover:bg-[#27366D]/5 text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg transition"
-            >
-              Crear cuenta gratis
+              <svg viewBox="0 0 24 24" aria-hidden className="w-5 h-5">
+                <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.2-.9 2.2-1.9 2.9l3 2.3c1.8-1.6 2.8-3.9 2.8-6.8 0-.7-.1-1.4-.2-2H12z" />
+                <path fill="#34A853" d="M12 21c2.7 0 4.9-.9 6.5-2.5l-3-2.3c-.8.6-1.9 1-3.5 1-2.7 0-4.9-1.8-5.7-4.2l-3.1 2.4C4.9 18.8 8.2 21 12 21z" />
+                <path fill="#4A90E2" d="M6.3 13c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2L3.2 6.6C2.4 8 2 9.5 2 11s.4 3 1.2 4.4L6.3 13z" />
+                <path fill="#FBBC05" d="M12 4.8c1.5 0 2.8.5 3.8 1.5l2.8-2.8C16.9 1.9 14.7 1 12 1 8.2 1 4.9 3.2 3.2 6.6L6.3 9c.8-2.4 3-4.2 5.7-4.2z" />
+              </svg>
+              Continuar con Google
             </Link>
           </div>
         </section>

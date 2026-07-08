@@ -57,7 +57,7 @@ export function pointShowsSeasonalStamp(point: MapRoutePoint): boolean {
 /** Contenido del popup del marcador (sin flechas; sello especial o mensaje patrimonial). */
 export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
   const wrapper = document.createElement("div");
-  wrapper.className = "text-xs min-w-[11rem] max-w-[15rem]";
+  wrapper.className = "text-xs min-w-[11rem] max-w-[15rem] animate-popup-in";
 
   const title = document.createElement("p");
   title.className = "font-bold text-slate-900 leading-snug";
@@ -84,7 +84,7 @@ export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
         padding:8px;transform:rotate(-6deg);
       ">
         <img src="${stamp.logoSrc}" alt="" style="width:36px;height:36px;object-fit:contain;margin-bottom:4px;" onerror="this.style.display='none'" />
-        <span style="font-size:7px;font-weight:800;color:#422006;text-transform:uppercase;letter-spacing:0.04em;line-height:1.2;text-align:center;">Barriando</span>
+        <span style="font-size:7px;font-weight:800;color:#422006;text-transform:uppercase;letter-spacing:0.04em;line-height:1.2;text-align:center;">Temporada</span>
         <span style="font-size:8px;font-weight:900;color:#1c1917;line-height:1.1;text-align:center;margin-top:2px;">${stamp.subtitle}</span>
       </div>
     `;

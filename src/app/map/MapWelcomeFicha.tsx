@@ -1,4 +1,4 @@
-import { MapPin, Route } from "lucide-react";
+import Link from "next/link";
 import type { MapRouteResult } from "@/lib/map-route-client";
 
 export default function MapWelcomeFicha({
@@ -22,24 +22,33 @@ export default function MapWelcomeFicha({
 
       <div className="flex flex-wrap gap-2 text-[11px]">
         <span className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 rounded-full px-3 py-1.5 font-semibold">
-          <Route className="w-3.5 h-3.5 text-[#27366D]" />
-          {route.milestoneCount} hitos
+          {route.milestoneCount} hitos patrimoniales
         </span>
         {route.premiumCount > 0 && (
-          <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-900 rounded-full px-3 py-1.5 font-semibold border border-amber-100">
+          <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-900 rounded-full px-3 py-1.5 font-semibold border border-amber-100 animate-soft-glow">
             {route.premiumCount} socios destacados
           </span>
         )}
-        <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-900 rounded-full px-3 py-1.5 font-semibold border border-blue-100">
-          <MapPin className="w-3.5 h-3.5" />
-          Ruta peatonal
-        </span>
       </div>
 
       <ul className="text-xs text-slate-500 space-y-1.5 font-light">
-        <li>· Punto azul = tu ubicación</li>
+        <li className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+          Punto azul = tu ubicación
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+          Ámbar = punto más cercano
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0" />
+          Gris = hito patrimonial
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-[#27366D] border border-amber-400 shrink-0" />
+          Azul oscuro = socio destacado
+        </li>
         <li>· Línea punteada = caminar entre paradas</li>
-        <li>· Toca un marcador para ver sellos especiales</li>
       </ul>
 
       <button
@@ -49,6 +58,15 @@ export default function MapWelcomeFicha({
       >
         Comenzar recorrido
       </button>
+
+      <p className="text-center pt-1">
+        <Link
+          href="/planes#gran_empresa"
+          className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
+        >
+          ¿Tu negocio está en el centro? Inscríbete al MAP
+        </Link>
+      </p>
     </div>
   );
 }

@@ -52,24 +52,24 @@ export default function SociosPageClient({ socios }: { socios: Socio[] }) {
       <main className="max-w-5xl mx-auto py-12 px-6">
         <SociosMapSection socios={socios} />
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8 space-y-4 md:space-y-0 md:flex md:items-center md:gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8 space-y-5">
+          <div className="relative w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
               placeholder="Buscar por nombre o giro comercial..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 md:py-4 bg-slate-50 border border-slate-200 rounded-lg text-sm md:text-base focus:outline-[#27366D] transition-colors focus:bg-white text-slate-800 placeholder:text-slate-400 font-medium"
+              className="w-full min-w-0 pl-12 pr-4 py-4 md:py-5 bg-slate-50 border border-slate-200 rounded-xl text-base md:text-lg focus:outline-[#27366D] transition-colors focus:bg-white text-slate-800 placeholder:text-slate-400 font-medium"
             />
           </div>
 
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+          <div className="flex items-center gap-3 overflow-x-auto md:overflow-visible pb-1 scrollbar-none">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0">
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>Giro:</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {categorias.map((cat) => (
                 <button
                   key={cat}

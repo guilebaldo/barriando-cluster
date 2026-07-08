@@ -94,7 +94,7 @@ export const listaSocios: Socio[] = [
     id: 11,
     name: "Cosme Tortas",
     categoria: "Alimentos y Bebidas",
-    foto: "cosme",
+    foto: "cosme-v2",
     url: "https://menu.fu.do/cosmetortas",
     direccion: "https://maps.app.goo.gl/iJoaUtfQk1476t3G7"
   },
