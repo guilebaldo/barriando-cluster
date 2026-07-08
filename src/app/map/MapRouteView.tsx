@@ -13,7 +13,7 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
-import { buildWalkingItinerary, type MapRouteResult } from "@/lib/map-route-client";
+import { buildWalkingItinerary, haversineDistanceKm, type MapRouteResult } from "@/lib/map-route-client";
 import { getHitoIntro } from "@/lib/map-hito-intro";
 import { getPointStampHref } from "@/lib/map-point-stamp";
 import MapWelcomeFicha from "./MapWelcomeFicha";
@@ -68,6 +68,7 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
+  const hasAutoRoutedRef = useRef(false);
 
   const [route, setRoute] = useState(initialRoute);
   const [selectedId, setSelectedId] = useState<string | null>(initialRoute.points[0]?.id ?? null);
@@ -75,27 +76,35 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
   const [geoModalOpen, setGeoModalOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<UserMapLocation | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
-  const [hasAutoRouted, setHasAutoRouted] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(true);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
   const [qrError, setQrError] = useState<string | null>(null);
 
-  const applyLocationRoute = useCallback(
-    (location: UserMapLocation, shouldReorder = false) => {
-      setUserLocation(location);
-      if (shouldReorder) {
-        const reordered = buildWalkingItinerary(location, initialRoute);
-        setRoute(reordered);
-        const start = reordered.points[0];
-        if (start) {
-          setSelectedId(start.id);
-          setCardIndex(0);
-        }
-        setHasAutoRouted(true);
+  const applyLocationUpdate = useCallback((location: UserMapLocation) => {
+    setUserLocation((prev) => {
+      if (prev && haversineDistanceKm(prev, location) < 0.008) {
+        return prev;
       }
-      setGeoModalOpen(false);
+      return location;
+    });
+    setGeoModalOpen(false);
+  }, []);
+
+  const applyInitialRouteFromLocation = useCallback(
+    (location: UserMapLocation) => {
+      applyLocationUpdate(location);
+      if (hasAutoRoutedRef.current) return;
+
+      const reordered = buildWalkingItinerary(location, initialRoute);
+      setRoute(reordered);
+      const start = reordered.points[0];
+      if (start) {
+        setSelectedId(start.id);
+        setCardIndex(0);
+      }
+      hasAutoRoutedRef.current = true;
     },
-    [initialRoute]
+    [applyLocationUpdate, initialRoute]
   );
 
   const requestGeolocation = useCallback(() => {
@@ -106,19 +115,16 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        applyLocationRoute(
-          {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          },
-          true
-        );
+        applyInitialRouteFromLocation({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        });
       },
       () => setGeoModalOpen(true),
       { enableHighAccuracy: true, timeout: 12_000, maximumAge: 30_000 }
     );
-  }, [applyLocationRoute]);
+  }, [applyInitialRouteFromLocation]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -127,14 +133,17 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
     }
 
     const onSuccess = (pos: GeolocationPosition) => {
-      applyLocationRoute(
-        {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        },
-        !hasAutoRouted
-      );
+      const location: UserMapLocation = {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+      };
+
+      if (!hasAutoRoutedRef.current) {
+        applyInitialRouteFromLocation(location);
+      } else {
+        applyLocationUpdate(location);
+      }
     };
 
     const onError = () => setGeoModalOpen(true);
@@ -147,12 +156,12 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
 
     const watchId = navigator.geolocation.watchPosition(onSuccess, () => {}, {
       enableHighAccuracy: true,
-      maximumAge: 15_000,
-      timeout: 20_000,
+      maximumAge: 60_000,
+      timeout: 25_000,
     });
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [applyLocationRoute, hasAutoRouted]);
+  }, [applyInitialRouteFromLocation, applyLocationUpdate]);
 
   useEffect(() => {
     const el = sheetRef.current;
