@@ -67,6 +67,20 @@ export default async function BarrIdPage() {
             >
               Ver Pasaporte
             </Link>
+            <Link
+              href="/panel"
+              className="inline-flex items-center justify-center border border-slate-300 text-white hover:bg-white/10 text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg transition"
+            >
+              Panel socio
+            </Link>
+            {session.role === "ADMIN" && (
+              <Link
+                href="/admin"
+                className="inline-flex items-center justify-center border border-amber-300 text-amber-200 hover:bg-amber-300/10 text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg transition"
+              >
+                Panel admin
+              </Link>
+            )}
           </div>
         </section>
       </main>

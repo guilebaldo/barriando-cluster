@@ -67,12 +67,12 @@ export async function resolvePlanSelectionPath(plan: MembershipPlan): Promise<st
   const sub = await loadSubscription(session.user.id);
 
   if (sub && hasCommercialAccess(sub.plan, sub.status) && sub.plan === plan) {
-    return "/panel";
+    return "/barrid";
   }
 
   if (isTuristaPlan(plan)) {
     await ensureTuristaSubscription(session.user.id);
-    return "/panel";
+    return "/barrid";
   }
 
   if (isPaidMembershipPlan(plan)) {
@@ -89,7 +89,7 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
   redirect(path);
 }
 
-/** Tras autenticación: turista → panel; plan de pago → pantalla de certificación. */
+/** Tras autenticación: turista → BarrID; plan de pago → pantalla de certificación. */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -101,7 +101,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   let sub = await loadSubscription(session.user.id);
 
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {
-    redirect("/panel?pago=exitoso");
+    redirect("/barrid?pago=exitoso");
   }
 
   if (pending && isPaidMembershipPlan(pending)) {
@@ -111,12 +111,12 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
 
   if (!sub || isTuristaPlan(sub.plan)) {
     await ensureTuristaSubscription(session.user.id);
-    redirect("/panel?bienvenida=1");
+    redirect("/barrid?bienvenida=1");
   }
 
   if (sub && isPaidMembershipPlan(sub.plan) && !hasCommercialAccess(sub.plan, sub.status)) {
     if (sub.status === "manual_pending") {
-      redirect("/panel");
+      redirect("/barrid");
     }
     redirect("/certificacion/pago");
   }

@@ -82,7 +82,7 @@ function PasaporteInner({
     tierId === "poblano" ? "text-amber-600" : "text-stone-600";
 
   return (
-    <div className="min-h-[80vh] bg-gradient-to-b from-amber-50 via-orange-50/40 to-amber-100/60 py-10 px-4 sm:px-6">
+    <div className="min-h-[80vh] bg-gradient-to-b from-amber-50 via-orange-50/40 to-amber-100/60 py-6 sm:py-10 px-3 sm:px-6">
       <div className="max-w-5xl mx-auto">
         {/* Pasaporte cover */}
         <div className="relative rounded-2xl border border-amber-200/80 bg-[#faf6ef] shadow-[0_8px_30px_rgba(120,80,30,0.12)] overflow-hidden">
@@ -93,11 +93,11 @@ function PasaporteInner({
                 "repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(180,140,80,0.06) 28px, rgba(180,140,80,0.06) 29px)",
             }}
           />
-          <div className="relative p-6 sm:p-10 border-b border-amber-200/60 bg-gradient-to-r from-amber-100/50 to-orange-50/30">
+          <div className="relative p-4 sm:p-10 border-b border-amber-200/60 bg-gradient-to-r from-amber-100/50 to-orange-50/30">
             <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-amber-800/70 mb-2">
               Temporada · Chiles en Nogada
             </p>
-            <h1 className="text-2xl sm:text-3xl font-black font-serif-cluster uppercase tracking-wide text-[#5c3d1e]">
+            <h1 className="text-xl sm:text-3xl font-black font-serif-cluster uppercase tracking-wide text-[#5c3d1e]">
               Pasaporte Digital
             </h1>
             <p className="text-sm text-stone-600 mt-2 font-light">
@@ -129,7 +129,7 @@ function PasaporteInner({
           </div>
 
           {/* Rango de temporada */}
-          <div className="relative px-6 sm:px-10 py-6 border-b border-amber-200/50 bg-white/40">
+          <div className="relative px-4 sm:px-10 py-5 sm:py-6 border-b border-amber-200/50 bg-white/40">
             {showPoblanoCelebration && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-amber-100/90 backdrop-blur-sm animate-pulse rounded-none">
                 <div className="text-center px-6 py-4">
@@ -181,11 +181,11 @@ function PasaporteInner({
           </div>
 
           {/* Stamp grid */}
-          <div className="relative p-6 sm:p-10">
+          <div className="relative p-4 sm:p-10">
             <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-6">
               Restaurantes participantes
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {restaurants.map((restaurant, index) => {
                 const stamp = stampMap[restaurant.id];
                 const hasStamp = Boolean(stamp?.count);
@@ -198,7 +198,7 @@ function PasaporteInner({
                   >
                     <div className="relative">
                       <div
-                        className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-dashed flex flex-col items-center justify-center p-2 transition-all active:scale-95 ${
+                        className={`w-[4.5rem] h-[4.5rem] sm:w-24 sm:h-24 rounded-full border-2 border-dashed flex flex-col items-center justify-center p-2 transition-all active:scale-95 ${
                           hasStamp
                             ? `bg-gradient-to-br ${colorClass} text-white shadow-md rotate-[-8deg]`
                             : "border-stone-300 bg-stone-100/50 text-stone-400"
