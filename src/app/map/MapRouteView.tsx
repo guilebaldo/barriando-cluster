@@ -325,7 +325,7 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
   );
 
   return (
-    <div className="relative flex-1 min-h-0 w-full">
+    <div className="relative h-full w-full overflow-hidden overscroll-none">
       <input
         ref={cameraInputRef}
         type="file"
@@ -351,7 +351,7 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
       <div className="absolute bottom-0 left-0 right-0 z-20 px-2 sm:px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <div
           ref={sheetRef}
-          className={`max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl overflow-hidden transition-[max-height] duration-300 ease-out ${
+          className={`max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl overflow-hidden transition-[max-height] duration-300 ease-out overscroll-contain ${
             sheetExpanded ? "max-h-[min(52vh,420px)]" : "max-h-[6.5rem]"
           }`}
           onTouchStart={onSheetTouchStart}
@@ -409,7 +409,7 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
           )}
 
           <div
-            className={`p-4 space-y-3 overflow-y-auto ${
+            className={`p-4 space-y-3 overflow-y-auto overscroll-contain touch-pan-y ${
               sheetExpanded ? "max-h-[min(calc(52vh-2.5rem),380px)]" : "hidden"
             }`}
           >

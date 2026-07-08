@@ -119,6 +119,12 @@
   right: 2px !important;
 }
 
+.map-immersive-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+  touch-action: manipulation;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-float-y,
   .animate-icon-ring,

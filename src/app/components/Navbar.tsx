@@ -140,12 +140,15 @@ export default function Navbar() {
     setOpen(false);
   }, [pathname]);
 
+  const isMapPage = pathname === "/map";
+
   useEffect(() => {
+    if (isMapPage) return;
     document.body.style.overflow = open ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [open, isMapPage]);
 
   function AuthActions({ mobile = false }: { mobile?: boolean }) {
     if (isAuthenticated) {
@@ -171,7 +174,11 @@ export default function Navbar() {
   const navLinks = getNavLinks(Boolean(isAuthenticated));
 
   return (
-    <nav className="bg-[#27366D] border-b border-[#1e2b58] sticky top-0 z-[50] safe-area-top">
+    <nav
+      className={`bg-[#27366D] border-b border-[#1e2b58] z-[50] safe-area-top ${
+        isMapPage ? "shrink-0 relative" : "sticky top-0"
+      }`}
+    >
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
         <Link
           href="/"

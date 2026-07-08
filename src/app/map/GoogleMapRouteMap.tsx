@@ -271,7 +271,7 @@ export default function GoogleMapRouteMap({
             : "h-[min(70vh,520px)] rounded-2xl border border-slate-200 shadow-lg"
       }`}
     >
-      <div ref={containerRef} className="h-full w-full" />
+      <div ref={containerRef} className="h-full w-full touch-manipulation" />
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/90 text-xs text-red-700 p-4 text-center">
           {error}
