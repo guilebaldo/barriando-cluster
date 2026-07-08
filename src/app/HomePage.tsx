@@ -83,9 +83,9 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
           </Reveal>
           <Reveal delay={100}>
             <p className="mt-8 text-sm md:text-lg text-slate-200 max-w-3xl mx-auto font-light leading-relaxed text-center">
-              El MAP integra tu negocio al circuito peatonal y comercial más importante de Puebla, un polígono
-              vivo protegido por la UNESCO. Pon tu marca directamente en la ruta de los viajeros que buscan
-              experiencias auténticas en el Centro Histórico:
+              El MAP es una forma viva de conocer Puebla caminando. Recorre un circuito patrimonial protegido por
+              la UNESCO, entra a sus calles más emblemáticas y descubre hitos, sabores y rincones auténticos del
+              Centro Histórico:
             </p>
             <IconFeatureList
               dark
@@ -170,7 +170,7 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
       <section className="py-20 px-6 bg-slate-50 border-y border-slate-200">
         <div className="max-w-6xl mx-auto text-center">
           <Reveal className="mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#27366D]">El Clúster no duerme</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#27366D]">Clúster Turístico de Puebla</p>
             <h2 className="text-3xl md:text-5xl font-black font-serif-cluster uppercase tracking-wide text-slate-950 mt-3 leading-tight">
               Cultura viva; escenario del mundo
             </h2>
@@ -202,6 +202,14 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
               </Reveal>
             ))}
           </div>
+          <Reveal delay={120} className="mt-12">
+            <Link
+              href="/equipo"
+              className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-lg transition"
+            >
+              Conoce más de Barriando <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </Reveal>
         </div>
       </section>
 

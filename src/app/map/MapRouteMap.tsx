@@ -7,6 +7,7 @@ import "leaflet/dist/leaflet.css";
 import type { MapRoutePoint } from "@/lib/map-route-client";
 import type { UserMapLocation } from "./GoogleMapRouteMap";
 import MapMarkerPopup from "./MapMarkerPopup";
+import { pointHasScannableStamp } from "@/lib/map-point-stamp";
 
 function FitRouteBounds({
   points,
@@ -94,8 +95,13 @@ function RouteMarker({
   const icon = useMemo(() => makeIcon(kind, highlighted), [kind, highlighted]);
 
   useEffect(() => {
-    if (highlighted) markerRef.current?.openPopup();
-  }, [highlighted]);
+    if (!highlighted) return;
+    if (pointHasScannableStamp(point)) {
+      markerRef.current?.openPopup();
+    } else {
+      markerRef.current?.closePopup();
+    }
+  }, [highlighted, point]);
 
   return (
     <>

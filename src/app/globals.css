@@ -112,6 +112,13 @@
   animation: popup-in 220ms ease-out 1;
 }
 
+.gm-style .gm-ui-hover-effect {
+  transform: scale(0.78);
+  transform-origin: top right;
+  top: 2px !important;
+  right: 2px !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-float-y,
   .animate-icon-ring,

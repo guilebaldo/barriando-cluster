@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { loadGoogleMapsApi } from "@/lib/google-maps-loader";
 import { buildGoogleWalkingPath } from "@/lib/google-walking-path";
-import { buildMapMarkerPopupContent } from "@/lib/map-point-stamp";
+import { buildMapMarkerPopupContent, pointHasScannableStamp } from "@/lib/map-point-stamp";
 import type { MapRoutePoint } from "@/lib/map-route-client";
 
 const LeafletMapFallback = dynamic(() => import("./MapRouteMap"), {
@@ -20,11 +20,18 @@ export type UserMapLocation = {
   accuracy?: number;
 };
 
+/** Centra el marcador en el espacio visible entre el borde superior del mapa y la ficha inferior. */
+function getFocusPanOffsetPx(bottomSheetHeight: number): number {
+  if (bottomSheetHeight <= 0) return 0;
+  return Math.round(bottomSheetHeight / 2);
+}
+
 export default function GoogleMapRouteMap({
   points,
   highlightedId = null,
   fullScreen = false,
   immersive = false,
+  bottomSheetHeight = 0,
   userLocation = null,
   onPointSelect,
 }: {
@@ -32,6 +39,8 @@ export default function GoogleMapRouteMap({
   highlightedId?: string | null;
   fullScreen?: boolean;
   immersive?: boolean;
+  /** Alto real de la ficha inferior para centrar el marcador en el área visible. */
+  bottomSheetHeight?: number;
   userLocation?: UserMapLocation | null;
   onPointSelect?: (id: string) => void;
 }) {
@@ -39,8 +48,6 @@ export default function GoogleMapRouteMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
-  const userPulseRef = useRef<google.maps.Circle | null>(null);
-  const userPulseIntervalRef = useRef<number | null>(null);
   const userAccuracyRef = useRef<google.maps.Circle | null>(null);
   const polylineRef = useRef<google.maps.Polyline | null>(null);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
@@ -94,7 +101,7 @@ export default function GoogleMapRouteMap({
             position: { lat: point.latitude, lng: point.longitude },
             title: point.name,
             label: isHighlight
-              ? { text: String(point.order), color: "#1e293b", fontWeight: "bold", fontSize: "11px" }
+              ? { text: String(point.order), color: "#ffffff", fontWeight: "bold", fontSize: "12px" }
               : undefined,
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
@@ -109,8 +116,12 @@ export default function GoogleMapRouteMap({
 
           marker.addListener("click", () => {
             onSelectRef.current?.(point.id);
-            infoWindowRef.current?.setContent(buildMapMarkerPopupContent(point));
-            infoWindowRef.current?.open({ map, anchor: marker });
+            if (pointHasScannableStamp(point)) {
+              infoWindowRef.current?.setContent(buildMapMarkerPopupContent(point));
+              infoWindowRef.current?.open({ map, anchor: marker });
+            } else {
+              infoWindowRef.current?.close();
+            }
           });
 
           markersRef.current.push(marker);
@@ -137,32 +148,6 @@ export default function GoogleMapRouteMap({
           userMarkerRef.current.setPosition(userPos);
           userMarkerRef.current.setMap(map);
 
-          if (!userPulseRef.current) {
-            userPulseRef.current = new google.maps.Circle({
-              map,
-              fillColor: "#3b82f6",
-              fillOpacity: 0.2,
-              strokeColor: "#3b82f6",
-              strokeOpacity: 0.45,
-              strokeWeight: 1,
-            });
-          }
-          userPulseRef.current.setCenter(userPos);
-          userPulseRef.current.setMap(map);
-
-          if (!userPulseIntervalRef.current) {
-            let expanded = false;
-            userPulseIntervalRef.current = window.setInterval(() => {
-              if (!userPulseRef.current) return;
-              expanded = !expanded;
-              userPulseRef.current.setRadius(expanded ? 28 : 10);
-              userPulseRef.current.setOptions({
-                fillOpacity: expanded ? 0.08 : 0.22,
-                strokeOpacity: expanded ? 0.2 : 0.45,
-              });
-            }, 900);
-          }
-
           if (userLocation.accuracy && userLocation.accuracy > 0) {
             if (!userAccuracyRef.current) {
               userAccuracyRef.current = new google.maps.Circle({
@@ -180,11 +165,6 @@ export default function GoogleMapRouteMap({
           }
         } else {
           userMarkerRef.current?.setMap(null);
-          userPulseRef.current?.setMap(null);
-          if (userPulseIntervalRef.current) {
-            window.clearInterval(userPulseIntervalRef.current);
-            userPulseIntervalRef.current = null;
-          }
           userAccuracyRef.current?.setMap(null);
         }
 
@@ -192,26 +172,30 @@ export default function GoogleMapRouteMap({
           const hp = points.find((p) => p.id === highlightedId);
           const hi = points.findIndex((p) => p.id === highlightedId);
           if (hp && hi >= 0) {
-            map.panTo({ lat: hp.latitude, lng: hp.longitude });
-            if (immersive) {
-              const verticalOffset = Math.round((containerRef.current?.clientHeight ?? 680) * 0.35);
-              map.panBy(0, verticalOffset);
-            }
+            const focusHighlighted = () => {
+              map.panTo({ lat: hp.latitude, lng: hp.longitude });
+              const verticalOffset = immersive ? getFocusPanOffsetPx(bottomSheetHeight) : 0;
+              if (verticalOffset > 0) {
+                map.panBy(0, verticalOffset);
+              }
+            };
+            focusHighlighted();
             if (!userLocation) map.setZoom(17);
             const marker = markersRef.current[hi];
             if (marker) {
-              infoWindowRef.current?.setContent(buildMapMarkerPopupContent(hp));
-              infoWindowRef.current?.open({ map, anchor: marker });
-              if (immersive) {
-                window.setTimeout(() => {
-                  const verticalOffset = Math.round((containerRef.current?.clientHeight ?? 680) * 0.35);
-                  map.panBy(0, verticalOffset);
-                }, 90);
+              if (pointHasScannableStamp(hp)) {
+                infoWindowRef.current?.setContent(buildMapMarkerPopupContent(hp));
+                infoWindowRef.current?.open({ map, anchor: marker });
+              } else {
+                infoWindowRef.current?.close();
+              }
+              if (immersive && bottomSheetHeight > 0) {
+                window.setTimeout(focusHighlighted, 90);
               }
             }
           }
         } else if (!userLocation) {
-          const bottomPad = immersive ? 280 : 48;
+          const bottomPad = bottomSheetHeight > 0 ? bottomSheetHeight + 32 : 48;
           map.fitBounds(bounds, { top: 48, right: 48, bottom: bottomPad, left: 48 });
         }
 
@@ -250,12 +234,8 @@ export default function GoogleMapRouteMap({
 
     return () => {
       cancelled = true;
-      if (userPulseIntervalRef.current) {
-        window.clearInterval(userPulseIntervalRef.current);
-        userPulseIntervalRef.current = null;
-      }
     };
-  }, [points, highlightedId, fullScreen, immersive, useLeafletFallback, userLocation]);
+  }, [points, highlightedId, fullScreen, immersive, bottomSheetHeight, useLeafletFallback, userLocation]);
 
   if (points.length === 0) {
     return (

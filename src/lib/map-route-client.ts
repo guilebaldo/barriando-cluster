@@ -56,9 +56,7 @@ export function findNearestRoutePoint(
   return best;
 }
 
-const PREMIUM_DETOUR_RADIUS_KM = 0.4;
-
-/** Itinerario peatonal: desde el hito más cercano, prioriza Gran Empresa cercanos y luego el siguiente punto más próximo. */
+/** Itinerario peatonal: conserva el circuito original y solo rota el inicio al punto más cercano. */
 export function buildWalkingItinerary(
   location: { latitude: number; longitude: number },
   route: MapRouteResult
@@ -67,56 +65,22 @@ export function buildWalkingItinerary(
 
   const start = findNearestRoutePoint(location, route.points);
   if (!start) return route;
+  const idx = route.points.findIndex((p) => p.id === start.id);
+  if (idx < 0) return route;
 
-  const unvisited = new Map(route.points.map((p) => [p.id, p]));
-  const ordered: MapRoutePoint[] = [];
-  let current = start;
-  let currentLoc = { latitude: current.latitude, longitude: current.longitude };
-
-  unvisited.delete(current.id);
-  ordered.push({ ...current, order: 1, category: "Punto de partida" });
-
-  while (unvisited.size > 0) {
-    const candidates = [...unvisited.values()];
-
-    const nearbyPremium = candidates
-      .filter((p) => p.kind === "premium_business")
-      .map((p) => ({ p, d: haversineDistanceKm(currentLoc, p) }))
-      .filter((x) => x.d <= PREMIUM_DETOUR_RADIUS_KM)
-      .sort((a, b) => a.d - b.d);
-
-    let next: MapRoutePoint;
-    if (nearbyPremium.length > 0) {
-      next = nearbyPremium[0].p;
-    } else {
-      next = candidates.reduce((best, p) => {
-        const d = haversineDistanceKm(currentLoc, p);
-        const bestD = haversineDistanceKm(currentLoc, best);
-        return d < bestD ? p : best;
-      });
-    }
-
-    unvisited.delete(next.id);
-    ordered.push({
-      ...next,
-      order: ordered.length + 1,
-      category:
-        next.category === "Punto de partida"
-          ? next.kind === "premium_business"
-            ? next.category
-            : "Hito patrimonial"
-          : next.category,
-    });
-    currentLoc = { latitude: next.latitude, longitude: next.longitude };
-  }
-
-  const walkPath = ordered.map((p) => [p.latitude, p.longitude] as [number, number]);
+  const rotated = [...route.points.slice(idx), ...route.points.slice(0, idx)];
+  const points = rotated.map((p, i) => ({
+    ...p,
+    category:
+      i === 0
+        ? "Punto más cercano"
+        : p.category?.replace("Punto de partida", "Hito patrimonial") ?? p.category,
+  }));
 
   return {
     ...route,
-    startName: ordered[0]?.name ?? route.startName,
-    points: ordered,
-    walkPath,
+    startName: points[0]?.name ?? route.startName,
+    points,
   };
 }
 
@@ -130,19 +94,15 @@ export function reorderRouteFromPoint(
   const rotated = [...route.points.slice(idx), ...route.points.slice(0, idx)];
   const points = rotated.map((p, i) => ({
     ...p,
-    order: i + 1,
     category:
       i === 0
         ? "Punto de partida"
         : p.category?.replace("Punto de partida", "Hito patrimonial") ?? p.category,
   }));
 
-  const walkPath = points.map((p) => [p.latitude, p.longitude] as [number, number]);
-
   return {
     ...route,
     startName: points[0]?.name ?? route.startName,
     points,
-    walkPath,
   };
 }

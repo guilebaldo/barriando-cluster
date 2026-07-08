@@ -37,6 +37,10 @@ export function getPointStampHref(point: MapRoutePoint): string | null {
   return null;
 }
 
+export function pointHasScannableStamp(point: MapRoutePoint): boolean {
+  return getPointStampHref(point) != null;
+}
+
 export function getStampDisplayInfo(point: MapRoutePoint): StampDisplayInfo | null {
   const socio = getLinkedSocio(point);
   if (!socio || socio.categoria !== "Alimentos y Bebidas") return null;
@@ -68,12 +72,12 @@ export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
 
   if (stamp) {
     const badge = document.createElement("p");
-    badge.className = "text-[10px] font-bold uppercase tracking-wider text-amber-700 mt-2";
+    badge.className = "text-[10px] font-bold uppercase tracking-wider text-amber-700 mt-1.5";
     badge.textContent = stamp.title;
     wrapper.appendChild(badge);
 
     const stampVisual = document.createElement("div");
-    stampVisual.className = "mt-3 flex flex-col items-center";
+    stampVisual.className = "mt-2 flex flex-col items-center";
     stampVisual.innerHTML = `
       <div style="
         width:88px;height:88px;border-radius:50%;
@@ -82,6 +86,7 @@ export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
         box-shadow:0 4px 14px rgba(180,120,20,0.35);
         display:flex;flex-direction:column;align-items:center;justify-content:center;
         padding:8px;transform:rotate(-6deg);
+        animation:float-y 3.5s ease-in-out infinite;
       ">
         <img src="${stamp.logoSrc}" alt="" style="width:36px;height:36px;object-fit:contain;margin-bottom:4px;" onerror="this.style.display='none'" />
         <span style="font-size:7px;font-weight:800;color:#422006;text-transform:uppercase;letter-spacing:0.04em;line-height:1.2;text-align:center;">Temporada</span>
@@ -91,7 +96,7 @@ export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
     wrapper.appendChild(stampVisual);
 
     const hint = document.createElement("p");
-    hint.className = "text-[10px] text-slate-600 mt-3 leading-relaxed text-center";
+    hint.className = "text-[10px] text-slate-600 mt-2 leading-relaxed text-center";
     hint.textContent = "Escanea el QR en el local para recibir este sello dorado en tu Pasaporte.";
     wrapper.appendChild(hint);
   } else {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   Camera,
@@ -12,22 +13,29 @@ import {
   MapPin,
   Sparkles,
 } from "lucide-react";
-import {
-  buildWalkingItinerary,
-  type MapRouteResult,
-} from "@/lib/map-route-client";
+import { buildWalkingItinerary, type MapRouteResult } from "@/lib/map-route-client";
 import { getHitoIntro } from "@/lib/map-hito-intro";
-import { getPointStampHref, getStampDisplayInfo } from "@/lib/map-point-stamp";
-import MapStampPreview from "./MapStampPreview";
+import { getPointStampHref } from "@/lib/map-point-stamp";
 import MapWelcomeFicha from "./MapWelcomeFicha";
 import MapGeoModal from "./MapGeoModal";
 import type { UserMapLocation } from "./GoogleMapRouteMap";
-import QrScanModal from "./QrScanModal";
 
 const GoogleMapRouteMap = dynamic(() => import("./GoogleMapRouteMap"), {
   ssr: false,
   loading: () => <div className="absolute inset-0 bg-slate-100 animate-pulse" />,
 });
+
+function extractInternalPath(raw: string): string | null {
+  try {
+    const url = raw.startsWith("http") ? new URL(raw) : new URL(raw, window.location.origin);
+    if (url.pathname.startsWith("/pasaporte")) return `${url.pathname}${url.search}`;
+    const match = raw.match(/\/pasaporte\/sellar\?[^\s"'<>]+/);
+    return match ? match[0] : null;
+  } catch {
+    const match = raw.match(/\/pasaporte\/sellar\?[^\s"'<>]+/);
+    return match ? match[0] : null;
+  }
+}
 
 function NavArrowButton({
   direction,
@@ -56,23 +64,34 @@ function NavArrowButton({
 }
 
 export default function MapRouteView({ route: initialRoute }: { route: MapRouteResult }) {
+  const router = useRouter();
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number | null>(null);
+
   const [route, setRoute] = useState(initialRoute);
   const [selectedId, setSelectedId] = useState<string | null>(initialRoute.points[0]?.id ?? null);
   const [cardIndex, setCardIndex] = useState(0);
   const [geoModalOpen, setGeoModalOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<UserMapLocation | null>(null);
-  const [qrOpen, setQrOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
+  const [hasAutoRouted, setHasAutoRouted] = useState(false);
+  const [sheetExpanded, setSheetExpanded] = useState(true);
+  const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
+  const [qrError, setQrError] = useState<string | null>(null);
 
   const applyLocationRoute = useCallback(
-    (location: UserMapLocation) => {
+    (location: UserMapLocation, shouldReorder = false) => {
       setUserLocation(location);
-      const reordered = buildWalkingItinerary(location, initialRoute);
-      setRoute(reordered);
-      const start = reordered.points[0];
-      if (start) {
-        setSelectedId(start.id);
-        setCardIndex(0);
+      if (shouldReorder) {
+        const reordered = buildWalkingItinerary(location, initialRoute);
+        setRoute(reordered);
+        const start = reordered.points[0];
+        if (start) {
+          setSelectedId(start.id);
+          setCardIndex(0);
+        }
+        setHasAutoRouted(true);
       }
       setGeoModalOpen(false);
     },
@@ -87,11 +106,14 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        applyLocationRoute({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
+        applyLocationRoute(
+          {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+          },
+          true
+        );
       },
       () => setGeoModalOpen(true),
       { enableHighAccuracy: true, timeout: 12_000, maximumAge: 30_000 }
@@ -105,11 +127,14 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
     }
 
     const onSuccess = (pos: GeolocationPosition) => {
-      applyLocationRoute({
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-        accuracy: pos.coords.accuracy,
-      });
+      applyLocationRoute(
+        {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        },
+        !hasAutoRouted
+      );
     };
 
     const onError = () => setGeoModalOpen(true);
@@ -127,7 +152,21 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
     });
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [applyLocationRoute]);
+  }, [applyLocationRoute, hasAutoRouted]);
+
+  useEffect(() => {
+    const el = sheetRef.current;
+    if (!el) return;
+
+    const updateHeight = () => {
+      setBottomSheetHeight(el.getBoundingClientRect().height);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [sheetExpanded, welcomeOpen]);
 
   const selectedIndex = useMemo(
     () => route.points.findIndex((p) => p.id === selectedId),
@@ -137,7 +176,6 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
   const activeCardIndex = Math.max(0, selectedIndex >= 0 ? selectedIndex : cardIndex);
   const activePoint = route.points[activeCardIndex] ?? route.points[0];
   const stampHref = activePoint ? getPointStampHref(activePoint) : null;
-  const stampDisplay = activePoint ? getStampDisplayInfo(activePoint) : null;
 
   function selectPoint(id: string) {
     setWelcomeOpen(false);
@@ -150,9 +188,73 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
     const total = route.points.length;
     if (!total) return;
     const wrapped = ((next % total) + total) % total;
+    setWelcomeOpen(false);
     setCardIndex(wrapped);
-    selectPoint(route.points[wrapped].id);
+    setSelectedId(route.points[wrapped].id);
   }
+
+  const openNativeCamera = useCallback(() => {
+    setQrError(null);
+    cameraInputRef.current?.click();
+  }, []);
+
+  const handleQrCapture = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+
+      setQrError(null);
+
+      try {
+        const bitmap = await createImageBitmap(file);
+        const Detector = (
+          window as Window & {
+            BarcodeDetector?: new (options?: { formats: string[] }) => {
+              detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue: string }>>;
+            };
+          }
+        ).BarcodeDetector;
+
+        if (!Detector) {
+          setQrError("No pudimos leer el QR en esta foto. Intenta con otro navegador o usa el enlace del Pasaporte.");
+          return;
+        }
+
+        const detector = new Detector({ formats: ["qr_code"] });
+        const codes = await detector.detect(bitmap);
+        bitmap.close();
+
+        for (const code of codes) {
+          if (!code.rawValue) continue;
+          const path = extractInternalPath(code.rawValue);
+          if (path) {
+            router.push(path);
+            return;
+          }
+        }
+
+        setQrError("No encontramos un código QR válido de Barriando en la foto. Intenta de nuevo.");
+      } catch {
+        setQrError("No pudimos procesar la imagen. Intenta tomar otra foto más cerca del QR.");
+      }
+    },
+    [router]
+  );
+
+  const onSheetTouchStart = (event: React.TouchEvent) => {
+    touchStartY.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const onSheetTouchEnd = (event: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const endY = event.changedTouches[0]?.clientY;
+    if (endY == null) return;
+    const delta = touchStartY.current - endY;
+    if (delta > 48) setSheetExpanded(true);
+    else if (delta < -48) setSheetExpanded(false);
+    touchStartY.current = null;
+  };
 
   const fichaBody = activePoint && (
     <>
@@ -172,8 +274,6 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
         )}
       </div>
 
-      {stampDisplay && <MapStampPreview stamp={stampDisplay} />}
-
       <p className="text-sm text-slate-600 leading-relaxed font-light mt-3 line-clamp-3">
         {getHitoIntro(activePoint.name, activePoint.zone)}
       </p>
@@ -186,7 +286,7 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
         {stampHref && (
           <button
             type="button"
-            onClick={() => setQrOpen(true)}
+            onClick={openNativeCamera}
             className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-lg transition active:scale-95 animate-soft-glow"
           >
             <Camera className="w-4 h-4" />
@@ -204,31 +304,38 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
           <ExternalLink className="w-3 h-3" />
         </Link>
       </div>
+
+      {qrError && (
+        <p className="text-[11px] text-red-600 mt-2 font-medium">{qrError}</p>
+      )}
     </>
   );
 
   const navRow = (
     <div className="flex items-center gap-3">
-      <NavArrowButton
-        direction="prev"
-        onClick={() => goToIndex(activeCardIndex - 1)}
-      />
+      <NavArrowButton direction="prev" onClick={() => goToIndex(activeCardIndex - 1)} />
       <div className="flex-1 text-center min-w-0">
         <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Siguiente parada</p>
         <p className="text-sm font-semibold text-slate-800 truncate">
           {route.points[(activeCardIndex + 1) % route.points.length]?.name ?? "Fin del recorrido"}
         </p>
       </div>
-      <NavArrowButton
-        direction="next"
-        primary
-        onClick={() => goToIndex(activeCardIndex + 1)}
-      />
+      <NavArrowButton direction="next" primary onClick={() => goToIndex(activeCardIndex + 1)} />
     </div>
   );
 
   return (
     <div className="relative flex-1 min-h-0 w-full">
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        aria-hidden
+        onChange={handleQrCapture}
+      />
+
       <div className="absolute inset-0">
         <GoogleMapRouteMap
           points={route.points}
@@ -236,28 +343,93 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
           userLocation={userLocation}
           fullScreen
           immersive
+          bottomSheetHeight={sheetExpanded ? bottomSheetHeight : 0}
           onPointSelect={selectPoint}
         />
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 z-20 px-2 sm:px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-        <div className="max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl p-4 space-y-3 max-h-[min(52vh,420px)] overflow-y-auto">
-          {welcomeOpen ? (
-            <MapWelcomeFicha route={initialRoute} onStart={() => setWelcomeOpen(false)} />
-          ) : (
-            <>
-              {fichaBody}
-              {navRow}
-              <p className="text-center">
-                <Link
-                  href="/planes#gran_empresa"
-                  className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
-                >
-                  ¿Tu negocio está en el centro? Inscríbete al MAP
-                </Link>
-              </p>
-            </>
+        <div
+          ref={sheetRef}
+          className={`max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl overflow-hidden transition-[max-height] duration-300 ease-out ${
+            sheetExpanded ? "max-h-[min(52vh,420px)]" : "max-h-[6.5rem]"
+          }`}
+          onTouchStart={onSheetTouchStart}
+          onTouchEnd={onSheetTouchEnd}
+        >
+          <button
+            type="button"
+            onClick={() => setSheetExpanded((v) => !v)}
+            className={`w-full flex justify-center touch-manipulation ${
+              sheetExpanded ? "pt-2.5 pb-1 border-b border-slate-100/80" : "pt-2.5 pb-2"
+            }`}
+            aria-expanded={sheetExpanded}
+            aria-label={sheetExpanded ? "Ocultar ficha" : "Mostrar ficha"}
+          >
+            <span className="w-10 h-1 rounded-full bg-slate-300" />
+          </button>
+
+          {!sheetExpanded && (
+            <div className="flex items-center gap-1.5 px-2 pb-2.5">
+              {!welcomeOpen ? (
+                <>
+                  <NavArrowButton
+                    direction="prev"
+                    onClick={() => goToIndex(activeCardIndex - 1)}
+                  />
+                  <div className="flex-1 min-w-0 text-center px-1">
+                    {activePoint && (
+                      <>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                          Hito {activePoint.order} de {route.points.length}
+                        </p>
+                        <p className="text-sm font-semibold text-[#27366D] truncate leading-tight mt-0.5">
+                          {activePoint.name}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  <NavArrowButton
+                    direction="next"
+                    primary
+                    onClick={() => goToIndex(activeCardIndex + 1)}
+                  />
+                </>
+              ) : (
+                <div className="flex-1 min-w-0 text-center px-2 py-0.5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                    Bienvenido al MAP
+                  </p>
+                  <p className="text-sm font-semibold text-[#27366D] truncate leading-tight mt-0.5">
+                    Museo Abierto de Puebla
+                  </p>
+                </div>
+              )}
+            </div>
           )}
+
+          <div
+            className={`p-4 space-y-3 overflow-y-auto ${
+              sheetExpanded ? "max-h-[min(calc(52vh-2.5rem),380px)]" : "hidden"
+            }`}
+          >
+            {welcomeOpen ? (
+              <MapWelcomeFicha route={initialRoute} onStart={() => setWelcomeOpen(false)} />
+            ) : (
+              <>
+                {fichaBody}
+                {navRow}
+                <p className="text-center">
+                  <Link
+                    href="/planes#gran_empresa"
+                    className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
+                  >
+                    ¿Tu negocio está en el centro? Inscríbete al MAP
+                  </Link>
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -265,12 +437,6 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
         open={geoModalOpen}
         onClose={() => setGeoModalOpen(false)}
         onRetry={requestGeolocation}
-      />
-
-      <QrScanModal
-        open={qrOpen}
-        onClose={() => setQrOpen(false)}
-        fallbackHref={stampHref ?? "/pasaporte"}
       />
     </div>
   );
