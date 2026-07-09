@@ -2,29 +2,9 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getCsrfToken, signIn, signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
-
-async function submitOAuthForm(csrfToken: string, callbackUrl: string) {
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = "/api/auth/signin/google";
-  form.style.display = "none";
-
-  for (const [name, value] of Object.entries({
-    csrfToken,
-    callbackUrl,
-  })) {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = name;
-    input.value = value;
-    form.appendChild(input);
-  }
-
-  document.body.appendChild(form);
-  form.submit();
-}
 
 export function OAuthButtons() {
   return (
@@ -36,9 +16,6 @@ export function OAuthButtons() {
 
 function OAuthButtonsInner() {
   const searchParams = useSearchParams();
-  const { status } = useSession();
-  const [csrfToken, setCsrfToken] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const redirectAfterLogin = useMemo(() => {
@@ -65,63 +42,11 @@ function OAuthButtonsInner() {
     setError("No se pudo iniciar sesión con Google. Intenta de nuevo.");
   }, [searchParams]);
 
-  useEffect(() => {
-    getCsrfToken()
-      .then((token) => {
-        if (token) setCsrfToken(token);
-      })
-      .catch(() => {
-        setError("No se pudo preparar el inicio de sesión. Recarga la página.");
-      });
-  }, []);
-
-  async function handleGoogleSignIn() {
-    setError("");
-    setLoading(true);
-
-    try {
-      // Solo cerrar sesión previa si hay una activa (evita romper el picker en móvil).
-      if (status === "authenticated") {
-        await signOut({ redirect: false });
-      }
-
-      const result = await signIn("google", {
-        redirectTo: redirectAfterLogin,
-        callbackUrl: redirectAfterLogin,
-        redirect: false,
-      });
-
-      if (result?.url) {
-        window.location.assign(result.url);
-        return;
-      }
-
-      if (result?.error) {
-        setError("No se pudo conectar con Google. Intenta de nuevo.");
-        return;
-      }
-
-      await signIn("google", {
-        redirectTo: redirectAfterLogin,
-        callbackUrl: redirectAfterLogin,
-      });
-    } catch {
-      if (csrfToken) {
-        submitOAuthForm(csrfToken, redirectAfterLogin);
-        return;
-      }
-      setError("Error al iniciar sesión. Recarga la página e intenta de nuevo.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <div>
-      <button
-        type="button"
-        disabled={loading}
-        onClick={handleGoogleSignIn}
+      <GoogleSignInButton
+        callbackUrl={redirectAfterLogin}
+        label="Iniciar sesión con Google"
         className="w-full flex items-center justify-center gap-2 border border-slate-200 rounded-lg py-3.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 shadow-sm"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -130,8 +55,8 @@ function OAuthButtonsInner() {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        {loading ? "Redirigiendo..." : "Iniciar sesión con Google"}
-      </button>
+        Iniciar sesión con Google
+      </GoogleSignInButton>
       {error && <p className="text-xs text-red-600 text-center mt-3">{error}</p>}
     </div>
   );
