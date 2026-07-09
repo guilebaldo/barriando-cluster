@@ -9,6 +9,7 @@ import path from "path";
 import type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 import { haversineDistanceKm } from "@/lib/map-route-client";
 import { getPlanForSocio } from "@/lib/membresia";
+import { getParticipatingRestaurants } from "@/lib/pasaporte";
 
 export type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 export { findNearestRoutePoint, reorderRouteFromPoint, buildWalkingItinerary } from "@/lib/map-route-client";
@@ -235,6 +236,37 @@ function loadCatalogRouteBusinesses(): RawPoint[] {
   return points;
 }
 
+/** Restaurantes con sello de Pasaporte — siempre visibles en el MAP para deep links desde /pasaporte. */
+function loadStampRestaurantPoints(): RawPoint[] {
+  const points: RawPoint[] = [];
+  const seenNames = new Set<string>();
+
+  for (const socio of getParticipatingRestaurants()) {
+    const coord = sociosCoords[socio.id];
+    if (!coord) continue;
+
+    const nameKey = normalizeName(socio.name);
+    if (seenNames.has(nameKey)) continue;
+    seenNames.add(nameKey);
+
+    points.push({
+      id: `stamp-${socio.id}`,
+      name: socio.name,
+      latitude: coord.lat,
+      longitude: coord.lng,
+      mapsUrl: socio.direccion?.startsWith("http")
+        ? socio.direccion
+        : `https://www.google.com/maps?q=${coord.lat},${coord.lng}`,
+      kind: "premium_business",
+      category: `${socio.categoria} · Sello Pasaporte`,
+      socioId: socio.id,
+      hasSeasonalStamp: true,
+    });
+  }
+
+  return points;
+}
+
 async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
   try {
     const users = await prisma.user.findMany({
@@ -310,14 +342,15 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
 }
 
 export async function buildMapRoute(): Promise<MapRouteResult> {
-  const [milestones, premiumDb, premiumCatalog] = await Promise.all([
+  const [milestones, premiumDb, premiumCatalog, stampRestaurants] = await Promise.all([
     loadActiveMilestones(),
     loadPremiumGranEmpresaBusinesses(),
     Promise.resolve(loadCatalogRouteBusinesses()),
+    Promise.resolve(loadStampRestaurantPoints()),
   ]);
 
   const premiumByName = new Map<string, RawPoint>();
-  for (const p of [...premiumDb, ...premiumCatalog]) {
+  for (const p of [...premiumDb, ...premiumCatalog, ...stampRestaurants]) {
     premiumByName.set(normalizeName(p.name), p);
   }
   const premium = [...premiumByName.values()];

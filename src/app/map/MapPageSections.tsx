@@ -68,7 +68,7 @@ export function MapPageGuides() {
           ¿Primera vez? Crea tu cuenta gratis o inicia sesión desde la página Pasaporte.
         </p>
         <Link
-          href="/pasaporte-info"
+          href="/pasaporte"
           className="inline-flex items-center gap-2 mt-4 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition-all"
         >
           Abrir Pasaporte

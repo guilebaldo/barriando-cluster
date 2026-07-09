@@ -157,7 +157,7 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
               como un verdadero poblano.
             </p>
             <Link
-              href="/pasaporte-info"
+              href="/pasaporte"
               className="inline-flex items-center gap-2 mt-10 bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-lg transition"
             >
               Abrir Pasaporte <ArrowUpRight className="w-4 h-4" />

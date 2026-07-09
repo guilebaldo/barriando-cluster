@@ -79,6 +79,11 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
   const [qrError, setQrError] = useState<string | null>(null);
 
+  const hasSocioDeepLink = useMemo(() => {
+    const socioParam = searchParams.get("socio");
+    return socioParam != null && Number.isFinite(Number(socioParam));
+  }, [searchParams]);
+
   const focusSocioOnRoute = useCallback(
     (currentRoute: MapRouteResult) => {
       const socioParam = searchParams.get("socio");
@@ -115,6 +120,11 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       applyLocationUpdate(location);
       if (hasAutoRoutedRef.current) return;
 
+      if (hasSocioDeepLink && focusSocioOnRoute(initialRoute)) {
+        hasAutoRoutedRef.current = true;
+        return;
+      }
+
       const reordered = buildWalkingItinerary(location, initialRoute);
       setRoute(reordered);
       if (!focusSocioOnRoute(reordered)) {
@@ -126,7 +136,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       }
       hasAutoRoutedRef.current = true;
     },
-    [applyLocationUpdate, focusSocioOnRoute, initialRoute]
+    [applyLocationUpdate, focusSocioOnRoute, hasSocioDeepLink, initialRoute]
   );
 
   const requestGeolocation = useCallback(() => {
@@ -184,6 +194,12 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [applyInitialRouteFromLocation, applyLocationUpdate]);
+
+  useEffect(() => {
+    if (hasSocioDeepLink) {
+      focusSocioOnRoute(initialRoute);
+    }
+  }, [focusSocioOnRoute, hasSocioDeepLink, initialRoute]);
 
   useEffect(() => {
     focusSocioOnRoute(route);

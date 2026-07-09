@@ -23,7 +23,7 @@ export default function HomeClosingCta() {
               Registrar Empresa
             </Link>
             <Link
-              href="/pasaporte-info"
+              href="/pasaporte"
               className="w-full sm:w-auto inline-flex items-center justify-center border border-white text-white hover:bg-white/10 transition-colors font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-lg"
             >
               Abrir Pasaporte
