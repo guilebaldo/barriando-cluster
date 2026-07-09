@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Camera } from "lucide-react";
 import { scanQrFromImageFile } from "@/lib/qr-scan-client";
+import { getMapHrefForRestaurant } from "@/lib/pasaporte";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 
 type RestaurantCard = {
@@ -68,6 +69,22 @@ function getSectionRevealProgress(
 
   const relativeTop = (rect.top - containerRect.top) / containerRect.height;
   return clamp01((enterAt - relativeTop) / (enterAt - completeAt));
+}
+
+function collectVisiblePreviewStamps(
+  stampsEl: HTMLElement,
+  container: HTMLElement,
+  allowedIds: number[]
+): Set<number> {
+  const allowed = new Set(allowedIds);
+  const visible = new Set<number>();
+  stampsEl.querySelectorAll<HTMLElement>("[data-preview-stamp]").forEach((cell) => {
+    const id = Number(cell.dataset.previewStamp);
+    if (!Number.isFinite(id) || !allowed.has(id)) return;
+    const progress = getSectionRevealProgress(cell, container, 0.94, 0.62);
+    if (progress >= 0.88) visible.add(id);
+  });
+  return visible;
 }
 
 function pickPreviewStampIds(restaurants: RestaurantCard[]): number[] {
@@ -156,14 +173,9 @@ function useScrollPreviewDemo(
       const displayProgress = Math.round(barP * PREVIEW_MAX_PROGRESS);
       const barPhaseStamps = Math.round(barP * previewStampIds.length);
 
-      const stampsP = getSectionRevealProgress(stampsEl, container, 0.92, 0.22);
-      const visibleCount = Math.min(
-        previewStampIds.length,
-        Math.ceil(stampsP * previewStampIds.length)
-      );
-      const visibleStampIds = new Set(previewStampIds.slice(0, visibleCount));
-      const displayStamps = visibleCount > 0 ? visibleCount : barPhaseStamps;
-      const displayVisited = visibleCount > 0 ? visibleCount : barPhaseStamps;
+      const visibleStampIds = collectVisiblePreviewStamps(stampsEl, container, previewStampIds);
+      const displayStamps = visibleStampIds.size > 0 ? visibleStampIds.size : barPhaseStamps;
+      const displayVisited = visibleStampIds.size > 0 ? visibleStampIds.size : barPhaseStamps;
 
       setState({
         displayName: name,
@@ -339,6 +351,10 @@ function PasaporteInner({
   const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
   const isPreview = !isAuthenticated;
+  const previewStampIds = useMemo(
+    () => (isPreview ? pickPreviewStampIds(restaurants) : []),
+    [isPreview, restaurants]
+  );
   const previewScroll = useScrollPreviewDemo(
     isPreview,
     restaurants,
@@ -587,7 +603,10 @@ function PasaporteInner({
                 </div>
               </div>
             )}
-            <div ref={previewStampsRef} className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
+            <div
+              ref={previewStampsRef}
+              className={`grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 ${isPreview ? "pb-[38vh]" : ""}`}
+            >
               {restaurants.map((restaurant, index) => {
                 const stamp = stampMap[restaurant.id];
                 const hasStamp = isPreview
@@ -596,15 +615,21 @@ function PasaporteInner({
                 const colorClass = STAMP_OUTLINE_COLORS[index % STAMP_OUTLINE_COLORS.length];
 
                 return (
-                  <div
+                  <Link
                     key={restaurant.id}
-                    className={`flex flex-col items-center text-center gap-2 transition-opacity duration-500 ${
+                    href={getMapHrefForRestaurant(restaurant.id)}
+                    data-preview-stamp={
+                      isPreview && previewStampIds.includes(restaurant.id)
+                        ? restaurant.id
+                        : undefined
+                    }
+                    className={`flex flex-col items-center text-center gap-2 transition-opacity duration-500 active:scale-[0.98] ${
                       !hasStamp ? "opacity-40" : "opacity-100"
                     }`}
                   >
                     <div className="relative">
                       <div
-                        className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-500 ${
+                        className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-700 ${
                           hasStamp
                             ? `${colorClass} border-solid rotate-[-8deg] scale-100`
                             : "border-dashed border-stone-300 scale-95"
@@ -630,7 +655,7 @@ function PasaporteInner({
                     <p className="text-[10px] font-medium text-stone-700 leading-tight line-clamp-2">
                       {restaurant.name}
                     </p>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

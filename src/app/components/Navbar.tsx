@@ -13,8 +13,8 @@ type NavLink = {
   isActive?: (pathname: string) => boolean;
 };
 
-function getPasaporteHref(isAuthenticated: boolean) {
-  return isAuthenticated ? "/pasaporte" : "/pasaporte-info";
+function getPasaporteHref() {
+  return "/pasaporte";
 }
 
 function getNavLinks(isAuthenticated: boolean): NavLink[] {
@@ -24,7 +24,7 @@ function getNavLinks(isAuthenticated: boolean): NavLink[] {
     { href: "/equipo", label: "Equipo" },
     { href: "/map", label: "MAP" },
     {
-      href: getPasaporteHref(isAuthenticated),
+      href: getPasaporteHref(),
       label: "Pasaporte",
       isActive: (pathname) =>
         pathname === "/pasaporte-info" ||

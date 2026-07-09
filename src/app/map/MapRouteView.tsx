@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   Camera,
@@ -54,7 +54,16 @@ function NavArrowButton({
 }
 
 export default function MapRouteView({ route: initialRoute }: { route: MapRouteResult }) {
+  return (
+    <Suspense fallback={<div className="absolute inset-0 bg-slate-100 animate-pulse" />}>
+      <MapRouteViewInner route={initialRoute} />
+    </Suspense>
+  );
+}
+
+function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
@@ -69,6 +78,27 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
   const [sheetExpanded, setSheetExpanded] = useState(true);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
   const [qrError, setQrError] = useState<string | null>(null);
+
+  const focusSocioOnRoute = useCallback(
+    (currentRoute: MapRouteResult) => {
+      const socioParam = searchParams.get("socio");
+      if (!socioParam) return false;
+
+      const socioId = Number(socioParam);
+      if (!Number.isFinite(socioId)) return false;
+
+      const idx = currentRoute.points.findIndex((p) => p.socioId === socioId);
+      if (idx < 0) return false;
+
+      const point = currentRoute.points[idx];
+      setSelectedId(point.id);
+      setCardIndex(idx);
+      setWelcomeOpen(false);
+      setSheetExpanded(true);
+      return true;
+    },
+    [searchParams]
+  );
 
   const applyLocationUpdate = useCallback((location: UserMapLocation) => {
     setUserLocation((prev) => {
@@ -87,14 +117,16 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
 
       const reordered = buildWalkingItinerary(location, initialRoute);
       setRoute(reordered);
-      const start = reordered.points[0];
-      if (start) {
-        setSelectedId(start.id);
-        setCardIndex(0);
+      if (!focusSocioOnRoute(reordered)) {
+        const start = reordered.points[0];
+        if (start) {
+          setSelectedId(start.id);
+          setCardIndex(0);
+        }
       }
       hasAutoRoutedRef.current = true;
     },
-    [applyLocationUpdate, initialRoute]
+    [applyLocationUpdate, focusSocioOnRoute, initialRoute]
   );
 
   const requestGeolocation = useCallback(() => {
@@ -152,6 +184,10 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [applyInitialRouteFromLocation, applyLocationUpdate]);
+
+  useEffect(() => {
+    focusSocioOnRoute(route);
+  }, [focusSocioOnRoute, route]);
 
   useEffect(() => {
     const el = sheetRef.current;

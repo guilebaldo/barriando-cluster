@@ -79,6 +79,10 @@ export function buildSellarPath(restaurantSlug: string): string {
   return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlug)}`;
 }
 
+export function getMapHrefForRestaurant(socioId: number): string {
+  return `/map?socio=${socioId}`;
+}
+
 export function buildLoginRedirectPath(sellarPath: string): string {
   return `/login?callbackUrl=${encodeURIComponent(sellarPath)}`;
 }
