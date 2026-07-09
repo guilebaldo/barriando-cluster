@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { Camera } from "lucide-react";
+import { scanQrFromImageFile } from "@/lib/qr-scan-client";
 
 type RestaurantCard = {
   id: number;
@@ -36,6 +38,71 @@ const STAMP_COLORS = [
 ] as const;
 
 const MRZ_SLOTS = 28;
+const STATS_ANIMATION_MS = 1600;
+
+type AnimatedPassportStats = {
+  stamps: number;
+  visited: number;
+  progress: number;
+};
+
+function useAnimatedPassportStats(
+  totalStamps: number,
+  uniqueStamped: number,
+  progress: number
+): AnimatedPassportStats {
+  const [animated, setAnimated] = useState<AnimatedPassportStats>({
+    stamps: 0,
+    visited: 0,
+    progress: 0,
+  });
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setAnimated({ stamps: totalStamps, visited: uniqueStamped, progress });
+      return;
+    }
+
+    let frame = 0;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / STATS_ANIMATION_MS);
+      const eased = 1 - (1 - t) ** 3;
+      setAnimated({
+        stamps: Math.round(totalStamps * eased),
+        visited: Math.round(uniqueStamped * eased),
+        progress: Math.round(progress * eased),
+      });
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [totalStamps, uniqueStamped, progress]);
+
+  return animated;
+}
+
+function PassportProgressTrack({ animatedProgress }: { animatedProgress: number }) {
+  const filledSlots = Math.round((animatedProgress / 100) * MRZ_SLOTS);
+
+  return (
+    <div className="mt-5">
+      <div className="flex items-center gap-2 font-passport-mrz text-[10px] sm:text-[11px] font-bold tracking-[0.12em]">
+        <span className="shrink-0 text-black">TURISTA</span>
+        <span className="flex-1 min-w-0 overflow-hidden whitespace-nowrap leading-none" aria-hidden>
+          {Array.from({ length: MRZ_SLOTS }).map((_, index) => (
+            <span key={index} className={index < filledSlots ? "text-black" : "text-stone-300"}>
+              {"<"}
+            </span>
+          ))}
+        </span>
+        <span className="shrink-0 text-black">POBLANO</span>
+      </div>
+    </div>
+  );
+}
 
 function getInitials(name: string): string {
   return name
@@ -44,80 +111,6 @@ function getInitials(name: string): string {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
-}
-
-function PassportProgressTrack({
-  progress,
-  tierId,
-}: {
-  progress: number;
-  tierId: "turista" | "poblano";
-}) {
-  const [animatedProgress, setAnimatedProgress] = useState(0);
-
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setAnimatedProgress(progress);
-      return;
-    }
-
-    let frame = 0;
-    const start = performance.now();
-    const duration = 1600;
-
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - (1 - t) ** 3;
-      setAnimatedProgress(Math.round(progress * eased));
-      if (t < 1) frame = requestAnimationFrame(tick);
-    };
-
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [progress]);
-
-  const filledSlots = Math.round((animatedProgress / 100) * MRZ_SLOTS);
-
-  return (
-    <div className="mt-5">
-      <div className="flex items-end justify-between gap-3 font-passport-mrz text-[11px] sm:text-xs font-bold tracking-[0.14em]">
-        <span className={tierId === "turista" ? "text-[#27366D]" : "text-stone-500"}>TURISTA</span>
-        <span className={tierId === "poblano" ? "text-amber-700" : "text-stone-500"}>POBLANO</span>
-      </div>
-      <div
-        className="mt-2 font-passport-mrz text-[13px] sm:text-sm leading-none select-none overflow-hidden whitespace-nowrap"
-        aria-hidden
-      >
-        {Array.from({ length: MRZ_SLOTS }).map((_, index) => (
-          <span
-            key={index}
-            className={
-              index < filledSlots
-                ? tierId === "poblano"
-                  ? "text-amber-700"
-                  : "text-[#27366D]"
-                : "text-stone-300/90"
-            }
-          >
-            {"<"}
-          </span>
-        ))}
-      </div>
-      <div className="mt-2 h-1 rounded-full bg-stone-300/70 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-[width] duration-300 ${
-            tierId === "poblano"
-              ? "bg-gradient-to-r from-amber-500 to-amber-700"
-              : "bg-gradient-to-r from-[#27366D] to-[#1e2b58]"
-          }`}
-          style={{ width: `${animatedProgress}%` }}
-        />
-      </div>
-      <p className="mt-2 text-[10px] font-passport-mrz tracking-widest text-stone-500 uppercase">
-        {animatedProgress}% · rango {tierId === "poblano" ? "POBLANO" : "TURISTA"}
-      </p>
-    </div>
-  );
 }
 
 function PasaporteInner({
@@ -134,8 +127,43 @@ function PasaporteInner({
   isPoblanoComplete,
   progress,
 }: PasaporteClientProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const animatedStats = useAnimatedPassportStats(totalStamps, uniqueStamped, progress);
+
+  const openNativeCamera = useCallback(() => {
+    setQrError(null);
+    cameraInputRef.current?.click();
+  }, []);
+
+  const handleQrCapture = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+
+      setQrError(null);
+
+      try {
+        const path = await scanQrFromImageFile(file);
+        if (path) {
+          router.push(path);
+          return;
+        }
+        setQrError("No encontramos un QR válido de Barriando. Intenta de nuevo.");
+      } catch (error) {
+        if (error instanceof Error && error.message === "BARCODE_DETECTOR_UNAVAILABLE") {
+          setQrError("Tu navegador no puede leer QR desde la foto. Prueba con Chrome o Safari.");
+          return;
+        }
+        setQrError("No pudimos procesar la imagen. Toma otra foto más cerca del QR.");
+      }
+    },
+    [router]
+  );
 
   useEffect(() => {
     if (isPoblanoComplete) {
@@ -171,7 +199,17 @@ function PasaporteInner({
   }, [searchParams]);
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-[#e8e0d0] py-3 sm:py-8 px-2 sm:px-4 pb-8">
+    <div className="min-h-[calc(100dvh-4rem)] bg-[#e8e0d0] py-3 sm:py-8 px-2 sm:px-4 pb-24">
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        aria-hidden
+        onChange={handleQrCapture}
+      />
+
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         <div className="relative rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
           <div
@@ -186,19 +224,16 @@ function PasaporteInner({
           <div className="relative px-4 sm:px-8 pt-5 sm:pt-7 pb-6 border-b border-[#d9cdb3]">
             <div className="flex items-start justify-between gap-3 border-b border-[#d9cdb3]/80 pb-3">
               <div>
-                <p className="text-[9px] font-passport-mrz tracking-[0.35em] text-stone-500 uppercase">
-                  Clúster Turístico
+                <p className="text-[9px] font-passport-mrz tracking-[0.28em] text-stone-500 uppercase">
+                  Clúster Turístico de Puebla
                 </p>
                 <h1 className="text-lg sm:text-2xl font-black font-serif-cluster uppercase tracking-[0.12em] text-[#3d2914] leading-tight mt-0.5">
                   Pasaporte Digital
                 </h1>
               </div>
-              <div className="text-right shrink-0 max-w-[9rem]">
-                <p className="passport-label">Zona</p>
-                <p className="passport-value text-[11px] sm:text-xs leading-snug mt-0.5">
-                  Puebla de Los Ángeles
-                </p>
-              </div>
+              <p className="text-sm sm:text-lg font-black font-serif-cluster uppercase tracking-[0.12em] text-[#3d2914] leading-tight text-right shrink-0 max-w-[8.5rem] sm:max-w-[9.5rem]">
+                Puebla de Los Ángeles
+              </p>
             </div>
 
             <div className="mt-4 flex gap-4 sm:gap-5">
@@ -217,54 +252,56 @@ function PasaporteInner({
                     <span className="text-2xl font-serif-cluster text-[#5c3d1e]/70">
                       {getInitials(userName) || "?"}
                     </span>
-                    <span className="text-[8px] font-passport-mrz tracking-widest mt-1 uppercase">Foto</span>
+                    <span className="text-[8px] font-passport-mrz tracking-widest mt-1 text-stone-500">Foto</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex-1 min-w-0 space-y-3 pt-0.5">
-                <div>
-                  <p className="passport-label">Nombre</p>
-                  <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words">
-                    {userName}
-                  </p>
+              <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_6.75rem] sm:grid-cols-[minmax(0,1fr)_7.5rem] gap-x-5 gap-y-2.5 pt-0.5 items-start">
+                <div className="space-y-2.5">
+                  <div>
+                    <p className="passport-label">Nombre</p>
+                    <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words">
+                      {userName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="passport-label">Temporada</p>
+                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">Chiles en Nogada</p>
+                  </div>
+                  <div>
+                    <p className="passport-label">Rango</p>
+                    <p
+                      className={`passport-value text-[11px] sm:text-xs mt-0.5 flex items-center gap-1.5 ${
+                        tierId === "poblano" ? "text-amber-900" : ""
+                      }`}
+                    >
+                      {tierId === "poblano" && <span aria-hidden>★</span>}
+                      {tierLabel}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="passport-label">Temporada</p>
-                  <p className="passport-value text-[11px] sm:text-xs mt-0.5">Chiles en Nogada</p>
-                </div>
-                <div>
-                  <p className="passport-label">Rango</p>
-                  <p
-                    className={`passport-value text-[11px] sm:text-xs mt-0.5 flex items-center gap-1.5 ${
-                      tierId === "poblano" ? "text-amber-800" : ""
-                    }`}
-                  >
-                    {tierId === "poblano" && <span aria-hidden>★</span>}
-                    {tierLabel.toUpperCase()}
-                  </p>
+
+                <div className="space-y-2.5 pt-0.5 pl-3 border-l border-[#d9cdb3]/70">
+                  <div>
+                    <p className="passport-label">Sellos</p>
+                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">{animatedStats.stamps}</p>
+                  </div>
+                  <div>
+                    <p className="passport-label">Visitados</p>
+                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">
+                      {animatedStats.visited}/{totalRestaurants}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="passport-label">Progreso</p>
+                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">{animatedStats.progress}%</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-lg border border-[#d9cdb3] bg-white/50 px-2 py-2">
-                <p className="passport-label text-[9px]">Sellos</p>
-                <p className="passport-value text-base mt-0.5">{totalStamps}</p>
-              </div>
-              <div className="rounded-lg border border-[#d9cdb3] bg-white/50 px-2 py-2">
-                <p className="passport-label text-[9px]">Visitados</p>
-                <p className="passport-value text-base mt-0.5">
-                  {uniqueStamped}/{totalRestaurants}
-                </p>
-              </div>
-              <div className="rounded-lg border border-[#d9cdb3] bg-white/50 px-2 py-2">
-                <p className="passport-label text-[9px]">Progreso</p>
-                <p className="passport-value text-base mt-0.5">{progress}%</p>
-              </div>
-            </div>
-
-            <PassportProgressTrack progress={progress} tierId={tierId} />
+            <PassportProgressTrack animatedProgress={animatedStats.progress} />
 
             {!isAuthenticated && (
               <p className="mt-4 text-[11px] text-amber-950 bg-amber-100/80 border border-amber-200 rounded-lg px-3 py-2.5 leading-relaxed">
@@ -363,6 +400,21 @@ function PasaporteInner({
           Escanea el QR en cada restaurante participante. Un sello por visita cada 18 horas por lugar.
         </p>
       </div>
+
+      <button
+        type="button"
+        onClick={openNativeCamera}
+        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-50 w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition active:scale-95 animate-soft-glow"
+        aria-label="Escanear QR con la cámara"
+      >
+        <Camera className="w-6 h-6" strokeWidth={2.25} />
+      </button>
+
+      {qrError && (
+        <p className="fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+4.25rem)] right-4 left-4 z-50 max-w-xs ml-auto text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow-md">
+          {qrError}
+        </p>
+      )}
     </div>
   );
 }

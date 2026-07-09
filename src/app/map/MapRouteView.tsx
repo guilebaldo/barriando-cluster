@@ -25,17 +25,7 @@ const GoogleMapRouteMap = dynamic(() => import("./GoogleMapRouteMap"), {
   loading: () => <div className="absolute inset-0 bg-slate-100 animate-pulse" />,
 });
 
-function extractInternalPath(raw: string): string | null {
-  try {
-    const url = raw.startsWith("http") ? new URL(raw) : new URL(raw, window.location.origin);
-    if (url.pathname.startsWith("/pasaporte")) return `${url.pathname}${url.search}`;
-    const match = raw.match(/\/pasaporte\/sellar\?[^\s"'<>]+/);
-    return match ? match[0] : null;
-  } catch {
-    const match = raw.match(/\/pasaporte\/sellar\?[^\s"'<>]+/);
-    return match ? match[0] : null;
-  }
-}
+import { scanQrFromImageFile } from "@/lib/qr-scan-client";
 
 function NavArrowButton({
   direction,
@@ -216,35 +206,17 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
       setQrError(null);
 
       try {
-        const bitmap = await createImageBitmap(file);
-        const Detector = (
-          window as Window & {
-            BarcodeDetector?: new (options?: { formats: string[] }) => {
-              detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue: string }>>;
-            };
-          }
-        ).BarcodeDetector;
-
-        if (!Detector) {
+        const path = await scanQrFromImageFile(file);
+        if (path) {
+          router.push(path);
+          return;
+        }
+        setQrError("No encontramos un código QR válido de Barriando en la foto. Intenta de nuevo.");
+      } catch (error) {
+        if (error instanceof Error && error.message === "BARCODE_DETECTOR_UNAVAILABLE") {
           setQrError("No pudimos leer el QR en esta foto. Intenta con otro navegador o usa el enlace del Pasaporte.");
           return;
         }
-
-        const detector = new Detector({ formats: ["qr_code"] });
-        const codes = await detector.detect(bitmap);
-        bitmap.close();
-
-        for (const code of codes) {
-          if (!code.rawValue) continue;
-          const path = extractInternalPath(code.rawValue);
-          if (path) {
-            router.push(path);
-            return;
-          }
-        }
-
-        setQrError("No encontramos un código QR válido de Barriando en la foto. Intenta de nuevo.");
-      } catch {
         setQrError("No pudimos procesar la imagen. Intenta tomar otra foto más cerca del QR.");
       }
     },

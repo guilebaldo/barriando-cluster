@@ -135,15 +135,14 @@
   color: #b42318;
   font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .passport-value {
   color: #111827;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-family: var(--font-passport-mrz);
+  font-weight: 400;
+  letter-spacing: 0.05em;
 }
 
 @media (prefers-reduced-motion: reduce) {
