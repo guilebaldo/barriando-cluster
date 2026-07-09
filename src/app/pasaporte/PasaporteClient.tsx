@@ -31,10 +31,10 @@ interface PasaporteClientProps {
   progress: number;
 }
 
-const STAMP_COLORS = [
-  "from-emerald-700 to-emerald-900 border-emerald-800",
-  "from-red-700 to-red-900 border-red-800",
-  "from-blue-800 to-indigo-900 border-blue-900",
+const STAMP_OUTLINE_COLORS = [
+  "border-emerald-700",
+  "border-red-600",
+  "border-[#27366D]",
 ] as const;
 
 const MRZ_SLOTS = 28;
@@ -378,7 +378,7 @@ function PasaporteInner({
               {restaurants.map((restaurant, index) => {
                 const stamp = stampMap[restaurant.id];
                 const hasStamp = Boolean(stamp?.count);
-                const colorClass = STAMP_COLORS[index % STAMP_COLORS.length];
+                const colorClass = STAMP_OUTLINE_COLORS[index % STAMP_OUTLINE_COLORS.length];
 
                 return (
                   <div
@@ -387,25 +387,21 @@ function PasaporteInner({
                   >
                     <div className="relative">
                       <div
-                        className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 border-dashed flex flex-col items-center justify-center p-1.5 transition-transform active:scale-95 ${
+                        className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-transform ${
                           hasStamp
-                            ? `bg-gradient-to-br ${colorClass} text-white shadow-md rotate-[-8deg]`
-                            : "border-stone-300 bg-stone-100/60 text-stone-400"
+                            ? `${colorClass} border-solid rotate-[-8deg]`
+                            : "border-dashed border-stone-300"
                         }`}
                       >
-                        {hasStamp ? (
-                          <>
-                            <span className="text-[7px] font-bold uppercase tracking-wider opacity-90">
-                              Barriando
-                            </span>
-                            <span className="text-[8px] sm:text-[9px] font-black leading-tight text-center line-clamp-2">
-                              {restaurant.name}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-[8px] font-semibold uppercase tracking-wide text-center leading-snug">
-                            Pendiente
-                          </span>
+                        {hasStamp && (
+                          <Image
+                            src={`/logos/${restaurant.foto}.png`}
+                            alt={restaurant.name}
+                            width={56}
+                            height={56}
+                            className="w-full h-full object-contain"
+                            unoptimized
+                          />
                         )}
                       </div>
                       {stamp && stamp.count > 1 && (
