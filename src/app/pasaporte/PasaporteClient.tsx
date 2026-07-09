@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Camera } from "lucide-react";
 import { scanQrFromImageFile } from "@/lib/qr-scan-client";
+import PasaporteInfoCard from "../components/PasaporteInfoCard";
 
 type RestaurantCard = {
   id: number;
@@ -40,6 +40,158 @@ const STAMP_OUTLINE_COLORS = [
 const MRZ_SLOTS = 28;
 const STATS_ANIMATION_MS = 1600;
 
+const PREVIEW_NAME = "Ana García";
+const PREVIEW_TEMPORADA = "Chiles en Nogada";
+const PREVIEW_RANGO = "Turista";
+const PREVIEW_MAX_PROGRESS = 80;
+
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+function typeInRange(progress: number, start: number, end: number, text: string): string {
+  const t = clamp01((progress - start) / (end - start));
+  return text.slice(0, Math.ceil(t * text.length));
+}
+
+function getPreviewScrollProgress(element: HTMLElement): number {
+  const rect = element.getBoundingClientRect();
+  const viewportHeight = window.innerHeight;
+  const start = viewportHeight * 0.92;
+  const traveled = start - rect.top;
+  const scrollable = rect.height + viewportHeight * 0.35;
+  return clamp01(traveled / scrollable);
+}
+
+function pickPreviewStampIds(restaurants: RestaurantCard[]): number[] {
+  return [...restaurants]
+    .sort((a, b) => ((a.id * 37 + 11) % 101) - ((b.id * 37 + 11) % 101))
+    .slice(0, Math.min(5, restaurants.length))
+    .map((r) => r.id);
+}
+
+type PreviewScrollState = {
+  displayName: string;
+  displayTemporada: string;
+  displayRango: string;
+  displayProgress: number;
+  displayStamps: number;
+  displayVisited: number;
+  visibleStampIds: Set<number>;
+  isTypingName: boolean;
+  isTypingTemporada: boolean;
+  isTypingRango: boolean;
+};
+
+const EMPTY_PREVIEW: PreviewScrollState = {
+  displayName: "",
+  displayTemporada: "",
+  displayRango: "",
+  displayProgress: 0,
+  displayStamps: 0,
+  displayVisited: 0,
+  visibleStampIds: new Set(),
+  isTypingName: false,
+  isTypingTemporada: false,
+  isTypingRango: false,
+};
+
+function useScrollPreviewDemo(
+  enabled: boolean,
+  restaurants: RestaurantCard[],
+  totalRestaurants: number,
+  scrollRootRef: React.RefObject<HTMLElement | null>
+): PreviewScrollState {
+  const previewStampIds = useMemo(() => pickPreviewStampIds(restaurants), [restaurants]);
+  const [state, setState] = useState<PreviewScrollState>(EMPTY_PREVIEW);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const applyFullPreview = () => {
+      setState({
+        displayName: PREVIEW_NAME,
+        displayTemporada: PREVIEW_TEMPORADA,
+        displayRango: PREVIEW_RANGO,
+        displayProgress: PREVIEW_MAX_PROGRESS,
+        displayStamps: previewStampIds.length,
+        displayVisited: Math.min(previewStampIds.length, totalRestaurants),
+        visibleStampIds: new Set(previewStampIds),
+        isTypingName: false,
+        isTypingTemporada: false,
+        isTypingRango: false,
+      });
+    };
+
+    const update = () => {
+      const el = scrollRootRef.current;
+      if (!el) return;
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.9) applyFullPreview();
+        return;
+      }
+
+      const p = getPreviewScrollProgress(el);
+      const name = typeInRange(p, 0.05, 0.22, PREVIEW_NAME);
+      const temporada = typeInRange(p, 0.22, 0.38, PREVIEW_TEMPORADA);
+      const rango = typeInRange(p, 0.38, 0.52, PREVIEW_RANGO);
+      const barT = clamp01((p - 0.52) / 0.18);
+      const displayProgress = Math.round(barT * PREVIEW_MAX_PROGRESS);
+
+      const stampRevealT = clamp01((p - 0.7) / 0.28);
+      const visibleCount = Math.min(
+        previewStampIds.length,
+        Math.ceil(stampRevealT * previewStampIds.length)
+      );
+      const visibleStampIds = new Set(previewStampIds.slice(0, visibleCount));
+      const inBarPhase = p >= 0.52 && p < 0.7;
+      const barPhaseStamps = Math.round(barT * previewStampIds.length);
+      const displayStamps = visibleCount > 0 ? visibleCount : inBarPhase ? barPhaseStamps : 0;
+      const displayVisited =
+        visibleCount > 0 ? visibleCount : inBarPhase ? barPhaseStamps : 0;
+
+      setState({
+        displayName: name,
+        displayTemporada: temporada,
+        displayRango: rango,
+        displayProgress,
+        displayStamps,
+        displayVisited: Math.min(displayVisited, totalRestaurants),
+        visibleStampIds,
+        isTypingName: name.length < PREVIEW_NAME.length && p >= 0.05 && p < 0.22,
+        isTypingTemporada:
+          temporada.length < PREVIEW_TEMPORADA.length && p >= 0.22 && p < 0.38,
+        isTypingRango: rango.length < PREVIEW_RANGO.length && p >= 0.38 && p < 0.52,
+      });
+    };
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [enabled, previewStampIds, scrollRootRef, totalRestaurants]);
+
+  return state;
+}
+
+function TypewriterValue({ text, isTyping }: { text: string; isTyping: boolean }) {
+  return (
+    <span>
+      {text}
+      {isTyping && (
+        <span className="inline-block w-[0.45em] text-[#27366D] animate-pulse" aria-hidden>
+          |
+        </span>
+      )}
+    </span>
+  );
+}
+
 type AnimatedPassportStats = {
   stamps: number;
   visited: number;
@@ -49,7 +201,8 @@ type AnimatedPassportStats = {
 function useAnimatedPassportStats(
   totalStamps: number,
   uniqueStamped: number,
-  progress: number
+  progress: number,
+  enabled: boolean
 ): AnimatedPassportStats {
   const [animated, setAnimated] = useState<AnimatedPassportStats>({
     stamps: 0,
@@ -58,6 +211,11 @@ function useAnimatedPassportStats(
   });
 
   useEffect(() => {
+    if (!enabled) {
+      setAnimated({ stamps: 0, visited: 0, progress: 0 });
+      return;
+    }
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setAnimated({ stamps: totalStamps, visited: uniqueStamped, progress });
       return;
@@ -79,7 +237,7 @@ function useAnimatedPassportStats(
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [totalStamps, uniqueStamped, progress]);
+  }, [totalStamps, uniqueStamped, progress, enabled]);
 
   return animated;
 }
@@ -158,9 +316,29 @@ function PasaporteInner({
   const router = useRouter();
   const searchParams = useSearchParams();
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const previewScrollRef = useRef<HTMLDivElement>(null);
   const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
-  const animatedStats = useAnimatedPassportStats(totalStamps, uniqueStamped, progress);
+  const isPreview = !isAuthenticated;
+  const previewScroll = useScrollPreviewDemo(isPreview, restaurants, totalRestaurants, previewScrollRef);
+  const animatedStats = useAnimatedPassportStats(
+    totalStamps,
+    uniqueStamped,
+    progress,
+    isAuthenticated
+  );
+
+  const displayName = isPreview ? previewScroll.displayName : userName;
+  const displayTemporada = isPreview ? previewScroll.displayTemporada : "Chiles en Nogada";
+  const displayRango = isPreview ? previewScroll.displayRango : tierLabel.toUpperCase();
+  const displayTierId = isPreview ? "turista" : tierId;
+  const displayStats = isPreview
+    ? {
+        stamps: previewScroll.displayStamps,
+        visited: previewScroll.displayVisited,
+        progress: previewScroll.displayProgress,
+      }
+    : animatedStats;
 
   const openNativeCamera = useCallback(() => {
     setQrError(null);
@@ -227,7 +405,7 @@ function PasaporteInner({
   }, [searchParams]);
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-[#e8e0d0] py-3 sm:py-8 px-2 sm:px-4 pb-24">
+    <div className={`min-h-[calc(100dvh-4rem)] bg-[#e8e0d0] py-3 sm:py-8 px-2 sm:px-4 ${isAuthenticated ? "pb-24" : "pb-8"}`}>
       <input
         ref={cameraInputRef}
         type="file"
@@ -239,6 +417,15 @@ function PasaporteInner({
       />
 
       <div className="max-w-lg sm:max-w-2xl mx-auto">
+        {!isAuthenticated && <PasaporteInfoCard className="mb-5 sm:mb-6" />}
+
+        <div ref={previewScrollRef} className={isPreview ? "min-h-[145vh]" : undefined}>
+          {isPreview && (
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif-cluster text-[#3d2914] text-center mb-5 sm:mb-6 tracking-wide leading-tight">
+              Llénalo todo.
+            </h2>
+          )}
+
         <div className="relative rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
           <div
             className="absolute inset-0 opacity-[0.28] pointer-events-none"
@@ -278,7 +465,7 @@ function PasaporteInner({
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-stone-500 bg-gradient-to-b from-[#f0ebe3] to-[#e4ddd0]">
                     <span className="text-2xl font-serif-cluster text-[#5c3d1e]/70">
-                      {getInitials(userName) || "?"}
+                      {getInitials(displayName) || "?"}
                     </span>
                     <span className="text-[8px] font-passport-mrz tracking-widest mt-1 uppercase">Foto</span>
                   </div>
@@ -289,23 +476,31 @@ function PasaporteInner({
                 <div className="space-y-2.5">
                   <div>
                     <p className="passport-label">Nombre</p>
-                    <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words">
-                      {userName}
+                    <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words min-h-[1.35em]">
+                      <TypewriterValue text={displayName} isTyping={isPreview && previewScroll.isTypingName} />
                     </p>
                   </div>
                   <div>
                     <p className="passport-label">Temporada</p>
-                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">Chiles en Nogada</p>
+                    <p className="passport-value text-[11px] sm:text-xs mt-0.5 min-h-[1.1em]">
+                      <TypewriterValue
+                        text={displayTemporada}
+                        isTyping={isPreview && previewScroll.isTypingTemporada}
+                      />
+                    </p>
                   </div>
                   <div>
                     <p className="passport-label">Rango</p>
                     <p
-                      className={`passport-value text-[11px] sm:text-xs mt-0.5 flex items-center gap-1.5 ${
-                        tierId === "poblano" ? "text-amber-900" : ""
+                      className={`passport-value text-[11px] sm:text-xs mt-0.5 flex items-center gap-1.5 min-h-[1.1em] ${
+                        displayTierId === "poblano" ? "text-amber-900" : ""
                       }`}
                     >
-                      {tierId === "poblano" && <span aria-hidden>★</span>}
-                      {tierLabel.toUpperCase()}
+                      {displayTierId === "poblano" && <span aria-hidden>★</span>}
+                      <TypewriterValue
+                        text={displayRango}
+                        isTyping={isPreview && previewScroll.isTypingRango}
+                      />
                     </p>
                   </div>
                 </div>
@@ -313,32 +508,23 @@ function PasaporteInner({
                 <div className="space-y-2.5 pt-0.5 pl-3 border-l border-[#d9cdb3]/70">
                   <div>
                     <p className="passport-label">Sellos</p>
-                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">{animatedStats.stamps}</p>
+                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">{displayStats.stamps}</p>
                   </div>
                   <div>
                     <p className="passport-label">Visitados</p>
                     <p className="passport-value text-[11px] sm:text-xs mt-0.5">
-                      {animatedStats.visited}/{totalRestaurants}
+                      {displayStats.visited}/{totalRestaurants}
                     </p>
                   </div>
                   <div>
                     <p className="passport-label">Progreso</p>
-                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">{animatedStats.progress}%</p>
+                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">{displayStats.progress}%</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <PassportProgressTrack animatedProgress={animatedStats.progress} tierId={tierId} />
-
-            {!isAuthenticated && (
-              <p className="mt-4 text-[11px] text-amber-950 bg-amber-100/80 border border-amber-200 rounded-lg px-3 py-2.5 leading-relaxed">
-                <Link href="/login?callbackUrl=%2Fpasaporte" className="font-bold underline text-[#27366D]">
-                  Inicia sesión
-                </Link>{" "}
-                para guardar tus sellos al escanear los QR en los restaurantes.
-              </p>
-            )}
+            <PassportProgressTrack animatedProgress={displayStats.progress} tierId={displayTierId} />
 
             {notice && (
               <div
@@ -355,8 +541,8 @@ function PasaporteInner({
             )}
           </div>
 
-          {/* Celebración Poblano */}
-          <div className="relative px-4 sm:px-8 py-4 border-b border-[#d9cdb3]/70 bg-white/30">
+          {/* Cuadrícula de sellos */}
+          <div className="relative px-4 sm:px-8 py-5 sm:py-7 border-t border-[#d9cdb3]/70">
             {showPoblanoCelebration && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-amber-100/92 backdrop-blur-sm">
                 <div className="text-center px-4 py-3">
@@ -367,30 +553,27 @@ function PasaporteInner({
                 </div>
               </div>
             )}
-            <p className="text-[10px] font-passport-mrz tracking-[0.2em] text-stone-500 uppercase">
-              Sellos de temporada · Restaurantes participantes
-            </p>
-          </div>
-
-          {/* Cuadrícula de sellos */}
-          <div className="relative px-4 sm:px-8 py-5 sm:py-7">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
               {restaurants.map((restaurant, index) => {
                 const stamp = stampMap[restaurant.id];
-                const hasStamp = Boolean(stamp?.count);
+                const hasStamp = isPreview
+                  ? previewScroll.visibleStampIds.has(restaurant.id)
+                  : Boolean(stamp?.count);
                 const colorClass = STAMP_OUTLINE_COLORS[index % STAMP_OUTLINE_COLORS.length];
 
                 return (
                   <div
                     key={restaurant.id}
-                    className={`flex flex-col items-center text-center gap-2 ${!hasStamp ? "opacity-40" : ""}`}
+                    className={`flex flex-col items-center text-center gap-2 transition-opacity duration-500 ${
+                      !hasStamp ? "opacity-40" : "opacity-100"
+                    }`}
                   >
                     <div className="relative">
                       <div
-                        className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-transform ${
+                        className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-500 ${
                           hasStamp
-                            ? `${colorClass} border-solid rotate-[-8deg]`
-                            : "border-dashed border-stone-300"
+                            ? `${colorClass} border-solid rotate-[-8deg] scale-100`
+                            : "border-dashed border-stone-300 scale-95"
                         }`}
                       >
                         {hasStamp && (
@@ -420,21 +603,26 @@ function PasaporteInner({
           </div>
         </div>
 
+          {isPreview && <div className="h-[38vh]" aria-hidden />}
+        </div>
+
         <p className="text-center text-[10px] text-stone-600 mt-4 max-w-sm mx-auto leading-relaxed font-light px-2">
           Escanea el QR en cada restaurante participante. Un sello por visita cada 18 horas por lugar.
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={openNativeCamera}
-        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-50 w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition active:scale-95 animate-soft-glow"
-        aria-label="Escanear QR con la cámara"
-      >
-        <Camera className="w-6 h-6" strokeWidth={2.25} />
-      </button>
+      {isAuthenticated && (
+        <button
+          type="button"
+          onClick={openNativeCamera}
+          className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-50 w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition active:scale-95 animate-soft-glow"
+          aria-label="Escanear QR con la cámara"
+        >
+          <Camera className="w-6 h-6" strokeWidth={2.25} />
+        </button>
+      )}
 
-      {qrError && (
+      {isAuthenticated && qrError && (
         <p className="fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+4.25rem)] right-4 left-4 z-50 max-w-xs ml-auto text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow-md">
           {qrError}
         </p>
