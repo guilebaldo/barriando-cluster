@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { Camera } from "lucide-react";
 import { scanQrFromImageFile } from "@/lib/qr-scan-client";
 import { getMapHrefForRestaurant } from "@/lib/pasaporte";
+import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 
 type RestaurantCard = {
@@ -541,17 +542,23 @@ function PasaporteInner({
           </h2>
         )}
 
-        <div className="relative rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
+        <div className="relative isolate rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
+          <SecurityPatternBackground
+            opacity={isPreview ? 0.12 : 0.09}
+            density={isPreview ? 1.08 : 0.98}
+            className="text-stone-500"
+          />
           <div
-            className="absolute inset-0 opacity-[0.28] pointer-events-none"
+            className="absolute inset-0 opacity-[0.22] pointer-events-none"
             style={{
               backgroundImage:
-                "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(160,120,60,0.07) 24px, rgba(160,120,60,0.07) 25px)",
+                "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(160,120,60,0.06) 24px, rgba(160,120,60,0.06) 25px)",
             }}
           />
 
+          <div className="relative z-10">
           {/* Hoja de identificación */}
-          <div className="relative px-4 sm:px-8 pt-5 sm:pt-7 pb-6 border-b border-[#d9cdb3]">
+          <div className="px-4 sm:px-8 pt-5 sm:pt-7 pb-6 border-b border-[#d9cdb3]">
             <div className="flex items-start justify-between gap-3 border-b border-[#d9cdb3]/80 pb-3">
               <div>
                 <p className="text-[9px] font-passport-mrz tracking-[0.35em] text-stone-500 uppercase">
@@ -743,6 +750,7 @@ function PasaporteInner({
                 </div>
               )}
             </div>
+          </div>
           </div>
         </div>
 
