@@ -10,6 +10,7 @@ import {
   restaurantSlug,
 } from "@/lib/pasaporte";
 import { countUserStamps, loadUserStampSummaries } from "@/lib/pasaporte-stamps";
+import { loadPanelUser } from "@/lib/panel-data";
 
 export default async function PasaportePage() {
   const session = await getSession();
@@ -23,29 +24,38 @@ export default async function PasaportePage() {
 
   let totalStamps = 0;
   let stampMap: Record<number, { count: number; lastStampAt: string }> = {};
+  let userImage: string | null = null;
 
   if (session) {
-    const summaries = await loadUserStampSummaries(session.id);
-    totalStamps = await countUserStamps(session.id);
+    const [summaries, stampTotal, panelUser] = await Promise.all([
+      loadUserStampSummaries(session.id),
+      countUserStamps(session.id),
+      loadPanelUser(session.id),
+    ]);
+    totalStamps = stampTotal;
     stampMap = Object.fromEntries(
       summaries.map((s) => [s.restaurantId, { count: s.count, lastStampAt: s.lastStampAt }])
     );
+    userImage = panelUser?.image ?? null;
   }
 
-  const uniqueStamped = Object.values(stampMap).filter((s) => s.count > 0).length;
-  const rank = getPassportRank(uniqueStamped, restaurants.length);
-  const progress = getPassportProgress(uniqueStamped, restaurants.length);
+  const uniqueStampedCount = Object.values(stampMap).filter((s) => s.count > 0).length;
+  const rank = getPassportRank(uniqueStampedCount, restaurants.length);
+  const progress = getPassportProgress(uniqueStampedCount, restaurants.length);
 
   return (
-    <SiteShell>
+    <SiteShell className="bg-[#e8e0d0]">
       <Navbar />
       <main className="flex-1 w-full">
         <PasaporteClient
           userName={session?.nombre || session?.email || "Visitante"}
+          userImage={userImage}
           isAuthenticated={Boolean(session)}
           restaurants={restaurants}
           stampMap={stampMap}
           totalStamps={totalStamps}
+          uniqueStamped={uniqueStampedCount}
+          totalRestaurants={restaurants.length}
           tierLabel={rank.label}
           tierId={rank.id}
           isPoblanoComplete={rank.isComplete}

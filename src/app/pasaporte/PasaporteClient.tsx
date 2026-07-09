@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -15,10 +16,13 @@ type RestaurantCard = {
 
 interface PasaporteClientProps {
   userName: string;
+  userImage: string | null;
   isAuthenticated: boolean;
   restaurants: RestaurantCard[];
   stampMap: Record<number, { count: number; lastStampAt: string }>;
   totalStamps: number;
+  uniqueStamped: number;
+  totalRestaurants: number;
   tierLabel: string;
   tierId: "turista" | "poblano";
   isPoblanoComplete: boolean;
@@ -31,12 +35,100 @@ const STAMP_COLORS = [
   "from-blue-800 to-indigo-900 border-blue-900",
 ] as const;
 
+const MRZ_SLOTS = 28;
+
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function PassportProgressTrack({
+  progress,
+  tierId,
+}: {
+  progress: number;
+  tierId: "turista" | "poblano";
+}) {
+  const [animatedProgress, setAnimatedProgress] = useState(0);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setAnimatedProgress(progress);
+      return;
+    }
+
+    let frame = 0;
+    const start = performance.now();
+    const duration = 1600;
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - t) ** 3;
+      setAnimatedProgress(Math.round(progress * eased));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [progress]);
+
+  const filledSlots = Math.round((animatedProgress / 100) * MRZ_SLOTS);
+
+  return (
+    <div className="mt-5">
+      <div className="flex items-end justify-between gap-3 font-passport-mrz text-[11px] sm:text-xs font-bold tracking-[0.14em]">
+        <span className={tierId === "turista" ? "text-[#27366D]" : "text-stone-500"}>TURISTA</span>
+        <span className={tierId === "poblano" ? "text-amber-700" : "text-stone-500"}>POBLANO</span>
+      </div>
+      <div
+        className="mt-2 font-passport-mrz text-[13px] sm:text-sm leading-none select-none overflow-hidden whitespace-nowrap"
+        aria-hidden
+      >
+        {Array.from({ length: MRZ_SLOTS }).map((_, index) => (
+          <span
+            key={index}
+            className={
+              index < filledSlots
+                ? tierId === "poblano"
+                  ? "text-amber-700"
+                  : "text-[#27366D]"
+                : "text-stone-300/90"
+            }
+          >
+            {"<"}
+          </span>
+        ))}
+      </div>
+      <div className="mt-2 h-1 rounded-full bg-stone-300/70 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-[width] duration-300 ${
+            tierId === "poblano"
+              ? "bg-gradient-to-r from-amber-500 to-amber-700"
+              : "bg-gradient-to-r from-[#27366D] to-[#1e2b58]"
+          }`}
+          style={{ width: `${animatedProgress}%` }}
+        />
+      </div>
+      <p className="mt-2 text-[10px] font-passport-mrz tracking-widest text-stone-500 uppercase">
+        {animatedProgress}% · rango {tierId === "poblano" ? "POBLANO" : "TURISTA"}
+      </p>
+    </div>
+  );
+}
+
 function PasaporteInner({
   userName,
+  userImage,
   isAuthenticated,
   restaurants,
   stampMap,
   totalStamps,
+  uniqueStamped,
+  totalRestaurants,
   tierLabel,
   tierId,
   isPoblanoComplete,
@@ -78,46 +170,104 @@ function PasaporteInner({
     return null;
   }, [searchParams]);
 
-  const tierAccent =
-    tierId === "poblano" ? "text-amber-600" : "text-stone-600";
-
   return (
-    <div className="min-h-[80vh] bg-gradient-to-b from-amber-50 via-orange-50/40 to-amber-100/60 py-6 sm:py-10 px-3 sm:px-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="sm:hidden sticky top-2 z-20 mb-3">
-          <div className="rounded-xl border border-amber-200 bg-white/95 backdrop-blur px-3 py-2 shadow-sm">
-            <div className="flex items-center justify-between text-[11px] text-stone-700 font-semibold">
-              <span>{totalStamps} sellos</span>
-              <span>{progress}% completado</span>
-            </div>
-            <div className="mt-1.5 h-2 rounded-full bg-stone-200 overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-amber-400 to-[#27366D]" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Pasaporte cover */}
-        <div className="relative rounded-2xl border border-amber-200/80 bg-[#faf6ef] shadow-[0_8px_30px_rgba(120,80,30,0.12)] overflow-hidden">
+    <div className="min-h-[calc(100dvh-4rem)] bg-[#e8e0d0] py-3 sm:py-8 px-2 sm:px-4 pb-8">
+      <div className="max-w-lg sm:max-w-2xl mx-auto">
+        <div className="relative rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
           <div
-            className="absolute inset-0 opacity-[0.35] pointer-events-none"
+            className="absolute inset-0 opacity-[0.28] pointer-events-none"
             style={{
               backgroundImage:
-                "repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(180,140,80,0.06) 28px, rgba(180,140,80,0.06) 29px)",
+                "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(160,120,60,0.07) 24px, rgba(160,120,60,0.07) 25px)",
             }}
           />
-          <div className="relative p-4 sm:p-10 border-b border-amber-200/60 bg-gradient-to-r from-amber-100/50 to-orange-50/30">
-            <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-amber-800/70 mb-2">
-              Temporada · Chiles en Nogada
-            </p>
-            <h1 className="text-xl sm:text-3xl font-black font-serif-cluster uppercase tracking-wide text-[#5c3d1e]">
-              Pasaporte Digital
-            </h1>
-            <p className="text-sm text-stone-600 mt-2 font-light">
-              Titular: <strong className="text-stone-800">{userName}</strong>
-            </p>
+
+          {/* Hoja de identificación */}
+          <div className="relative px-4 sm:px-8 pt-5 sm:pt-7 pb-6 border-b border-[#d9cdb3]">
+            <div className="flex items-start justify-between gap-3 border-b border-[#d9cdb3]/80 pb-3">
+              <div>
+                <p className="text-[9px] font-passport-mrz tracking-[0.35em] text-stone-500 uppercase">
+                  Clúster Turístico
+                </p>
+                <h1 className="text-lg sm:text-2xl font-black font-serif-cluster uppercase tracking-[0.12em] text-[#3d2914] leading-tight mt-0.5">
+                  Pasaporte Digital
+                </h1>
+              </div>
+              <div className="text-right shrink-0 max-w-[9rem]">
+                <p className="passport-label">Zona</p>
+                <p className="passport-value text-[11px] sm:text-xs leading-snug mt-0.5">
+                  Puebla de Los Ángeles
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex gap-4 sm:gap-5">
+              <div className="shrink-0 w-[5.5rem] h-[7rem] sm:w-24 sm:h-[7.5rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner">
+                {userImage ? (
+                  <Image
+                    src={userImage}
+                    alt={userName}
+                    width={96}
+                    height={120}
+                    className="w-full h-full object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-stone-500 bg-gradient-to-b from-[#f0ebe3] to-[#e4ddd0]">
+                    <span className="text-2xl font-serif-cluster text-[#5c3d1e]/70">
+                      {getInitials(userName) || "?"}
+                    </span>
+                    <span className="text-[8px] font-passport-mrz tracking-widest mt-1 uppercase">Foto</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-3 pt-0.5">
+                <div>
+                  <p className="passport-label">Nombre</p>
+                  <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words">
+                    {userName}
+                  </p>
+                </div>
+                <div>
+                  <p className="passport-label">Temporada</p>
+                  <p className="passport-value text-[11px] sm:text-xs mt-0.5">Chiles en Nogada</p>
+                </div>
+                <div>
+                  <p className="passport-label">Rango</p>
+                  <p
+                    className={`passport-value text-[11px] sm:text-xs mt-0.5 flex items-center gap-1.5 ${
+                      tierId === "poblano" ? "text-amber-800" : ""
+                    }`}
+                  >
+                    {tierId === "poblano" && <span aria-hidden>★</span>}
+                    {tierLabel.toUpperCase()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-lg border border-[#d9cdb3] bg-white/50 px-2 py-2">
+                <p className="passport-label text-[9px]">Sellos</p>
+                <p className="passport-value text-base mt-0.5">{totalStamps}</p>
+              </div>
+              <div className="rounded-lg border border-[#d9cdb3] bg-white/50 px-2 py-2">
+                <p className="passport-label text-[9px]">Visitados</p>
+                <p className="passport-value text-base mt-0.5">
+                  {uniqueStamped}/{totalRestaurants}
+                </p>
+              </div>
+              <div className="rounded-lg border border-[#d9cdb3] bg-white/50 px-2 py-2">
+                <p className="passport-label text-[9px]">Progreso</p>
+                <p className="passport-value text-base mt-0.5">{progress}%</p>
+              </div>
+            </div>
+
+            <PassportProgressTrack progress={progress} tierId={tierId} />
 
             {!isAuthenticated && (
-              <p className="mt-4 text-xs text-amber-900 bg-amber-100/80 border border-amber-200 rounded-lg px-4 py-3">
+              <p className="mt-4 text-[11px] text-amber-950 bg-amber-100/80 border border-amber-200 rounded-lg px-3 py-2.5 leading-relaxed">
                 <Link href="/login?callbackUrl=%2Fpasaporte" className="font-bold underline text-[#27366D]">
                   Inicia sesión
                 </Link>{" "}
@@ -127,7 +277,7 @@ function PasaporteInner({
 
             {notice && (
               <div
-                className={`mt-4 text-xs rounded-lg px-4 py-3 border ${
+                className={`mt-3 text-[11px] rounded-lg px-3 py-2.5 border ${
                   notice.type === "success"
                     ? "bg-emerald-50 border-emerald-200 text-emerald-900"
                     : notice.type === "error"
@@ -140,64 +290,26 @@ function PasaporteInner({
             )}
           </div>
 
-          {/* Rango de temporada */}
-          <div className="relative px-4 sm:px-10 py-5 sm:py-6 border-b border-amber-200/50 bg-white/40">
+          {/* Celebración Poblano */}
+          <div className="relative px-4 sm:px-8 py-4 border-b border-[#d9cdb3]/70 bg-white/30">
             {showPoblanoCelebration && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-amber-100/90 backdrop-blur-sm animate-pulse rounded-none">
-                <div className="text-center px-6 py-4">
-                  <span className="text-4xl block mb-2">👑</span>
-                  <p className="text-lg font-black font-serif-cluster text-amber-800 uppercase tracking-wide">
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-amber-100/92 backdrop-blur-sm">
+                <div className="text-center px-4 py-3">
+                  <span className="text-3xl block mb-1">👑</span>
+                  <p className="text-base font-black font-serif-cluster text-amber-800 uppercase tracking-wide">
                     ¡Eres un verdadero Poblano!
-                  </p>
-                  <p className="text-xs text-amber-900/80 mt-1">
-                    Completaste todos los restaurantes de la temporada
                   </p>
                 </div>
               </div>
             )}
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
-                  Rango MAP · Chiles en Nogada
-                </p>
-                <p className={`text-lg font-bold font-serif-cluster flex items-center gap-2 ${tierAccent}`}>
-                  {tierId === "poblano" && (
-                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-600 text-white text-sm shadow-md ring-2 ring-amber-400/50">
-                      ★
-                    </span>
-                  )}
-                  {tierLabel}
-                </p>
-              </div>
-              <p className="text-xs text-stone-500">
-                <strong className="text-stone-800">{totalStamps}</strong> sellos ·{" "}
-                <strong className="text-stone-800">
-                  {Object.values(stampMap).filter((s) => s.count > 0).length}
-                </strong>{" "}
-                restaurantes visitados
-              </p>
-            </div>
-            <div className="h-2.5 rounded-full bg-stone-200/80 overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ${
-                  tierId === "poblano"
-                    ? "bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"
-                    : "bg-gradient-to-r from-stone-400 to-[#27366D]"
-                }`}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="text-[10px] text-stone-400 mt-2">
-              Empiezas como Turista · Completa todos los restaurantes para la insignia dorada Poblano
+            <p className="text-[10px] font-passport-mrz tracking-[0.2em] text-stone-500 uppercase">
+              Sellos de temporada · Restaurantes participantes
             </p>
           </div>
 
-          {/* Stamp grid */}
-          <div className="relative p-4 sm:p-10">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500 mb-6">
-              Restaurantes participantes
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* Cuadrícula de sellos */}
+          <div className="relative px-4 sm:px-8 py-5 sm:py-7">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
               {restaurants.map((restaurant, index) => {
                 const stamp = stampMap[restaurant.id];
                 const hasStamp = Boolean(stamp?.count);
@@ -206,38 +318,38 @@ function PasaporteInner({
                 return (
                   <div
                     key={restaurant.id}
-                    className={`flex flex-col items-center text-center gap-2 ${!hasStamp ? "opacity-45" : ""}`}
+                    className={`flex flex-col items-center text-center gap-2 ${!hasStamp ? "opacity-40" : ""}`}
                   >
                     <div className="relative">
                       <div
-                        className={`w-[4.5rem] h-[4.5rem] sm:w-24 sm:h-24 rounded-full border-2 border-dashed flex flex-col items-center justify-center p-2 transition-all active:scale-95 ${
+                        className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 border-dashed flex flex-col items-center justify-center p-1.5 transition-transform active:scale-95 ${
                           hasStamp
                             ? `bg-gradient-to-br ${colorClass} text-white shadow-md rotate-[-8deg]`
-                            : "border-stone-300 bg-stone-100/50 text-stone-400"
+                            : "border-stone-300 bg-stone-100/60 text-stone-400"
                         }`}
                       >
                         {hasStamp ? (
                           <>
-                            <span className="text-[8px] font-bold uppercase tracking-wider opacity-90">
+                            <span className="text-[7px] font-bold uppercase tracking-wider opacity-90">
                               Barriando
                             </span>
-                            <span className="text-[9px] sm:text-[10px] font-black leading-tight text-center line-clamp-2">
+                            <span className="text-[8px] sm:text-[9px] font-black leading-tight text-center line-clamp-2">
                               {restaurant.name}
                             </span>
                           </>
                         ) : (
-                          <span className="text-[9px] font-semibold uppercase tracking-wide text-center leading-snug">
-                            Sello pendiente
+                          <span className="text-[8px] font-semibold uppercase tracking-wide text-center leading-snug">
+                            Pendiente
                           </span>
                         )}
                       </div>
                       {stamp && stamp.count > 1 && (
-                        <span className="absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-[#27366D] text-white text-[10px] font-bold flex items-center justify-center shadow">
+                        <span className="absolute -top-1 -right-1 min-w-[1.15rem] h-4 px-1 rounded-full bg-[#27366D] text-white text-[9px] font-bold flex items-center justify-center shadow">
                           x{stamp.count}
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] font-medium text-stone-700 leading-tight line-clamp-2">
+                    <p className="text-[10px] font-medium text-stone-700 leading-tight line-clamp-2">
                       {restaurant.name}
                     </p>
                   </div>
@@ -247,7 +359,7 @@ function PasaporteInner({
           </div>
         </div>
 
-        <p className="text-center text-[10px] text-stone-500 mt-6 max-w-md mx-auto leading-relaxed">
+        <p className="text-center text-[10px] text-stone-600 mt-4 max-w-sm mx-auto leading-relaxed font-light px-2">
           Escanea el QR en cada restaurante participante. Un sello por visita cada 18 horas por lugar.
         </p>
       </div>
