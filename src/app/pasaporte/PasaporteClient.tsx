@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Camera } from "lucide-react";
@@ -54,13 +55,19 @@ function typeInRange(progress: number, start: number, end: number, text: string)
   return text.slice(0, Math.ceil(t * text.length));
 }
 
-function getPreviewScrollProgress(element: HTMLElement): number {
+/** 0 → section entering from below; 1 → section in the upper focus band of the viewport */
+function getSectionRevealProgress(
+  element: HTMLElement,
+  container: HTMLElement,
+  enterAt = 0.86,
+  completeAt = 0.4
+): number {
   const rect = element.getBoundingClientRect();
-  const viewportHeight = window.innerHeight;
-  const start = viewportHeight * 0.92;
-  const traveled = start - rect.top;
-  const scrollable = rect.height + viewportHeight * 0.35;
-  return clamp01(traveled / scrollable);
+  const containerRect = container.getBoundingClientRect();
+  if (containerRect.height <= 0) return 0;
+
+  const relativeTop = (rect.top - containerRect.top) / containerRect.height;
+  return clamp01((enterAt - relativeTop) / (enterAt - completeAt));
 }
 
 function pickPreviewStampIds(restaurants: RestaurantCard[]): number[] {
@@ -100,7 +107,10 @@ function useScrollPreviewDemo(
   enabled: boolean,
   restaurants: RestaurantCard[],
   totalRestaurants: number,
-  scrollRootRef: React.RefObject<HTMLElement | null>
+  fieldsRef: React.RefObject<HTMLElement | null>,
+  progressRef: React.RefObject<HTMLElement | null>,
+  stampsRef: React.RefObject<HTMLElement | null>,
+  scrollContainerRef: React.RefObject<HTMLElement | null>
 ): PreviewScrollState {
   const previewStampIds = useMemo(() => pickPreviewStampIds(restaurants), [restaurants]);
   const [state, setState] = useState<PreviewScrollState>(EMPTY_PREVIEW);
@@ -124,33 +134,36 @@ function useScrollPreviewDemo(
     };
 
     const update = () => {
-      const el = scrollRootRef.current;
-      if (!el) return;
+      const container = scrollContainerRef.current;
+      const fieldsEl = fieldsRef.current;
+      const progressEl = progressRef.current;
+      const stampsEl = stampsRef.current;
+      if (!container || !fieldsEl || !progressEl || !stampsEl) return;
 
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight * 0.9) applyFullPreview();
+        const rect = fieldsEl.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        if (rect.top < containerRect.bottom && rect.bottom > containerRect.top) applyFullPreview();
         return;
       }
 
-      const p = getPreviewScrollProgress(el);
-      const name = typeInRange(p, 0.05, 0.22, PREVIEW_NAME);
-      const temporada = typeInRange(p, 0.22, 0.38, PREVIEW_TEMPORADA);
-      const rango = typeInRange(p, 0.38, 0.52, PREVIEW_RANGO);
-      const barT = clamp01((p - 0.52) / 0.18);
-      const displayProgress = Math.round(barT * PREVIEW_MAX_PROGRESS);
+      const fieldsP = getSectionRevealProgress(fieldsEl, container, 0.9, 0.48);
+      const name = typeInRange(fieldsP, 0, 0.34, PREVIEW_NAME);
+      const temporada = typeInRange(fieldsP, 0.3, 0.64, PREVIEW_TEMPORADA);
+      const rango = typeInRange(fieldsP, 0.58, 1, PREVIEW_RANGO);
 
-      const stampRevealT = clamp01((p - 0.7) / 0.28);
+      const barP = getSectionRevealProgress(progressEl, container, 0.88, 0.42);
+      const displayProgress = Math.round(barP * PREVIEW_MAX_PROGRESS);
+      const barPhaseStamps = Math.round(barP * previewStampIds.length);
+
+      const stampsP = getSectionRevealProgress(stampsEl, container, 0.92, 0.22);
       const visibleCount = Math.min(
         previewStampIds.length,
-        Math.ceil(stampRevealT * previewStampIds.length)
+        Math.ceil(stampsP * previewStampIds.length)
       );
       const visibleStampIds = new Set(previewStampIds.slice(0, visibleCount));
-      const inBarPhase = p >= 0.52 && p < 0.7;
-      const barPhaseStamps = Math.round(barT * previewStampIds.length);
-      const displayStamps = visibleCount > 0 ? visibleCount : inBarPhase ? barPhaseStamps : 0;
-      const displayVisited =
-        visibleCount > 0 ? visibleCount : inBarPhase ? barPhaseStamps : 0;
+      const displayStamps = visibleCount > 0 ? visibleCount : barPhaseStamps;
+      const displayVisited = visibleCount > 0 ? visibleCount : barPhaseStamps;
 
       setState({
         displayName: name,
@@ -160,21 +173,24 @@ function useScrollPreviewDemo(
         displayStamps,
         displayVisited: Math.min(displayVisited, totalRestaurants),
         visibleStampIds,
-        isTypingName: name.length < PREVIEW_NAME.length && p >= 0.05 && p < 0.22,
+        isTypingName: name.length < PREVIEW_NAME.length && fieldsP > 0 && fieldsP < 0.34,
         isTypingTemporada:
-          temporada.length < PREVIEW_TEMPORADA.length && p >= 0.22 && p < 0.38,
-        isTypingRango: rango.length < PREVIEW_RANGO.length && p >= 0.38 && p < 0.52,
+          temporada.length < PREVIEW_TEMPORADA.length && fieldsP > 0.3 && fieldsP < 0.64,
+        isTypingRango: rango.length < PREVIEW_RANGO.length && fieldsP > 0.58 && fieldsP < 1,
       });
     };
 
     update();
-    window.addEventListener("scroll", update, { passive: true });
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
     return () => {
-      window.removeEventListener("scroll", update);
+      container.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [enabled, previewStampIds, scrollRootRef, totalRestaurants]);
+  }, [enabled, previewStampIds, fieldsRef, progressRef, stampsRef, scrollContainerRef, totalRestaurants]);
 
   return state;
 }
@@ -316,11 +332,22 @@ function PasaporteInner({
   const router = useRouter();
   const searchParams = useSearchParams();
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const previewScrollRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const previewFieldsRef = useRef<HTMLDivElement>(null);
+  const previewProgressRef = useRef<HTMLDivElement>(null);
+  const previewStampsRef = useRef<HTMLDivElement>(null);
   const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
   const isPreview = !isAuthenticated;
-  const previewScroll = useScrollPreviewDemo(isPreview, restaurants, totalRestaurants, previewScrollRef);
+  const previewScroll = useScrollPreviewDemo(
+    isPreview,
+    restaurants,
+    totalRestaurants,
+    previewFieldsRef,
+    previewProgressRef,
+    previewStampsRef,
+    scrollContainerRef
+  );
   const animatedStats = useAnimatedPassportStats(
     totalStamps,
     uniqueStamped,
@@ -405,7 +432,11 @@ function PasaporteInner({
   }, [searchParams]);
 
   return (
-    <div className={`min-h-[calc(100dvh-4rem)] bg-[#e8e0d0] py-3 sm:py-8 px-2 sm:px-4 ${isAuthenticated ? "pb-24" : "pb-8"}`}>
+    <div
+      ref={scrollContainerRef}
+      className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#e8e0d0]"
+    >
+      <div className={`py-3 sm:py-6 px-2 sm:px-4 ${isAuthenticated ? "pb-24" : "pb-6"}`}>
       <input
         ref={cameraInputRef}
         type="file"
@@ -419,12 +450,11 @@ function PasaporteInner({
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         {!isAuthenticated && <PasaporteInfoCard className="mb-5 sm:mb-6" />}
 
-        <div ref={previewScrollRef} className={isPreview ? "min-h-[145vh]" : undefined}>
-          {isPreview && (
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif-cluster text-[#3d2914] text-center mb-5 sm:mb-6 tracking-wide leading-tight">
-              Llénalo todo.
-            </h2>
-          )}
+        {isPreview && (
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif-cluster text-[#3d2914] text-center mb-5 sm:mb-6 tracking-wide leading-tight">
+            Llénalo todo.
+          </h2>
+        )}
 
         <div className="relative rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
           <div
@@ -472,7 +502,10 @@ function PasaporteInner({
                 )}
               </div>
 
-              <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_6.75rem] sm:grid-cols-[minmax(0,1fr)_7.5rem] gap-x-5 gap-y-2.5 pt-0.5 items-start">
+              <div
+                ref={previewFieldsRef}
+                className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_6.75rem] sm:grid-cols-[minmax(0,1fr)_7.5rem] gap-x-5 gap-y-2.5 pt-0.5 items-start"
+              >
                 <div className="space-y-2.5">
                   <div>
                     <p className="passport-label">Nombre</p>
@@ -524,7 +557,9 @@ function PasaporteInner({
               </div>
             </div>
 
-            <PassportProgressTrack animatedProgress={displayStats.progress} tierId={displayTierId} />
+            <div ref={previewProgressRef}>
+              <PassportProgressTrack animatedProgress={displayStats.progress} tierId={displayTierId} />
+            </div>
 
             {notice && (
               <div
@@ -541,7 +576,6 @@ function PasaporteInner({
             )}
           </div>
 
-          {/* Cuadrícula de sellos */}
           <div className="relative px-4 sm:px-8 py-5 sm:py-7 border-t border-[#d9cdb3]/70">
             {showPoblanoCelebration && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-amber-100/92 backdrop-blur-sm">
@@ -553,7 +587,7 @@ function PasaporteInner({
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
+            <div ref={previewStampsRef} className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
               {restaurants.map((restaurant, index) => {
                 const stamp = stampMap[restaurant.id];
                 const hasStamp = isPreview
@@ -603,12 +637,13 @@ function PasaporteInner({
           </div>
         </div>
 
-          {isPreview && <div className="h-[38vh]" aria-hidden />}
-        </div>
-
-        <p className="text-center text-[10px] text-stone-600 mt-4 max-w-sm mx-auto leading-relaxed font-light px-2">
-          Escanea el QR en cada restaurante participante. Un sello por visita cada 18 horas por lugar.
+        <p className="text-center text-[11px] text-stone-600 mt-4 max-w-sm mx-auto leading-relaxed font-light px-2">
+          <Link href="/map" className="font-semibold text-[#27366D] underline underline-offset-2">
+            Entra al MAP
+          </Link>{" "}
+          y descubre qué lugares del barrio te dan sellos.
         </p>
+      </div>
       </div>
 
       {isAuthenticated && (

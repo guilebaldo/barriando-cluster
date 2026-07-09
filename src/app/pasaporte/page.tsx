@@ -1,7 +1,6 @@
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import SiteShell from "../components/SiteShell";
 import PasaporteClient from "./PasaporteClient";
+import PasaporteImmersiveShell from "./PasaporteImmersiveShell";
 import { getSession } from "@/lib/auth-utils";
 import {
   getParticipatingRestaurants,
@@ -44,25 +43,22 @@ export default async function PasaportePage() {
   const progress = getPassportProgress(uniqueStampedCount, restaurants.length);
 
   return (
-    <SiteShell className="bg-[#e8e0d0]">
+    <PasaporteImmersiveShell>
       <Navbar />
-      <main className="flex-1 w-full">
-        <PasaporteClient
-          userName={session?.nombre || session?.email || "Visitante"}
-          userImage={userImage}
-          isAuthenticated={Boolean(session)}
-          restaurants={restaurants}
-          stampMap={stampMap}
-          totalStamps={totalStamps}
-          uniqueStamped={uniqueStampedCount}
-          totalRestaurants={restaurants.length}
-          tierLabel={rank.label}
-          tierId={rank.id}
-          isPoblanoComplete={rank.isComplete}
-          progress={progress}
-        />
-      </main>
-      <Footer />
-    </SiteShell>
+      <PasaporteClient
+        userName={session?.nombre || session?.email || "Visitante"}
+        userImage={userImage}
+        isAuthenticated={Boolean(session)}
+        restaurants={restaurants}
+        stampMap={stampMap}
+        totalStamps={totalStamps}
+        uniqueStamped={uniqueStampedCount}
+        totalRestaurants={restaurants.length}
+        tierLabel={rank.label}
+        tierId={rank.id}
+        isPoblanoComplete={rank.isComplete}
+        progress={progress}
+      />
+    </PasaporteImmersiveShell>
   );
 }
