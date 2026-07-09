@@ -84,21 +84,49 @@ function useAnimatedPassportStats(
   return animated;
 }
 
-function PassportProgressTrack({ animatedProgress }: { animatedProgress: number }) {
+function PassportProgressTrack({
+  animatedProgress,
+  tierId,
+}: {
+  animatedProgress: number;
+  tierId: "turista" | "poblano";
+}) {
   const filledSlots = Math.round((animatedProgress / 100) * MRZ_SLOTS);
 
   return (
     <div className="mt-5">
-      <div className="flex items-center gap-2 font-passport-mrz text-[10px] sm:text-[11px] font-bold tracking-[0.12em]">
-        <span className="shrink-0 text-black">TURISTA</span>
-        <span className="flex-1 min-w-0 overflow-hidden whitespace-nowrap leading-none" aria-hidden>
-          {Array.from({ length: MRZ_SLOTS }).map((_, index) => (
-            <span key={index} className={index < filledSlots ? "text-black" : "text-stone-300"}>
-              {"<"}
-            </span>
-          ))}
-        </span>
-        <span className="shrink-0 text-black">POBLANO</span>
+      <div className="flex items-end justify-between gap-3 font-passport-mrz text-[11px] sm:text-xs font-bold tracking-[0.14em]">
+        <span className={tierId === "turista" ? "text-[#27366D]" : "text-stone-500"}>TURISTA</span>
+        <span className={tierId === "poblano" ? "text-amber-700" : "text-stone-500"}>POBLANO</span>
+      </div>
+      <div
+        className="mt-2 flex w-full justify-between font-passport-mrz text-[13px] sm:text-sm leading-none select-none"
+        aria-hidden
+      >
+        {Array.from({ length: MRZ_SLOTS }).map((_, index) => (
+          <span
+            key={index}
+            className={
+              index < filledSlots
+                ? tierId === "poblano"
+                  ? "text-amber-700"
+                  : "text-[#27366D]"
+                : "text-stone-300/90"
+            }
+          >
+            {"<"}
+          </span>
+        ))}
+      </div>
+      <div className="mt-2 h-1 w-full rounded-full bg-stone-300/70 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-[width] duration-300 ${
+            tierId === "poblano"
+              ? "bg-gradient-to-r from-amber-500 to-amber-700"
+              : "bg-gradient-to-r from-[#27366D] to-[#1e2b58]"
+          }`}
+          style={{ width: `${animatedProgress}%` }}
+        />
       </div>
     </div>
   );
@@ -224,14 +252,14 @@ function PasaporteInner({
           <div className="relative px-4 sm:px-8 pt-5 sm:pt-7 pb-6 border-b border-[#d9cdb3]">
             <div className="flex items-start justify-between gap-3 border-b border-[#d9cdb3]/80 pb-3">
               <div>
-                <p className="text-[9px] font-passport-mrz tracking-[0.28em] text-stone-500 uppercase">
+                <p className="text-[9px] font-passport-mrz tracking-[0.35em] text-stone-500 uppercase">
                   Clúster Turístico de Puebla
                 </p>
                 <h1 className="text-lg sm:text-2xl font-black font-serif-cluster uppercase tracking-[0.12em] text-[#3d2914] leading-tight mt-0.5">
                   Pasaporte Digital
                 </h1>
               </div>
-              <p className="text-sm sm:text-lg font-black font-serif-cluster uppercase tracking-[0.12em] text-[#3d2914] leading-tight text-right shrink-0 max-w-[8.5rem] sm:max-w-[9.5rem]">
+              <p className="passport-value text-[11px] sm:text-xs leading-snug text-right shrink-0 max-w-[8.5rem] sm:max-w-[9.5rem]">
                 Puebla de Los Ángeles
               </p>
             </div>
@@ -252,7 +280,7 @@ function PasaporteInner({
                     <span className="text-2xl font-serif-cluster text-[#5c3d1e]/70">
                       {getInitials(userName) || "?"}
                     </span>
-                    <span className="text-[8px] font-passport-mrz tracking-widest mt-1 text-stone-500">Foto</span>
+                    <span className="text-[8px] font-passport-mrz tracking-widest mt-1 uppercase">Foto</span>
                   </div>
                 )}
               </div>
@@ -277,7 +305,7 @@ function PasaporteInner({
                       }`}
                     >
                       {tierId === "poblano" && <span aria-hidden>★</span>}
-                      {tierLabel}
+                      {tierLabel.toUpperCase()}
                     </p>
                   </div>
                 </div>
@@ -301,7 +329,7 @@ function PasaporteInner({
               </div>
             </div>
 
-            <PassportProgressTrack animatedProgress={animatedStats.progress} />
+            <PassportProgressTrack animatedProgress={animatedStats.progress} tierId={tierId} />
 
             {!isAuthenticated && (
               <p className="mt-4 text-[11px] text-amber-950 bg-amber-100/80 border border-amber-200 rounded-lg px-3 py-2.5 leading-relaxed">
