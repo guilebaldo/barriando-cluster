@@ -111,7 +111,7 @@ export default function VecinoPanel({ user, subscription, showCredential }: Veci
           pago.
         </p>
         <Link
-          href="/socios"
+          href="/socios?beneficios=1"
           className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition"
         >
           Consultar beneficios

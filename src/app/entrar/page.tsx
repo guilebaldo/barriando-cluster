@@ -5,6 +5,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
+import { isPaidMember } from "@/lib/membresia";
+import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 
 export const metadata = {
   title: "Entrar | Barriando",
@@ -14,7 +16,10 @@ export const metadata = {
 export default async function EntrarPage() {
   const session = await getSession();
   if (session) {
-    redirect("/barrid");
+    if (isPaidMember(session.plan, session.subscriptionStatus)) {
+      redirect("/barrid");
+    }
+    redirect("/pasaporte");
   }
 
   return (
@@ -35,10 +40,11 @@ export default async function EntrarPage() {
             <LogIn className="w-5 h-5 text-[#27366D]" />
             <h2 className="mt-3 text-lg font-bold text-slate-900">Iniciar sesión</h2>
             <p className="mt-2 text-sm text-slate-600 font-light leading-relaxed">
-              Si ya tienes cuenta, entra con Google y te llevamos directo a tu BarrID.
+              Si ya tienes cuenta, entra con Google. Los turistas van al Pasaporte; los socios de pago,
+              a su BarrID.
             </p>
             <Link
-              href="/login?callbackUrl=/barrid"
+              href={`/login?callbackUrl=${encodeURIComponent(ONBOARDING_CONTINUE_PATH)}`}
               className="mt-5 inline-flex items-center justify-center w-full bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg transition"
             >
               Iniciar sesión

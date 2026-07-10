@@ -72,7 +72,7 @@ export async function resolvePlanSelectionPath(plan: MembershipPlan): Promise<st
 
   if (isTuristaPlan(plan)) {
     await ensureTuristaSubscription(session.user.id);
-    return "/barrid";
+    return "/pasaporte";
   }
 
   if (isPaidMembershipPlan(plan)) {
@@ -89,7 +89,7 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
   redirect(path);
 }
 
-/** Tras autenticación: turista → BarrID; plan de pago → pantalla de certificación. */
+/** Tras autenticación: turista → Pasaporte; plan de pago activo → BarrID. */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -111,12 +111,12 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
 
   if (!sub || isTuristaPlan(sub.plan)) {
     await ensureTuristaSubscription(session.user.id);
-    redirect("/barrid?bienvenida=1");
+    redirect("/pasaporte");
   }
 
   if (sub && isPaidMembershipPlan(sub.plan) && !hasCommercialAccess(sub.plan, sub.status)) {
     if (sub.status === "manual_pending") {
-      redirect("/barrid");
+      redirect("/panel");
     }
     redirect("/certificacion/pago");
   }

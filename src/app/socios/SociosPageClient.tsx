@@ -19,12 +19,15 @@ function formatBenefitDate(value: string | null): string | null {
 export default function SociosPageClient({
   socios,
   canViewBenefits,
+  initialBenefitsOnly = false,
 }: {
   socios: Socio[];
   canViewBenefits: boolean;
+  initialBenefitsOnly?: boolean;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [benefitsOnly, setBenefitsOnly] = useState(initialBenefitsOnly);
   const [activeBenefit, setActiveBenefit] = useState<{
     name: string;
     benefit: SocioBenefitInfo;
@@ -44,9 +47,11 @@ export default function SociosPageClient({
       const matchesCategory =
         selectedCategory === "Todos" || socio.categoria === selectedCategory;
 
-      return matchesSearch && matchesCategory;
+      const matchesBenefits = !benefitsOnly || Boolean(socio.benefit);
+
+      return matchesSearch && matchesCategory && matchesBenefits;
     });
-  }, [searchQuery, selectedCategory, socios]);
+  }, [searchQuery, selectedCategory, benefitsOnly, socios]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
@@ -101,6 +106,20 @@ export default function SociosPageClient({
                   {cat}
                 </button>
               ))}
+              {canViewBenefits && (
+                <button
+                  type="button"
+                  onClick={() => setBenefitsOnly((v) => !v)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                    benefitsOnly
+                      ? "bg-amber-500 text-slate-950 shadow-sm"
+                      : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
+                  }`}
+                >
+                  <Gift className="w-3 h-3" />
+                  Con beneficios
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -231,7 +250,7 @@ export default function SociosPageClient({
               </p>
             )}
             <Link
-              href="/panel?credencial=1"
+              href="/barrid"
               className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
               onClick={() => setActiveBenefit(null)}
             >
