@@ -62,7 +62,8 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     role: session?.user?.role,
   });
   const isPaid = Boolean(plan && isPaidMember(plan, subscriptionStatus));
-  const profileHref = isPaid ? "/barrid" : "/pasaporte";
+  // Admin y socios de pago → BarrID; solo turista → Pasaporte
+  const profileHref = isAdmin || isPaid ? "/barrid" : "/pasaporte";
 
   useEffect(() => {
     if (!open) return;
@@ -91,28 +92,21 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
   if (mobile) {
     return (
       <div className="mt-2 pt-2 border-t border-[#314385]/60">
-        {isAdmin ? (
-          <>
-            <p className="px-3 py-2 text-sm font-bold text-amber-400">{displayName}</p>
-            <Link
-              href="/admin"
-              className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-            >
-              ADMIN
-            </Link>
-            {logoutButton}
-          </>
-        ) : (
-          <>
-            <Link
-              href={profileHref}
-              className="block px-3 py-2 text-sm font-bold text-amber-400 hover:text-amber-300 transition"
-            >
-              {displayName}
-            </Link>
-            {logoutButton}
-          </>
+        <Link
+          href={profileHref}
+          className="block px-3 py-2 text-sm font-bold text-amber-400 hover:text-amber-300 transition"
+        >
+          {displayName}
+        </Link>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+          >
+            ADMIN
+          </Link>
         )}
+        {logoutButton}
       </div>
     );
   }
@@ -125,16 +119,24 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
       >
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
-          aria-expanded={open}
-          aria-haspopup="menu"
-        >
-          {displayName}
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-        </button>
+        <div className="inline-flex items-center gap-1">
+          <Link
+            href="/barrid"
+            className="text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
+          >
+            {displayName}
+          </Link>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="text-amber-400 hover:text-amber-300 transition-colors"
+            aria-expanded={open}
+            aria-haspopup="menu"
+            aria-label="Abrir menú de cuenta"
+          >
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+          </button>
+        </div>
         {open && (
           <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
             <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">

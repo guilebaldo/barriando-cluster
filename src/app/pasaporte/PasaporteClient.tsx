@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { Camera } from "lucide-react";
 import { scanQrFromImageFile } from "@/lib/qr-scan-client";
 import { getMapHrefForRestaurant } from "@/lib/pasaporte";
+import { registroUrl } from "@/lib/plan-routing";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 
@@ -469,7 +470,12 @@ function PasaporteInner({
 
   const openNativeCamera = useCallback(() => {
     setQrError(null);
-    cameraInputRef.current?.click();
+    const input = cameraInputRef.current;
+    if (!input) return;
+    // Forzar captura con cámara trasera en móviles (app nativa / picker de cámara).
+    input.setAttribute("capture", "environment");
+    input.value = "";
+    input.click();
   }, []);
 
   const handleQrCapture = useCallback(
@@ -541,6 +547,7 @@ function PasaporteInner({
         capture="environment"
         className="sr-only"
         aria-hidden
+        tabIndex={-1}
         onChange={handleQrCapture}
       />
 
@@ -767,10 +774,14 @@ function PasaporteInner({
 
         {!isPreview && (
           <p className="text-center text-[11px] text-stone-600 mt-4 max-w-sm mx-auto leading-relaxed font-light px-2">
-            <Link href="/map" className="font-semibold text-[#27366D] underline underline-offset-2">
-              Entra al MAP
+            ¿Tienes un negocio en el barrio?{" "}
+            <Link
+              href={registroUrl("NEGOCIO_FAMILIAR")}
+              className="font-semibold text-[#27366D] underline underline-offset-2"
+            >
+              Regístralo
             </Link>{" "}
-            y descubre qué lugares del barrio te dan sellos.
+            para aparecer en el Pasaporte Digital.
           </p>
         )}
       </div>

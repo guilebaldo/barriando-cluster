@@ -8,6 +8,7 @@ import Footer from "../components/Footer";
 import SociosMapSection from "./SociosMapSection";
 import type { Socio, SocioBenefitInfo } from "../data/socios";
 import { Search, MapPin, ExternalLink, SlidersHorizontal, Building2, Gift, X } from "lucide-react";
+import { registroUrl } from "@/lib/plan-routing";
 
 function formatBenefitDate(value: string | null): string | null {
   if (!value) return null;
@@ -18,11 +19,11 @@ function formatBenefitDate(value: string | null): string | null {
 
 export default function SociosPageClient({
   socios,
-  canViewBenefits,
+  canRedeemBenefits,
   initialBenefitsOnly = false,
 }: {
   socios: Socio[];
-  canViewBenefits: boolean;
+  canRedeemBenefits: boolean;
   initialBenefitsOnly?: boolean;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,6 +54,8 @@ export default function SociosPageClient({
     });
   }, [searchQuery, selectedCategory, benefitsOnly, socios]);
 
+  const useBenefitHref = canRedeemBenefits ? "/barrid" : registroUrl("VECINO");
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
       <Navbar />
@@ -73,6 +76,27 @@ export default function SociosPageClient({
       </header>
 
       <main className="max-w-5xl mx-auto py-12 px-6">
+        {!canRedeemBenefits && (
+          <section className="mb-8 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-6 sm:p-8 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+              Beneficios para vecinos
+            </p>
+            <h2 className="mt-2 text-xl sm:text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+              Certifícate y desbloquea convenios exclusivos
+            </h2>
+            <p className="mt-3 text-sm text-slate-600 font-light leading-relaxed max-w-2xl">
+              Como Vecino certificado accedes a descuentos, cortesías y acceso preferente en negocios
+              del barrio. Explora los beneficios abajo y activa tu membresía cuando quieras canjearlos.
+            </p>
+            <Link
+              href={registroUrl("VECINO")}
+              className="mt-5 inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition shadow-sm"
+            >
+              Certificarme como Vecino
+            </Link>
+          </section>
+        )}
+
         <SociosMapSection socios={socios} />
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8 space-y-5">
@@ -106,20 +130,18 @@ export default function SociosPageClient({
                   {cat}
                 </button>
               ))}
-              {canViewBenefits && (
-                <button
-                  type="button"
-                  onClick={() => setBenefitsOnly((v) => !v)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                    benefitsOnly
-                      ? "bg-amber-500 text-slate-950 shadow-sm"
-                      : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
-                  }`}
-                >
-                  <Gift className="w-3 h-3" />
-                  Con beneficios
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setBenefitsOnly((v) => !v)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                  benefitsOnly
+                    ? "bg-amber-500 text-slate-950 shadow-sm"
+                    : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
+                }`}
+              >
+                <Gift className="w-3 h-3" />
+                Con beneficios
+              </button>
             </div>
           </div>
         </div>
@@ -175,7 +197,7 @@ export default function SociosPageClient({
                       </a>
                     )}
 
-                    {canViewBenefits && s.benefit && (
+                    {s.benefit && (
                       <button
                         type="button"
                         onClick={() => setActiveBenefit({ name: s.name, benefit: s.benefit! })}
@@ -249,12 +271,17 @@ export default function SociosPageClient({
                   : ""}
               </p>
             )}
+            {!canRedeemBenefits && (
+              <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                Para usar este beneficio certifícate como Vecino y muestra tu BarrID en el negocio.
+              </p>
+            )}
             <Link
-              href="/barrid"
+              href={useBenefitHref}
               className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
               onClick={() => setActiveBenefit(null)}
             >
-              Usar beneficio
+              {canRedeemBenefits ? "Usar beneficio" : "Certificarme como Vecino"}
             </Link>
           </div>
         </div>

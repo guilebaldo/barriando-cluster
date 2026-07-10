@@ -24,7 +24,9 @@ export default async function BarrIdPage() {
   }
 
   if (!isPaidMember(session.plan, session.subscriptionStatus)) {
-    redirect("/pasaporte");
+    if (!isAdminUser({ email: session.email, role: session.role })) {
+      redirect("/pasaporte");
+    }
   }
 
   const user = await loadPanelUser(session.id);

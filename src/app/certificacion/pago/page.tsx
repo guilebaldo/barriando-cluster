@@ -33,7 +33,7 @@ export default async function CertificacionPagoPage({
   }
 
   if (hasCommercialAccess(sub.plan, sub.status)) {
-    redirect("/panel?pago=exitoso");
+    redirect("/barrid?pago=exitoso");
   }
 
   if (!needsCertificationPayment(sub.plan, sub.status) && sub.status === "manual_pending") {

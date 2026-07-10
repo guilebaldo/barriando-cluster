@@ -13,7 +13,7 @@ export default async function SociosPage({
     getSession(),
     searchParams,
   ]);
-  const canViewBenefits = Boolean(
+  const canRedeemBenefits = Boolean(
     session?.plan && isPaidMember(session.plan, session.subscriptionStatus ?? "inactive")
   );
   const initialBenefitsOnly = params.beneficios === "1";
@@ -21,7 +21,7 @@ export default async function SociosPage({
   return (
     <SociosPageClient
       socios={socios}
-      canViewBenefits={canViewBenefits}
+      canRedeemBenefits={canRedeemBenefits}
       initialBenefitsOnly={initialBenefitsOnly}
     />
   );
