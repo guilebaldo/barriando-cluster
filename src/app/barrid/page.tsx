@@ -8,6 +8,7 @@ import { loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 import { loadPanelUser, normalizePanelSubscription } from "@/lib/panel-data";
 import { getParticipatingRestaurants, getPassportProgress } from "@/lib/pasaporte";
 import { isPaidMember, getPlanLabel, getSubscriptionStatusLabel } from "@/lib/membresia";
+import { isAdminUser } from "@/lib/admin";
 import {
   formatRenewalDisplay,
   resolveMembershipExpiryLabel,
@@ -54,7 +55,6 @@ export default async function BarrIdPage() {
             email: user?.email ?? session.email,
             image: user?.image ?? null,
           }}
-          plan={subscription.plan}
           planLabel={getPlanLabel(subscription.plan)}
           statusLabel={getSubscriptionStatusLabel(subscription.status)}
           priceLabel={safePlanPriceLabel(subscription.plan)}
@@ -63,7 +63,7 @@ export default async function BarrIdPage() {
           stampedCount={stampedCount}
           totalRestaurants={totalRestaurants}
           progress={progress}
-          isAdmin={session.role === "ADMIN"}
+          isAdmin={isAdminUser({ email: session.email, role: session.role })}
         />
       </main>
       <Footer />

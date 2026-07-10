@@ -41,7 +41,7 @@ const STAMP_OUTLINE_COLORS = [
   "border-[#27366D]",
 ] as const;
 
-const MRZ_SLOTS = 28;
+const MRZ_SLOTS = 20; // 10 a cada lado del porcentaje
 const STATS_ANIMATION_MS = 1600;
 
 const PREVIEW_NAME = "Ana García";
@@ -350,43 +350,54 @@ function PassportProgressTrack({
   animatedProgress: number;
   tierId: "turista" | "poblano";
 }) {
+  const halfSlots = MRZ_SLOTS / 2;
   const filledSlots = Math.round((animatedProgress / 100) * MRZ_SLOTS);
+  const filledColor = tierId === "poblano" ? "text-amber-700" : "text-[#27366D]";
+  const emptyColor = "text-stone-300/90";
+
+  function renderChevrons(startIndex: number, count: number) {
+    return Array.from({ length: count }).map((_, offset) => {
+      const index = startIndex + offset;
+      return (
+        <span key={index} className={index < filledSlots ? filledColor : emptyColor}>
+          {"<"}
+        </span>
+      );
+    });
+  }
 
   return (
-    <div className="mt-5">
-      <div className="flex items-end justify-between gap-3 font-passport-mrz text-[11px] sm:text-xs font-bold tracking-[0.14em]">
-        <span className={tierId === "turista" ? "text-[#27366D]" : "text-stone-500"}>TURISTA</span>
-        <span className={tierId === "poblano" ? "text-amber-700" : "text-stone-500"}>POBLANO</span>
-      </div>
-      <div
-        className="mt-2 flex w-full justify-between font-passport-mrz text-[13px] sm:text-sm leading-none select-none"
-        aria-hidden
+    <div
+      className="mt-5 flex w-full items-center gap-1 sm:gap-1.5 font-passport-mrz text-[10px] sm:text-xs font-bold tracking-[0.08em] sm:tracking-[0.12em] select-none"
+      role="progressbar"
+      aria-valuenow={animatedProgress}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Progreso del pasaporte: ${animatedProgress}%`}
+    >
+      <span
+        className={`shrink-0 ${tierId === "turista" ? "text-[#27366D]" : "text-stone-500"}`}
       >
-        {Array.from({ length: MRZ_SLOTS }).map((_, index) => (
-          <span
-            key={index}
-            className={
-              index < filledSlots
-                ? tierId === "poblano"
-                  ? "text-amber-700"
-                  : "text-[#27366D]"
-                : "text-stone-300/90"
-            }
-          >
-            {"<"}
-          </span>
-        ))}
-      </div>
-      <div className="mt-2 h-1 w-full rounded-full bg-stone-300/70 overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-[width] duration-300 ${
-            tierId === "poblano"
-              ? "bg-gradient-to-r from-amber-500 to-amber-700"
-              : "bg-gradient-to-r from-[#27366D] to-[#1e2b58]"
-          }`}
-          style={{ width: `${animatedProgress}%` }}
-        />
-      </div>
+        TURISTA
+      </span>
+      <span className="flex min-w-0 flex-1 items-center justify-end gap-px text-[12px] sm:text-sm leading-none" aria-hidden>
+        {renderChevrons(0, halfSlots)}
+      </span>
+      <span
+        className={`shrink-0 tabular-nums px-0.5 ${
+          tierId === "poblano" ? "text-amber-700" : "text-[#27366D]"
+        }`}
+      >
+        {animatedProgress}%
+      </span>
+      <span className="flex min-w-0 flex-1 items-center justify-start gap-px text-[12px] sm:text-sm leading-none" aria-hidden>
+        {renderChevrons(halfSlots, halfSlots)}
+      </span>
+      <span
+        className={`shrink-0 ${tierId === "poblano" ? "text-amber-700" : "text-stone-500"}`}
+      >
+        POBLANO
+      </span>
     </div>
   );
 }

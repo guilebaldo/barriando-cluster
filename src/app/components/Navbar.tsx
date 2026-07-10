@@ -6,8 +6,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, ChevronDown } from "lucide-react";
-import { isPaidMember, isTuristaPlan } from "@/lib/membresia";
-import { getAccountNavItem } from "@/lib/nav-account";
+import { isPaidMember } from "@/lib/membresia";
+import { isAdminUser } from "@/lib/admin";
 
 type NavLink = {
   href: string;
@@ -51,18 +51,18 @@ function navLinkClass(pathname: string, link: NavLink) {
 
 function UserMenu({ mobile = false }: { mobile?: boolean }) {
   const { data: session } = useSession();
-  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const displayName = session?.user?.name?.trim() || "Mi cuenta";
   const plan = session?.user?.plan;
   const subscriptionStatus = session?.user?.subscriptionStatus ?? "inactive";
-  const showPanelLink = Boolean(plan && !isTuristaPlan(plan));
-  const showBarrId = Boolean(plan && isPaidMember(plan, subscriptionStatus));
-  const panelItem = showPanelLink
-    ? getAccountNavItem(plan, subscriptionStatus, pathname)
-    : null;
+  const isAdmin = isAdminUser({
+    email: session?.user?.email,
+    role: session?.user?.role,
+  });
+  const isPaid = Boolean(plan && isPaidMember(plan, subscriptionStatus));
+  const profileHref = isPaid ? "/barrid" : "/pasaporte";
 
   useEffect(() => {
     if (!open) return;
@@ -73,33 +73,83 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
 
+  const logoutButton = (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={() => signOut({ callbackUrl: "/" })}
+      className={
+        mobile
+          ? "w-full py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition text-left"
+          : "w-full text-left px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition"
+      }
+    >
+      Cerrar sesión
+    </button>
+  );
+
   if (mobile) {
     return (
       <div className="mt-2 pt-2 border-t border-[#314385]/60">
-        <p className="px-3 py-2 text-sm font-bold text-amber-400">{displayName}</p>
-        {showBarrId && (
-          <Link
-            href="/barrid"
-            className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-          >
-            BarrID
-          </Link>
+        {isAdmin ? (
+          <>
+            <p className="px-3 py-2 text-sm font-bold text-amber-400">{displayName}</p>
+            <Link
+              href="/admin"
+              className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+            >
+              ADMIN
+            </Link>
+            {logoutButton}
+          </>
+        ) : (
+          <>
+            <Link
+              href={profileHref}
+              className="block px-3 py-2 text-sm font-bold text-amber-400 hover:text-amber-300 transition"
+            >
+              {displayName}
+            </Link>
+            {logoutButton}
+          </>
         )}
-        {panelItem && (
-          <Link
-            href={panelItem.href}
-            className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-          >
-            {panelItem.label}
-          </Link>
-        )}
+      </div>
+    );
+  }
+
+  if (isAdmin) {
+    return (
+      <div
+        ref={ref}
+        className="relative"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
         <button
           type="button"
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="w-full py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition text-left"
+          onClick={() => setOpen((v) => !v)}
+          className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
+          aria-expanded={open}
+          aria-haspopup="menu"
         >
-          Cerrar sesión
+          {displayName}
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
+        {open && (
+          <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
+            <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
+              <Link
+                href="/admin"
+                role="menuitem"
+                className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+                onClick={() => setOpen(false)}
+              >
+                ADMIN
+              </Link>
+              {logoutButton}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -111,50 +161,28 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
-        aria-expanded={open}
-        aria-haspopup="menu"
-      >
-        {displayName}
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]"
+      <div className="inline-flex items-center gap-1">
+        <Link
+          href={profileHref}
+          className="text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
         >
+          {displayName}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="text-amber-400 hover:text-amber-300 transition-colors"
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-label="Abrir menú de cuenta"
+        >
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </div>
+      {open && (
+        <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
-            {showBarrId && (
-              <Link
-                href="/barrid"
-                role="menuitem"
-                className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-                onClick={() => setOpen(false)}
-              >
-                BarrID
-              </Link>
-            )}
-            {panelItem && (
-              <Link
-                href={panelItem.href}
-                role="menuitem"
-                className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-                onClick={() => setOpen(false)}
-              >
-                {panelItem.label}
-              </Link>
-            )}
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="w-full text-left px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition"
-            >
-              Cerrar sesión
-            </button>
+            {logoutButton}
           </div>
         </div>
       )}
