@@ -1,16 +1,34 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import SocioLogo from "../components/SocioLogo";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SociosMapSection from "./SociosMapSection";
-import type { Socio } from "../data/socios";
-import { Search, MapPin, ExternalLink, SlidersHorizontal, Building2 } from "lucide-react";
+import type { Socio, SocioBenefitInfo } from "../data/socios";
+import { Search, MapPin, ExternalLink, SlidersHorizontal, Building2, Gift, X } from "lucide-react";
 
-export default function SociosPageClient({ socios }: { socios: Socio[] }) {
+function formatBenefitDate(value: string | null): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+}
+
+export default function SociosPageClient({
+  socios,
+  canViewBenefits,
+}: {
+  socios: Socio[];
+  canViewBenefits: boolean;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [activeBenefit, setActiveBenefit] = useState<{
+    name: string;
+    benefit: SocioBenefitInfo;
+  } | null>(null);
 
   const categorias = useMemo(() => {
     const list = new Set(socios.map((s) => s.categoria));
@@ -137,6 +155,17 @@ export default function SociosPageClient({ socios }: { socios: Socio[] }) {
                         <span className="truncate">Visitar sitio web</span>
                       </a>
                     )}
+
+                    {canViewBenefits && s.benefit && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveBenefit({ name: s.name, benefit: s.benefit! })}
+                        className="w-full mt-1 inline-flex items-center justify-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg transition"
+                      >
+                        <Gift className="w-3.5 h-3.5" />
+                        Beneficios
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -152,6 +181,65 @@ export default function SociosPageClient({ socios }: { socios: Socio[] }) {
       </main>
 
       <Footer />
+
+      {activeBenefit && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/50"
+            aria-label="Cerrar"
+            onClick={() => setActiveBenefit(null)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="relative w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-6"
+          >
+            <button
+              type="button"
+              onClick={() => setActiveBenefit(null)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-slate-700"
+              aria-label="Cerrar diálogo"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">
+              Beneficio para socios
+            </p>
+            <h2 className="text-lg font-bold text-slate-950 pr-8">{activeBenefit.name}</h2>
+            <p className="mt-3 text-sm font-semibold text-[#27366D]">{activeBenefit.benefit.title}</p>
+            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+              {activeBenefit.benefit.description}
+            </p>
+            <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                Cómo canjearlo
+              </p>
+              <p className="text-xs text-slate-700 leading-relaxed">
+                {activeBenefit.benefit.howToRedeem}
+              </p>
+            </div>
+            {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
+              <p className="mt-3 text-[11px] text-slate-500">
+                Vigencia
+                {activeBenefit.benefit.validFrom
+                  ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
+                  : ""}
+                {activeBenefit.benefit.validUntil
+                  ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
+                  : ""}
+              </p>
+            )}
+            <Link
+              href="/panel?credencial=1"
+              className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
+              onClick={() => setActiveBenefit(null)}
+            >
+              Usar beneficio
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

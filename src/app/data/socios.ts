@@ -1,3 +1,11 @@
+export interface SocioBenefitInfo {
+  title: string;
+  description: string;
+  howToRedeem: string;
+  validFrom: string | null;
+  validUntil: string | null;
+}
+
 export interface Socio {
   id: number;
   name: string;
@@ -6,6 +14,8 @@ export interface Socio {
   url: string;
   direccion?: string;
   telefono?: string;
+  /** Beneficio activo para socios de pago (solo si el negocio lo publicó). */
+  benefit?: SocioBenefitInfo | null;
 }
 
 export const listaSocios: Socio[] = [

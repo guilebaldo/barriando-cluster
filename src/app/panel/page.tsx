@@ -34,7 +34,7 @@ export const dynamic = "force-dynamic";
 export default async function PanelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bienvenida?: string; pago?: string }>;
+  searchParams: Promise<{ bienvenida?: string; pago?: string; credencial?: string }>;
 }) {
   const params = await searchParams;
   const session = await getSession();
@@ -154,6 +154,7 @@ export default async function PanelPage({
             paymentDetails={paymentDetails}
             totalMilestones={listaHitos.length}
             milestonesVisited={milestonesVisited}
+            showCredential={params.credencial === "1"}
           />
         </main>
         <Footer />

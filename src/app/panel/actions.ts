@@ -5,7 +5,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { listaSocios } from "@/app/data/socios";
-import { canLinkSocioAccount, getPlanLabel, isTuristaPlan } from "@/lib/membresia";
+import { canLinkSocioAccount, getPlanLabel, isBusinessPlan, isPaidMember, isTuristaPlan } from "@/lib/membresia";
+import { isLinkageApproved } from "@/lib/linkage";
+import {
+  buildBenefitVerifyUrl,
+  signBenefitCredentialToken,
+} from "@/lib/benefit-credential";
 import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
 import { getStripe } from "@/lib/stripe";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -416,5 +421,108 @@ export async function reportManualPayment(
       return { ok: false, error: "Debes iniciar sesión." };
     }
     return { ok: false, error: "No se pudo registrar el pago. Intenta de nuevo." };
+  }
+}
+
+export type UpdateBenefitResult = { ok: true } | { ok: false; error: string };
+
+export type BenefitCredentialResult =
+  | { ok: true; verifyUrl: string; expiresInSeconds: number }
+  | { ok: false; error: string };
+
+const benefitSchema = z.object({
+  offersBenefit: z.boolean(),
+  benefitTitle: z.string().trim().max(120),
+  benefitDescription: z.string().trim().max(600),
+  benefitHowToRedeem: z.string().trim().max(600),
+  benefitValidFrom: z.string().trim().optional(),
+  benefitValidUntil: z.string().trim().optional(),
+});
+
+function parseOptionalDate(value?: string): Date | null {
+  if (!value?.trim()) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export async function updateSocioBenefit(input: {
+  offersBenefit: boolean;
+  benefitTitle: string;
+  benefitDescription: string;
+  benefitHowToRedeem: string;
+  benefitValidFrom?: string;
+  benefitValidUntil?: string;
+}): Promise<UpdateBenefitResult> {
+  try {
+    const session = await requireSession();
+    const subscription = await prisma.subscription.findUnique({ where: { userId: session.id } });
+    if (!subscription || !isBusinessPlan(subscription.plan) || !isPaidMember(subscription.plan, subscription.status)) {
+      return { ok: false, error: "Solo negocios con membresía activa pueden publicar beneficios." };
+    }
+
+    const profile = await prisma.socioProfile.findUnique({ where: { userId: session.id } });
+    if (!profile || !isLinkageApproved(profile.linkageStatus)) {
+      return { ok: false, error: "Tu negocio debe estar vinculado y aprobado para publicar beneficios." };
+    }
+
+    const parsed = benefitSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const data = parsed.data;
+    if (data.offersBenefit) {
+      if (!data.benefitTitle.trim()) return { ok: false, error: "Indica el título del beneficio." };
+      if (!data.benefitDescription.trim()) return { ok: false, error: "Describe qué ofrece el beneficio." };
+      if (!data.benefitHowToRedeem.trim()) {
+        return { ok: false, error: "Explica cómo se hace válido el beneficio." };
+      }
+    }
+
+    await prisma.socioProfile.update({
+      where: { userId: session.id },
+      data: {
+        offersBenefit: data.offersBenefit,
+        benefitTitle: data.offersBenefit ? data.benefitTitle.trim() : null,
+        benefitDescription: data.offersBenefit ? data.benefitDescription.trim() : null,
+        benefitHowToRedeem: data.offersBenefit ? data.benefitHowToRedeem.trim() : null,
+        benefitValidFrom: data.offersBenefit ? parseOptionalDate(data.benefitValidFrom) : null,
+        benefitValidUntil: data.offersBenefit ? parseOptionalDate(data.benefitValidUntil) : null,
+      },
+    });
+
+    revalidatePath("/panel");
+    revalidatePath("/socios");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo guardar el beneficio. Intenta de nuevo." };
+  }
+}
+
+export async function createBenefitCredential(): Promise<BenefitCredentialResult> {
+  try {
+    const session = await requireSession();
+    const subscription = await prisma.subscription.findUnique({ where: { userId: session.id } });
+    if (!subscription || !isPaidMember(subscription.plan, subscription.status)) {
+      return {
+        ok: false,
+        error: "Necesitas una membresía de pago activa para usar beneficios.",
+      };
+    }
+
+    const token = await signBenefitCredentialToken(session.id);
+    return {
+      ok: true,
+      verifyUrl: buildBenefitVerifyUrl(token),
+      expiresInSeconds: 15 * 60,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo generar la credencial. Intenta de nuevo." };
   }
 }

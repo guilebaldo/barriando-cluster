@@ -12,6 +12,8 @@ import {
   getUpgradePlans,
   hasCommercialAccess,
   isTuristaPlan,
+  isVecinoPlan,
+  isBusinessPlan,
   canLinkSocioAccount,
   isSubscriptionStatusPending,
   isTransferPaymentPending,
@@ -35,6 +37,10 @@ import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
 import LinkSocioSection from "./LinkSocioSection";
 import TouristPanel from "./TouristPanel";
+import VecinoPanel from "./VecinoPanel";
+import SocioBenefitForm from "./SocioBenefitForm";
+import EstablishmentQrDownload from "./EstablishmentQrDownload";
+import BenefitCredentialCard from "./BenefitCredentialCard";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import {
   Building2,
@@ -69,6 +75,7 @@ interface PanelProps {
     createdAt: string | null;
   };
   socioProfile: {
+    id: string;
     businessName: string;
     website: string;
     googleBusinessUrl: string;
@@ -90,6 +97,12 @@ interface PanelProps {
     billingAddressFull: string;
     latitude: number | null;
     longitude: number | null;
+    offersBenefit: boolean;
+    benefitTitle: string;
+    benefitDescription: string;
+    benefitHowToRedeem: string;
+    benefitValidFrom: string | null;
+    benefitValidUntil: string | null;
   } | null;
   catalogSocio: {
     name: string;
@@ -111,6 +124,7 @@ interface PanelProps {
   };
   totalMilestones: number;
   milestonesVisited: number;
+  showCredential?: boolean;
 }
 
 export default function PanelDashboard({
@@ -128,6 +142,7 @@ export default function PanelDashboard({
   paymentDetails,
   totalMilestones,
   milestonesVisited,
+  showCredential = false,
 }: PanelProps) {
   const router = useRouter();
   const { update } = useSession();
@@ -154,6 +169,8 @@ export default function PanelDashboard({
   const status = subscription?.status ?? "inactive";
 
   const isTurista = isTuristaPlan(plan);
+  const isVecino = isVecinoPlan(plan);
+  const isBusiness = isBusinessPlan(plan);
   const commercial = hasCommercialAccess(plan, status);
   const canLink = canLinkSocioAccount(status);
   const pendingValidation = isSubscriptionStatusPending(status);
@@ -405,7 +422,7 @@ export default function PanelDashboard({
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-            {isTurista ? "Mi comunidad Barriando" : "Panel del socio"}
+            {isTurista ? "Mi comunidad Barriando" : isVecino ? "Panel del vecino" : "Panel del socio"}
           </h1>
           <p className="text-sm text-slate-600 mt-1">
             Bienvenido, {user.nombre} · Plan{" "}
@@ -441,6 +458,16 @@ export default function PanelDashboard({
           }}
           milestonesVisited={milestonesVisited}
           totalMilestones={totalMilestones}
+        />
+      ) : isVecino ? (
+        <VecinoPanel
+          user={{
+            nombre: user.nombre,
+            email: user.email,
+            image: user.image,
+          }}
+          subscription={subscription}
+          showCredential={showCredential}
         />
       ) : transferPending && !canLink ? (
         <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
@@ -490,6 +517,13 @@ export default function PanelDashboard({
         </div>
       ) : (
         <div className="space-y-6">
+          {showCredential && commercial && (
+            <BenefitCredentialCard
+              userName={user.nombre}
+              plan={plan}
+              expiryLabel={expiryLabel}
+            />
+          )}
           {showLinkSection && (
             <LinkSocioSection
               socios={socios ?? []}
@@ -564,6 +598,26 @@ export default function PanelDashboard({
                 />
               </div>
             </section>
+          )}
+
+          {hasBusinessEstablished && isBusiness && commercial && socioProfile && (
+            <>
+              <SocioBenefitForm
+                initial={{
+                  offersBenefit: socioProfile.offersBenefit,
+                  benefitTitle: socioProfile.benefitTitle,
+                  benefitDescription: socioProfile.benefitDescription,
+                  benefitHowToRedeem: socioProfile.benefitHowToRedeem,
+                  benefitValidFrom: socioProfile.benefitValidFrom,
+                  benefitValidUntil: socioProfile.benefitValidUntil,
+                }}
+                onSaved={refreshSession}
+              />
+              <EstablishmentQrDownload
+                socioId={user.socioId}
+                businessName={displayName ?? socioProfile.businessName}
+              />
+            </>
           )}
 
           <div className="grid md:grid-cols-2 gap-6">

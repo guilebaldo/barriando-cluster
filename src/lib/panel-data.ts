@@ -12,6 +12,7 @@ export type SafePanelSubscription = {
 };
 
 export type SafeSocioProfile = {
+  id: string;
   businessName: string;
   website: string;
   googleBusinessUrl: string;
@@ -33,6 +34,12 @@ export type SafeSocioProfile = {
   billingPais: string;
   billingCodigoPostal: string;
   billingAddressFull: string;
+  offersBenefit: boolean;
+  benefitTitle: string;
+  benefitDescription: string;
+  benefitHowToRedeem: string;
+  benefitValidFrom: string | null;
+  benefitValidUntil: string | null;
 };
 
 export const DEFAULT_PANEL_SUBSCRIPTION: SafePanelSubscription = {
@@ -87,6 +94,7 @@ export function normalizePanelSubscription(
 
 export function normalizeSocioProfile(
   profile?: {
+    id?: string | null;
     businessName?: string | null;
     website?: string | null;
     googleBusinessUrl?: string | null;
@@ -108,10 +116,24 @@ export function normalizeSocioProfile(
     billingPais?: string | null;
     billingCodigoPostal?: string | null;
     billingAddressFull?: string | null;
+    offersBenefit?: boolean | null;
+    benefitTitle?: string | null;
+    benefitDescription?: string | null;
+    benefitHowToRedeem?: string | null;
+    benefitValidFrom?: Date | string | null;
+    benefitValidUntil?: Date | string | null;
   } | null
 ): SafeSocioProfile | null {
   if (!profile) return null;
+
+  const toIso = (value?: Date | string | null): string | null => {
+    if (!value) return null;
+    const d = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  };
+
   return {
+    id: profile.id?.trim() ?? "",
     businessName: profile.businessName?.trim() ?? "",
     website: profile.website?.trim() ?? "",
     googleBusinessUrl: profile.googleBusinessUrl?.trim() ?? "",
@@ -133,6 +155,12 @@ export function normalizeSocioProfile(
     billingPais: profile.billingPais?.trim() ?? "México",
     billingCodigoPostal: profile.billingCodigoPostal?.trim() ?? "",
     billingAddressFull: profile.billingAddressFull?.trim() ?? "",
+    offersBenefit: Boolean(profile.offersBenefit),
+    benefitTitle: profile.benefitTitle?.trim() ?? "",
+    benefitDescription: profile.benefitDescription?.trim() ?? "",
+    benefitHowToRedeem: profile.benefitHowToRedeem?.trim() ?? "",
+    benefitValidFrom: toIso(profile.benefitValidFrom),
+    benefitValidUntil: toIso(profile.benefitValidUntil),
   };
 }
 

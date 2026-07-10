@@ -6,6 +6,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, ChevronDown } from "lucide-react";
+import { isTuristaPlan } from "@/lib/membresia";
+import { getAccountNavItem } from "@/lib/nav-account";
 
 type NavLink = {
   href: string;
@@ -49,10 +51,17 @@ function navLinkClass(pathname: string, link: NavLink) {
 
 function UserMenu({ mobile = false }: { mobile?: boolean }) {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const displayName = session?.user?.name?.trim() || "Mi cuenta";
+  const plan = session?.user?.plan;
+  const subscriptionStatus = session?.user?.subscriptionStatus ?? "inactive";
+  const showPanelLink = Boolean(plan && !isTuristaPlan(plan));
+  const panelItem = showPanelLink
+    ? getAccountNavItem(plan, subscriptionStatus, pathname)
+    : null;
 
   useEffect(() => {
     if (!open) return;
@@ -67,12 +76,14 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     return (
       <div className="mt-2 pt-2 border-t border-[#314385]/60">
         <p className="px-3 py-2 text-sm font-bold text-amber-400">{displayName}</p>
-        <Link
-          href="/barrid"
-          className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-        >
-          BarrID
-        </Link>
+        {panelItem && (
+          <Link
+            href={panelItem.href}
+            className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+          >
+            {panelItem.label}
+          </Link>
+        )}
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/" })}
@@ -107,14 +118,16 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
           className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]"
         >
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
-            <Link
-              href="/barrid"
-              role="menuitem"
-              className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-              onClick={() => setOpen(false)}
-            >
-              BarrID
-            </Link>
+            {panelItem && (
+              <Link
+                href={panelItem.href}
+                role="menuitem"
+                className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+                onClick={() => setOpen(false)}
+              >
+                {panelItem.label}
+              </Link>
+            )}
             <button
               type="button"
               role="menuitem"

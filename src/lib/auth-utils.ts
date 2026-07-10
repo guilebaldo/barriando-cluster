@@ -10,6 +10,7 @@ export interface SessionUser {
   role: UserRole;
   socioId: number | null;
   plan: MembershipPlan;
+  subscriptionStatus: string;
 }
 
 export async function getSession(): Promise<SessionUser | null> {
@@ -23,6 +24,7 @@ export async function getSession(): Promise<SessionUser | null> {
     role: session.user.role as UserRole,
     socioId: session.user.socioId ?? null,
     plan: session.user.plan ?? "TURISTA",
+    subscriptionStatus: session.user.subscriptionStatus ?? "inactive",
   };
 }
 

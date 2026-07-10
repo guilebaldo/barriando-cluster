@@ -144,9 +144,20 @@ export function isTuristaPlan(plan: MembershipPlan): boolean {
   return plan === "TURISTA";
 }
 
-/** @deprecated Usar isTuristaPlan */
 export function isVecinoPlan(plan: MembershipPlan): boolean {
-  return isTuristaPlan(plan);
+  return plan === "VECINO";
+}
+
+export function isBusinessPlan(plan: MembershipPlan): boolean {
+  return (
+    plan === "NEGOCIO_FAMILIAR" || plan === "MEDIANA_EMPRESA" || plan === "GRAN_EMPRESA"
+  );
+}
+
+/** Membresía de pago activa (Vecino o plan de negocio). */
+export function isPaidMember(plan: MembershipPlan, status: string): boolean {
+  if (isTuristaPlan(plan)) return false;
+  return status === "active" || status === "manual_active";
 }
 
 export function hasCommercialAccess(plan: MembershipPlan, status: string): boolean {

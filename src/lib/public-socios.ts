@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { listaSocios, type Socio } from "@/app/data/socios";
+import { listaSocios, type Socio, type SocioBenefitInfo } from "@/app/data/socios";
 import { compareSociosByPlan, getPlanForSocio, hasCommercialAccess } from "@/lib/membresia";
 import { isVisibleInCarousel, isMedianaCarouselPlan } from "@/lib/plan-visibility";
+import { isBenefitCurrentlyValid } from "@/lib/benefit-credential";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const BUSINESS_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
@@ -38,6 +39,12 @@ type PublishedUserRow = {
     isManualEntry: boolean | null;
     address: string | null;
     category: string | null;
+    offersBenefit: boolean | null;
+    benefitTitle: string | null;
+    benefitDescription: string | null;
+    benefitHowToRedeem: string | null;
+    benefitValidFrom: Date | null;
+    benefitValidUntil: Date | null;
   } | null;
 };
 
@@ -65,6 +72,12 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
             isManualEntry: true,
             address: true,
             category: true,
+            offersBenefit: true,
+            benefitTitle: true,
+            benefitDescription: true,
+            benefitHowToRedeem: true,
+            benefitValidFrom: true,
+            benefitValidUntil: true,
           },
         },
       },
@@ -73,6 +86,30 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
     console.error("[public-socios] loadPublishedBusinessUsers failed:", error);
     return [];
   }
+}
+
+function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefitInfo | null {
+  if (!profile) return null;
+  if (
+    !isBenefitCurrentlyValid({
+      offersBenefit: Boolean(profile.offersBenefit),
+      benefitValidFrom: profile.benefitValidFrom,
+      benefitValidUntil: profile.benefitValidUntil,
+    })
+  ) {
+    return null;
+  }
+  const title = profile.benefitTitle?.trim();
+  const description = profile.benefitDescription?.trim();
+  const howToRedeem = profile.benefitHowToRedeem?.trim();
+  if (!title || !description || !howToRedeem) return null;
+  return {
+    title,
+    description,
+    howToRedeem,
+    validFrom: profile.benefitValidFrom?.toISOString() ?? null,
+    validUntil: profile.benefitValidUntil?.toISOString() ?? null,
+  };
 }
 
 function userToSocio(user: PublishedUserRow): Socio | null {
@@ -90,6 +127,7 @@ function userToSocio(user: PublishedUserRow): Socio | null {
         url: profile.website?.trim() || catalog.url,
         direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || catalog.direccion,
         categoria: profile.category?.trim() || catalog.categoria,
+        benefit: profileBenefit(profile),
       };
     }
   }
@@ -106,6 +144,7 @@ function userToSocio(user: PublishedUserRow): Socio | null {
     foto,
     url: profile.website?.trim() || "#",
     direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || undefined,
+    benefit: profileBenefit(profile),
   };
 }
 

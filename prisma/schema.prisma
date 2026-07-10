@@ -67,11 +67,13 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  accounts        Account[]
-  sessions        Session[]
-  subscription    Subscription?
-  socioProfile    SocioProfile?
-  stamps          Stamp[]
+  accounts              Account[]
+  sessions              Session[]
+  subscription          Subscription?
+  socioProfile          SocioProfile?
+  stamps                Stamp[]
+  benefitRedemptionsAsBeneficiary BenefitRedemption[] @relation("BenefitBeneficiary")
+  benefitRedemptionsAsProvider    BenefitRedemption[] @relation("BenefitProvider")
 }
 
 model VerificationToken {
@@ -125,8 +127,31 @@ model SocioProfile {
   billingPais       String?
   billingCodigoPostal String?
   billingAddressFull  String?
+  offersBenefit       Boolean  @default(false)
+  benefitTitle        String?
+  benefitDescription  String?
+  benefitHowToRedeem  String?
+  benefitValidFrom    DateTime?
+  benefitValidUntil   DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  benefitRedemptions BenefitRedemption[]
+}
+
+model BenefitRedemption {
+  id                String   @id @default(cuid())
+  beneficiaryUserId String
+  beneficiary       User     @relation("BenefitBeneficiary", fields: [beneficiaryUserId], references: [id], onDelete: Cascade)
+  providerUserId    String
+  provider          User     @relation("BenefitProvider", fields: [providerUserId], references: [id], onDelete: Cascade)
+  socioProfileId    String
+  socioProfile      SocioProfile @relation(fields: [socioProfileId], references: [id], onDelete: Cascade)
+  confirmedAt       DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  @@index([beneficiaryUserId])
+  @@index([providerUserId])
+  @@index([socioProfileId])
 }
 
 model ContactMessage {
