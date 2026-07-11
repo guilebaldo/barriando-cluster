@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { Camera, Gift, Settings } from "lucide-react";
 import { createBenefitCredential } from "../panel/actions";
-import { scanQrFromImageFile } from "@/lib/qr-scan-client";
+import QrScanModal from "../components/QrScanModal";
 
 type BarrIdClientProps = {
   user: {
@@ -43,15 +42,13 @@ export default function BarrIdClient({
   totalRestaurants,
   progress,
 }: BarrIdClientProps) {
-  const router = useRouter();
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [credError, setCredError] = useState<string | null>(null);
   const [loadingCred, setLoadingCred] = useState(true);
   const [expiresAtMs, setExpiresAtMs] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [qrError, setQrError] = useState<string | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,54 +111,8 @@ export default function BarrIdClient({
     setRefreshKey((key) => key + 1);
   }, [expiresAtMs, loadingCred, secondsLeft]);
 
-  const openNativeCamera = useCallback(() => {
-    setQrError(null);
-    const input = cameraInputRef.current;
-    if (!input) return;
-    input.setAttribute("capture", "environment");
-    input.value = "";
-    input.click();
-  }, []);
-
-  const handleQrCapture = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = "";
-      if (!file) return;
-
-      setQrError(null);
-
-      try {
-        const path = await scanQrFromImageFile(file);
-        if (path) {
-          router.push(path);
-          return;
-        }
-        setQrError("No encontramos un QR válido de Barriando. Intenta de nuevo.");
-      } catch (error) {
-        if (error instanceof Error && error.message === "BARCODE_DETECTOR_UNAVAILABLE") {
-          setQrError("Tu navegador no puede leer QR desde la foto. Prueba con Chrome o Safari.");
-          return;
-        }
-        setQrError("No pudimos procesar la imagen. Toma otra foto más cerca del QR.");
-      }
-    },
-    [router]
-  );
-
   return (
     <div className="space-y-5 relative pb-20">
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        aria-hidden
-        tabIndex={-1}
-        onChange={handleQrCapture}
-      />
-
       <div className="absolute top-0 right-0 z-10">
         <Link
           href="/panel"
@@ -279,18 +230,19 @@ export default function BarrIdClient({
 
       <button
         type="button"
-        onClick={openNativeCamera}
+        onClick={() => setScannerOpen(true)}
         className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-50 w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition active:scale-95"
         aria-label="Escanear QR con la cámara"
       >
         <Camera className="w-6 h-6" strokeWidth={2.25} />
       </button>
 
-      {qrError && (
-        <p className="fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+4.25rem)] right-4 left-4 z-50 max-w-xs ml-auto text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow-md">
-          {qrError}
-        </p>
-      )}
+      <QrScanModal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        hint="Apunta al QR del negocio o hito. Se lee solo al enfocar, sin tomar foto."
+        fallbackHref="/pasaporte"
+      />
     </div>
   );
 }

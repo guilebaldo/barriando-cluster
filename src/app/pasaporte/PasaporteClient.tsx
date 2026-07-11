@@ -1,16 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Camera } from "lucide-react";
-import { scanQrFromImageFile } from "@/lib/qr-scan-client";
 import { getMapHrefForRestaurant } from "@/lib/pasaporte";
 import { registroUrl } from "@/lib/plan-routing";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
+import QrScanModal from "../components/QrScanModal";
 
 type RestaurantCard = {
   id: number;
@@ -427,15 +427,13 @@ function PasaporteInner({
   isPoblanoComplete,
   progress,
 }: PasaporteClientProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const previewFieldsRef = useRef<HTMLDivElement>(null);
   const previewProgressRef = useRef<HTMLDivElement>(null);
   const previewStampsRef = useRef<HTMLDivElement>(null);
   const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
-  const [qrError, setQrError] = useState<string | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const isPreview = !isAuthenticated;
   const previewStampIds = useMemo(
     () => (isPreview ? pickPreviewStampIds(restaurants) : []),
@@ -467,42 +465,6 @@ function PasaporteInner({
         progress: previewScroll.displayProgress,
       }
     : animatedStats;
-
-  const openNativeCamera = useCallback(() => {
-    setQrError(null);
-    const input = cameraInputRef.current;
-    if (!input) return;
-    // Forzar captura con cámara trasera en móviles (app nativa / picker de cámara).
-    input.setAttribute("capture", "environment");
-    input.value = "";
-    input.click();
-  }, []);
-
-  const handleQrCapture = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = "";
-      if (!file) return;
-
-      setQrError(null);
-
-      try {
-        const path = await scanQrFromImageFile(file);
-        if (path) {
-          router.push(path);
-          return;
-        }
-        setQrError("No encontramos un QR válido de Barriando. Intenta de nuevo.");
-      } catch (error) {
-        if (error instanceof Error && error.message === "BARCODE_DETECTOR_UNAVAILABLE") {
-          setQrError("Tu navegador no puede leer QR desde la foto. Prueba con Chrome o Safari.");
-          return;
-        }
-        setQrError("No pudimos procesar la imagen. Toma otra foto más cerca del QR.");
-      }
-    },
-    [router]
-  );
 
   useEffect(() => {
     if (isPoblanoComplete) {
@@ -540,17 +502,6 @@ function PasaporteInner({
   const pageContent = (
     <>
       <div className={`py-3 sm:py-6 px-2 sm:px-4 ${isAuthenticated ? "pb-24" : "pb-6"}`}>
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        aria-hidden
-        tabIndex={-1}
-        onChange={handleQrCapture}
-      />
-
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         {!isAuthenticated && <PasaporteInfoCard className="mb-5 sm:mb-6" />}
 
@@ -790,7 +741,7 @@ function PasaporteInner({
       {isAuthenticated && (
         <button
           type="button"
-          onClick={openNativeCamera}
+          onClick={() => setScannerOpen(true)}
           className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-50 w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition active:scale-95 animate-soft-glow"
           aria-label="Escanear QR con la cámara"
         >
@@ -798,11 +749,11 @@ function PasaporteInner({
         </button>
       )}
 
-      {isAuthenticated && qrError && (
-        <p className="fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+4.25rem)] right-4 left-4 z-50 max-w-xs ml-auto text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow-md">
-          {qrError}
-        </p>
-      )}
+      <QrScanModal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        hint="Apunta al QR del negocio o hito. Se lee solo al enfocar, sin tomar foto."
+      />
     </>
   );
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   Camera,
@@ -19,13 +19,12 @@ import { getPointStampHref } from "@/lib/map-point-stamp";
 import MapWelcomeFicha from "./MapWelcomeFicha";
 import MapGeoModal from "./MapGeoModal";
 import type { UserMapLocation } from "./GoogleMapRouteMap";
+import QrScanModal from "../components/QrScanModal";
 
 const GoogleMapRouteMap = dynamic(() => import("./GoogleMapRouteMap"), {
   ssr: false,
   loading: () => <div className="absolute inset-0 bg-slate-100 animate-pulse" />,
 });
-
-import { scanQrFromImageFile } from "@/lib/qr-scan-client";
 
 function NavArrowButton({
   direction,
@@ -62,9 +61,7 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
 }
 
 function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
   const hasAutoRoutedRef = useRef(false);
@@ -77,7 +74,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [sheetExpanded, setSheetExpanded] = useState(true);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
-  const [qrError, setQrError] = useState<string | null>(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const hasSocioDeepLink = useMemo(() => {
     const socioParam = searchParams.get("socio");
@@ -245,35 +242,8 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   }
 
   const openNativeCamera = useCallback(() => {
-    setQrError(null);
-    cameraInputRef.current?.click();
+    setScannerOpen(true);
   }, []);
-
-  const handleQrCapture = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = "";
-      if (!file) return;
-
-      setQrError(null);
-
-      try {
-        const path = await scanQrFromImageFile(file);
-        if (path) {
-          router.push(path);
-          return;
-        }
-        setQrError("No encontramos un código QR válido de Barriando en la foto. Intenta de nuevo.");
-      } catch (error) {
-        if (error instanceof Error && error.message === "BARCODE_DETECTOR_UNAVAILABLE") {
-          setQrError("No pudimos leer el QR en esta foto. Intenta con otro navegador o usa el enlace del Pasaporte.");
-          return;
-        }
-        setQrError("No pudimos procesar la imagen. Intenta tomar otra foto más cerca del QR.");
-      }
-    },
-    [router]
-  );
 
   const onSheetTouchStart = (event: React.TouchEvent) => {
     touchStartY.current = event.touches[0]?.clientY ?? null;
@@ -337,10 +307,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
           <ExternalLink className="w-3 h-3" />
         </Link>
       </div>
-
-      {qrError && (
-        <p className="text-[11px] text-red-600 mt-2 font-medium">{qrError}</p>
-      )}
     </>
   );
 
@@ -359,16 +325,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
   return (
     <div className="relative h-full w-full overflow-hidden overscroll-none">
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        aria-hidden
-        onChange={handleQrCapture}
-      />
-
       <div className="absolute inset-0">
         <GoogleMapRouteMap
           points={route.points}
@@ -470,6 +426,13 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         open={geoModalOpen}
         onClose={() => setGeoModalOpen(false)}
         onRetry={requestGeolocation}
+      />
+
+      <QrScanModal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        hint="Apunta al QR del negocio o hito. Se lee solo al enfocar, sin tomar foto."
+        fallbackHref="/pasaporte"
       />
     </div>
   );

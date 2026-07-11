@@ -1,3 +1,5 @@
+import jsQR from "jsqr";
+
 export function extractAppPathFromQr(raw: string): string | null {
   try {
     const url = raw.startsWith("http") ? new URL(raw) : new URL(raw, window.location.origin);
@@ -35,20 +37,38 @@ export async function scanQrFromImageFile(file: File): Promise<string | null> {
     }
   ).BarcodeDetector;
 
-  if (!Detector) {
+  try {
+    if (Detector) {
+      const detector = new Detector({ formats: ["qr_code"] });
+      const codes = await detector.detect(bitmap);
+      for (const code of codes) {
+        if (!code.rawValue) continue;
+        const path = extractAppPathFromQr(code.rawValue);
+        if (path) {
+          bitmap.close();
+          return path;
+        }
+      }
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return null;
+    }
+    ctx.drawImage(bitmap, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "attemptBoth",
+    });
     bitmap.close();
-    throw new Error("BARCODE_DETECTOR_UNAVAILABLE");
+    if (!code?.data) return null;
+    return extractAppPathFromQr(code.data);
+  } catch {
+    bitmap.close();
+    throw new Error("QR_DECODE_FAILED");
   }
-
-  const detector = new Detector({ formats: ["qr_code"] });
-  const codes = await detector.detect(bitmap);
-  bitmap.close();
-
-  for (const code of codes) {
-    if (!code.rawValue) continue;
-    const path = extractAppPathFromQr(code.rawValue);
-    if (path) return path;
-  }
-
-  return null;
 }
