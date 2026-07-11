@@ -131,6 +131,7 @@ model SocioProfile {
   benefitTitle        String?
   benefitDescription  String?
   benefitHowToRedeem  String?
+  benefitRedeemViaQr  Boolean  @default(false)
   benefitValidFrom    DateTime?
   benefitValidUntil   DateTime?
   createdAt         DateTime @default(now())

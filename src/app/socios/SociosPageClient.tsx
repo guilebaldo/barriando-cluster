@@ -9,6 +9,7 @@ import SociosMapSection from "./SociosMapSection";
 import type { Socio, SocioBenefitInfo } from "../data/socios";
 import { Search, MapPin, ExternalLink, SlidersHorizontal, Building2, Gift, X } from "lucide-react";
 import { registroUrl } from "@/lib/plan-routing";
+import BenefitRedeemQr from "./BenefitRedeemQr";
 
 function formatBenefitDate(value: string | null): string | null {
   if (!value) return null;
@@ -252,37 +253,66 @@ export default function SociosPageClient({
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               {activeBenefit.benefit.description}
             </p>
-            <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-                Cómo canjearlo
-              </p>
-              <p className="text-xs text-slate-700 leading-relaxed">
-                {activeBenefit.benefit.howToRedeem}
-              </p>
-            </div>
-            {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
-              <p className="mt-3 text-[11px] text-slate-500">
-                Vigencia
-                {activeBenefit.benefit.validFrom
-                  ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
-                  : ""}
-                {activeBenefit.benefit.validUntil
-                  ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
-                  : ""}
-              </p>
+
+            {activeBenefit.benefit.redeemViaQr && canRedeemBenefits ? (
+              <BenefitRedeemQr />
+            ) : (
+              <>
+                {!activeBenefit.benefit.redeemViaQr && (
+                  <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                      Cómo canjearlo
+                    </p>
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      {activeBenefit.benefit.howToRedeem}
+                    </p>
+                  </div>
+                )}
+                {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
+                  <p className="mt-3 text-[11px] text-slate-500">
+                    Vigencia
+                    {activeBenefit.benefit.validFrom
+                      ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
+                      : ""}
+                    {activeBenefit.benefit.validUntil
+                      ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
+                      : ""}
+                  </p>
+                )}
+                {!canRedeemBenefits && (
+                  <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    {activeBenefit.benefit.redeemViaQr
+                      ? "Para mostrar tu QR de canje certifícate como Vecino con membresía activa."
+                      : "Para usar este beneficio certifícate como Vecino y muestra tu BarrID en el negocio."}
+                  </p>
+                )}
+                {(!canRedeemBenefits || !activeBenefit.benefit.redeemViaQr) && (
+                  <Link
+                    href={useBenefitHref}
+                    className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
+                    onClick={() => setActiveBenefit(null)}
+                  >
+                    {canRedeemBenefits ? "Usar beneficio" : "Certificarme como Vecino"}
+                  </Link>
+                )}
+              </>
             )}
-            {!canRedeemBenefits && (
-              <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                Para usar este beneficio certifícate como Vecino y muestra tu BarrID en el negocio.
-              </p>
+
+            {activeBenefit.benefit.redeemViaQr && canRedeemBenefits && (
+              <>
+                {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
+                  <p className="mt-3 text-[11px] text-slate-500 text-center">
+                    Vigencia
+                    {activeBenefit.benefit.validFrom
+                      ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
+                      : ""}
+                    {activeBenefit.benefit.validUntil
+                      ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
+                      : ""}
+                  </p>
+                )}
+              </>
             )}
-            <Link
-              href={useBenefitHref}
-              className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
-              onClick={() => setActiveBenefit(null)}
-            >
-              {canRedeemBenefits ? "Usar beneficio" : "Certificarme como Vecino"}
-            </Link>
           </div>
         </div>
       )}

@@ -101,6 +101,7 @@ interface PanelProps {
     benefitTitle: string;
     benefitDescription: string;
     benefitHowToRedeem: string;
+    benefitRedeemViaQr: boolean;
     benefitValidFrom: string | null;
     benefitValidUntil: string | null;
   } | null;
@@ -608,6 +609,7 @@ export default function PanelDashboard({
                   benefitTitle: socioProfile.benefitTitle,
                   benefitDescription: socioProfile.benefitDescription,
                   benefitHowToRedeem: socioProfile.benefitHowToRedeem,
+                  benefitRedeemViaQr: socioProfile.benefitRedeemViaQr,
                   benefitValidFrom: socioProfile.benefitValidFrom,
                   benefitValidUntil: socioProfile.benefitValidUntil,
                 }}

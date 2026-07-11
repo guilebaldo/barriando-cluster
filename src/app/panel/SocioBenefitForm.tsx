@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Gift } from "lucide-react";
+import { Gift, QrCode } from "lucide-react";
 import { updateSocioBenefit } from "./actions";
 
 type BenefitFormProps = {
@@ -10,6 +10,7 @@ type BenefitFormProps = {
     benefitTitle: string;
     benefitDescription: string;
     benefitHowToRedeem: string;
+    benefitRedeemViaQr: boolean;
     benefitValidFrom: string | null;
     benefitValidUntil: string | null;
   };
@@ -28,6 +29,7 @@ export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps)
   const [benefitTitle, setBenefitTitle] = useState(initial.benefitTitle);
   const [benefitDescription, setBenefitDescription] = useState(initial.benefitDescription);
   const [benefitHowToRedeem, setBenefitHowToRedeem] = useState(initial.benefitHowToRedeem);
+  const [benefitRedeemViaQr, setBenefitRedeemViaQr] = useState(initial.benefitRedeemViaQr);
   const [benefitValidFrom, setBenefitValidFrom] = useState(toDateInput(initial.benefitValidFrom));
   const [benefitValidUntil, setBenefitValidUntil] = useState(toDateInput(initial.benefitValidUntil));
   const [msg, setMsg] = useState("");
@@ -42,6 +44,7 @@ export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps)
       benefitTitle,
       benefitDescription,
       benefitHowToRedeem,
+      benefitRedeemViaQr,
       benefitValidFrom,
       benefitValidUntil,
     });
@@ -64,7 +67,7 @@ export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps)
       </div>
       <p className="text-xs text-slate-500 mb-4 font-light leading-relaxed">
         Ofrece un beneficio especial a Vecinos y otros socios con membresía activa. Ellos lo verán en
-        /socios y lo canjearán mostrando su credencial QR.
+        /socios y lo canjearán con su credencial.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -107,20 +110,64 @@ export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps)
                 required={offersBenefit}
               />
             </div>
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-                Cómo se hace válido
+
+            <fieldset className="space-y-2">
+              <legend className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                Cómo se valida
+              </legend>
+              <label className="flex items-start gap-2 text-sm text-slate-800 cursor-pointer">
+                <input
+                  type="radio"
+                  name="redeem-method"
+                  checked={benefitRedeemViaQr}
+                  onChange={() => setBenefitRedeemViaQr(true)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="inline-flex items-center gap-1.5 font-medium">
+                    <QrCode className="w-3.5 h-3.5 text-[#27366D]" />
+                    Escaneando el QR de BarrID
+                  </span>
+                  <span className="block text-xs text-slate-500 font-light mt-0.5">
+                    En el popup de /socios se muestra el QR del socio; el negocio lo escanea para
+                    validar.
+                  </span>
+                </span>
               </label>
-              <textarea
-                value={benefitHowToRedeem}
-                onChange={(e) => setBenefitHowToRedeem(e.target.value)}
-                maxLength={600}
-                rows={3}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                placeholder="Ej. Muestra tu credencial QR al mesero y menciona Barriando"
-                required={offersBenefit}
-              />
-            </div>
+              <label className="flex items-start gap-2 text-sm text-slate-800 cursor-pointer">
+                <input
+                  type="radio"
+                  name="redeem-method"
+                  checked={!benefitRedeemViaQr}
+                  onChange={() => setBenefitRedeemViaQr(false)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="font-medium">Instrucciones por escrito</span>
+                  <span className="block text-xs text-slate-500 font-light mt-0.5">
+                    Describes cómo canjearlo y el socio usa el botón hacia BarrID si hace falta.
+                  </span>
+                </span>
+              </label>
+            </fieldset>
+
+            {!benefitRedeemViaQr && (
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                  Cómo se hace válido
+                </label>
+                <textarea
+                  value={benefitHowToRedeem}
+                  onChange={(e) => setBenefitHowToRedeem(e.target.value)}
+                  maxLength={600}
+                  rows={3}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  placeholder="Ej. Menciona Barriando al pagar y muestra tu membresía"
+                  required={offersBenefit && !benefitRedeemViaQr}
+                />
+              </div>
+            )}
+
             <div className="grid sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">

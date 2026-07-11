@@ -43,6 +43,7 @@ type PublishedUserRow = {
     benefitTitle: string | null;
     benefitDescription: string | null;
     benefitHowToRedeem: string | null;
+    benefitRedeemViaQr: boolean | null;
     benefitValidFrom: Date | null;
     benefitValidUntil: Date | null;
   } | null;
@@ -76,6 +77,7 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
             benefitTitle: true,
             benefitDescription: true,
             benefitHowToRedeem: true,
+            benefitRedeemViaQr: true,
             benefitValidFrom: true,
             benefitValidUntil: true,
           },
@@ -101,12 +103,17 @@ function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefit
   }
   const title = profile.benefitTitle?.trim();
   const description = profile.benefitDescription?.trim();
-  const howToRedeem = profile.benefitHowToRedeem?.trim();
-  if (!title || !description || !howToRedeem) return null;
+  const redeemViaQr = Boolean(profile.benefitRedeemViaQr);
+  const howToRedeem = profile.benefitHowToRedeem?.trim() || "";
+  if (!title || !description) return null;
+  if (!redeemViaQr && !howToRedeem) return null;
   return {
     title,
     description,
-    howToRedeem,
+    howToRedeem: redeemViaQr
+      ? howToRedeem || "Muestra este QR al negocio para validar tu membresía."
+      : howToRedeem,
+    redeemViaQr,
     validFrom: profile.benefitValidFrom?.toISOString() ?? null,
     validUntil: profile.benefitValidUntil?.toISOString() ?? null,
   };

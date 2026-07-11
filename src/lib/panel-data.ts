@@ -38,6 +38,7 @@ export type SafeSocioProfile = {
   benefitTitle: string;
   benefitDescription: string;
   benefitHowToRedeem: string;
+  benefitRedeemViaQr: boolean;
   benefitValidFrom: string | null;
   benefitValidUntil: string | null;
 };
@@ -120,6 +121,7 @@ export function normalizeSocioProfile(
     benefitTitle?: string | null;
     benefitDescription?: string | null;
     benefitHowToRedeem?: string | null;
+    benefitRedeemViaQr?: boolean | null;
     benefitValidFrom?: Date | string | null;
     benefitValidUntil?: Date | string | null;
   } | null
@@ -159,6 +161,7 @@ export function normalizeSocioProfile(
     benefitTitle: profile.benefitTitle?.trim() ?? "",
     benefitDescription: profile.benefitDescription?.trim() ?? "",
     benefitHowToRedeem: profile.benefitHowToRedeem?.trim() ?? "",
+    benefitRedeemViaQr: Boolean(profile.benefitRedeemViaQr),
     benefitValidFrom: toIso(profile.benefitValidFrom),
     benefitValidUntil: toIso(profile.benefitValidUntil),
   };

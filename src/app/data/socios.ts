@@ -2,6 +2,7 @@ export interface SocioBenefitInfo {
   title: string;
   description: string;
   howToRedeem: string;
+  redeemViaQr: boolean;
   validFrom: string | null;
   validUntil: string | null;
 }

@@ -435,6 +435,7 @@ const benefitSchema = z.object({
   benefitTitle: z.string().trim().max(120),
   benefitDescription: z.string().trim().max(600),
   benefitHowToRedeem: z.string().trim().max(600),
+  benefitRedeemViaQr: z.boolean(),
   benefitValidFrom: z.string().trim().optional(),
   benefitValidUntil: z.string().trim().optional(),
 });
@@ -450,6 +451,7 @@ export async function updateSocioBenefit(input: {
   benefitTitle: string;
   benefitDescription: string;
   benefitHowToRedeem: string;
+  benefitRedeemViaQr: boolean;
   benefitValidFrom?: string;
   benefitValidUntil?: string;
 }): Promise<UpdateBenefitResult> {
@@ -474,7 +476,7 @@ export async function updateSocioBenefit(input: {
     if (data.offersBenefit) {
       if (!data.benefitTitle.trim()) return { ok: false, error: "Indica el título del beneficio." };
       if (!data.benefitDescription.trim()) return { ok: false, error: "Describe qué ofrece el beneficio." };
-      if (!data.benefitHowToRedeem.trim()) {
+      if (!data.benefitRedeemViaQr && !data.benefitHowToRedeem.trim()) {
         return { ok: false, error: "Explica cómo se hace válido el beneficio." };
       }
     }
@@ -485,7 +487,13 @@ export async function updateSocioBenefit(input: {
         offersBenefit: data.offersBenefit,
         benefitTitle: data.offersBenefit ? data.benefitTitle.trim() : null,
         benefitDescription: data.offersBenefit ? data.benefitDescription.trim() : null,
-        benefitHowToRedeem: data.offersBenefit ? data.benefitHowToRedeem.trim() : null,
+        benefitRedeemViaQr: data.offersBenefit ? data.benefitRedeemViaQr : false,
+        benefitHowToRedeem: data.offersBenefit
+          ? data.benefitRedeemViaQr
+            ? data.benefitHowToRedeem.trim() ||
+              "Muestra este QR al negocio para validar tu membresía."
+            : data.benefitHowToRedeem.trim()
+          : null,
         benefitValidFrom: data.offersBenefit ? parseOptionalDate(data.benefitValidFrom) : null,
         benefitValidUntil: data.offersBenefit ? parseOptionalDate(data.benefitValidUntil) : null,
       },
