@@ -23,10 +23,9 @@ export default async function BarrIdPage() {
     redirect("/login?callbackUrl=/barrid");
   }
 
-  if (!isPaidMember(session.plan, session.subscriptionStatus)) {
-    if (!isAdminUser({ email: session.email, role: session.role })) {
-      redirect("/pasaporte");
-    }
+  const isAdmin = isAdminUser({ email: session.email, role: session.role });
+  if (!isPaidMember(session.plan, session.subscriptionStatus) && !isAdmin) {
+    redirect("/pasaporte");
   }
 
   const user = await loadPanelUser(session.id);
@@ -65,7 +64,6 @@ export default async function BarrIdPage() {
           stampedCount={stampedCount}
           totalRestaurants={totalRestaurants}
           progress={progress}
-          isAdmin={isAdminUser({ email: session.email, role: session.role })}
         />
       </main>
       <Footer />

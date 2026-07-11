@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { Gift, Settings } from "lucide-react";
+import { Camera, Gift, Settings } from "lucide-react";
 import { createBenefitCredential } from "../panel/actions";
+import { scanQrFromImageFile } from "@/lib/qr-scan-client";
 
 type BarrIdClientProps = {
   user: {
@@ -21,8 +23,14 @@ type BarrIdClientProps = {
   stampedCount: number;
   totalRestaurants: number;
   progress: number;
-  isAdmin: boolean;
 };
+
+function formatCountdown(totalSeconds: number): string {
+  const safe = Math.max(0, totalSeconds);
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
 
 export default function BarrIdClient({
   user,
@@ -34,11 +42,16 @@ export default function BarrIdClient({
   stampedCount,
   totalRestaurants,
   progress,
-  isAdmin,
 }: BarrIdClientProps) {
+  const router = useRouter();
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [credError, setCredError] = useState<string | null>(null);
   const [loadingCred, setLoadingCred] = useState(true);
+  const [expiresAtMs, setExpiresAtMs] = useState<number | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [qrError, setQrError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,9 +61,12 @@ export default function BarrIdClient({
       setCredError(null);
       const result = await createBenefitCredential();
       if (cancelled) return;
-      setLoadingCred(false);
       if (!result.ok) {
+        setLoadingCred(false);
         setCredError(result.error);
+        setQrDataUrl(null);
+        setExpiresAtMs(null);
+        setSecondsLeft(0);
         return;
       }
       try {
@@ -59,9 +75,18 @@ export default function BarrIdClient({
           margin: 2,
           errorCorrectionLevel: "M",
         });
-        if (!cancelled) setQrDataUrl(url);
+        if (cancelled) return;
+        setQrDataUrl(url);
+        const expiresAt = Date.now() + result.expiresInSeconds * 1000;
+        setExpiresAtMs(expiresAt);
+        setSecondsLeft(result.expiresInSeconds);
+        setLoadingCred(false);
       } catch {
-        if (!cancelled) setCredError("No se pudo dibujar el QR.");
+        if (!cancelled) {
+          setCredError("No se pudo dibujar el QR.");
+          setLoadingCred(false);
+          setExpiresAtMs(null);
+        }
       }
     }
 
@@ -69,10 +94,74 @@ export default function BarrIdClient({
     return () => {
       cancelled = true;
     };
+  }, [refreshKey]);
+
+  useEffect(() => {
+    if (!expiresAtMs) return;
+
+    const tick = () => {
+      setSecondsLeft(Math.max(0, Math.ceil((expiresAtMs - Date.now()) / 1000)));
+    };
+
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [expiresAtMs]);
+
+  useEffect(() => {
+    if (!expiresAtMs || loadingCred || secondsLeft > 0) return;
+    setExpiresAtMs(null);
+    setRefreshKey((key) => key + 1);
+  }, [expiresAtMs, loadingCred, secondsLeft]);
+
+  const openNativeCamera = useCallback(() => {
+    setQrError(null);
+    const input = cameraInputRef.current;
+    if (!input) return;
+    input.setAttribute("capture", "environment");
+    input.value = "";
+    input.click();
   }, []);
 
+  const handleQrCapture = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (!file) return;
+
+      setQrError(null);
+
+      try {
+        const path = await scanQrFromImageFile(file);
+        if (path) {
+          router.push(path);
+          return;
+        }
+        setQrError("No encontramos un QR válido de Barriando. Intenta de nuevo.");
+      } catch (error) {
+        if (error instanceof Error && error.message === "BARCODE_DETECTOR_UNAVAILABLE") {
+          setQrError("Tu navegador no puede leer QR desde la foto. Prueba con Chrome o Safari.");
+          return;
+        }
+        setQrError("No pudimos procesar la imagen. Toma otra foto más cerca del QR.");
+      }
+    },
+    [router]
+  );
+
   return (
-    <div className="space-y-5 relative">
+    <div className="space-y-5 relative pb-20">
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        aria-hidden
+        tabIndex={-1}
+        onChange={handleQrCapture}
+      />
+
       <div className="absolute top-0 right-0 z-10">
         <Link
           href="/panel"
@@ -85,26 +174,32 @@ export default function BarrIdClient({
       </div>
 
       <section className="pt-2 flex flex-col items-center text-center px-2">
-        <div className="w-52 h-52 sm:w-56 sm:h-56 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center overflow-hidden">
-          {loadingCred && (
+        <div className="w-52 h-52 sm:w-56 sm:h-56 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center overflow-hidden relative">
+          {loadingCred && !qrDataUrl && (
             <p className="text-xs text-slate-400 px-4">Generando credencial…</p>
           )}
           {credError && (
             <p className="text-xs text-red-700 px-4 leading-relaxed">{credError}</p>
           )}
-          {qrDataUrl && (
+          {qrDataUrl && !credError && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={qrDataUrl}
               alt="QR de credencial BarrID"
-              className="w-full h-full object-contain p-3"
+              className={`w-full h-full object-contain p-3 transition-opacity ${loadingCred ? "opacity-40" : "opacity-100"}`}
             />
           )}
         </div>
-        <p className="mt-4 max-w-sm text-sm text-slate-600 font-light leading-relaxed">
-          Muestra este QR en el negocio para validar tu membresía activa y canjear tu beneficio.
-          Expira en unos minutos; recarga la página si necesitas uno nuevo.
-        </p>
+        {expiresAtMs && !credError ? (
+          <p
+            className="mt-4 text-sm font-semibold tabular-nums text-[#27366D]"
+            aria-live="polite"
+          >
+            Válido por {formatCountdown(secondsLeft)}
+          </p>
+        ) : loadingCred && qrDataUrl ? (
+          <p className="mt-4 text-sm font-medium text-slate-500">Actualizando…</p>
+        ) : null}
       </section>
 
       <section className="bg-[#27366D] text-white rounded-2xl p-6 sm:p-7 border border-[#1e2b58]">
@@ -182,13 +277,19 @@ export default function BarrIdClient({
         Ver socios con beneficios
       </Link>
 
-      {isAdmin && (
-        <Link
-          href="/admin"
-          className="w-full inline-flex items-center justify-center border border-[#27366D] text-[#27366D] hover:bg-[#27366D]/5 text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg transition"
-        >
-          Panel admin
-        </Link>
+      <button
+        type="button"
+        onClick={openNativeCamera}
+        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-50 w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition active:scale-95"
+        aria-label="Escanear QR con la cámara"
+      >
+        <Camera className="w-6 h-6" strokeWidth={2.25} />
+      </button>
+
+      {qrError && (
+        <p className="fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+4.25rem)] right-4 left-4 z-50 max-w-xs ml-auto text-[11px] text-red-800 bg-red-50 border border-red-200 rounded-lg px-3 py-2 shadow-md">
+          {qrError}
+        </p>
       )}
     </div>
   );

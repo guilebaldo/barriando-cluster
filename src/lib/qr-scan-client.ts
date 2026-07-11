@@ -1,13 +1,28 @@
-export function extractPasaportePathFromQr(raw: string): string | null {
+export function extractAppPathFromQr(raw: string): string | null {
   try {
     const url = raw.startsWith("http") ? new URL(raw) : new URL(raw, window.location.origin);
-    if (url.pathname.startsWith("/pasaporte")) return `${url.pathname}${url.search}`;
-    const match = raw.match(/\/pasaporte\/sellar\?[^\s"'<>]+/);
-    return match ? match[0] : null;
+    if (
+      url.pathname.startsWith("/pasaporte") ||
+      url.pathname.startsWith("/beneficios/verificar")
+    ) {
+      return `${url.pathname}${url.search}`;
+    }
   } catch {
-    const match = raw.match(/\/pasaporte\/sellar\?[^\s"'<>]+/);
-    return match ? match[0] : null;
+    // fall through to regex
   }
+
+  const pasaporte = raw.match(/\/pasaporte\/sellar\?[^\s"'<>]+/);
+  if (pasaporte) return pasaporte[0];
+
+  const beneficio = raw.match(/\/beneficios\/verificar\?[^\s"'<>]+/);
+  if (beneficio) return beneficio[0];
+
+  return null;
+}
+
+/** @deprecated Prefer extractAppPathFromQr */
+export function extractPasaportePathFromQr(raw: string): string | null {
+  return extractAppPathFromQr(raw);
 }
 
 export async function scanQrFromImageFile(file: File): Promise<string | null> {
@@ -31,7 +46,7 @@ export async function scanQrFromImageFile(file: File): Promise<string | null> {
 
   for (const code of codes) {
     if (!code.rawValue) continue;
-    const path = extractPasaportePathFromQr(code.rawValue);
+    const path = extractAppPathFromQr(code.rawValue);
     if (path) return path;
   }
 
