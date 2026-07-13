@@ -2,7 +2,11 @@
 
 import { useEffect } from "react";
 
-/** Fullscreen + scroll lock en móvil; flujo normal en desktop. */
+/**
+ * Fullscreen + sin scroll de página en móvil.
+ * Evita `position: fixed` en `body` (rompe la navegación al /panel y otras rutas).
+ * El contenedor ya es `fixed inset-0`; solo se bloquea overflow.
+ */
 export default function BarrIdShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const html = document.documentElement;
@@ -11,34 +15,18 @@ export default function BarrIdShell({ children }: { children: React.ReactNode })
 
     const previous = {
       htmlOverflow: html.style.overflow,
-      htmlHeight: html.style.height,
       htmlOverscroll: html.style.overscrollBehavior,
       bodyOverflow: body.style.overflow,
-      bodyPosition: body.style.position,
-      bodyTop: body.style.top,
-      bodyLeft: body.style.left,
-      bodyRight: body.style.right,
-      bodyWidth: body.style.width,
-      bodyHeight: body.style.height,
       bodyOverscroll: body.style.overscrollBehavior,
     };
 
-    let scrollY = 0;
     let locked = false;
 
     const lock = () => {
       if (locked) return;
       locked = true;
-      scrollY = window.scrollY;
-      html.style.height = "100%";
       html.style.overflow = "hidden";
       html.style.overscrollBehavior = "none";
-      body.style.position = "fixed";
-      body.style.top = `-${scrollY}px`;
-      body.style.left = "0";
-      body.style.right = "0";
-      body.style.width = "100%";
-      body.style.height = "100%";
       body.style.overflow = "hidden";
       body.style.overscrollBehavior = "none";
     };
@@ -47,17 +35,9 @@ export default function BarrIdShell({ children }: { children: React.ReactNode })
       if (!locked) return;
       locked = false;
       html.style.overflow = previous.htmlOverflow;
-      html.style.height = previous.htmlHeight;
       html.style.overscrollBehavior = previous.htmlOverscroll;
       body.style.overflow = previous.bodyOverflow;
-      body.style.position = previous.bodyPosition;
-      body.style.top = previous.bodyTop;
-      body.style.left = previous.bodyLeft;
-      body.style.right = previous.bodyRight;
-      body.style.width = previous.bodyWidth;
-      body.style.height = previous.bodyHeight;
       body.style.overscrollBehavior = previous.bodyOverscroll;
-      window.scrollTo(0, scrollY);
     };
 
     const sync = () => {

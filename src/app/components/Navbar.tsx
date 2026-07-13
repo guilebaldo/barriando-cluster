@@ -98,6 +98,14 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
         >
           {displayName}
         </Link>
+        {(isAdmin || isPaid) && (
+          <Link
+            href="/panel"
+            className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+          >
+            Mi Panel
+          </Link>
+        )}
         {isAdmin && (
           <Link
             href="/admin"
@@ -140,6 +148,14 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
         {open && (
           <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
             <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
+              <Link
+                href="/panel"
+                role="menuitem"
+                className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+                onClick={() => setOpen(false)}
+              >
+                Mi Panel
+              </Link>
               <Link
                 href="/admin"
                 role="menuitem"
@@ -184,6 +200,16 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
       {open && (
         <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
+            {isPaid && (
+              <Link
+                href="/panel"
+                role="menuitem"
+                className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+                onClick={() => setOpen(false)}
+              >
+                Mi Panel
+              </Link>
+            )}
             {logoutButton}
           </div>
         </div>
