@@ -15,7 +15,7 @@ export async function createStampForUser(
   userId: string,
   restaurantSlug: string
 ): Promise<CreateStampResult> {
-  const restaurant = findRestaurantBySlug(restaurantSlug);
+  const restaurant = await findRestaurantBySlug(restaurantSlug);
   if (!restaurant) {
     return { ok: false, error: "invalid_restaurant" };
   }

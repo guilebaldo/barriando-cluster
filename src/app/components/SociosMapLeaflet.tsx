@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { sociosCoords } from "../data/socios-coords";
 import type { Socio } from "../data/socios";
+import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 
 function makeIcon(selected: boolean, hasBenefit: boolean) {
   const size = selected ? 14 : 10;
@@ -86,7 +86,7 @@ export default function SociosMapLeaflet({
     () =>
       socios
         .map((s) => {
-          const coord = sociosCoords[s.id];
+          const coord = resolveSocioMapCoord(s);
           if (!coord) return null;
           return { lat: coord.lat, lng: coord.lng, socio: s };
         })

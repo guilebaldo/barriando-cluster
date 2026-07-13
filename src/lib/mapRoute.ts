@@ -14,6 +14,7 @@ import {
 } from "@/lib/map-circuit";
 import { getPlanForSocio } from "@/lib/membresia";
 import { getParticipatingRestaurants } from "@/lib/pasaporte";
+import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 
 export type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 export { findNearestRoutePoint, reorderRouteFromPoint, buildWalkingItinerary } from "@/lib/map-route-client";
@@ -249,12 +250,12 @@ function loadCatalogRouteBusinesses(): RawPoint[] {
 }
 
 /** Restaurantes con sello de Pasaporte — siempre visibles en el MAP para deep links desde /pasaporte. */
-function loadStampRestaurantPoints(): RawPoint[] {
+async function loadStampRestaurantPoints(): Promise<RawPoint[]> {
   const points: RawPoint[] = [];
   const seenNames = new Set<string>();
 
-  for (const socio of getParticipatingRestaurants()) {
-    const coord = sociosCoords[socio.id];
+  for (const socio of await getParticipatingRestaurants()) {
+    const coord = resolveSocioMapCoord(socio);
     if (!coord) continue;
 
     const nameKey = normalizeName(socio.name);
@@ -358,7 +359,7 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
     loadActiveMilestones(),
     loadPremiumGranEmpresaBusinesses(),
     Promise.resolve(loadCatalogRouteBusinesses()),
-    Promise.resolve(loadStampRestaurantPoints()),
+    loadStampRestaurantPoints(),
   ]);
 
   const premiumByName = new Map<string, RawPoint>();

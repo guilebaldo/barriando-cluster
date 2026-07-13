@@ -8,6 +8,7 @@ import { isAdminUser } from "@/lib/admin";
 import { listaSocios } from "@/app/data/socios";
 import { getPlanLabel } from "@/lib/membresia";
 import { addThirtyDaysFrom } from "@/lib/subscription-lifecycle";
+import { publishBusinessPresenceOnPayment } from "@/lib/publish-business";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -32,9 +33,12 @@ export async function approveManualCertification(userId: string): Promise<Action
       },
     });
 
+    await publishBusinessPresenceOnPayment(userId, subscription.plan);
+
     revalidatePath("/admin");
     revalidatePath("/panel");
     revalidatePath("/socios");
+    revalidatePath("/pasaporte");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -183,6 +187,14 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
             : {}),
         },
       });
+
+      const subAfter = await prisma.subscription.findUnique({ where: { userId } });
+      if (
+        subAfter &&
+        (subAfter.status === "active" || subAfter.status === "manual_active")
+      ) {
+        await publishBusinessPresenceOnPayment(userId, subAfter.plan);
+      }
     }
 
     if (
@@ -251,6 +263,7 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
     revalidatePath("/admin");
     revalidatePath("/panel");
     revalidatePath("/socios");
+    revalidatePath("/pasaporte");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

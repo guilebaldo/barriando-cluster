@@ -1,11 +1,35 @@
 import { listaSocios, type Socio } from "@/app/data/socios";
+import { getPublicSociosList } from "@/lib/public-socios";
 
 export const STAMP_COOLDOWN_MS = 18 * 60 * 60 * 1000;
 export const STAMP_STATUS_VALIDATED = "validado";
 
-/** Restaurantes participantes en la temporada de chiles en nogada. */
-export function getParticipatingRestaurants(): Socio[] {
-  return listaSocios.filter((s) => s.categoria === "Alimentos y Bebidas");
+const FOOD_CATEGORY = "Alimentos y Bebidas";
+
+function isFoodAndDrink(socio: Socio): boolean {
+  return socio.categoria.trim().toLowerCase() === FOOD_CATEGORY.toLowerCase();
+}
+
+/**
+ * Catálogo estático de restaurantes (sin DB).
+ * Preferir `getParticipatingRestaurants()` async para incluir socios pagados.
+ */
+export function getCatalogParticipatingRestaurants(): Socio[] {
+  return listaSocios.filter(isFoodAndDrink);
+}
+
+/** @deprecated Usar getParticipatingRestaurants async */
+export function getParticipatingRestaurantsSync(): Socio[] {
+  return getCatalogParticipatingRestaurants();
+}
+
+/**
+ * Restaurantes del pasaporte: catálogo público + negocios con membresía comercial
+ * activa en categoría Alimentos y Bebidas (mismo universo que /socios).
+ */
+export async function getParticipatingRestaurants(): Promise<Socio[]> {
+  const publicList = await getPublicSociosList();
+  return publicList.filter(isFoodAndDrink).sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
 export function restaurantSlug(socio: Socio): string {
@@ -17,10 +41,10 @@ export function restaurantSlug(socio: Socio): string {
     .replace(/^-|-$/g, "");
 }
 
-export function findRestaurantBySlug(slug: string | null | undefined): Socio | null {
+export async function findRestaurantBySlug(slug: string | null | undefined): Promise<Socio | null> {
   if (!slug?.trim()) return null;
   const normalized = slug.trim().toLowerCase();
-  const participants = getParticipatingRestaurants();
+  const participants = await getParticipatingRestaurants();
 
   const bySlug = participants.find((s) => restaurantSlug(s) === normalized);
   if (bySlug) return bySlug;

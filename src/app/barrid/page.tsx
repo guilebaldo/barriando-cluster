@@ -33,10 +33,13 @@ export default async function BarrIdPage() {
     redirect("/pasaporte");
   }
 
-  const user = await loadPanelUser(session.id);
+  const [user, summaries, restaurants] = await Promise.all([
+    loadPanelUser(session.id),
+    loadUserStampSummaries(session.id),
+    getParticipatingRestaurants(),
+  ]);
   const subscription = normalizePanelSubscription(user?.subscription);
-  const summaries = await loadUserStampSummaries(session.id);
-  const totalRestaurants = getParticipatingRestaurants().length;
+  const totalRestaurants = restaurants.length;
   const stampedCount = summaries.length;
   const progress = getPassportProgress(stampedCount, totalRestaurants);
 
