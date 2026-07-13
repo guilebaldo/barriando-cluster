@@ -50,11 +50,11 @@ function StatusCard({
     >
       <Link
         href="/panel"
-        className={`absolute z-20 inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 text-white hover:bg-white/20 transition ${
+        className={`absolute inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 text-white hover:bg-white/20 transition ${
           compact ? "top-3 right-3 w-8 h-8" : "top-4 right-4 w-10 h-10"
         }`}
         aria-label="Configuración / Mi Panel"
-        title="Mi Panel"
+        title="Configuración"
       >
         <Settings className={compact ? "w-4 h-4" : "w-5 h-5"} />
       </Link>
