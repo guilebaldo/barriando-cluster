@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { loadGoogleMapsApi } from "@/lib/google-maps-loader";
 import type { Socio } from "../data/socios";
-import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
+import { sociosCoords } from "../data/socios-coords";
 
 const LeafletSociosMap = dynamic(() => import("./SociosMapLeaflet"), {
   ssr: false,
@@ -67,7 +67,7 @@ export default function GoogleSociosMap({
     () =>
       socios
         .map((s) => {
-          const coord = resolveSocioMapCoord(s);
+          const coord = sociosCoords[s.id];
           if (!coord) return null;
           return { lat: coord.lat, lng: coord.lng, socio: s };
         })

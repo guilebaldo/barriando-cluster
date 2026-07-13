@@ -15,8 +15,7 @@ import { loadPanelUser } from "@/lib/panel-data";
 
 export default async function PasaportePage() {
   const session = await getSession();
-  const restaurantsData = await getParticipatingRestaurants();
-  const restaurants = restaurantsData.map((r) => ({
+  const restaurants = getParticipatingRestaurants().map((r) => ({
     id: r.id,
     name: r.name,
     slug: restaurantSlug(r),
