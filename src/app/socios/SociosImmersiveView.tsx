@@ -255,18 +255,18 @@ export default function SociosImmersiveView({
         onTouchEnd={onSheetTouchEnd}
       >
         <div
-          className={`pointer-events-auto mx-auto w-full max-w-lg bg-white rounded-t-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.12)] border border-slate-200/80 border-b-0 overflow-hidden transition-[max-height] duration-200 ${
+          className={`pointer-events-auto mx-auto w-full max-w-lg bg-white rounded-t-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.12)] border border-slate-200/80 border-b-0 overflow-hidden flex flex-col transition-[max-height] duration-200 ${
             sheetExpanded
-              ? "max-h-[min(62vh,560px)]"
+              ? "max-h-[min(68vh,600px)]"
               : canRedeemBenefits
                 ? "max-h-[5.75rem]"
-                : "max-h-[7.75rem]"
+                : "max-h-[8.5rem]"
           }`}
         >
           <button
             type="button"
             onClick={() => setSheetExpanded((v) => !v)}
-            className={`relative w-full flex items-center justify-center touch-manipulation ${
+            className={`relative w-full flex items-center justify-center touch-manipulation shrink-0 ${
               sheetExpanded ? "pt-2.5 pb-1 border-b border-slate-100/80" : "pt-2.5 pb-2"
             }`}
             aria-expanded={sheetExpanded}
@@ -276,7 +276,7 @@ export default function SociosImmersiveView({
           </button>
 
           {!sheetExpanded && (
-            <div className="px-4 pb-3 text-center">
+            <div className="px-4 pb-2 text-center shrink-0">
               <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
                 {selectedSocio ? selectedSocio.categoria : "Red empresarial"}
               </p>
@@ -288,7 +288,7 @@ export default function SociosImmersiveView({
 
           {sheetExpanded && (
             <>
-              <div className="px-3 pt-2 max-h-[min(calc(62vh-14rem),320px)] overflow-y-auto overscroll-contain touch-pan-y">
+              <div className="px-3 pt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y">
                 {selectedSocio ? detailBody : browseBody}
                 {!selectedSocio && (
                   <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
@@ -297,7 +297,7 @@ export default function SociosImmersiveView({
                 )}
               </div>
 
-              <div className="border-t border-slate-100 bg-white px-3 pt-2 space-y-2">
+              <div className="border-t border-slate-100 bg-white px-3 pt-2 space-y-2 shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1 min-w-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -307,7 +307,6 @@ export default function SociosImmersiveView({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       enterKeyHint="search"
-                      // 16px evita zoom automático de iOS al enfocar el input
                       className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white"
                     />
                   </div>
@@ -369,15 +368,8 @@ export default function SociosImmersiveView({
           )}
 
           {!canRedeemBenefits && (
-            <div
-              className={`px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${
-                sheetExpanded ? "pt-2 border-t border-slate-100" : "pt-1 border-t border-slate-100"
-              }`}
-            >
-              <Link
-                href={vecinoHref}
-                className="block px-1 py-1.5 text-center"
-              >
+            <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 shrink-0 bg-white">
+              <Link href={vecinoHref} className="block px-1 py-1.5 text-center">
                 <p className="text-[11px] text-slate-500 font-light leading-snug">
                   Afíliate como Vecino y disfruta beneficios exclusivos de la red Barriando.{" "}
                   <span className="font-semibold text-[#27366D]">Adquirir membresía →</span>

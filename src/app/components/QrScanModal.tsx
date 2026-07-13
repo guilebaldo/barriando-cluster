@@ -191,8 +191,8 @@ export default function QrScanModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 text-white">
+    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between px-4 py-3 text-white shrink-0">
         <p className="text-sm font-bold uppercase tracking-wider">Escanear QR</p>
         <button
           type="button"
@@ -207,7 +207,7 @@ export default function QrScanModal({
         </button>
       </div>
 
-      <div className="flex-1 relative mx-4 mb-4 rounded-2xl overflow-hidden bg-black min-h-[50vh]">
+      <div className="flex-1 relative mx-4 mb-3 rounded-2xl overflow-hidden bg-black min-h-0">
         <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover"
@@ -216,20 +216,20 @@ export default function QrScanModal({
           autoPlay
         />
         <canvas ref={canvasRef} className="hidden" aria-hidden />
-        <div className="absolute inset-8 border-2 border-amber-400/80 rounded-xl pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
+        <div className="absolute inset-[12%] sm:inset-8 border-2 border-amber-400/80 rounded-xl pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
         {error ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-black/75">
             <Camera className="w-10 h-10 text-amber-400 mb-3" />
             <p className="text-sm font-light leading-relaxed">{error}</p>
           </div>
         ) : (
-          <p className="absolute bottom-4 left-0 right-0 text-center text-xs text-white/90 font-medium">
+          <p className="absolute bottom-4 left-0 right-0 text-center text-xs text-white/90 font-medium px-4">
             {status}
           </p>
         )}
       </div>
 
-      <div className="px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center space-y-3">
+      <div className="px-4 pt-1 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center space-y-2 shrink-0">
         <p className="text-xs text-slate-300 font-light leading-relaxed">{hint}</p>
         {fallbackHref && (
           <a

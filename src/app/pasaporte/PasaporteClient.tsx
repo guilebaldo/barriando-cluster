@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Camera } from "lucide-react";
+import { Camera, X } from "lucide-react";
 import { getMapHrefForRestaurant } from "@/lib/pasaporte";
 import { registroUrl } from "@/lib/plan-routing";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
@@ -427,6 +427,7 @@ function PasaporteInner({
   isPoblanoComplete,
   progress,
 }: PasaporteClientProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const previewFieldsRef = useRef<HTMLDivElement>(null);
@@ -434,6 +435,11 @@ function PasaporteInner({
   const previewStampsRef = useRef<HTMLDivElement>(null);
   const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [noticePopup, setNoticePopup] = useState<{
+    type: "success" | "error" | "info";
+    text: string;
+  } | null>(null);
+  const [stampFlashId, setStampFlashId] = useState<number | null>(null);
   const isPreview = !isAuthenticated;
   const previewStampIds = useMemo(
     () => (isPreview ? pickPreviewStampIds(restaurants) : []),
@@ -474,30 +480,59 @@ function PasaporteInner({
     }
   }, [isPoblanoComplete]);
 
-  const notice = useMemo(() => {
+  useEffect(() => {
     const sello = searchParams.get("sello");
     const error = searchParams.get("error");
     const info = searchParams.get("info");
     const nombre = searchParams.get("nombre");
+    const restauranteSlug = searchParams.get("restaurante");
+    const queryKey = searchParams.toString();
+    if (!queryKey) return;
+
+    let next: { type: "success" | "error" | "info"; text: string } | null = null;
 
     if (sello === "ok" && nombre) {
-      return { type: "success" as const, text: `¡Sello registrado en ${decodeURIComponent(nombre)}!` };
-    }
-    if (info === "cooldown") {
+      next = {
+        type: "success",
+        text: `¡Sello registrado en ${decodeURIComponent(nombre)}!`,
+      };
+    } else if (info === "cooldown") {
       const horas = searchParams.get("horas") ?? "18";
-      return {
-        type: "info" as const,
+      next = {
+        type: "info",
         text: `Ya sellaste este restaurante recientemente. Vuelve en ~${horas} h para un nuevo sello.`,
       };
+    } else if (error === "invalid_restaurant") {
+      next = { type: "error", text: "Restaurante no participante o enlace inválido." };
+    } else if (error === "restaurante_requerido") {
+      next = { type: "error", text: "Falta el identificador del restaurante en el enlace QR." };
     }
-    if (error === "invalid_restaurant") {
-      return { type: "error" as const, text: "Restaurante no participante o enlace inválido." };
+
+    if (!next) return;
+
+    setNoticePopup(next);
+
+    if (sello === "ok" && restauranteSlug) {
+      const slug = restauranteSlug.trim().toLowerCase();
+      const match = restaurants.find((r) => r.slug.toLowerCase() === slug);
+      if (match) {
+        setStampFlashId(match.id);
+        window.setTimeout(() => {
+          const el = document.querySelector<HTMLElement>(`[data-stamp-id="${match.id}"]`);
+          el?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        }, 120);
+        window.setTimeout(() => setStampFlashId(null), 1800);
+      }
     }
-    if (error === "restaurante_requerido") {
-      return { type: "error" as const, text: "Falta el identificador del restaurante en el enlace QR." };
-    }
-    return null;
-  }, [searchParams]);
+
+    router.replace("/pasaporte", { scroll: false });
+  }, [searchParams, restaurants, router]);
+
+  useEffect(() => {
+    if (!noticePopup) return;
+    const autoClose = window.setTimeout(() => setNoticePopup(null), 5000);
+    return () => window.clearTimeout(autoClose);
+  }, [noticePopup]);
 
   const pageContent = (
     <>
@@ -621,20 +656,6 @@ function PasaporteInner({
             <div ref={previewProgressRef}>
               <PassportProgressTrack animatedProgress={displayStats.progress} tierId={displayTierId} />
             </div>
-
-            {notice && (
-              <div
-                className={`mt-3 text-[11px] rounded-lg px-3 py-2.5 border ${
-                  notice.type === "success"
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                    : notice.type === "error"
-                      ? "bg-red-50 border-red-200 text-red-800"
-                      : "bg-amber-50 border-amber-200 text-amber-900"
-                }`}
-              >
-                {notice.text}
-              </div>
-            )}
           </div>
 
           <div className="relative px-4 sm:px-8 py-5 sm:py-7 border-t border-[#d9cdb3]/70">
@@ -656,11 +677,13 @@ function PasaporteInner({
                   ? previewScroll.visibleStampIds.has(restaurant.id)
                   : Boolean(stamp?.count);
                 const colorClass = STAMP_OUTLINE_COLORS[index % STAMP_OUTLINE_COLORS.length];
+                const isFlashing = stampFlashId === restaurant.id;
 
                 return (
                   <Link
                     key={restaurant.id}
                     href={getMapHrefForRestaurant(restaurant.id)}
+                    data-stamp-id={restaurant.id}
                     data-preview-stamp={
                       isPreview && previewStampIds.includes(restaurant.id)
                         ? restaurant.id
@@ -676,7 +699,7 @@ function PasaporteInner({
                           hasStamp
                             ? `${colorClass} border-solid rotate-[-8deg] scale-100`
                             : "border-dashed border-stone-300 scale-95"
-                        }`}
+                        } ${isFlashing ? "animate-stamp-press" : ""}`}
                       >
                         {hasStamp && (
                           <Image
@@ -754,6 +777,38 @@ function PasaporteInner({
         onClose={() => setScannerOpen(false)}
         hint="Apunta al QR del negocio o hito. Se lee solo al enfocar, sin tomar foto."
       />
+
+      {noticePopup && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 pointer-events-none">
+          <div
+            role="status"
+            className={`pointer-events-auto relative w-full max-w-sm rounded-2xl border shadow-2xl p-5 animate-popup-in ${
+              noticePopup.type === "success"
+                ? "bg-emerald-50 border-emerald-200 text-emerald-950"
+                : noticePopup.type === "error"
+                  ? "bg-red-50 border-red-200 text-red-900"
+                  : "bg-amber-50 border-amber-200 text-amber-950"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => setNoticePopup(null)}
+              className="absolute top-3 right-3 text-current/50 hover:text-current"
+              aria-label="Cerrar aviso"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1 pr-6">
+              {noticePopup.type === "success"
+                ? "Sello agregado"
+                : noticePopup.type === "error"
+                  ? "No se pudo sellar"
+                  : "Aviso"}
+            </p>
+            <p className="text-sm font-medium leading-relaxed pr-6">{noticePopup.text}</p>
+          </div>
+        </div>
+      )}
     </>
   );
 
