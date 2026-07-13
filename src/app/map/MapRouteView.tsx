@@ -328,6 +328,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       <div className="absolute inset-0">
         <GoogleMapRouteMap
           points={route.points}
+          walkPath={route.walkPath}
           highlightedId={selectedId}
           userLocation={userLocation}
           fullScreen

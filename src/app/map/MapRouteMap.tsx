@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { MapRoutePoint } from "@/lib/map-route-client";
+import { circuitViaWalkPath } from "@/lib/map-circuit";
 import type { UserMapLocation } from "./GoogleMapRouteMap";
 import MapMarkerPopup from "./MapMarkerPopup";
 import { pointHasScannableStamp } from "@/lib/map-point-stamp";
@@ -157,9 +158,9 @@ export default function MapRouteMap({
   onPointSelect?: (id: string) => void;
 }) {
   const polyline = useMemo(() => {
-    if (walkPath?.length) return walkPath;
-    return points.map((p) => [p.latitude, p.longitude] as [number, number]);
-  }, [points, walkPath]);
+    if (walkPath && walkPath.length >= 2) return walkPath;
+    return circuitViaWalkPath();
+  }, [walkPath]);
 
   const center = useMemo<[number, number]>(() => {
     if (points.length === 0) return [19.0414, -98.1984];

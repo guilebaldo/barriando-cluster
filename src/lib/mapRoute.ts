@@ -3,29 +3,41 @@ import { listaSocios } from "@/app/data/socios";
 import { listaHitos } from "@/app/data/hitos";
 import { sociosCoords } from "@/app/data/socios-coords";
 import { extractLatLngFromMapsEmbed } from "@/lib/muaap-coords";
-import { buildWalkingPath, type WalkLatLng } from "@/lib/muaap-walking-route";
 import { readFileSync } from "fs";
 import path from "path";
 import type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 import { haversineDistanceKm } from "@/lib/map-route-client";
+import {
+  buildCircuitWalkPath,
+  MAP_CIRCUIT_START,
+  orderPointsByCircuitProgress,
+} from "@/lib/map-circuit";
 import { getPlanForSocio } from "@/lib/membresia";
 import { getParticipatingRestaurants } from "@/lib/pasaporte";
 
 export type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 export { findNearestRoutePoint, reorderRouteFromPoint, buildWalkingItinerary } from "@/lib/map-route-client";
+export { MAP_CIRCUIT_START, MAP_CIRCUIT_VIA_POINTS } from "@/lib/map-circuit";
 
-/** Teatro Principal — punto de partida canónico del MAP. */
+/**
+ * @deprecated El recorrido ya no fuerza un hito de arranque editorial.
+ * El inicio geométrico es Via 1 (`MAP_CIRCUIT_START`); GPS/bienvenida rotan al hito más cercano.
+ * Se conserva el alias para código legacy MUAAP.
+ */
 export const MAP_ROUTE_START = {
-  name: "Teatro Principal",
-  latitude: 19.0446205,
-  longitude: -98.1923828,
+  name: MAP_CIRCUIT_START.label,
+  latitude: MAP_CIRCUIT_START.latitude,
+  longitude: MAP_CIRCUIT_START.longitude,
 } as const;
 
 export { haversineDistanceKm };
 
 type RawPoint = Omit<MapRoutePoint, "order">;
 
-/** Orden serpenteante peatonal (cuadrante): filas N→S, alternando O→P y P→O. */
+/**
+ * @deprecated Reemplazado por `orderPointsByCircuitProgress` (trazo fijo del Centro Histórico).
+ * Se conserva por exports legacy (`nearestNeighborOrder` / MUAAP).
+ */
 export function quadrantPedestrianOrder(
   start: { latitude: number; longitude: number },
   points: RawPoint[]
@@ -355,16 +367,7 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
   }
   const premium = [...premiumByName.values()];
 
-  const startInList = milestones.find(
-    (m) => normalizeName(m.name) === normalizeName(MAP_ROUTE_START.name)
-  );
-
-  const start = startInList
-    ? { latitude: startInList.latitude, longitude: startInList.longitude }
-    : { latitude: MAP_ROUTE_START.latitude, longitude: MAP_ROUTE_START.longitude };
-
   const pool = [...milestones, ...premium].filter((p) => {
-    if (normalizeName(p.name) === normalizeName(MAP_ROUTE_START.name)) return false;
     // Evitar duplicar hito y socio con el mismo nombre en el pool.
     const nameKey = normalizeName(p.name);
     if (p.kind === "premium_business") {
@@ -374,33 +377,29 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
     return true;
   });
 
-  const ordered = quadrantPedestrianOrder(start, pool);
+  const ordered = orderPointsByCircuitProgress(pool);
+  const allPoints: MapRoutePoint[] = ordered.map((p, idx) => ({
+    id: p.id,
+    name: p.name,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    mapsUrl: p.mapsUrl,
+    kind: p.kind,
+    order: idx + 1,
+    category:
+      idx === 0 && p.kind === "milestone" && !p.category?.includes("Socio")
+        ? "Primera parada del circuito"
+        : p.category,
+    zone: p.zone,
+    socioId: p.socioId,
+    hasSeasonalStamp: p.hasSeasonalStamp,
+  }));
 
-  const allPoints: MapRoutePoint[] = [
-    {
-      id: startInList?.id ?? "start-teatro-principal",
-      name: MAP_ROUTE_START.name,
-      latitude: start.latitude,
-      longitude: start.longitude,
-      mapsUrl: startInList?.mapsUrl ?? "https://maps.app.goo.gl/TW2KJFauWXa3bJ7K8",
-      kind: "milestone",
-      order: 1,
-      category: "Punto de partida",
-      zone: startInList?.zone ?? 1,
-    },
-    ...ordered.map((p, idx) => ({ ...p, order: idx + 2 })),
-  ];
-
-  let walkPath: WalkLatLng[] = [];
-  try {
-    walkPath = await buildWalkingPath(allPoints);
-  } catch (error) {
-    console.error("[map] buildWalkingPath failed:", error);
-    walkPath = allPoints.map((p) => [p.latitude, p.longitude] as WalkLatLng);
-  }
+  // Polyline fija (via points + hitos densificadores). No usa OSRM / Directions.
+  const walkPath = buildCircuitWalkPath(allPoints);
 
   return {
-    startName: MAP_ROUTE_START.name,
+    startName: allPoints[0]?.name ?? MAP_CIRCUIT_START.label,
     points: allPoints,
     walkPath,
     totalStops: allPoints.length,

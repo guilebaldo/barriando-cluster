@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { loadGoogleMapsApi } from "@/lib/google-maps-loader";
-import { buildGoogleWalkingPath } from "@/lib/google-walking-path";
+import { circuitViaWalkPath } from "@/lib/map-circuit";
 import { buildMapMarkerPopupContent, pointHasScannableStamp } from "@/lib/map-point-stamp";
 import type { MapRoutePoint } from "@/lib/map-route-client";
 
@@ -29,6 +29,7 @@ function getFocusPanOffsetPx(bottomSheetHeight: number, stampPopup: boolean): nu
 
 export default function GoogleMapRouteMap({
   points,
+  walkPath,
   highlightedId = null,
   fullScreen = false,
   immersive = false,
@@ -37,6 +38,7 @@ export default function GoogleMapRouteMap({
   onPointSelect,
 }: {
   points: MapRoutePoint[];
+  walkPath?: Array<[number, number]>;
   highlightedId?: string | null;
   fullScreen?: boolean;
   immersive?: boolean;
@@ -60,6 +62,11 @@ export default function GoogleMapRouteMap({
   const [error, setError] = useState<string | null>(null);
   const [useLeafletFallback, setUseLeafletFallback] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+
+  const resolvedWalkPath = useMemo(
+    () => (walkPath && walkPath.length >= 2 ? walkPath : circuitViaWalkPath()),
+    [walkPath]
+  );
 
   useEffect(() => {
     if (useLeafletFallback || !containerRef.current || points.length === 0) return;
@@ -243,40 +250,32 @@ export default function GoogleMapRouteMap({
   }, [mapReady, highlightedId, points, immersive, bottomSheetHeight]);
 
   useEffect(() => {
-    if (!mapReady || !mapRef.current || points.length < 2) return;
-    let cancelled = false;
+    if (!mapReady || !mapRef.current || !googleRef.current || resolvedWalkPath.length < 2) return;
 
-    void buildGoogleWalkingPath(points)
-      .then((walkPath) => {
-        if (cancelled || !mapRef.current) return;
-
-        polylineRef.current?.setMap(null);
-        polylineRef.current = new google.maps.Polyline({
-          map: mapRef.current,
-          path: walkPath.map(([lat, lng]) => ({ lat, lng })),
-          strokeOpacity: 0,
-          icons: [
-            {
-              icon: {
-                path: "M 0,-1 0,1",
-                strokeOpacity: 1,
-                strokeColor: "#27366D",
-                scale: 3,
-              },
-              offset: "0",
-              repeat: "16px",
-            },
-          ],
-        });
-      })
-      .catch((pathErr) => {
-        console.warn("[map] Ruta peatonal no disponible, mostrando solo marcadores:", pathErr);
-      });
+    polylineRef.current?.setMap(null);
+    polylineRef.current = new google.maps.Polyline({
+      map: mapRef.current,
+      path: resolvedWalkPath.map(([lat, lng]) => ({ lat, lng })),
+      strokeOpacity: 0,
+      icons: [
+        {
+          icon: {
+            path: "M 0,-1 0,1",
+            strokeOpacity: 1,
+            strokeColor: "#27366D",
+            scale: 3,
+          },
+          offset: "0",
+          repeat: "16px",
+        },
+      ],
+    });
 
     return () => {
-      cancelled = true;
+      polylineRef.current?.setMap(null);
+      polylineRef.current = null;
     };
-  }, [mapReady, points]);
+  }, [mapReady, resolvedWalkPath]);
 
   if (points.length === 0) {
     return (
@@ -294,6 +293,7 @@ export default function GoogleMapRouteMap({
         </p>
         <LeafletMapFallback
           points={points}
+          walkPath={resolvedWalkPath}
           highlightedId={highlightedId}
           userLocation={userLocation}
           onPointSelect={onPointSelect}

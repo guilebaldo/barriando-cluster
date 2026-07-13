@@ -1,5 +1,11 @@
 import { loadGoogleMapsApi } from "@/lib/google-maps-loader";
 
+/**
+ * DEPRECATED: el MAP ya no usa Directions API.
+ * El trazo caminable es una polyline fija (`buildCircuitWalkPath` / `route.walkPath`).
+ * Se conserva el archivo por si se reutiliza en otra superficie con rutas dinámicas.
+ */
+
 export type LatLngPoint = { latitude: number; longitude: number };
 
 function mergeSegments(segments: Array<Array<[number, number]>>): Array<[number, number]> {
