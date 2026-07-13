@@ -7,13 +7,14 @@ import "leaflet/dist/leaflet.css";
 import { sociosCoords } from "../data/socios-coords";
 import type { Socio } from "../data/socios";
 
-function makeIcon(selected: boolean) {
+function makeIcon(selected: boolean, hasBenefit: boolean) {
   const size = selected ? 14 : 10;
-  const fill = selected ? "#f59e0b" : "#27366D";
-  const stroke = selected ? "#27366D" : "#fbbf24";
+  const fill = "#27366D";
+  const stroke = hasBenefit ? "#fbbf24" : "#1e2b58";
+  const border = hasBenefit ? (selected ? 3 : 2) : selected ? 2 : 1;
   return L.divIcon({
     className: "",
-    html: `<div style="background:${fill};width:${size}px;height:${size}px;border-radius:50%;border:2px solid ${stroke};box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>`,
+    html: `<div style="background:${fill};width:${size}px;height:${size}px;border-radius:50%;border:${border}px solid ${stroke};box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
@@ -34,10 +35,11 @@ function FocusSelected({
     if (selectedId == null) return;
     const point = puntos.find((p) => p.socio.id === selectedId);
     if (!point) return;
-    const offsetY = bottomSheetHeight > 0 ? bottomSheetHeight / 2 : 0;
+    const offsetY = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.72) : 0;
     map.setView([point.lat, point.lng], Math.max(map.getZoom(), 16), { animate: true });
     if (offsetY > 0) {
-      map.panBy([0, -offsetY], { animate: true });
+      // Positive Y pans the map down so the marker sits higher on screen.
+      map.panBy([0, offsetY], { animate: true });
     }
   }, [selectedId, bottomSheetHeight, puntos, map]);
 
@@ -119,7 +121,7 @@ export default function SociosMapLeaflet({
           <Marker
             key={p.socio.id}
             position={[p.lat, p.lng]}
-            icon={makeIcon(selectedId === p.socio.id)}
+            icon={makeIcon(selectedId === p.socio.id, Boolean(p.socio.benefit))}
             eventHandlers={{
               click: () => onSelect?.(p.socio.id),
             }}

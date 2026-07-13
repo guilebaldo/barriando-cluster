@@ -18,20 +18,23 @@ type MapPoint = {
 };
 
 function getFocusPanOffsetPx(bottomSheetHeight: number): number {
-  return bottomSheetHeight > 0 ? Math.round(bottomSheetHeight / 2) : 0;
+  // Empuja el marcador más arriba del centro visible para que la ficha no lo tape.
+  if (bottomSheetHeight <= 0) return 0;
+  return Math.round(bottomSheetHeight * 0.72);
 }
 
 function markerIcon(
   google: typeof globalThis.google,
-  selected: boolean
+  opts: { selected: boolean; hasBenefit: boolean }
 ): google.maps.Symbol {
+  const { selected, hasBenefit } = opts;
   return {
     path: google.maps.SymbolPath.CIRCLE,
-    scale: selected ? 10 : 7,
-    fillColor: selected ? "#f59e0b" : "#27366D",
+    scale: selected ? 11 : 7,
+    fillColor: "#27366D",
     fillOpacity: 1,
-    strokeColor: selected ? "#27366D" : "#fbbf24",
-    strokeWeight: selected ? 3 : 2,
+    strokeColor: hasBenefit ? "#fbbf24" : "#1e2b58",
+    strokeWeight: hasBenefit ? (selected ? 3.5 : 2.5) : selected ? 2.5 : 1.5,
   };
 }
 
@@ -109,13 +112,14 @@ export default function GoogleSociosMap({
 
         puntos.forEach((p) => {
           const selected = selectedIdRef.current === p.socio.id;
+          const hasBenefit = Boolean(p.socio.benefit);
           let marker = markersRef.current.get(p.socio.id);
           if (!marker) {
             marker = new google.maps.Marker({
               map,
               position: { lat: p.lat, lng: p.lng },
               title: p.socio.name,
-              icon: markerIcon(google, selected),
+              icon: markerIcon(google, { selected, hasBenefit }),
             });
             marker.addListener("click", () => {
               onSelectRef.current?.(p.socio.id);
@@ -123,7 +127,7 @@ export default function GoogleSociosMap({
             markersRef.current.set(p.socio.id, marker);
           } else {
             marker.setPosition({ lat: p.lat, lng: p.lng });
-            marker.setIcon(markerIcon(google, selected));
+            marker.setIcon(markerIcon(google, { selected, hasBenefit }));
             marker.setMap(map);
           }
         });
@@ -167,7 +171,13 @@ export default function GoogleSociosMap({
     if (!map || !google || !mapReady) return;
 
     markersRef.current.forEach((marker, id) => {
-      marker.setIcon(markerIcon(google, id === selectedId));
+      const point = puntos.find((p) => p.socio.id === id);
+      marker.setIcon(
+        markerIcon(google, {
+          selected: id === selectedId,
+          hasBenefit: Boolean(point?.socio.benefit),
+        })
+      );
       marker.setZIndex(id === selectedId ? 1000 : 1);
     });
 
@@ -179,9 +189,10 @@ export default function GoogleSociosMap({
     if ((map.getZoom() ?? 15) < 16) {
       map.setZoom(16);
     }
+    // panBy positivo en Y mueve el mapa hacia abajo → el marcador sube en pantalla
     const offset = getFocusPanOffsetPx(bottomSheetHeight);
     if (offset > 0) {
-      map.panBy(0, -offset);
+      map.panBy(0, offset);
     }
   }, [selectedId, bottomSheetHeight, puntos, mapReady]);
 

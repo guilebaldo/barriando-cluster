@@ -44,7 +44,7 @@ export default function SociosImmersiveView({
   const touchStartY = useRef<number | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [benefitsOnly, setBenefitsOnly] = useState(initialBenefitsOnly);
   const [viewMode, setViewMode] = useState<ViewMode>("icons");
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -56,21 +56,22 @@ export default function SociosImmersiveView({
   } | null>(null);
 
   const categorias = useMemo(() => {
-    const list = new Set(socios.map((s) => s.categoria));
-    return ["Todos", ...Array.from(list).sort()];
+    return Array.from(new Set(socios.map((s) => s.categoria))).sort();
   }, [socios]);
 
   const sociosFiltrados = useMemo(() => {
     return socios.filter((socio) => {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
-        socio.name.toLowerCase().includes(q) || socio.categoria.toLowerCase().includes(q);
+        !q ||
+        socio.name.toLowerCase().includes(q) ||
+        socio.categoria.toLowerCase().includes(q);
       const matchesCategory =
-        selectedCategory === "Todos" || socio.categoria === selectedCategory;
+        activeCategories.length === 0 || activeCategories.includes(socio.categoria);
       const matchesBenefits = !benefitsOnly || Boolean(socio.benefit);
       return matchesSearch && matchesCategory && matchesBenefits;
     });
-  }, [searchQuery, selectedCategory, benefitsOnly, socios]);
+  }, [searchQuery, activeCategories, benefitsOnly, socios]);
 
   const selectedSocio = useMemo(
     () => (selectedId == null ? null : sociosFiltrados.find((s) => s.id === selectedId) ?? null),
@@ -91,7 +92,7 @@ export default function SociosImmersiveView({
     const observer = new ResizeObserver(updateHeight);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [sheetExpanded, selectedId, viewMode]);
+  }, [sheetExpanded, selectedId, viewMode, canRedeemBenefits]);
 
   const selectSocio = useCallback((id: number) => {
     setSelectedId(id);
@@ -100,6 +101,12 @@ export default function SociosImmersiveView({
 
   const clearSelection = useCallback(() => {
     setSelectedId(null);
+  }, []);
+
+  const toggleCategory = useCallback((cat: string) => {
+    setActiveCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
   }, []);
 
   const onSheetTouchStart = (event: React.TouchEvent) => {
@@ -117,72 +124,7 @@ export default function SociosImmersiveView({
   };
 
   const useBenefitHref = canRedeemBenefits ? "/barrid" : registroUrl("VECINO");
-
-  const filtersBar = (
-    <div className="border-t border-slate-100 bg-white px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-2">
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <input
-            type="search"
-            placeholder="Buscar socio o giro…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-[#27366D] focus:bg-white"
-          />
-        </div>
-        <div className="flex shrink-0 rounded-xl border border-slate-200 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setViewMode("icons")}
-            className={`p-2.5 ${viewMode === "icons" ? "bg-[#27366D] text-white" : "bg-white text-slate-500"}`}
-            aria-label="Vista de iconos"
-            aria-pressed={viewMode === "icons"}
-          >
-            <Grid2X2 className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("list")}
-            className={`p-2.5 ${viewMode === "list" ? "bg-[#27366D] text-white" : "bg-white text-slate-500"}`}
-            aria-label="Vista de lista"
-            aria-pressed={viewMode === "list"}
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
-        {categorias.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-              selectedCategory === cat
-                ? "bg-[#27366D] text-white"
-                : "bg-slate-100 text-slate-600"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setBenefitsOnly((v) => !v)}
-          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-            benefitsOnly
-              ? "bg-amber-500 text-slate-950"
-              : "bg-amber-50 text-amber-800 border border-amber-200"
-          }`}
-        >
-          <Gift className="w-3 h-3" />
-          Beneficios
-        </button>
-      </div>
-    </div>
-  );
+  const vecinoHref = registroUrl("VECINO");
 
   const browseBody =
     sociosFiltrados.length === 0 ? (
@@ -286,7 +228,7 @@ export default function SociosImmersiveView({
             onClick={() =>
               setActiveBenefit({ name: selectedSocio.name, benefit: selectedSocio.benefit! })
             }
-            className="inline-flex items-center gap-1.5 bg-[#27366D] hover:bg-[#1e2b58] text-white text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg"
+            className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg"
           >
             <Gift className="w-3.5 h-3.5" />
             Beneficios
@@ -303,7 +245,7 @@ export default function SociosImmersiveView({
         selectedId={selectedId}
         onSelect={selectSocio}
         immersive
-        bottomSheetHeight={sheetExpanded ? bottomSheetHeight : 0}
+        bottomSheetHeight={bottomSheetHeight}
       />
 
       <div
@@ -314,7 +256,11 @@ export default function SociosImmersiveView({
       >
         <div
           className={`pointer-events-auto mx-auto w-full max-w-lg bg-white rounded-t-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.12)] border border-slate-200/80 border-b-0 overflow-hidden transition-[max-height] duration-200 ${
-            sheetExpanded ? "max-h-[min(58vh,520px)]" : "max-h-[7.5rem]"
+            sheetExpanded
+              ? "max-h-[min(62vh,560px)]"
+              : canRedeemBenefits
+                ? "max-h-[5.75rem]"
+                : "max-h-[7.75rem]"
           }`}
         >
           <button
@@ -330,7 +276,7 @@ export default function SociosImmersiveView({
           </button>
 
           {!sheetExpanded && (
-            <div className="px-4 pb-2 text-center">
+            <div className="px-4 pb-3 text-center">
               <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
                 {selectedSocio ? selectedSocio.categoria : "Red empresarial"}
               </p>
@@ -341,17 +287,104 @@ export default function SociosImmersiveView({
           )}
 
           {sheetExpanded && (
-            <div className="px-3 pt-2 max-h-[min(calc(58vh-8.5rem),380px)] overflow-y-auto overscroll-contain touch-pan-y">
-              {selectedSocio ? detailBody : browseBody}
-              {!selectedSocio && (
-                <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
-                  {sociosFiltrados.length} miembros
-                </p>
-              )}
-            </div>
+            <>
+              <div className="px-3 pt-2 max-h-[min(calc(62vh-14rem),320px)] overflow-y-auto overscroll-contain touch-pan-y">
+                {selectedSocio ? detailBody : browseBody}
+                {!selectedSocio && (
+                  <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
+                    {sociosFiltrados.length} miembros
+                  </p>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100 bg-white px-3 pt-2 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 min-w-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <input
+                      type="search"
+                      placeholder="Buscar socio o giro…"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      enterKeyHint="search"
+                      // 16px evita zoom automático de iOS al enfocar el input
+                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white"
+                    />
+                  </div>
+                  <div className="flex shrink-0 rounded-xl border border-slate-200 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("icons")}
+                      className={`p-2.5 ${viewMode === "icons" ? "bg-[#27366D] text-white" : "bg-white text-slate-500"}`}
+                      aria-label="Vista de iconos"
+                      aria-pressed={viewMode === "icons"}
+                    >
+                      <Grid2X2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("list")}
+                      className={`p-2.5 ${viewMode === "list" ? "bg-[#27366D] text-white" : "bg-white text-slate-500"}`}
+                      aria-label="Vista de lista"
+                      aria-pressed={viewMode === "list"}
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setBenefitsOnly((v) => !v)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                      benefitsOnly
+                        ? "bg-amber-500 text-slate-950"
+                        : "bg-amber-50 text-amber-800 border border-amber-200"
+                    }`}
+                  >
+                    <Gift className="w-3 h-3" />
+                    Beneficios
+                  </button>
+                  {categorias.map((cat) => {
+                    const active = activeCategories.includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => toggleCategory(cat)}
+                        className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                          active
+                            ? "bg-[#27366D] text-white"
+                            : "bg-slate-100 text-slate-600 border border-transparent"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
           )}
 
-          {filtersBar}
+          {!canRedeemBenefits && (
+            <div
+              className={`px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${
+                sheetExpanded ? "pt-2 border-t border-slate-100" : "pt-1 border-t border-slate-100"
+              }`}
+            >
+              <Link
+                href={vecinoHref}
+                className="block px-1 py-1.5 text-center"
+              >
+                <p className="text-[11px] text-slate-500 font-light leading-snug">
+                  Afíliate como Vecino y disfruta beneficios exclusivos de la red Barriando.{" "}
+                  <span className="font-semibold text-[#27366D]">Adquirir membresía →</span>
+                </p>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
