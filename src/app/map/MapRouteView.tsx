@@ -341,7 +341,13 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         <div
           ref={sheetRef}
           className={`max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl overflow-hidden transition-[max-height] duration-300 ease-out overscroll-contain ${
-            sheetExpanded ? "max-h-[min(52vh,420px)]" : "max-h-[6.5rem]"
+            sheetExpanded
+              ? welcomeOpen
+                ? "max-h-[min(62vh,480px)]"
+                : "max-h-[min(52vh,420px)]"
+              : welcomeOpen
+                ? "max-h-[9.5rem]"
+                : "max-h-[6.5rem]"
           }`}
           onTouchStart={onSheetTouchStart}
           onTouchEnd={onSheetTouchEnd}
@@ -359,9 +365,9 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
           </button>
 
           {!sheetExpanded && (
-            <div className="flex items-center gap-1.5 px-2 pb-2.5">
+            <div className="px-2 pb-2.5">
               {!welcomeOpen ? (
-                <>
+                <div className="flex items-center gap-1.5">
                   <NavArrowButton
                     direction="prev"
                     onClick={() => goToIndex(activeCardIndex - 1)}
@@ -383,23 +389,35 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
                     primary
                     onClick={() => goToIndex(activeCardIndex + 1)}
                   />
-                </>
+                </div>
               ) : (
-                <div className="flex-1 min-w-0 text-center px-2 py-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-                    Bienvenido al MAP
-                  </p>
-                  <p className="text-sm font-semibold text-[#27366D] truncate leading-tight mt-0.5">
-                    Museo Abierto de Puebla
-                  </p>
+                <div className="space-y-2 px-1">
+                  <div className="text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                      Bienvenido al MAP
+                    </p>
+                    <p className="text-sm font-semibold text-[#27366D] truncate leading-tight mt-0.5">
+                      Museo Abierto de Puebla
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWelcomeOpen(false);
+                      setSheetExpanded(true);
+                    }}
+                    className="w-full bg-[#27366D] hover:bg-[#1e2b58] text-white text-[11px] font-bold uppercase tracking-wider py-2.5 rounded-xl transition active:scale-[0.98]"
+                  >
+                    Comenzar recorrido
+                  </button>
                 </div>
               )}
             </div>
           )}
 
           <div
-            className={`p-4 space-y-3 overflow-y-auto overscroll-contain touch-pan-y ${
-              sheetExpanded ? "max-h-[min(calc(52vh-2.5rem),380px)]" : "hidden"
+            className={`p-3.5 space-y-2.5 overflow-y-auto overscroll-contain touch-pan-y ${
+              sheetExpanded ? "max-h-[min(calc(58vh-2.5rem),440px)]" : "hidden"
             }`}
           >
             {welcomeOpen ? (

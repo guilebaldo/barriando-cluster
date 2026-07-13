@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import SiteShell from "../components/SiteShell";
+import MapImmersiveShell from "../map/MapImmersiveShell";
 import BarrIdClient from "./BarrIdClient";
 import { getSession } from "@/lib/auth-utils";
 import { loadUserStampSummaries } from "@/lib/pasaporte-stamps";
@@ -16,6 +15,11 @@ import {
 } from "@/lib/panel-display";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "BarrID | Barriando",
+  description: "Credencial digital de membresía Barriando.",
+};
 
 export default async function BarrIdPage() {
   const session = await getSession();
@@ -47,9 +51,9 @@ export default async function BarrIdPage() {
   );
 
   return (
-    <SiteShell>
+    <MapImmersiveShell>
       <Navbar />
-      <main className="flex-1 max-w-lg mx-auto w-full px-4 sm:px-6 py-8 sm:py-12">
+      <main className="flex-1 min-h-0 overflow-hidden">
         <BarrIdClient
           user={{
             nombre: user?.nombre?.trim() || session.nombre || "Socio",
@@ -66,7 +70,6 @@ export default async function BarrIdPage() {
           progress={progress}
         />
       </main>
-      <Footer />
-    </SiteShell>
+    </MapImmersiveShell>
   );
 }

@@ -68,8 +68,8 @@ export default function BarrIdClient({
       }
       try {
         const url = await QRCode.toDataURL(result.verifyUrl, {
-          width: 420,
-          margin: 2,
+          width: 360,
+          margin: 1,
           errorCorrectionLevel: "M",
         });
         if (cancelled) return;
@@ -112,121 +112,116 @@ export default function BarrIdClient({
   }, [expiresAtMs, loadingCred, secondsLeft]);
 
   return (
-    <div className="space-y-5 relative pb-20">
-      <div className="absolute top-0 right-0 z-10">
+    <div className="h-full min-h-0 flex flex-col relative px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="absolute top-2 right-4 z-10">
         <Link
           href="/panel"
-          className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-[#27366D]/25 bg-white text-[#27366D] hover:bg-slate-50 shadow-sm transition"
+          className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-[#27366D]/25 bg-white text-[#27366D] hover:bg-slate-50 shadow-sm transition"
           aria-label="Configuración / Mi Panel"
           title="Configuración"
         >
-          <Settings className="w-5 h-5" />
+          <Settings className="w-4 h-4" />
         </Link>
       </div>
 
-      <section className="pt-2 flex flex-col items-center text-center px-2">
-        <div className="w-52 h-52 sm:w-56 sm:h-56 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center overflow-hidden relative">
-          {loadingCred && !qrDataUrl && (
-            <p className="text-xs text-slate-400 px-4">Generando credencial…</p>
-          )}
-          {credError && (
-            <p className="text-xs text-red-700 px-4 leading-relaxed">{credError}</p>
-          )}
-          {qrDataUrl && !credError && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={qrDataUrl}
-              alt="QR de credencial BarrID"
-              className={`w-full h-full object-contain p-3 transition-opacity ${loadingCred ? "opacity-40" : "opacity-100"}`}
-            />
-          )}
-        </div>
-        {expiresAtMs && !credError ? (
-          <p
-            className="mt-4 text-sm font-semibold tabular-nums text-[#27366D]"
-            aria-live="polite"
-          >
-            Válido por {formatCountdown(secondsLeft)}
-          </p>
-        ) : loadingCred && qrDataUrl ? (
-          <p className="mt-4 text-sm font-medium text-slate-500">Actualizando…</p>
-        ) : null}
-      </section>
-
-      <section className="bg-[#27366D] text-white rounded-2xl p-6 sm:p-7 border border-[#1e2b58]">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-200 shrink-0 border-2 border-amber-400/40">
-            {user.image ? (
-              <Image
-                src={user.image}
-                alt={user.nombre}
-                width={56}
-                height={56}
-                className="w-full h-full object-cover"
-                unoptimized
+      <div className="flex-1 min-h-0 flex flex-col justify-between gap-3 max-w-lg mx-auto w-full overflow-hidden">
+        <section className="flex flex-col items-center text-center shrink-0 pt-1">
+          <div className="w-[min(42vw,11.5rem)] h-[min(42vw,11.5rem)] sm:w-48 sm:h-48 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center overflow-hidden relative">
+            {loadingCred && !qrDataUrl && (
+              <p className="text-xs text-slate-400 px-4">Generando…</p>
+            )}
+            {credError && (
+              <p className="text-[11px] text-red-700 px-3 leading-relaxed">{credError}</p>
+            )}
+            {qrDataUrl && !credError && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={qrDataUrl}
+                alt="QR de credencial BarrID"
+                className={`w-full h-full object-contain p-2 transition-opacity ${loadingCred ? "opacity-40" : "opacity-100"}`}
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-300 text-[#27366D] font-bold text-lg">
-                {user.nombre.charAt(0).toUpperCase()}
-              </div>
             )}
           </div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">BarrID</p>
-            <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide truncate mt-0.5">
-              {user.nombre}
-            </h1>
-            <p className="text-xs text-slate-300 truncate">{user.email}</p>
-          </div>
-        </div>
+          {expiresAtMs && !credError ? (
+            <p className="mt-2 text-xs font-semibold tabular-nums text-[#27366D]" aria-live="polite">
+              Válido por {formatCountdown(secondsLeft)}
+            </p>
+          ) : loadingCred && qrDataUrl ? (
+            <p className="mt-2 text-xs font-medium text-slate-500">Actualizando…</p>
+          ) : null}
+        </section>
 
-        <div className="mt-5">
-          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-200">
-            <span>Pasaporte</span>
-            <span>
-              {stampedCount}/{totalRestaurants}
-            </span>
+        <section className="bg-[#27366D] text-white rounded-2xl px-4 py-4 border border-[#1e2b58] min-h-0 overflow-y-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full overflow-hidden bg-slate-200 shrink-0 border-2 border-amber-400/40">
+              {user.image ? (
+                <Image
+                  src={user.image}
+                  alt={user.nombre}
+                  width={44}
+                  height={44}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-300 text-[#27366D] font-bold text-sm">
+                  {user.nombre.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400">BarrID</p>
+              <h1 className="text-base font-black font-serif-cluster uppercase tracking-wide truncate">
+                {user.nombre}
+              </h1>
+              <p className="text-[11px] text-slate-300 truncate">{user.email}</p>
+            </div>
           </div>
-          <div className="mt-2 h-2.5 rounded-full bg-white/20 overflow-hidden">
-            <div
-              className="h-full bg-amber-400 rounded-full"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="text-[10px] text-slate-300 mt-1.5">{progress}% completado</p>
-        </div>
 
-        <dl className="mt-5 pt-5 border-t border-white/15 space-y-2.5 text-sm">
-          <div className="flex justify-between gap-3">
-            <dt className="text-slate-300">Membresía</dt>
-            <dd className="font-semibold text-amber-300 text-right">{planLabel}</dd>
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-[10px] font-semibold text-slate-200">
+              <span>Pasaporte</span>
+              <span>
+                {stampedCount}/{totalRestaurants}
+              </span>
+            </div>
+            <div className="mt-1.5 h-2 rounded-full bg-white/20 overflow-hidden">
+              <div className="h-full bg-amber-400 rounded-full" style={{ width: `${progress}%` }} />
+            </div>
           </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-slate-300">Estado</dt>
-            <dd className="font-semibold text-emerald-300 text-right">{statusLabel}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-slate-300">Cuota</dt>
-            <dd className="font-semibold text-white text-right">{priceLabel}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-slate-300">Vencimiento</dt>
-            <dd className="font-semibold text-white text-right">{expiryLabel}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-slate-300">Tipo de pago</dt>
-            <dd className="font-semibold text-white text-right">{renewalLabel}</dd>
-          </div>
-        </dl>
-      </section>
 
-      <Link
-        href="/socios?beneficios=1"
-        className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition shadow-sm"
-      >
-        <Gift className="w-4 h-4" />
-        Ver socios con beneficios
-      </Link>
+          <dl className="mt-3 pt-3 border-t border-white/15 space-y-1.5 text-xs">
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-300">Membresía</dt>
+              <dd className="font-semibold text-amber-300 text-right">{planLabel}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-300">Estado</dt>
+              <dd className="font-semibold text-emerald-300 text-right">{statusLabel}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-300">Cuota</dt>
+              <dd className="font-semibold text-white text-right">{priceLabel}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-300">Vencimiento</dt>
+              <dd className="font-semibold text-white text-right">{expiryLabel}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-300">Tipo de pago</dt>
+              <dd className="font-semibold text-white text-right">{renewalLabel}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <Link
+          href="/socios?beneficios=1"
+          className="w-full shrink-0 inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition shadow-sm"
+        >
+          <Gift className="w-4 h-4" />
+          Mis Beneficios
+        </Link>
+      </div>
 
       <button
         type="button"

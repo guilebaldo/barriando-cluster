@@ -536,7 +536,7 @@ function PasaporteInner({
 
   const pageContent = (
     <>
-      <div className={`py-3 sm:py-6 px-2 sm:px-4 ${isAuthenticated ? "pb-24" : "pb-6"}`}>
+      <div className={`py-2 sm:py-4 px-2 sm:px-4 ${isAuthenticated ? "pb-16" : "pb-6"}`}>
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         {!isAuthenticated && <PasaporteInfoCard className="mb-5 sm:mb-6" />}
 
@@ -747,7 +747,7 @@ function PasaporteInner({
         </div>
 
         {!isPreview && (
-          <p className="text-center text-[11px] text-stone-600 mt-4 max-w-sm mx-auto leading-relaxed font-light px-2">
+          <p className="text-center text-[11px] text-stone-600 mt-3 mb-1 max-w-sm mx-auto leading-relaxed font-light px-2">
             ¿Tienes un negocio en el barrio?{" "}
             <Link
               href={registroUrl("NEGOCIO_FAMILIAR")}
