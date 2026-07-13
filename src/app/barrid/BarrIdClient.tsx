@@ -246,15 +246,17 @@ export default function BarrIdClient(props: BarrIdClientProps) {
 
   return (
     <>
-      {/* Mobile: fullscreen compact stack */}
-      <div className="md:hidden flex-1 min-h-0 flex flex-col px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="flex-1 min-h-0 flex flex-col justify-between gap-4 max-w-lg mx-auto w-full">
-          <section className="flex flex-col items-center text-center flex-1 min-h-0 justify-center gap-3">
-            {qrBox("w-[min(62vw,17rem)] h-[min(62vw,17rem)]", "text-xs")}
-            {countdown && <div className="text-sm">{countdown}</div>}
+      {/* Mobile: fullscreen compact stack (no page scroll) */}
+      <div className="md:hidden flex-1 min-h-0 flex flex-col overflow-hidden overscroll-none px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="flex-1 min-h-0 flex flex-col justify-between gap-4 max-w-lg mx-auto w-full overflow-hidden">
+          <section className="flex flex-col items-center text-center flex-1 min-h-0 justify-center gap-3 overflow-hidden">
+            {qrBox("w-[min(62vw,17rem)] h-[min(62vw,17rem)] shrink-0", "text-xs")}
+            {countdown && <div className="text-sm shrink-0">{countdown}</div>}
           </section>
 
-          <StatusCard {...props} compact />
+          <div className="shrink-0 overflow-hidden">
+            <StatusCard {...props} compact />
+          </div>
 
           <div className="grid grid-cols-3 gap-2 shrink-0">
             <Link

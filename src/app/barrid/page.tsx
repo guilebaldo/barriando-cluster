@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import SiteShell from "../components/SiteShell";
+import BarrIdShell from "./BarrIdShell";
 import BarrIdClient from "./BarrIdClient";
 import { getSession } from "@/lib/auth-utils";
 import { loadUserStampSummaries } from "@/lib/pasaporte-stamps";
@@ -52,7 +52,7 @@ export default async function BarrIdPage() {
   );
 
   return (
-    <SiteShell>
+    <BarrIdShell>
       <Navbar />
       <main className="flex-1 min-h-0 flex flex-col overflow-hidden md:overflow-visible">
         <BarrIdClient
@@ -71,9 +71,9 @@ export default async function BarrIdPage() {
           progress={progress}
         />
       </main>
-      <div className="hidden md:block">
+      <div className="hidden md:block shrink-0">
         <Footer />
       </div>
-    </SiteShell>
+    </BarrIdShell>
   );
 }
