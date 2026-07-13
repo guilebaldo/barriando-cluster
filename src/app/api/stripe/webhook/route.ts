@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { publishBusinessPresenceOnPayment } from "@/lib/publish-business";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const PAID_PLANS = new Set<MembershipPlan>([
@@ -71,6 +72,8 @@ export async function POST(request: NextRequest) {
           currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
         },
       });
+
+      await publishBusinessPresenceOnPayment(userId, plan);
     }
   }
 
@@ -90,6 +93,14 @@ export async function POST(request: NextRequest) {
         currentPeriodEnd: sub.current_period_end ? new Date(sub.current_period_end * 1000) : null,
       },
     });
+
+    if (status === "active") {
+      const row = await prisma.subscription.findFirst({
+        where: { stripeSubscriptionId: sub.id },
+        select: { userId: true, plan: true },
+      });
+      if (row) await publishBusinessPresenceOnPayment(row.userId, row.plan);
+    }
   }
 
   return new Response("ok", { status: 200 });

@@ -35,6 +35,8 @@ type PublishedUserRow = {
     website: string | null;
     googleBusinessUrl: string | null;
     logoUrl: string | null;
+    latitude: number | null;
+    longitude: number | null;
     linkageStatus: string | null;
     isManualEntry: boolean | null;
     address: string | null;
@@ -49,6 +51,10 @@ type PublishedUserRow = {
   } | null;
 };
 
+/**
+ * Negocios con membresía comercial activa.
+ * Tras pagar aparecen en /socios sin esperar aprobación editorial (salvo rejected).
+ */
 async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
   try {
     return await prisma.user.findMany({
@@ -57,7 +63,10 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
           plan: { in: BUSINESS_PLANS },
           status: { in: [...ACTIVE_STATUSES] },
         },
-        socioProfile: { linkageStatus: "approved" },
+        socioProfile: {
+          businessName: { not: null },
+          NOT: { linkageStatus: "rejected" },
+        },
       },
       select: {
         id: true,
@@ -69,6 +78,8 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
             website: true,
             googleBusinessUrl: true,
             logoUrl: true,
+            latitude: true,
+            longitude: true,
             linkageStatus: true,
             isManualEntry: true,
             address: true,
@@ -122,8 +133,15 @@ function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefit
 function userToSocio(user: PublishedUserRow): Socio | null {
   const sub = user.subscription;
   const profile = user.socioProfile;
-  if (!sub || !profile || profile.linkageStatus !== "approved") return null;
+  if (!sub || !profile) return null;
+  if (profile.linkageStatus === "rejected") return null;
   if (!hasCommercialAccess(sub.plan, sub.status)) return null;
+
+  const coords = {
+    latitude: profile.latitude ?? null,
+    longitude: profile.longitude ?? null,
+    logoUrl: profile.logoUrl ?? null,
+  };
 
   if (user.socioId != null) {
     const catalog = listaSocios.find((s) => s.id === user.socioId);
@@ -135,6 +153,7 @@ function userToSocio(user: PublishedUserRow): Socio | null {
         direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || catalog.direccion,
         categoria: profile.category?.trim() || catalog.categoria,
         benefit: profileBenefit(profile),
+        ...coords,
       };
     }
   }
@@ -152,10 +171,11 @@ function userToSocio(user: PublishedUserRow): Socio | null {
     url: profile.website?.trim() || "#",
     direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || undefined,
     benefit: profileBenefit(profile),
+    ...coords,
   };
 }
 
-/** Socios visibles en /socios: catálogo + familiares validados, autorizados y pagados. */
+/** Socios visibles en /socios: catálogo + negocios con plan de pago activo. */
 export async function getPublicSociosList(): Promise<Socio[]> {
   const publishedUsers = await loadPublishedBusinessUsers();
   const dynamic = publishedUsers.map(userToSocio).filter(Boolean) as Socio[];

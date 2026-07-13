@@ -15,6 +15,10 @@ export interface Socio {
   url: string;
   direccion?: string;
   telefono?: string;
+  /** Coordenadas comerciales del perfil (Places / registro). Prioridad sobre socios-coords. */
+  latitude?: number | null;
+  longitude?: number | null;
+  logoUrl?: string | null;
   /** Beneficio activo para socios de pago (solo si el negocio lo publicó). */
   benefit?: SocioBenefitInfo | null;
 }
