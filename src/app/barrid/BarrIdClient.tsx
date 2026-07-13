@@ -48,7 +48,7 @@ function StatusCard({
         compact ? "px-4 py-4" : "px-6 sm:px-8 py-6 sm:py-8"
       }`}
     >
-      <Link
+      <a
         href="/panel"
         className={`absolute z-20 inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 text-white hover:bg-white/20 transition ${
           compact ? "top-3 right-3 w-8 h-8" : "top-4 right-4 w-10 h-10"
@@ -57,7 +57,7 @@ function StatusCard({
         title="Mi Panel"
       >
         <Settings className={compact ? "w-4 h-4" : "w-5 h-5"} />
-      </Link>
+      </a>
 
       <div className={`flex items-center ${compact ? "gap-3 pr-10" : "gap-4 pr-12"}`}>
         <div
