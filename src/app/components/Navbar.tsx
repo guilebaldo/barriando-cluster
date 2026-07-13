@@ -99,12 +99,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
           {displayName}
         </Link>
         {(isAdmin || isPaid) && (
-          <a
+          <Link
             href="/panel"
             className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
           >
             Mi Panel
-          </a>
+          </Link>
         )}
         {isAdmin && (
           <Link
@@ -148,14 +148,14 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
         {open && (
           <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
             <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
-              <a
+              <Link
                 href="/panel"
                 role="menuitem"
                 className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
                 onClick={() => setOpen(false)}
               >
                 Mi Panel
-              </a>
+              </Link>
               <Link
                 href="/admin"
                 role="menuitem"
@@ -201,14 +201,14 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
         <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
             {isPaid && (
-              <a
+              <Link
                 href="/panel"
                 role="menuitem"
                 className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
                 onClick={() => setOpen(false)}
               >
                 Mi Panel
-              </a>
+              </Link>
             )}
             {logoutButton}
           </div>

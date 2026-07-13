@@ -196,15 +196,13 @@ export async function loadTakenSocioIds(excludeUserId: string): Promise<number[]
   }
 }
 
-/** Elimina perfil huérfano solo si no hay negocio en curso de registro. */
+/** Elimina perfil huérfano si el usuario ya no tiene negocio vinculado en catálogo. */
 export async function cleanupOrphanSocioProfile(userId: string, socioId: number | null): Promise<void> {
   if (socioId != null) return;
   try {
     const profile = await prisma.socioProfile.findUnique({ where: { userId } });
     if (!profile) return;
-    // Nunca borrar si ya hay nombre comercial (manual o vinculado en revisión).
-    if (profile.businessName?.trim()) return;
-    if (profile.linkageStatus === "pending") return;
+    if (profile.linkageStatus === "pending" && profile.businessName?.trim()) return;
     if (profile.linkageStatus === "approved") return;
     await prisma.socioProfile.delete({ where: { userId } });
   } catch (error) {
