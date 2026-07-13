@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
-import MapImmersiveShell from "../map/MapImmersiveShell";
+import Footer from "../components/Footer";
+import SiteShell from "../components/SiteShell";
 import BarrIdClient from "./BarrIdClient";
 import { getSession } from "@/lib/auth-utils";
 import { loadUserStampSummaries } from "@/lib/pasaporte-stamps";
@@ -51,9 +52,9 @@ export default async function BarrIdPage() {
   );
 
   return (
-    <MapImmersiveShell>
+    <SiteShell>
       <Navbar />
-      <main className="flex-1 min-h-0 overflow-hidden">
+      <main className="flex-1 min-h-0 flex flex-col overflow-hidden md:overflow-visible">
         <BarrIdClient
           user={{
             nombre: user?.nombre?.trim() || session.nombre || "Socio",
@@ -70,6 +71,9 @@ export default async function BarrIdPage() {
           progress={progress}
         />
       </main>
-    </MapImmersiveShell>
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+    </SiteShell>
   );
 }

@@ -536,7 +536,7 @@ function PasaporteInner({
 
   const pageContent = (
     <>
-      <div className={`py-2 sm:py-4 px-2 sm:px-4 ${isAuthenticated ? "pb-16" : "pb-6"}`}>
+      <div className={`py-2 sm:py-4 px-2 sm:px-4 ${isAuthenticated ? "pb-6" : "pb-6"}`}>
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         {!isAuthenticated && <PasaporteInfoCard className="mb-5 sm:mb-6" />}
 
@@ -747,30 +747,29 @@ function PasaporteInner({
         </div>
 
         {!isPreview && (
-          <p className="text-center text-[11px] text-stone-600 mt-3 mb-1 max-w-sm mx-auto leading-relaxed font-light px-2">
-            ¿Tienes un negocio en el barrio?{" "}
-            <Link
-              href={registroUrl("NEGOCIO_FAMILIAR")}
-              className="font-semibold text-[#27366D] underline underline-offset-2"
+          <div className="mt-4 mb-1 max-w-sm mx-auto px-2 space-y-3">
+            <button
+              type="button"
+              onClick={() => setScannerOpen(true)}
+              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition shadow-sm active:scale-[0.98]"
             >
-              Regístralo
-            </Link>{" "}
-            para aparecer en el Pasaporte Digital.
-          </p>
+              <Camera className="w-4 h-4" strokeWidth={2.25} />
+              Escanear QR
+            </button>
+            <p className="text-center text-[11px] text-stone-600 leading-relaxed font-light">
+              ¿Tienes un negocio en el barrio?{" "}
+              <Link
+                href={registroUrl("NEGOCIO_FAMILIAR")}
+                className="font-semibold text-[#27366D] underline underline-offset-2"
+              >
+                Regístralo
+              </Link>{" "}
+              para aparecer en el Pasaporte Digital.
+            </p>
+          </div>
         )}
       </div>
       </div>
-
-      {isAuthenticated && (
-        <button
-          type="button"
-          onClick={() => setScannerOpen(true)}
-          className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-50 w-14 h-14 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition active:scale-95 animate-soft-glow"
-          aria-label="Escanear QR con la cámara"
-        >
-          <Camera className="w-6 h-6" strokeWidth={2.25} />
-        </button>
-      )}
 
       <QrScanModal
         open={scannerOpen}

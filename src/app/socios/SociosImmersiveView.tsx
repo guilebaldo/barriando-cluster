@@ -369,12 +369,15 @@ export default function SociosImmersiveView({
 
           {!canRedeemBenefits && (
             <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 shrink-0 bg-white">
-              <Link href={vecinoHref} className="block px-1 py-1.5 text-center">
-                <p className="text-[11px] text-slate-500 font-light leading-snug">
-                  Afíliate como Vecino y disfruta beneficios exclusivos de la red Barriando.{" "}
-                  <span className="font-semibold text-[#27366D]">Adquirir membresía →</span>
-                </p>
-              </Link>
+              <p className="text-center text-[11px] text-stone-600 leading-relaxed font-light px-1 py-1.5">
+                Afíliate como Vecino y disfruta beneficios exclusivos de la red Barriando.{" "}
+                <Link
+                  href={vecinoHref}
+                  className="font-semibold text-[#27366D] underline underline-offset-2"
+                >
+                  Adquirir membresía
+                </Link>
+              </p>
             </div>
           )}
         </div>
