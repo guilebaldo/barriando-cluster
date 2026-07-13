@@ -8,9 +8,7 @@ import { sociosCoords } from "../data/socios-coords";
 
 const LeafletSociosMap = dynamic(() => import("./SociosMapLeaflet"), {
   ssr: false,
-  loading: () => (
-    <div className="h-[420px] rounded-xl border border-slate-200 bg-slate-100 animate-pulse" />
-  ),
+  loading: () => <div className="absolute inset-0 bg-slate-100 animate-pulse" />,
 });
 
 type MapPoint = {
@@ -19,12 +17,48 @@ type MapPoint = {
   socio: Socio;
 };
 
-export default function GoogleSociosMap({ socios }: { socios: Socio[] }) {
+function getFocusPanOffsetPx(bottomSheetHeight: number): number {
+  return bottomSheetHeight > 0 ? Math.round(bottomSheetHeight / 2) : 0;
+}
+
+function markerIcon(
+  google: typeof globalThis.google,
+  selected: boolean
+): google.maps.Symbol {
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: selected ? 10 : 7,
+    fillColor: selected ? "#f59e0b" : "#27366D",
+    fillOpacity: 1,
+    strokeColor: selected ? "#27366D" : "#fbbf24",
+    strokeWeight: selected ? 3 : 2,
+  };
+}
+
+export default function GoogleSociosMap({
+  socios,
+  selectedId = null,
+  onSelect,
+  immersive = false,
+  bottomSheetHeight = 0,
+}: {
+  socios: Socio[];
+  selectedId?: number | null;
+  onSelect?: (id: number) => void;
+  immersive?: boolean;
+  bottomSheetHeight?: number;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
-  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const googleRef = useRef<Awaited<ReturnType<typeof loadGoogleMapsApi>> | null>(null);
+  const markersRef = useRef<Map<number, google.maps.Marker>>(new Map());
+  const onSelectRef = useRef(onSelect);
+  const selectedIdRef = useRef(selectedId);
   const [useLeafletFallback, setUseLeafletFallback] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+
+  onSelectRef.current = onSelect;
+  selectedIdRef.current = selectedId;
 
   const puntos: MapPoint[] = useMemo(
     () =>
@@ -39,73 +73,62 @@ export default function GoogleSociosMap({ socios }: { socios: Socio[] }) {
   );
 
   useEffect(() => {
-    if (useLeafletFallback || !containerRef.current || puntos.length === 0) return;
+    if (useLeafletFallback || !containerRef.current) return;
     let cancelled = false;
 
     loadGoogleMapsApi()
       .then((google) => {
         if (cancelled || !containerRef.current) return;
 
-        const center = { lat: puntos[0].lat, lng: puntos[0].lng };
+        googleRef.current = google;
+        const defaultCenter = puntos[0]
+          ? { lat: puntos[0].lat, lng: puntos[0].lng }
+          : { lat: 19.0414, lng: -98.2063 };
+
         if (!mapRef.current) {
           mapRef.current = new google.maps.Map(containerRef.current, {
-            center,
+            center: defaultCenter,
             zoom: 15,
             mapTypeControl: false,
             streetViewControl: false,
-            fullscreenControl: true,
+            fullscreenControl: !immersive,
+            zoomControl: true,
+            gestureHandling: immersive ? "greedy" : "auto",
           });
         }
 
         const map = mapRef.current;
-        markersRef.current.forEach((m) => m.setMap(null));
-        markersRef.current = [];
+        const nextIds = new Set(puntos.map((p) => p.socio.id));
 
-        if (!infoWindowRef.current) {
-          infoWindowRef.current = new google.maps.InfoWindow();
-        }
-
-        const bounds = new google.maps.LatLngBounds();
-        puntos.forEach((p) => {
-          const marker = new google.maps.Marker({
-            map,
-            position: { lat: p.lat, lng: p.lng },
-            title: p.socio.name,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 6,
-              fillColor: "#27366D",
-              fillOpacity: 1,
-              strokeColor: "#fbbf24",
-              strokeWeight: 2,
-            },
-          });
-
-          marker.addListener("click", () => {
-            const content = document.createElement("div");
-            content.className = "text-xs min-w-[10rem] max-w-[14rem]";
-            content.innerHTML = `
-              <p class="font-bold text-slate-900 leading-snug">${escapeHtml(p.socio.name)}</p>
-              <p class="text-slate-500 mt-1">${escapeHtml(p.socio.categoria)}</p>
-            `;
-            if (p.socio.direccion) {
-              const link = document.createElement("a");
-              link.href = p.socio.direccion;
-              link.target = "_blank";
-              link.rel = "noreferrer";
-              link.className = "text-[#27366D] font-semibold underline mt-2 inline-block";
-              link.textContent = "Ver en Maps";
-              content.appendChild(link);
-            }
-            infoWindowRef.current?.setContent(content);
-            infoWindowRef.current?.open({ map, anchor: marker });
-          });
-
-          markersRef.current.push(marker);
-          bounds.extend({ lat: p.lat, lng: p.lng });
+        markersRef.current.forEach((marker, id) => {
+          if (!nextIds.has(id)) {
+            marker.setMap(null);
+            markersRef.current.delete(id);
+          }
         });
 
-        map.fitBounds(bounds, { top: 32, right: 32, bottom: 32, left: 32 });
+        puntos.forEach((p) => {
+          const selected = selectedIdRef.current === p.socio.id;
+          let marker = markersRef.current.get(p.socio.id);
+          if (!marker) {
+            marker = new google.maps.Marker({
+              map,
+              position: { lat: p.lat, lng: p.lng },
+              title: p.socio.name,
+              icon: markerIcon(google, selected),
+            });
+            marker.addListener("click", () => {
+              onSelectRef.current?.(p.socio.id);
+            });
+            markersRef.current.set(p.socio.id, marker);
+          } else {
+            marker.setPosition({ lat: p.lat, lng: p.lng });
+            marker.setIcon(markerIcon(google, selected));
+            marker.setMap(map);
+          }
+        });
+
+        setMapReady(true);
       })
       .catch((err) => {
         console.error("[socios-map] Google Maps failed:", err);
@@ -115,32 +138,74 @@ export default function GoogleSociosMap({ socios }: { socios: Socio[] }) {
     return () => {
       cancelled = true;
     };
-  }, [puntos, useLeafletFallback]);
+  }, [puntos, useLeafletFallback, immersive]);
 
-  if (puntos.length === 0) return null;
+  const fittedFilterKeyRef = useRef<string>("");
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const google = googleRef.current;
+    if (!map || !google || !mapReady || selectedId != null || puntos.length === 0) return;
+
+    const key = puntos.map((p) => p.socio.id).join(",");
+    if (key === fittedFilterKeyRef.current) return;
+    fittedFilterKeyRef.current = key;
+
+    const bounds = new google.maps.LatLngBounds();
+    puntos.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
+    map.fitBounds(bounds, {
+      top: 48,
+      right: 32,
+      bottom: Math.max(48, bottomSheetHeight + 24),
+      left: 32,
+    });
+  }, [puntos, selectedId, bottomSheetHeight, mapReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const google = googleRef.current;
+    if (!map || !google || !mapReady) return;
+
+    markersRef.current.forEach((marker, id) => {
+      marker.setIcon(markerIcon(google, id === selectedId));
+      marker.setZIndex(id === selectedId ? 1000 : 1);
+    });
+
+    if (selectedId == null) return;
+    const point = puntos.find((p) => p.socio.id === selectedId);
+    if (!point) return;
+
+    map.panTo({ lat: point.lat, lng: point.lng });
+    if ((map.getZoom() ?? 15) < 16) {
+      map.setZoom(16);
+    }
+    const offset = getFocusPanOffsetPx(bottomSheetHeight);
+    if (offset > 0) {
+      map.panBy(0, -offset);
+    }
+  }, [selectedId, bottomSheetHeight, puntos, mapReady]);
 
   if (useLeafletFallback) {
     return (
-      <div className="space-y-2">
-        <p className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          Mapa alternativo (OpenStreetMap). Para Google Maps, verifica la API key.
-        </p>
-        <LeafletSociosMap socios={socios} />
-      </div>
+      <LeafletSociosMap
+        socios={socios}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        immersive={immersive}
+        bottomSheetHeight={bottomSheetHeight}
+      />
     );
   }
 
   return (
-    <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm h-[420px] z-0">
+    <div
+      className={
+        immersive
+          ? "absolute inset-0 z-0"
+          : "rounded-xl overflow-hidden border border-slate-200 shadow-sm h-[420px] z-0"
+      }
+    >
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
