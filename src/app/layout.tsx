@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Barriando",
+    title: "BarriApp",
     statusBarStyle: "black-translucent",
   },
   icons: {

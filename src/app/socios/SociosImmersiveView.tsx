@@ -109,7 +109,7 @@ export default function SociosImmersiveView({
 
   const clearSelection = useCallback(() => {
     setSelectedId(null);
-    setSheetMode("peek");
+    setSheetMode("half");
   }, []);
 
   useEffect(() => {
@@ -161,31 +161,20 @@ export default function SociosImmersiveView({
       <p className="text-center text-sm text-slate-400 py-8">No hay socios con ese criterio.</p>
     ) : viewMode === "icons" ? (
       <div
-        className="overscroll-contain touch-pan-y scrollbar-none"
+        className={`overscroll-contain touch-pan-y scrollbar-none ${
+          sheetMode === "half" ? "h-[11rem] md:h-[15rem] overflow-y-auto" : ""
+        }`}
         style={
-          sheetMode === "half"
-            ? {
-                height: 176,
-                maxHeight: 176,
-                overflowY: "auto",
-                WebkitOverflowScrolling: "touch",
-              }
-            : undefined
+          sheetMode === "half" ? { WebkitOverflowScrolling: "touch" } : undefined
         }
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: 8,
-          }}
-        >
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-1.5">
           {sociosFiltrados.map((s) => (
             <button
               key={s.id}
               type="button"
               onClick={() => selectSocio(s.id)}
-              className={`relative w-full overflow-hidden rounded-xl border bg-slate-50 transition ${
+              className={`relative w-full overflow-hidden rounded-xl md:rounded-lg border bg-slate-50 transition ${
                 selectedId === s.id
                   ? "border-amber-400 ring-2 ring-amber-300"
                   : "border-slate-200 hover:border-[#27366D]/40"
@@ -494,11 +483,11 @@ export default function SociosImmersiveView({
       >
         <div
           ref={sheetRef}
-          className={`pointer-events-auto mx-auto w-full max-w-lg bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius] duration-300 ease-out ${
+          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius] duration-300 ease-out ${
             sheetMode === "full"
               ? "h-full rounded-t-3xl"
               : sheetMode === "half"
-                ? "rounded-t-2xl"
+                ? "rounded-t-2xl max-h-[400px] md:max-h-[min(52vh,520px)]"
                 : canRedeemBenefits
                   ? "rounded-t-2xl"
                   : "rounded-t-2xl"
@@ -507,7 +496,7 @@ export default function SociosImmersiveView({
             sheetMode === "full"
               ? undefined
               : sheetMode === "half"
-                ? { maxHeight: 400, height: "auto" }
+                ? undefined
                 : { maxHeight: canRedeemBenefits ? 92 : 136 }
           }
         >

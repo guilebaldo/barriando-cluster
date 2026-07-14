@@ -14,6 +14,7 @@ import {
   resolveMembershipExpiryLabel,
   safePlanPriceLabel,
 } from "@/lib/panel-display";
+import { isFirstLoginAccount } from "@/lib/add-to-home-screen";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,7 @@ export default async function BarrIdPage() {
       <main className="flex-1 min-h-0 relative overflow-hidden md:overflow-visible md:h-auto">
         <BarrIdClient
           user={{
+            id: session.id,
             nombre: user?.nombre?.trim() || session.nombre || "Socio",
             email: user?.email ?? session.email,
             image: user?.image ?? null,
@@ -69,6 +71,7 @@ export default async function BarrIdPage() {
           stampedCount={stampedCount}
           totalRestaurants={totalRestaurants}
           progress={progress}
+          isFirstLoginUser={isFirstLoginAccount(user?.createdAt)}
         />
       </main>
       <div className="hidden md:block shrink-0">

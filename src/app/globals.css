@@ -85,6 +85,11 @@
   50% { opacity: 0.72; }
 }
 
+@keyframes soft-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.72); }
+}
+
 @keyframes soft-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.26); }
   50% { box-shadow: 0 0 0 7px rgba(251, 191, 36, 0); }
@@ -92,6 +97,10 @@
 
 .animate-soft-blink {
   animation: soft-blink 2.1s ease-in-out infinite;
+}
+
+.animate-soft-scale {
+  animation: soft-scale 2.1s ease-in-out infinite;
 }
 
 .animate-soft-glow {
@@ -175,6 +184,7 @@
   .animate-float-y,
   .animate-icon-ring,
   .animate-soft-blink,
+  .animate-soft-scale,
   .animate-soft-glow,
   .animate-popup-in,
   .animate-stamp-press {

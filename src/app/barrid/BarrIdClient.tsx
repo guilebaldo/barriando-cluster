@@ -6,9 +6,11 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { BookOpen, Gift, Map as MapIcon, Settings } from "lucide-react";
 import { createBenefitCredential } from "../panel/actions";
+import AddToHomeScreenModal from "./AddToHomeScreenModal";
 
 type BarrIdClientProps = {
   user: {
+    id: string;
     nombre: string;
     email: string;
     image: string | null;
@@ -21,6 +23,8 @@ type BarrIdClientProps = {
   stampedCount: number;
   totalRestaurants: number;
   progress: number;
+  /** Cuenta recién creada: mostrar prompt de instalar BarriApp en móvil. */
+  isFirstLoginUser?: boolean;
 };
 
 function formatCountdown(totalSeconds: number): string {
@@ -268,6 +272,8 @@ export default function BarrIdClient(props: BarrIdClientProps) {
 
   return (
     <>
+      <AddToHomeScreenModal userId={props.user.id} eligible={Boolean(props.isFirstLoginUser)} />
+
       {/* —— Móvil: QR fijo + ficha azul casi fullscreen —— */}
       <div className="md:hidden relative h-full w-full overflow-hidden overscroll-none">
         <div className="absolute inset-0 flex flex-col items-center justify-center px-4 pb-28 pt-2 pointer-events-none">

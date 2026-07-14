@@ -43,11 +43,14 @@ function NavArrowButton({
       aria-label={direction === "prev" ? "Hito anterior" : "Siguiente hito"}
       className={`shrink-0 min-w-[52px] min-h-[52px] rounded-xl flex items-center justify-center transition-all active:scale-95 ${
         primary
-          ? "bg-[#27366D] text-amber-400 shadow-md animate-soft-blink"
+          ? "bg-[#27366D] text-amber-400 shadow-md"
           : "border border-slate-200 bg-white text-[#27366D]"
       }`}
     >
-      <Icon className="w-7 h-7" strokeWidth={2.5} />
+      <Icon
+        className={`w-7 h-7 ${primary ? "animate-soft-scale" : ""}`}
+        strokeWidth={2.5}
+      />
     </button>
   );
 }
@@ -105,9 +108,22 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const applyLocationUpdate = useCallback((location: UserMapLocation) => {
     setUserLocation((prev) => {
       if (prev && haversineDistanceKm(prev, location) < 0.008) {
-        return prev;
+        const nextHeading =
+          typeof location.heading === "number" && Number.isFinite(location.heading)
+            ? location.heading
+            : prev.heading;
+        if (nextHeading === prev.heading && location.accuracy === prev.accuracy) {
+          return prev;
+        }
+        return { ...prev, heading: nextHeading, accuracy: location.accuracy ?? prev.accuracy };
       }
-      return location;
+      return {
+        ...location,
+        heading:
+          typeof location.heading === "number" && Number.isFinite(location.heading)
+            ? location.heading
+            : prev?.heading ?? null,
+      };
     });
     setGeoModalOpen(false);
   }, []);
@@ -148,6 +164,10 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
+          heading:
+            typeof pos.coords.heading === "number" && Number.isFinite(pos.coords.heading)
+              ? pos.coords.heading
+              : null,
         });
       },
       () => setGeoModalOpen(true),
@@ -162,10 +182,15 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     }
 
     const onSuccess = (pos: GeolocationPosition) => {
+      const heading =
+        typeof pos.coords.heading === "number" && Number.isFinite(pos.coords.heading)
+          ? pos.coords.heading
+          : null;
       const location: UserMapLocation = {
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
         accuracy: pos.coords.accuracy,
+        heading,
       };
 
       if (!hasAutoRoutedRef.current) {
@@ -185,12 +210,38 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
     const watchId = navigator.geolocation.watchPosition(onSuccess, () => {}, {
       enableHighAccuracy: true,
-      maximumAge: 60_000,
+      maximumAge: 2_000,
       timeout: 25_000,
     });
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [applyInitialRouteFromLocation, applyLocationUpdate]);
+
+  useEffect(() => {
+    const readCompassHeading = (event: DeviceOrientationEvent) => {
+      const webkitHeading = (event as DeviceOrientationEvent & { webkitCompassHeading?: number })
+        .webkitCompassHeading;
+      let heading: number | null = null;
+      if (typeof webkitHeading === "number" && Number.isFinite(webkitHeading)) {
+        heading = webkitHeading;
+      } else if (typeof event.alpha === "number" && Number.isFinite(event.alpha)) {
+        heading = (360 - event.alpha) % 360;
+      }
+      if (heading == null) return;
+      setUserLocation((prev) => {
+        if (!prev) return prev;
+        if (prev.heading != null && Math.abs(prev.heading - heading!) < 2) return prev;
+        return { ...prev, heading };
+      });
+    };
+
+    window.addEventListener("deviceorientationabsolute", readCompassHeading, true);
+    window.addEventListener("deviceorientation", readCompassHeading, true);
+    return () => {
+      window.removeEventListener("deviceorientationabsolute", readCompassHeading, true);
+      window.removeEventListener("deviceorientation", readCompassHeading, true);
+    };
+  }, []);
 
   useEffect(() => {
     if (hasSocioDeepLink) {
