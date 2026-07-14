@@ -250,3 +250,10 @@ model HomePromo {
   endsAt    DateTime?
   createdAt DateTime  @default(now())
 }
+
+/** Overrides admin del sitio web para socios del catálogo estático (listaSocios). */
+model CatalogSocioOverride {
+  socioId   Int      @id
+  website   String?
+  updatedAt DateTime @updatedAt
+}

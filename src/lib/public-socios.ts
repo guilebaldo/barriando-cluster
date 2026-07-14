@@ -51,6 +51,30 @@ type PublishedUserRow = {
   } | null;
 };
 
+async function loadCatalogWebsiteOverrides(): Promise<Map<number, string>> {
+  try {
+    const rows = await prisma.catalogSocioOverride.findMany({
+      select: { socioId: true, website: true },
+    });
+    const map = new Map<number, string>();
+    for (const row of rows) {
+      const website = row.website?.trim();
+      if (website) map.set(row.socioId, website);
+    }
+    return map;
+  } catch (error) {
+    console.error("[public-socios] loadCatalogWebsiteOverrides failed:", error);
+    return new Map();
+  }
+}
+
+function catalogSociosWithOverrides(overrides: Map<number, string>): Socio[] {
+  return listaSocios.map((s) => {
+    const website = overrides.get(s.id);
+    return website ? { ...s, url: website } : s;
+  });
+}
+
 /**
  * Negocios con membresía comercial activa.
  * Tras pagar aparecen en /socios sin esperar aprobación editorial (salvo rejected).
@@ -130,7 +154,10 @@ function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefit
   };
 }
 
-function userToSocio(user: PublishedUserRow): Socio | null {
+function userToSocio(
+  user: PublishedUserRow,
+  overrides: Map<number, string> = new Map()
+): Socio | null {
   const sub = user.subscription;
   const profile = user.socioProfile;
   if (!sub || !profile) return null;
@@ -146,10 +173,11 @@ function userToSocio(user: PublishedUserRow): Socio | null {
   if (user.socioId != null) {
     const catalog = listaSocios.find((s) => s.id === user.socioId);
     if (catalog) {
+      const overrideUrl = overrides.get(catalog.id);
       return {
         ...catalog,
         name: profile.businessName?.trim() || catalog.name,
-        url: profile.website?.trim() || catalog.url,
+        url: profile.website?.trim() || overrideUrl || catalog.url,
         direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || catalog.direccion,
         categoria: profile.category?.trim() || catalog.categoria,
         benefit: profileBenefit(profile),
@@ -182,15 +210,21 @@ function userToSocio(user: PublishedUserRow): Socio | null {
 
 /** Socios visibles en /socios: catálogo + negocios con plan de pago activo. */
 export async function getPublicSociosList(): Promise<Socio[]> {
-  const publishedUsers = await loadPublishedBusinessUsers();
-  const dynamic = publishedUsers.map(userToSocio).filter(Boolean) as Socio[];
+  const [publishedUsers, overrides] = await Promise.all([
+    loadPublishedBusinessUsers(),
+    loadCatalogWebsiteOverrides(),
+  ]);
+  const catalogBase = catalogSociosWithOverrides(overrides);
+  const dynamic = publishedUsers
+    .map((user) => userToSocio(user, overrides))
+    .filter(Boolean) as Socio[];
 
-  const catalogIds = new Set(listaSocios.map((s) => s.id));
+  const catalogIds = new Set(catalogBase.map((s) => s.id));
   const linkedCatalogIds = new Set(
     publishedUsers.filter((u) => u.socioId != null).map((u) => u.socioId as number)
   );
 
-  const merged = [...listaSocios];
+  const merged = [...catalogBase];
   for (const entry of dynamic) {
     if (catalogIds.has(entry.id)) continue;
     merged.push(entry);
@@ -199,7 +233,7 @@ export async function getPublicSociosList(): Promise<Socio[]> {
   for (const user of publishedUsers) {
     if (user.socioId == null || !linkedCatalogIds.has(user.socioId)) continue;
     const idx = merged.findIndex((s) => s.id === user.socioId);
-    const refreshed = userToSocio(user);
+    const refreshed = userToSocio(user, overrides);
     if (idx >= 0 && refreshed) merged[idx] = refreshed;
   }
 
@@ -208,13 +242,16 @@ export async function getPublicSociosList(): Promise<Socio[]> {
 
 /** Carrusel destacado: Mediana y Gran Empresa. */
 export async function getCarouselSocios(): Promise<Socio[]> {
-  const publishedUsers = await loadPublishedBusinessUsers();
+  const [publishedUsers, overrides] = await Promise.all([
+    loadPublishedBusinessUsers(),
+    loadCatalogWebsiteOverrides(),
+  ]);
   const fromDb = publishedUsers
     .filter((u) => u.subscription && isVisibleInCarousel(u.subscription.plan))
-    .map(userToSocio)
+    .map((user) => userToSocio(user, overrides))
     .filter(Boolean) as Socio[];
 
-  const staticEligible = listaSocios.filter((s) => {
+  const staticEligible = catalogSociosWithOverrides(overrides).filter((s) => {
     const plan = getPlanForSocio(s);
     return isVisibleInCarousel(plan);
   });
@@ -233,13 +270,18 @@ export async function getCarouselSocios(): Promise<Socio[]> {
 
 /** Carrusel de la landing: solo Mediana Empresa. */
 export async function getMedianaCarouselSocios(): Promise<Socio[]> {
-  const publishedUsers = await loadPublishedBusinessUsers();
+  const [publishedUsers, overrides] = await Promise.all([
+    loadPublishedBusinessUsers(),
+    loadCatalogWebsiteOverrides(),
+  ]);
   const fromDb = publishedUsers
     .filter((u) => u.subscription && isMedianaCarouselPlan(u.subscription.plan))
-    .map(userToSocio)
+    .map((user) => userToSocio(user, overrides))
     .filter(Boolean) as Socio[];
 
-  const staticEligible = listaSocios.filter((s) => isMedianaCarouselPlan(getPlanForSocio(s)));
+  const staticEligible = catalogSociosWithOverrides(overrides).filter((s) =>
+    isMedianaCarouselPlan(getPlanForSocio(s))
+  );
 
   const seen = new Set<number>();
   const merged: Socio[] = [];

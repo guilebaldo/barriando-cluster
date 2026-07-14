@@ -847,3 +847,103 @@ export async function toggleHomePromoActive(id: string): Promise<ActionResult> {
     return { ok: false, error: "No se pudo cambiar el estado." };
   }
 }
+
+export type CatalogSocioRow = {
+  id: number;
+  name: string;
+  categoria: string;
+  catalogUrl: string;
+  website: string;
+  hasOverride: boolean;
+};
+
+export async function listCatalogSocioRows(): Promise<CatalogSocioRow[]> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return [];
+
+    const overrides = await prisma.catalogSocioOverride.findMany({
+      select: { socioId: true, website: true },
+    });
+    const byId = new Map(
+      overrides.map((row) => [row.socioId, row.website?.trim() || null] as const)
+    );
+
+    return listaSocios
+      .map((s) => {
+        const override = byId.get(s.id);
+        const hasOverride = Boolean(override);
+        return {
+          id: s.id,
+          name: s.name,
+          categoria: s.categoria,
+          catalogUrl: s.url,
+          website: override || s.url,
+          hasOverride,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+  } catch (error) {
+    console.error("[admin] listCatalogSocioRows failed:", error);
+    return [];
+  }
+}
+
+const catalogWebsiteSchema = z.object({
+  socioId: z.number().int().positive(),
+  website: z.string().trim().max(500),
+});
+
+export async function updateCatalogSocioWebsite(input: {
+  socioId: number;
+  website: string;
+}): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) {
+      return { ok: false, error: "No autorizado." };
+    }
+
+    const parsed = catalogWebsiteSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: "Datos inválidos." };
+    }
+
+    const { socioId, website } = parsed.data;
+    const catalog = listaSocios.find((s) => s.id === socioId);
+    if (!catalog) {
+      return { ok: false, error: "Socio del catálogo no encontrado." };
+    }
+
+    if (!website) {
+      await prisma.catalogSocioOverride.deleteMany({ where: { socioId } });
+    } else {
+      let normalized = website;
+      if (!/^https?:\/\//i.test(normalized)) {
+        normalized = `https://${normalized}`;
+      }
+      try {
+        void new URL(normalized);
+      } catch {
+        return { ok: false, error: "URL de sitio web inválida." };
+      }
+
+      await prisma.catalogSocioOverride.upsert({
+        where: { socioId },
+        create: { socioId, website: normalized },
+        update: { website: normalized },
+      });
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/socios");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] updateCatalogSocioWebsite failed:", error);
+    return { ok: false, error: "No se pudo guardar el sitio web." };
+  }
+}
