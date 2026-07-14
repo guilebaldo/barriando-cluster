@@ -304,6 +304,7 @@ export type AdminUserRow = {
   status: string;
   createdAt: string;
   currentPeriodEnd: string | null;
+  subscriptionCreatedAt: string | null;
   manualPaymentNote: string | null;
   stripeSubscriptionId: string | null;
   linkageStatus: string | null;
@@ -418,6 +419,7 @@ const SUBSCRIPTION_ADMIN_SELECT = {
   currentPeriodEnd: true,
   manualPaymentNote: true,
   stripeSubscriptionId: true,
+  createdAt: true,
 } as const;
 
 const USER_ADMIN_BASE_SELECT = {
@@ -443,6 +445,7 @@ type AdminUserRecord = {
     currentPeriodEnd: Date | null;
     manualPaymentNote: string | null;
     stripeSubscriptionId: string | null;
+    createdAt: Date;
   } | null;
   socioProfile?: {
     businessName: string | null;
@@ -527,6 +530,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
       status: user.subscription?.status ?? "inactive",
       createdAt: user.createdAt.toISOString(),
       currentPeriodEnd: user.subscription?.currentPeriodEnd?.toISOString() ?? null,
+      subscriptionCreatedAt: user.subscription?.createdAt?.toISOString() ?? null,
       manualPaymentNote: user.subscription?.manualPaymentNote ?? null,
       stripeSubscriptionId: user.subscription?.stripeSubscriptionId ?? null,
       linkageStatus: user.socioProfile?.linkageStatus ?? null,

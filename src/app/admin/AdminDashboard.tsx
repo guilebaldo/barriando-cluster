@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContentSection";
+import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
+import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
@@ -101,23 +103,18 @@ function ReviewActions({
   onRejectLinkage: () => void;
 }) {
   const busy = loadingId === userId;
-  const hasPayment = pendingPayment || paymentOutcome;
-  const hasLinkage = pendingLink || linkageOutcome;
+  const hasPayment = pendingPayment || paymentOutcome === "rejected";
+  const hasLinkage = pendingLink || linkageOutcome === "rejected";
 
   if (!hasPayment && !hasLinkage) {
-    return <span className="text-slate-300">—</span>;
+    return null;
   }
 
   return (
-    <div className="flex flex-col gap-2 min-w-[11rem]">
+    <div className="flex flex-col gap-2 min-w-[11rem] text-left">
       {hasPayment && (
         <div className="space-y-1">
           <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Pago manual</p>
-          {paymentOutcome === "approved" && (
-            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-green-700 bg-green-50">
-              Validado
-            </span>
-          )}
           {paymentOutcome === "rejected" && (
             <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-red-700 bg-red-50">
               Rechazado
@@ -148,11 +145,6 @@ function ReviewActions({
       {hasLinkage && (
         <div className="space-y-1">
           <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Vinculación</p>
-          {linkageOutcome === "approved" && (
-            <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-green-700 bg-green-50">
-              Aprobada
-            </span>
-          )}
           {linkageOutcome === "rejected" && (
             <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold text-red-700 bg-red-50">
               Rechazada
@@ -216,6 +208,7 @@ export default function AdminDashboard({
         user.email,
         business,
         user.planLabel,
+        PLAN_ADMIN_LABELS[user.plan] ?? "",
         user.profile?.rfc ?? "",
         user.profile?.razonSocial ?? "",
       ]
@@ -449,14 +442,15 @@ export default function AdminDashboard({
                 <th className="px-4 py-3">Correo</th>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Negocio</th>
-                <th className="px-4 py-3">Revisión</th>
-                <th className="px-4 py-3 w-24 text-right">Acciones</th>
+                <th className="px-4 py-3">Cuenta</th>
+                <th className="px-4 py-3">Vencimiento</th>
+                <th className="px-4 py-3 w-28 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {visibleUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
                     {query.trim()
                       ? "No hay socios que coincidan con tu búsqueda."
                       : tab === "pending"
@@ -607,45 +601,66 @@ function UserRows({
           )}
         </td>
         <td className="px-4 py-3 text-slate-700">{business}</td>
-        <td className="px-4 py-3 align-top">
-          <ReviewActions
-            userId={user.id}
-            loadingId={loadingId}
-            pendingPayment={pendingPayment}
-            pendingLink={pendingLink}
-            paymentOutcome={paymentOutcome}
-            linkageOutcome={linkageOutcome}
-            onApprovePayment={onApprovePayment}
-            onRejectPayment={onRejectPayment}
-            onApproveLinkage={onApproveLinkage}
-            onRejectLinkage={onRejectLinkage}
-          />
+        <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
+          {PLAN_ADMIN_LABELS[user.plan] ?? user.planLabel}
+        </td>
+        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+          {resolveMembershipExpiryLabel({
+            status: user.status,
+            currentPeriodEnd: user.currentPeriodEnd,
+            subscriptionCreatedAt: user.subscriptionCreatedAt,
+            stripeSubscriptionId: user.stripeSubscriptionId,
+          })}
         </td>
         <td className="px-4 py-3 text-right align-top">
-          <div className="inline-flex gap-1">
-            <button
-              type="button"
-              title={isEditing ? "Cerrar" : "Editar"}
-              onClick={onEdit}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
-            >
-              {isEditing ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
-            </button>
-            <button
-              type="button"
-              title="Eliminar"
-              disabled={loadingId === user.id}
-              onClick={onDelete}
-              className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+          <div className="inline-flex flex-col items-end gap-2">
+            <div className="inline-flex gap-1">
+              <AdminEstablishmentQrButton
+                businessName={
+                  user.profile?.businessName?.trim() ||
+                  user.requestedBusinessName ||
+                  user.socioName ||
+                  ""
+                }
+                category={user.profile?.category}
+                disabled={loadingId === user.id}
+              />
+              <button
+                type="button"
+                title={isEditing ? "Cerrar" : "Editar"}
+                onClick={onEdit}
+                className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
+              >
+                {isEditing ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+              </button>
+              <button
+                type="button"
+                title="Eliminar"
+                disabled={loadingId === user.id}
+                onClick={onDelete}
+                className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+            <ReviewActions
+              userId={user.id}
+              loadingId={loadingId}
+              pendingPayment={pendingPayment}
+              pendingLink={pendingLink}
+              paymentOutcome={paymentOutcome}
+              linkageOutcome={linkageOutcome}
+              onApprovePayment={onApprovePayment}
+              onRejectPayment={onRejectPayment}
+              onApproveLinkage={onApproveLinkage}
+              onRejectLinkage={onRejectLinkage}
+            />
           </div>
         </td>
       </tr>
       {isEditing && (
         <tr className="bg-slate-50 border-b border-slate-200">
-          <td colSpan={6} className="px-4 py-5">
+          <td colSpan={7} className="px-4 py-5">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
               <label className="block">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Nombre</span>
