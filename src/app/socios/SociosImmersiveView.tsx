@@ -30,6 +30,14 @@ function formatBenefitDate(value: string | null): string | null {
 }
 
 type ViewMode = "icons" | "list";
+type SheetMode = "peek" | "half" | "full";
+
+const SHEET_ORDER: SheetMode[] = ["peek", "half", "full"];
+
+function stepSheet(mode: SheetMode, delta: 1 | -1): SheetMode {
+  const idx = SHEET_ORDER.indexOf(mode);
+  return SHEET_ORDER[Math.max(0, Math.min(SHEET_ORDER.length - 1, idx + delta))];
+}
 
 export default function SociosImmersiveView({
   socios,
@@ -48,7 +56,7 @@ export default function SociosImmersiveView({
   const [benefitsOnly, setBenefitsOnly] = useState(initialBenefitsOnly);
   const [viewMode, setViewMode] = useState<ViewMode>("icons");
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [sheetExpanded, setSheetExpanded] = useState(true);
+  const [sheetMode, setSheetMode] = useState<SheetMode>("half");
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
   const [activeBenefit, setActiveBenefit] = useState<{
     name: string;
@@ -92,11 +100,11 @@ export default function SociosImmersiveView({
     const observer = new ResizeObserver(updateHeight);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [sheetExpanded, selectedId, viewMode, canRedeemBenefits]);
+  }, [sheetMode, selectedId, viewMode, canRedeemBenefits]);
 
   const selectSocio = useCallback((id: number) => {
     setSelectedId(id);
-    setSheetExpanded(true);
+    setSheetMode((m) => (m === "peek" ? "half" : m));
   }, []);
 
   const clearSelection = useCallback(() => {
@@ -118,40 +126,55 @@ export default function SociosImmersiveView({
     const endY = event.changedTouches[0]?.clientY;
     if (endY == null) return;
     const delta = touchStartY.current - endY;
-    if (delta > 48) setSheetExpanded(true);
-    else if (delta < -48) setSheetExpanded(false);
+    if (delta > 48) setSheetMode((m) => stepSheet(m, 1));
+    else if (delta < -48) setSheetMode((m) => stepSheet(m, -1));
     touchStartY.current = null;
+  };
+
+  const cycleSheetFromHandle = () => {
+    setSheetMode((m) => (m === "full" ? "half" : stepSheet(m, 1)));
   };
 
   const useBenefitHref = canRedeemBenefits ? "/barrid" : registroUrl("VECINO");
   const vecinoHref = registroUrl("VECINO");
 
+  const iconGridClass =
+    sheetMode === "half"
+      ? "grid grid-cols-3 gap-2 h-[11rem] overflow-y-auto overscroll-contain touch-pan-y scrollbar-none"
+      : "grid grid-cols-3 gap-2";
+
+  const listClass =
+    sheetMode === "half"
+      ? "divide-y divide-slate-100 h-[11rem] overflow-y-auto overscroll-contain touch-pan-y"
+      : "divide-y divide-slate-100";
+
   const browseBody =
     sociosFiltrados.length === 0 ? (
       <p className="text-center text-sm text-slate-400 py-8">No hay socios con ese criterio.</p>
     ) : viewMode === "icons" ? (
-      <div className="grid grid-cols-3 gap-2 max-h-[calc(((min(100vw,32rem)-1.5rem)/3)*1.5+0.25rem)] overflow-y-auto overscroll-contain touch-pan-y scrollbar-none">
+      <div className={iconGridClass}>
         {sociosFiltrados.map((s) => (
           <button
             key={s.id}
             type="button"
             onClick={() => selectSocio(s.id)}
-            className={`relative aspect-square rounded-xl border bg-slate-50 overflow-hidden transition ${
+            className={`relative w-full overflow-hidden rounded-xl border bg-slate-50 transition ${
               selectedId === s.id
                 ? "border-amber-400 ring-2 ring-amber-300"
                 : "border-slate-200 hover:border-[#27366D]/40"
             }`}
+            style={{ aspectRatio: "1 / 1" }}
             aria-label={s.name}
           >
             <SocioLogo foto={s.foto} name={s.name} compact />
             {s.benefit && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500" />
+              <span className="absolute top-1 right-1 z-[1] w-2 h-2 rounded-full bg-amber-500" />
             )}
           </button>
         ))}
       </div>
     ) : (
-      <ul className="divide-y divide-slate-100 max-h-[11.5rem] overflow-y-auto overscroll-contain touch-pan-y">
+      <ul className={listClass}>
         {sociosFiltrados.map((s) => (
           <li key={s.id}>
             <button
@@ -238,6 +261,155 @@ export default function SociosImmersiveView({
     </div>
   );
 
+  const filtersBar = (
+    <div className="border-t border-slate-100 bg-white px-3 pt-2 space-y-2 shrink-0">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="search"
+            placeholder="Buscar socio o giro…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            enterKeyHint="search"
+            className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white"
+          />
+        </div>
+        <div className="flex shrink-0 rounded-xl border border-slate-200 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setViewMode("icons")}
+            className={`p-2.5 ${viewMode === "icons" ? "bg-[#27366D] text-white" : "bg-white text-slate-500"}`}
+            aria-label="Vista de iconos"
+            aria-pressed={viewMode === "icons"}
+          >
+            <Grid2X2 className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            className={`p-2.5 ${viewMode === "list" ? "bg-[#27366D] text-white" : "bg-white text-slate-500"}`}
+            aria-label="Vista de lista"
+            aria-pressed={viewMode === "list"}
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
+        <button
+          type="button"
+          onClick={() => setBenefitsOnly((v) => !v)}
+          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+            benefitsOnly
+              ? "bg-amber-500 text-slate-950"
+              : "bg-amber-50 text-amber-800 border border-amber-200"
+          }`}
+        >
+          <Gift className="w-3 h-3" />
+          Beneficios
+        </button>
+        {categorias.map((cat) => {
+          const active = activeCategories.includes(cat);
+          return (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => toggleCategory(cat)}
+              className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                active
+                  ? "bg-[#27366D] text-white"
+                  : "bg-slate-100 text-slate-600 border border-transparent"
+              }`}
+            >
+              {cat}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const sheetChrome = (
+    <>
+      <button
+        type="button"
+        onClick={cycleSheetFromHandle}
+        className={`relative w-full flex items-center justify-center touch-manipulation shrink-0 ${
+          sheetMode !== "peek" ? "pt-2.5 pb-1 border-b border-slate-100/80" : "pt-2.5 pb-2"
+        }`}
+        aria-expanded={sheetMode !== "peek"}
+        aria-label={
+          sheetMode === "peek"
+            ? "Mostrar ficha"
+            : sheetMode === "half"
+              ? "Expandir ficha"
+              : "Reducir ficha"
+        }
+      >
+        <span className="w-10 h-1 rounded-full bg-slate-300" />
+      </button>
+
+      {sheetMode === "peek" && (
+        <button
+          type="button"
+          onClick={() => setSheetMode("half")}
+          className="w-full px-4 pb-2 text-center touch-manipulation shrink-0"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+            {selectedSocio ? selectedSocio.categoria : "Red empresarial"}
+          </p>
+          <p className="text-sm font-semibold text-[#27366D] truncate">
+            {selectedSocio?.name ?? `${sociosFiltrados.length} socios`}
+          </p>
+        </button>
+      )}
+
+      {sheetMode !== "peek" && (
+        <>
+          <div
+            className={`px-3 pt-2 min-h-0 ${
+              sheetMode === "full" || selectedSocio
+                ? "flex-1 overflow-y-auto overscroll-contain touch-pan-y"
+                : "shrink-0 overflow-hidden"
+            }`}
+          >
+            {selectedSocio ? detailBody : browseBody}
+            {!selectedSocio && sheetMode === "half" && (
+              <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
+                {sociosFiltrados.length} miembros · desliza arriba para ver todos
+              </p>
+            )}
+            {!selectedSocio && sheetMode === "full" && (
+              <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
+                {sociosFiltrados.length} miembros
+              </p>
+            )}
+          </div>
+          {filtersBar}
+        </>
+      )}
+
+      {!canRedeemBenefits && (
+        <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 shrink-0 bg-white">
+          <p className="text-center text-[11px] text-stone-600 leading-relaxed font-light px-1 py-1.5">
+            Afíliate como Vecino y disfruta beneficios exclusivos de la red Barriando.{" "}
+            <Link
+              href={vecinoHref}
+              className="font-semibold text-[#27366D] underline underline-offset-2"
+            >
+              Adquirir membresía
+            </Link>
+          </p>
+        </div>
+      )}
+      {canRedeemBenefits && sheetMode !== "peek" && (
+        <div className="pb-[max(0.5rem,env(safe-area-inset-bottom))] shrink-0" />
+      )}
+    </>
+  );
+
   return (
     <div className="relative h-full w-full overflow-hidden overscroll-none">
       <SociosMap
@@ -245,149 +417,29 @@ export default function SociosImmersiveView({
         selectedId={selectedId}
         onSelect={selectSocio}
         immersive
-        bottomSheetHeight={sheetExpanded ? bottomSheetHeight : 0}
+        bottomSheetHeight={sheetMode === "peek" ? 0 : bottomSheetHeight}
       />
 
       <div
-        ref={sheetRef}
-        className="absolute inset-x-0 bottom-0 z-20 pointer-events-none"
+        className={`absolute inset-x-0 z-20 pointer-events-none transition-[top] duration-300 ease-out ${
+          sheetMode === "full" ? "top-3 bottom-0" : "bottom-0 top-auto"
+        }`}
         onTouchStart={onSheetTouchStart}
         onTouchEnd={onSheetTouchEnd}
       >
         <div
-          className={`pointer-events-auto mx-auto w-full max-w-lg bg-white rounded-t-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.12)] border border-slate-200/80 border-b-0 overflow-hidden flex flex-col transition-[max-height] duration-200 ${
-            sheetExpanded
-              ? selectedSocio
-                ? "max-h-[min(52vh,460px)]"
-                : "max-h-[min(46vh,400px)]"
-              : canRedeemBenefits
-                ? "max-h-[5.75rem]"
-                : "max-h-[8.5rem]"
+          ref={sheetRef}
+          className={`pointer-events-auto mx-auto w-full max-w-lg bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius] duration-300 ease-out ${
+            sheetMode === "full"
+              ? "h-full rounded-t-3xl"
+              : sheetMode === "half"
+                ? "max-h-[min(46vh,400px)] rounded-t-2xl"
+                : canRedeemBenefits
+                  ? "max-h-[5.75rem] rounded-t-2xl"
+                  : "max-h-[8.5rem] rounded-t-2xl"
           }`}
         >
-          <button
-            type="button"
-            onClick={() => setSheetExpanded((v) => !v)}
-            className={`relative w-full flex items-center justify-center touch-manipulation shrink-0 ${
-              sheetExpanded ? "pt-2.5 pb-1 border-b border-slate-100/80" : "pt-2.5 pb-2"
-            }`}
-            aria-expanded={sheetExpanded}
-            aria-label={sheetExpanded ? "Ocultar ficha" : "Mostrar ficha"}
-          >
-            <span className="w-10 h-1 rounded-full bg-slate-300" />
-          </button>
-
-          {!sheetExpanded && (
-            <div className="px-4 pb-2 text-center shrink-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-                {selectedSocio ? selectedSocio.categoria : "Red empresarial"}
-              </p>
-              <p className="text-sm font-semibold text-[#27366D] truncate">
-                {selectedSocio?.name ?? `${sociosFiltrados.length} socios`}
-              </p>
-            </div>
-          )}
-
-          {sheetExpanded && (
-            <>
-              <div
-                className={`px-3 pt-2 ${
-                  selectedSocio
-                    ? "min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y"
-                    : "shrink-0 overflow-hidden"
-                }`}
-              >
-                {selectedSocio ? detailBody : browseBody}
-                {!selectedSocio && (
-                  <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
-                    {sociosFiltrados.length} miembros
-                  </p>
-                )}
-              </div>
-
-              <div className="border-t border-slate-100 bg-white px-3 pt-2 space-y-2 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1 min-w-0">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                    <input
-                      type="search"
-                      placeholder="Buscar socio o giro…"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      enterKeyHint="search"
-                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white"
-                    />
-                  </div>
-                  <div className="flex shrink-0 rounded-xl border border-slate-200 overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("icons")}
-                      className={`p-2.5 ${viewMode === "icons" ? "bg-[#27366D] text-white" : "bg-white text-slate-500"}`}
-                      aria-label="Vista de iconos"
-                      aria-pressed={viewMode === "icons"}
-                    >
-                      <Grid2X2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode("list")}
-                      className={`p-2.5 ${viewMode === "list" ? "bg-[#27366D] text-white" : "bg-white text-slate-500"}`}
-                      aria-label="Vista de lista"
-                      aria-pressed={viewMode === "list"}
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
-                  <button
-                    type="button"
-                    onClick={() => setBenefitsOnly((v) => !v)}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                      benefitsOnly
-                        ? "bg-amber-500 text-slate-950"
-                        : "bg-amber-50 text-amber-800 border border-amber-200"
-                    }`}
-                  >
-                    <Gift className="w-3 h-3" />
-                    Beneficios
-                  </button>
-                  {categorias.map((cat) => {
-                    const active = activeCategories.includes(cat);
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => toggleCategory(cat)}
-                        className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
-                          active
-                            ? "bg-[#27366D] text-white"
-                            : "bg-slate-100 text-slate-600 border border-transparent"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-
-          {!canRedeemBenefits && (
-            <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 shrink-0 bg-white">
-              <p className="text-center text-[11px] text-stone-600 leading-relaxed font-light px-1 py-1.5">
-                Afíliate como Vecino y disfruta beneficios exclusivos de la red Barriando.{" "}
-                <Link
-                  href={vecinoHref}
-                  className="font-semibold text-[#27366D] underline underline-offset-2"
-                >
-                  Adquirir membresía
-                </Link>
-              </p>
-            </div>
-          )}
+          {sheetChrome}
         </div>
       </div>
 
