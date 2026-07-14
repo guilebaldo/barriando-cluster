@@ -87,7 +87,7 @@ export default function AdminCatalogSection({ rows }: { rows: CatalogSocioRow[] 
         </p>
       ) : null}
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
         <div className="px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />

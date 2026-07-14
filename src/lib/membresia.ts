@@ -1,6 +1,14 @@
 import type { MembershipPlan } from "@/generated/prisma/client";
 import type { Socio } from "@/app/data/socios";
 
+/**
+ * Matriz de productos (resumen):
+ * Turista — pasaporte / sellar (gratis).
+ * Vecino — BarrID + canjear beneficios de negocios + escanear sellos.
+ * Pequeña — lo de Vecino + aparece en pasaporte (AyB) para que le sellen.
+ * Mediana — lo de Pequeña + carrusel landing + posición preferente en /socios.
+ * Gran — lo de Mediana + negocios en el itinerario MAP.
+ */
 export type PaidMembershipPlan = Exclude<MembershipPlan, "TURISTA">;
 
 export interface PlanDefinition {

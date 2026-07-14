@@ -260,10 +260,17 @@ model CatalogSocioOverride {
 
 /** Roster de membresía pagada del catálogo (CSV / admin). Fuente de verdad para /socios y MAP. */
 model CatalogMembership {
-  socioId       Int            @id
-  plan          MembershipPlan
-  paymentMethod String?
-  status        String         @default("active")
-  businessName  String?
-  updatedAt     DateTime       @updatedAt
+  socioId              Int            @id
+  plan                 MembershipPlan
+  paymentMethod        String?
+  status               String         @default("active")
+  businessName         String?
+  offersBenefit        Boolean        @default(false)
+  benefitTitle         String?
+  benefitDescription   String?
+  benefitHowToRedeem   String?
+  benefitRedeemViaQr   Boolean        @default(false)
+  benefitValidFrom     DateTime?
+  benefitValidUntil    DateTime?
+  updatedAt            DateTime       @updatedAt
 }

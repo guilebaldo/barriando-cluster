@@ -37,7 +37,7 @@ export default function SocioLogo({
       src={src}
       alt={`Logo de ${name}`}
       fill
-      sizes={compact ? "96px" : "(max-width: 1024px) 50vw, 33vw"}
+      sizes={compact ? "(max-width: 767px) 96px, 160px" : "(max-width: 1024px) 50vw, 33vw"}
       className={`object-contain group-hover:scale-105 transition-transform duration-300 ${
         compact ? "p-1.5" : "p-6"
       }`}

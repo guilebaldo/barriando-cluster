@@ -69,8 +69,12 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
       </p>
 
       {!catalog ? (
-        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          Vincula primero tu negocio del directorio oficial para generar el QR de sello.
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
+          Tu negocio puede aparecer en el directorio con membresía pagada, pero{" "}
+          <strong>esta cuenta no está vinculada</strong> a un socio del catálogo. En Panel, usa
+          “Vincular negocio” y elige p. ej. Cosme Tortas (u otro del listado). Cuando Admin apruebe
+          la vinculación, aquí podrás descargar el QR de sello. Mientras tanto, Admin también puede
+          descargar el QR desde /admin.
         </p>
       ) : (
         <div className="flex flex-col sm:flex-row items-start gap-5">

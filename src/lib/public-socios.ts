@@ -40,6 +40,13 @@ type CatalogMembershipRow = {
   plan: MembershipPlan;
   status: string;
   businessName: string | null;
+  offersBenefit: boolean | null;
+  benefitTitle: string | null;
+  benefitDescription: string | null;
+  benefitHowToRedeem: string | null;
+  benefitRedeemViaQr: boolean | null;
+  benefitValidFrom: Date | null;
+  benefitValidUntil: Date | null;
 };
 
 type PublishedUserRow = {
@@ -71,7 +78,19 @@ async function loadActiveCatalogMemberships(): Promise<Map<number, CatalogMember
   try {
     const rows = await prisma.catalogMembership.findMany({
       where: { status: "active", plan: { in: BUSINESS_PLANS } },
-      select: { socioId: true, plan: true, status: true, businessName: true },
+      select: {
+        socioId: true,
+        plan: true,
+        status: true,
+        businessName: true,
+        offersBenefit: true,
+        benefitTitle: true,
+        benefitDescription: true,
+        benefitHowToRedeem: true,
+        benefitRedeemViaQr: true,
+        benefitValidFrom: true,
+        benefitValidUntil: true,
+      },
     });
     return new Map(rows.map((r) => [r.socioId, r]));
   } catch (error) {
@@ -147,21 +166,28 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
   }
 }
 
-function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefitInfo | null {
-  if (!profile) return null;
+function toSocioBenefit(input: {
+  offersBenefit: boolean | null | undefined;
+  benefitTitle: string | null | undefined;
+  benefitDescription: string | null | undefined;
+  benefitHowToRedeem: string | null | undefined;
+  benefitRedeemViaQr: boolean | null | undefined;
+  benefitValidFrom: Date | null | undefined;
+  benefitValidUntil: Date | null | undefined;
+}): SocioBenefitInfo | null {
   if (
     !isBenefitCurrentlyValid({
-      offersBenefit: Boolean(profile.offersBenefit),
-      benefitValidFrom: profile.benefitValidFrom,
-      benefitValidUntil: profile.benefitValidUntil,
+      offersBenefit: Boolean(input.offersBenefit),
+      benefitValidFrom: input.benefitValidFrom ?? null,
+      benefitValidUntil: input.benefitValidUntil ?? null,
     })
   ) {
     return null;
   }
-  const title = profile.benefitTitle?.trim();
-  const description = profile.benefitDescription?.trim();
-  const redeemViaQr = Boolean(profile.benefitRedeemViaQr);
-  const howToRedeem = profile.benefitHowToRedeem?.trim() || "";
+  const title = input.benefitTitle?.trim();
+  const description = input.benefitDescription?.trim();
+  const redeemViaQr = Boolean(input.benefitRedeemViaQr);
+  const howToRedeem = input.benefitHowToRedeem?.trim() || "";
   if (!title || !description) return null;
   if (!redeemViaQr && !howToRedeem) return null;
   return {
@@ -171,9 +197,18 @@ function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefit
       ? howToRedeem || "Muestra este QR al negocio para validar tu membresía."
       : howToRedeem,
     redeemViaQr,
-    validFrom: profile.benefitValidFrom?.toISOString() ?? null,
-    validUntil: profile.benefitValidUntil?.toISOString() ?? null,
+    validFrom: input.benefitValidFrom?.toISOString() ?? null,
+    validUntil: input.benefitValidUntil?.toISOString() ?? null,
   };
+}
+
+function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefitInfo | null {
+  if (!profile) return null;
+  return toSocioBenefit(profile);
+}
+
+function rosterBenefit(membership: CatalogMembershipRow): SocioBenefitInfo | null {
+  return toSocioBenefit(membership);
 }
 
 function catalogSocioFromRoster(
@@ -189,6 +224,7 @@ function catalogSocioFromRoster(
     name: membership.businessName?.trim() || catalog.name,
     url: overrideUrl || catalog.url,
     membershipPlan: membership.plan as Socio["membershipPlan"],
+    benefit: rosterBenefit(membership),
   };
 }
 
@@ -220,7 +256,7 @@ function userToSocio(
         url: profile.website?.trim() || overrideUrl || catalog.url,
         direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || catalog.direccion,
         categoria: profile.category?.trim() || catalog.categoria,
-        benefit: profileBenefit(profile),
+        benefit: profileBenefit(profile) || (roster ? rosterBenefit(roster) : null),
         membershipPlan: sub.plan as Socio["membershipPlan"],
         ...coords,
       };

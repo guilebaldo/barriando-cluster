@@ -153,7 +153,6 @@ export default function SociosImmersiveView({
     });
   };
 
-  const useBenefitHref = canRedeemBenefits ? "/barrid" : registroUrl("VECINO");
   const vecinoHref = registroUrl("VECINO");
 
   const browseBody =
@@ -562,17 +561,17 @@ export default function SociosImmersiveView({
                 {!canRedeemBenefits && (
                   <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
                     {activeBenefit.benefit.redeemViaQr
-                      ? "Para mostrar tu QR de canje certifícate como Vecino con membresía activa."
-                      : "Para usar este beneficio certifícate como Vecino y muestra tu BarrID en el negocio."}
+                      ? "Para mostrar tu QR de canje necesitas membresía activa (Vecino o plan de negocio) y BarrID."
+                      : "Para usar este beneficio necesitas membresía activa (Vecino o plan de negocio) y muestra tu BarrID."}
                   </p>
                 )}
                 {(!canRedeemBenefits || !activeBenefit.benefit.redeemViaQr) && (
                   <Link
-                    href={useBenefitHref}
+                    href={canRedeemBenefits ? "/barrid" : "/planes"}
                     className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
                     onClick={() => setActiveBenefit(null)}
                   >
-                    {canRedeemBenefits ? "Usar beneficio" : "Certificarme como Vecino"}
+                    {canRedeemBenefits ? "Usar beneficio" : "Ver planes de membresía"}
                   </Link>
                 )}
               </>

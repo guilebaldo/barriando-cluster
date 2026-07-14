@@ -216,7 +216,7 @@ async function loadActiveMilestones(): Promise<RawPoint[]> {
 }
 
 /** Socios Gran Empresa del catálogo + aliados destacados en el corredor MAP (p. ej. Cosme Tortas). */
-const FEATURED_ROUTE_SOCIO_IDS = new Set([11]); // Cosme Tortas
+const FEATURED_ROUTE_SOCIO_IDS = new Set([54]); // Cosme Tortas
 
 /** Solo socios con membresía activa en el roster (GRAN o featured). */
 async function loadCatalogRouteBusinesses(): Promise<RawPoint[]> {

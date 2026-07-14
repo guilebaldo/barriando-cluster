@@ -483,23 +483,44 @@ export async function updateSocioBenefit(input: {
       }
     }
 
+    const benefitPayload = {
+      offersBenefit: data.offersBenefit,
+      benefitTitle: data.offersBenefit ? data.benefitTitle.trim() : null,
+      benefitDescription: data.offersBenefit ? data.benefitDescription.trim() : null,
+      benefitRedeemViaQr: data.offersBenefit ? data.benefitRedeemViaQr : false,
+      benefitHowToRedeem: data.offersBenefit
+        ? data.benefitRedeemViaQr
+          ? data.benefitHowToRedeem.trim() ||
+            "Muestra este QR al negocio para validar tu membresía."
+          : data.benefitHowToRedeem.trim()
+        : null,
+      benefitValidFrom: data.offersBenefit ? parseOptionalDate(data.benefitValidFrom) : null,
+      benefitValidUntil: data.offersBenefit ? parseOptionalDate(data.benefitValidUntil) : null,
+    };
+
     await prisma.socioProfile.update({
       where: { userId: session.id },
-      data: {
-        offersBenefit: data.offersBenefit,
-        benefitTitle: data.offersBenefit ? data.benefitTitle.trim() : null,
-        benefitDescription: data.offersBenefit ? data.benefitDescription.trim() : null,
-        benefitRedeemViaQr: data.offersBenefit ? data.benefitRedeemViaQr : false,
-        benefitHowToRedeem: data.offersBenefit
-          ? data.benefitRedeemViaQr
-            ? data.benefitHowToRedeem.trim() ||
-              "Muestra este QR al negocio para validar tu membresía."
-            : data.benefitHowToRedeem.trim()
-          : null,
-        benefitValidFrom: data.offersBenefit ? parseOptionalDate(data.benefitValidFrom) : null,
-        benefitValidUntil: data.offersBenefit ? parseOptionalDate(data.benefitValidUntil) : null,
-      },
+      data: benefitPayload,
     });
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+      select: { socioId: true },
+    });
+    if (user?.socioId != null) {
+      await prisma.catalogMembership.upsert({
+        where: { socioId: user.socioId },
+        create: {
+          socioId: user.socioId,
+          plan: subscription.plan,
+          status: "active",
+          businessName: profile.businessName,
+          paymentMethod: subscription.paymentMethod,
+          ...benefitPayload,
+        },
+        update: benefitPayload,
+      });
+    }
 
     revalidatePath("/panel");
     revalidatePath("/socios");

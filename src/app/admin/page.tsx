@@ -29,7 +29,7 @@ export default async function AdminPage() {
   return (
     <SiteShell>
       <Navbar />
-      <main className="flex-1 max-w-6xl mx-auto py-12 px-6 w-full">
+      <main className="flex-1 min-h-0 w-full max-w-6xl mx-auto py-8 sm:py-12 px-4 sm:px-6 overflow-y-auto overflow-x-hidden">
         <AdminDashboard
           users={users}
           testimonials={testimonials}

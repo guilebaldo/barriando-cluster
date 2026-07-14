@@ -908,6 +908,13 @@ export type CatalogMembershipRow = {
   status: string;
   foto: string;
   categoria: string;
+  offersBenefit: boolean;
+  benefitTitle: string;
+  benefitDescription: string;
+  benefitHowToRedeem: string;
+  benefitRedeemViaQr: boolean;
+  benefitValidFrom: string;
+  benefitValidUntil: string;
 };
 
 function paymentMethodLabel(method: string | null): string {
@@ -937,6 +944,8 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
     return rows
       .map((row) => {
         const catalog = listaSocios.find((s) => s.id === row.socioId);
+        const toDateInput = (d: Date | null) =>
+          d ? d.toISOString().slice(0, 10) : "";
         return {
           socioId: row.socioId,
           businessName: row.businessName?.trim() || catalog?.name || `Socio #${row.socioId}`,
@@ -947,12 +956,111 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
           status: row.status,
           foto: catalog?.foto ?? "",
           categoria: catalog?.categoria ?? "",
+          offersBenefit: Boolean(row.offersBenefit),
+          benefitTitle: row.benefitTitle ?? "",
+          benefitDescription: row.benefitDescription ?? "",
+          benefitHowToRedeem: row.benefitHowToRedeem ?? "",
+          benefitRedeemViaQr: Boolean(row.benefitRedeemViaQr),
+          benefitValidFrom: toDateInput(row.benefitValidFrom),
+          benefitValidUntil: toDateInput(row.benefitValidUntil),
         };
       })
       .sort((a, b) => a.businessName.localeCompare(b.businessName, "es"));
   } catch (error) {
     console.error("[admin] listCatalogMemberships failed:", error);
     return [];
+  }
+}
+
+const catalogBenefitSchema = z.object({
+  socioId: z.number().int().positive(),
+  offersBenefit: z.boolean(),
+  benefitTitle: z.string().trim().max(120),
+  benefitDescription: z.string().trim().max(600),
+  benefitHowToRedeem: z.string().trim().max(600),
+  benefitRedeemViaQr: z.boolean(),
+  benefitValidFrom: z.string().trim().optional(),
+  benefitValidUntil: z.string().trim().optional(),
+});
+
+function parseOptionalBenefitDate(value?: string): Date | null {
+  if (!value?.trim()) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export async function updateCatalogMembershipBenefit(input: {
+  socioId: number;
+  offersBenefit: boolean;
+  benefitTitle: string;
+  benefitDescription: string;
+  benefitHowToRedeem: string;
+  benefitRedeemViaQr: boolean;
+  benefitValidFrom?: string;
+  benefitValidUntil?: string;
+}): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = catalogBenefitSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const data = parsed.data;
+    const catalog = listaSocios.find((s) => s.id === data.socioId);
+    if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
+
+    if (data.offersBenefit) {
+      if (!data.benefitTitle.trim()) return { ok: false, error: "Indica el título del beneficio." };
+      if (!data.benefitDescription.trim()) {
+        return { ok: false, error: "Describe qué ofrece el beneficio." };
+      }
+      if (!data.benefitRedeemViaQr && !data.benefitHowToRedeem.trim()) {
+        return { ok: false, error: "Explica cómo se hace válido el beneficio." };
+      }
+    }
+
+    const benefitPayload = {
+      offersBenefit: data.offersBenefit,
+      benefitTitle: data.offersBenefit ? data.benefitTitle.trim() : null,
+      benefitDescription: data.offersBenefit ? data.benefitDescription.trim() : null,
+      benefitRedeemViaQr: data.offersBenefit ? data.benefitRedeemViaQr : false,
+      benefitHowToRedeem: data.offersBenefit
+        ? data.benefitRedeemViaQr
+          ? data.benefitHowToRedeem.trim() ||
+            "Muestra este QR al negocio para validar tu membresía."
+          : data.benefitHowToRedeem.trim()
+        : null,
+      benefitValidFrom: data.offersBenefit ? parseOptionalBenefitDate(data.benefitValidFrom) : null,
+      benefitValidUntil: data.offersBenefit
+        ? parseOptionalBenefitDate(data.benefitValidUntil)
+        : null,
+    };
+
+    await prisma.catalogMembership.upsert({
+      where: { socioId: data.socioId },
+      create: {
+        socioId: data.socioId,
+        plan: "NEGOCIO_FAMILIAR",
+        status: "active",
+        businessName: catalog.name,
+        ...benefitPayload,
+      },
+      update: benefitPayload,
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/socios");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] updateCatalogMembershipBenefit failed:", error);
+    return { ok: false, error: "No se pudo guardar el beneficio." };
   }
 }
 
