@@ -446,7 +446,7 @@ export default function SociosImmersiveView({
               </p>
             )}
           </div>
-          {filtersBar}
+          {!selectedSocio && filtersBar}
         </>
       )}
 
