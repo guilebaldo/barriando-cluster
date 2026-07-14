@@ -96,6 +96,8 @@ model Subscription {
   stripeCustomerId     String?        @unique
   stripeSubscriptionId String?        @unique
   status               String         @default("inactive")
+  /** stripe | transfer | cash | oxxo */
+  paymentMethod        String?
   manualPaymentNote    String?
   currentPeriodEnd     DateTime?
   createdAt            DateTime       @default(now())

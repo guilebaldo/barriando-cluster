@@ -30,6 +30,7 @@ export async function approveManualCertification(userId: string): Promise<Action
       data: {
         status: "manual_active",
         currentPeriodEnd: addThirtyDaysFrom(),
+        ...(subscription.paymentMethod ? {} : { paymentMethod: "transfer" }),
       },
     });
 
@@ -84,6 +85,7 @@ const adminUpdateSchema = z.object({
   socioId: z.number().int().positive().nullable().optional(),
   plan: z.enum(["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"]).optional(),
   status: z.string().trim().max(40).optional(),
+  paymentMethod: z.enum(["stripe", "transfer", "cash", "oxxo"]).nullable().optional(),
   businessName: z.string().trim().max(120).optional(),
   website: z.string().trim().max(500).optional(),
   googleBusinessUrl: z.string().trim().max(500).optional(),
@@ -122,6 +124,7 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
       socioId,
       plan,
       status,
+      paymentMethod,
       businessName,
       website,
       googleBusinessUrl,
@@ -167,17 +170,19 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
       },
     });
 
-    if (plan !== undefined || status !== undefined) {
+    if (plan !== undefined || status !== undefined || paymentMethod !== undefined) {
       await prisma.subscription.upsert({
         where: { userId },
         create: {
           userId,
           plan: plan ?? "TURISTA",
           status: status ?? "inactive",
+          ...(paymentMethod !== undefined ? { paymentMethod } : {}),
           ...(status === "manual_active" ? { currentPeriodEnd: addThirtyDaysFrom() } : {}),
         },
         update: {
           ...(plan !== undefined ? { plan } : {}),
+          ...(paymentMethod !== undefined ? { paymentMethod } : {}),
           ...(status !== undefined
             ? {
                 status,
@@ -305,6 +310,7 @@ export type AdminUserRow = {
   createdAt: string;
   currentPeriodEnd: string | null;
   subscriptionCreatedAt: string | null;
+  paymentMethod: string | null;
   manualPaymentNote: string | null;
   stripeSubscriptionId: string | null;
   linkageStatus: string | null;
@@ -419,6 +425,7 @@ const SUBSCRIPTION_ADMIN_SELECT = {
   currentPeriodEnd: true,
   manualPaymentNote: true,
   stripeSubscriptionId: true,
+  paymentMethod: true,
   createdAt: true,
 } as const;
 
@@ -445,6 +452,7 @@ type AdminUserRecord = {
     currentPeriodEnd: Date | null;
     manualPaymentNote: string | null;
     stripeSubscriptionId: string | null;
+    paymentMethod: string | null;
     createdAt: Date;
   } | null;
   socioProfile?: {
@@ -531,6 +539,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
       createdAt: user.createdAt.toISOString(),
       currentPeriodEnd: user.subscription?.currentPeriodEnd?.toISOString() ?? null,
       subscriptionCreatedAt: user.subscription?.createdAt?.toISOString() ?? null,
+      paymentMethod: user.subscription?.paymentMethod ?? null,
       manualPaymentNote: user.subscription?.manualPaymentNote ?? null,
       stripeSubscriptionId: user.subscription?.stripeSubscriptionId ?? null,
       linkageStatus: user.socioProfile?.linkageStatus ?? null,

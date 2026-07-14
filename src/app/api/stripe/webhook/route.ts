@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
           stripeSubscriptionId: sub.id,
           stripeCustomerId: sub.customer as string,
           status,
+          paymentMethod: "stripe",
           currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
         },
         update: {
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
           stripeSubscriptionId: sub.id,
           stripeCustomerId: sub.customer as string,
           status,
+          paymentMethod: "stripe",
           currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
         },
       });

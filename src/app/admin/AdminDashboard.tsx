@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   approveLinkage,
@@ -16,10 +15,9 @@ import {
 } from "./actions";
 import { listaSocios } from "@/app/data/socios";
 import { needsCertificationPayment } from "@/lib/membresia";
-import { PLAN_ADMIN_LABELS, MEMBERSHIP_STATUS_OPTIONS } from "@/lib/admin-labels";
+import { PLAN_ADMIN_LABELS, MEMBERSHIP_STATUS_OPTIONS, PAYMENT_METHOD_OPTIONS, resolvePaymentMethodLabel } from "@/lib/admin-labels";
 import { isLinkagePending } from "@/lib/linkage";
 import {
-  ArrowLeft,
   CheckCircle2,
   Clock,
   Pencil,
@@ -209,6 +207,7 @@ export default function AdminDashboard({
         business,
         user.planLabel,
         PLAN_ADMIN_LABELS[user.plan] ?? "",
+        resolvePaymentMethodLabel(user.paymentMethod, user.stripeSubscriptionId, user.status),
         user.profile?.rfc ?? "",
         user.profile?.razonSocial ?? "",
       ]
@@ -228,6 +227,7 @@ export default function AdminDashboard({
       role: user.role,
       plan: user.plan,
       status: user.status,
+      paymentMethod: user.paymentMethod ?? "",
       businessName: user.profile?.businessName ?? "",
       website: user.profile?.website ?? "",
       googleBusinessUrl: user.profile?.googleBusinessUrl ?? "",
@@ -310,6 +310,12 @@ export default function AdminDashboard({
       role: editForm.role as "SOCIO" | "ADMIN",
       plan: editForm.plan as MembershipPlan,
       status: editForm.status,
+      paymentMethod: (editForm.paymentMethod?.trim() || null) as
+        | "stripe"
+        | "transfer"
+        | "cash"
+        | "oxxo"
+        | null,
       businessName: editForm.businessName,
       website: editForm.website,
       googleBusinessUrl: editForm.googleBusinessUrl,
@@ -355,13 +361,6 @@ export default function AdminDashboard({
             <p className="text-sm text-slate-600 mt-1">Gestión de socios, vinculaciones y certificaciones.</p>
           </div>
         </div>
-        <Link
-          href="/panel"
-          className="inline-flex items-center gap-2 border border-slate-200 text-[#27366D] hover:bg-slate-50 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition shrink-0"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Regresar al Panel Principal
-        </Link>
       </div>
 
       {msg && (
@@ -443,6 +442,7 @@ export default function AdminDashboard({
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Negocio</th>
                 <th className="px-4 py-3">Cuenta</th>
+                <th className="px-4 py-3">Método de pago</th>
                 <th className="px-4 py-3">Vencimiento</th>
                 <th className="px-4 py-3 w-28 text-right">Acciones</th>
               </tr>
@@ -450,7 +450,7 @@ export default function AdminDashboard({
             <tbody>
               {visibleUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                     {query.trim()
                       ? "No hay socios que coincidan con tu búsqueda."
                       : tab === "pending"
@@ -604,6 +604,11 @@ function UserRows({
         <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
           {PLAN_ADMIN_LABELS[user.plan] ?? user.planLabel}
         </td>
+        <td className="px-4 py-3 text-slate-600 whitespace-nowrap max-w-[10rem]">
+          <span className="block truncate" title={resolvePaymentMethodLabel(user.paymentMethod, user.stripeSubscriptionId, user.status)}>
+            {resolvePaymentMethodLabel(user.paymentMethod, user.stripeSubscriptionId, user.status)}
+          </span>
+        </td>
         <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
           {resolveMembershipExpiryLabel({
             status: user.status,
@@ -660,7 +665,7 @@ function UserRows({
       </tr>
       {isEditing && (
         <tr className="bg-slate-50 border-b border-slate-200">
-          <td colSpan={7} className="px-4 py-5">
+          <td colSpan={8} className="px-4 py-5">
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
               <label className="block">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Nombre</span>
@@ -718,6 +723,21 @@ function UserRows({
                   onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
                 >
                   {MEMBERSHIP_STATUS_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Método de pago</span>
+                <select
+                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  value={editForm.paymentMethod ?? ""}
+                  onChange={(e) => setEditForm((f) => ({ ...f, paymentMethod: e.target.value }))}
+                >
+                  <option value="">Sin definir</option>
+                  {PAYMENT_METHOD_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
