@@ -104,12 +104,18 @@ export default function SociosImmersiveView({
 
   const selectSocio = useCallback((id: number) => {
     setSelectedId(id);
-    setSheetMode((m) => (m === "peek" ? "half" : m));
+    setSheetMode("half");
   }, []);
 
   const clearSelection = useCallback(() => {
     setSelectedId(null);
   }, []);
+
+  useEffect(() => {
+    if (selectedId != null && sheetMode === "full") {
+      setSheetMode("half");
+    }
+  }, [selectedId, sheetMode]);
 
   const toggleCategory = useCallback((cat: string) => {
     setActiveCategories((prev) =>
@@ -126,13 +132,24 @@ export default function SociosImmersiveView({
     const endY = event.changedTouches[0]?.clientY;
     if (endY == null) return;
     const delta = touchStartY.current - endY;
-    if (delta > 48) setSheetMode((m) => stepSheet(m, 1));
-    else if (delta < -48) setSheetMode((m) => stepSheet(m, -1));
+    if (delta > 48) {
+      setSheetMode((m) => {
+        if (selectedId != null) return m === "peek" ? "half" : "half";
+        return stepSheet(m, 1);
+      });
+    } else if (delta < -48) {
+      setSheetMode((m) => stepSheet(m, -1));
+    }
     touchStartY.current = null;
   };
 
   const cycleSheetFromHandle = () => {
-    setSheetMode((m) => (m === "full" ? "half" : stepSheet(m, 1)));
+    setSheetMode((m) => {
+      if (selectedId != null) {
+        return m === "peek" ? "half" : "peek";
+      }
+      return m === "full" ? "half" : stepSheet(m, 1);
+    });
   };
 
   const useBenefitHref = canRedeemBenefits ? "/barrid" : registroUrl("VECINO");
@@ -291,13 +308,26 @@ export default function SociosImmersiveView({
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
-            type="search"
+            type="text"
             placeholder="Buscar socio o giro…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             enterKeyHint="search"
-            className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white"
+            autoComplete="off"
+            className={`w-full pl-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white ${
+              searchQuery ? "pr-10" : "pr-3"
+            }`}
           />
+          {searchQuery ? (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/80"
+              aria-label="Borrar búsqueda"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : null}
         </div>
         <div className="flex shrink-0 rounded-xl border border-slate-200 overflow-hidden">
           <button
@@ -367,9 +397,9 @@ export default function SociosImmersiveView({
         aria-label={
           sheetMode === "peek"
             ? "Mostrar ficha"
-            : sheetMode === "half"
-              ? "Expandir ficha"
-              : "Reducir ficha"
+            : selectedId != null || sheetMode === "full"
+              ? "Reducir ficha"
+              : "Expandir ficha"
         }
       >
         <span className="w-10 h-1 rounded-full bg-slate-300" />
@@ -394,7 +424,7 @@ export default function SociosImmersiveView({
         <>
           <div
             className={`px-3 pt-2 min-h-0 ${
-              sheetMode === "full" || selectedSocio
+              sheetMode === "full" && !selectedSocio
                 ? "flex-1 overflow-y-auto overscroll-contain touch-pan-y"
                 : "shrink-0"
             }`}
