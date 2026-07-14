@@ -109,6 +109,7 @@ export default function SociosImmersiveView({
 
   const clearSelection = useCallback(() => {
     setSelectedId(null);
+    setSheetMode("peek");
   }, []);
 
   useEffect(() => {
