@@ -12,9 +12,12 @@ import {
   MAP_CIRCUIT_START,
   orderPointsByCircuitProgress,
 } from "@/lib/map-circuit";
-import { getPlanForSocio } from "@/lib/membresia";
 import { getParticipatingRestaurantsAsync } from "@/lib/pasaporte";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
+import {
+  getActiveCatalogMembershipIds,
+  getActiveGranEmpresaCatalogIds,
+} from "@/lib/public-socios";
 
 export type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 export { findNearestRoutePoint, reorderRouteFromPoint, buildWalkingItinerary } from "@/lib/map-route-client";
@@ -215,17 +218,24 @@ async function loadActiveMilestones(): Promise<RawPoint[]> {
 /** Socios Gran Empresa del catálogo + aliados destacados en el corredor MAP (p. ej. Cosme Tortas). */
 const FEATURED_ROUTE_SOCIO_IDS = new Set([11]); // Cosme Tortas
 
-function loadCatalogRouteBusinesses(): RawPoint[] {
+/** Solo socios con membresía activa en el roster (GRAN o featured). */
+async function loadCatalogRouteBusinesses(): Promise<RawPoint[]> {
+  const [activeGranIds, activeIds] = await Promise.all([
+    getActiveGranEmpresaCatalogIds(),
+    getActiveCatalogMembershipIds(),
+  ]);
+
   const points: RawPoint[] = [];
   const seenNames = new Set<string>();
 
   for (const socio of listaSocios) {
+    if (!activeIds.has(socio.id)) continue;
     const coord = sociosCoords[socio.id];
     if (!coord) continue;
 
-    const plan = getPlanForSocio(socio);
     const featured = FEATURED_ROUTE_SOCIO_IDS.has(socio.id);
-    if (plan !== "GRAN_EMPRESA" && !featured) continue;
+    const isGran = activeGranIds.has(socio.id);
+    if (!isGran && !featured) continue;
 
     const nameKey = normalizeName(socio.name);
     if (seenNames.has(nameKey)) continue;
@@ -360,7 +370,7 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
   const [milestones, premiumDb, premiumCatalog, stampRestaurants] = await Promise.all([
     loadActiveMilestones(),
     loadPremiumGranEmpresaBusinesses(),
-    Promise.resolve(loadCatalogRouteBusinesses()),
+    loadCatalogRouteBusinesses(),
     loadStampRestaurantPoints(),
   ]);
 

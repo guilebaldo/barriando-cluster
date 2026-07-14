@@ -5,18 +5,25 @@ import SiteShell from "../components/SiteShell";
 import AdminDashboard from "./AdminDashboard";
 import { getSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
-import { listAdminUsers, listTestimonials, listHomePromos, listCatalogSocioRows } from "./actions";
+import {
+  listAdminUsers,
+  listTestimonials,
+  listHomePromos,
+  listCatalogSocioRows,
+  listCatalogMemberships,
+} from "./actions";
 
 export default async function AdminPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!isAdminUser(session)) redirect("/panel");
 
-  const [users, testimonials, homePromos, catalogRows] = await Promise.all([
+  const [users, testimonials, homePromos, catalogRows, membershipRows] = await Promise.all([
     listAdminUsers(),
     listTestimonials(),
     listHomePromos(),
     listCatalogSocioRows(),
+    listCatalogMemberships(),
   ]);
 
   return (
@@ -28,6 +35,7 @@ export default async function AdminPage() {
           testimonials={testimonials}
           homePromos={homePromos}
           catalogRows={catalogRows}
+          membershipRows={membershipRows}
         />
       </main>
       <Footer />

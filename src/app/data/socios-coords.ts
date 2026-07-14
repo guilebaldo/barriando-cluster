@@ -1,4 +1,4 @@
-// Coordenadas extraídas de Google Maps embed (miembros_barriando CSV)
+// Coordenadas extraídas de Google Maps embed / CSV (miembros_barriando)
 export interface SocioCoord {
   lat: number;
   lng: number;
@@ -55,11 +55,6 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "lat": 19.043284300000003,
     "lng": -98.199384,
     "name": "Comal"
-  },
-  "11": {
-    "lat": 19.0461076,
-    "lng": -98.19426159999999,
-    "name": "Cosme Tortas"
   },
   "12": {
     "lat": 19.0414273,
@@ -172,8 +167,8 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "name": "SACRISTÍA"
   },
   "34": {
-    "lat": 19.0415737,
-    "lng": -98.2002252,
+    "lat": 19.0415954,
+    "lng": -98.2751442,
     "name": "IL GUSTO"
   },
   "35": {
@@ -264,11 +259,16 @@ export const sociosCoords: Record<number, SocioCoord> = {
   "52": {
     "lat": 19.043492,
     "lng": -98.199249,
-    "name": "Áttico 303"
+    "name": "ÁTTICO 303"
   },
   "53": {
     "lat": 19.046122695455082,
     "lng": -98.1942450590708,
     "name": "Casona Furlong"
+  },
+  "54": {
+    "lat": 19.0461076,
+    "lng": -98.19426159999999,
+    "name": "Cosme Tortas"
   }
 };

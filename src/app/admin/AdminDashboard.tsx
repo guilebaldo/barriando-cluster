@@ -13,6 +13,7 @@ import {
   type TestimonialRow,
   type HomePromoRow,
   type CatalogSocioRow,
+  type CatalogMembershipRow,
 } from "./actions";
 import { listaSocios } from "@/app/data/socios";
 import { needsCertificationPayment } from "@/lib/membresia";
@@ -31,6 +32,7 @@ import {
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContentSection";
 import AdminCatalogSection from "./AdminCatalogSection";
+import AdminRosterSection from "./AdminRosterSection";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 
@@ -181,11 +183,13 @@ export default function AdminDashboard({
   testimonials,
   homePromos,
   catalogRows,
+  membershipRows,
 }: {
   users: AdminUserRow[];
   testimonials: TestimonialRow[];
   homePromos: HomePromoRow[];
   catalogRows: CatalogSocioRow[];
+  membershipRows: CatalogMembershipRow[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<AdminTab>("all");
@@ -417,7 +421,10 @@ export default function AdminDashboard({
           <AdminHomePromosSection promos={homePromos} />
         </div>
       ) : tab === "catalog" ? (
-        <AdminCatalogSection rows={catalogRows} />
+        <div className="space-y-10">
+          <AdminRosterSection rows={membershipRows} />
+          <AdminCatalogSection rows={catalogRows} />
+        </div>
       ) : (
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">

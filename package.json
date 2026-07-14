@@ -13,6 +13,7 @@
     "resolve:muaap-coords": "npx tsx scripts/resolve-muaap-coords.ts",
     "db:setup": "prisma migrate dev && npx tsx prisma/seed.ts",
     "sync:socios": "node scripts/sync-socios.mjs",
+    "sync:catalog-memberships": "npx tsx scripts/sync-catalog-memberships.ts",
     "geocode:socios": "node scripts/geocode-socios.mjs"
   },
   "dependencies": {

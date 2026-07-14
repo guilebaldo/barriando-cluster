@@ -267,6 +267,7 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
     revalidatePath("/admin");
     revalidatePath("/panel");
     revalidatePath("/socios");
+    revalidatePath("/map");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -288,6 +289,9 @@ export async function deleteSocioUser(userId: string): Promise<ActionResult> {
 
     await prisma.user.delete({ where: { id: userId } });
     revalidatePath("/admin");
+    revalidatePath("/socios");
+    revalidatePath("/map");
+    revalidatePath("/");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -894,6 +898,99 @@ const catalogWebsiteSchema = z.object({
   website: z.string().trim().max(500),
 });
 
+export type CatalogMembershipRow = {
+  socioId: number;
+  businessName: string;
+  plan: MembershipPlan;
+  planLabel: string;
+  paymentMethod: string | null;
+  paymentLabel: string;
+  status: string;
+  foto: string;
+  categoria: string;
+};
+
+function paymentMethodLabel(method: string | null): string {
+  switch (method) {
+    case "transfer":
+      return "Transferencia";
+    case "cash":
+      return "Efectivo";
+    case "stripe":
+      return "Stripe";
+    case "oxxo":
+      return "OXXO";
+    default:
+      return method?.trim() || "—";
+  }
+}
+
+export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return [];
+
+    const rows = await prisma.catalogMembership.findMany({
+      orderBy: { businessName: "asc" },
+    });
+
+    return rows
+      .map((row) => {
+        const catalog = listaSocios.find((s) => s.id === row.socioId);
+        return {
+          socioId: row.socioId,
+          businessName: row.businessName?.trim() || catalog?.name || `Socio #${row.socioId}`,
+          plan: row.plan,
+          planLabel: getPlanLabel(row.plan),
+          paymentMethod: row.paymentMethod,
+          paymentLabel: paymentMethodLabel(row.paymentMethod),
+          status: row.status,
+          foto: catalog?.foto ?? "",
+          categoria: catalog?.categoria ?? "",
+        };
+      })
+      .sort((a, b) => a.businessName.localeCompare(b.businessName, "es"));
+  } catch (error) {
+    console.error("[admin] listCatalogMemberships failed:", error);
+    return [];
+  }
+}
+
+export async function setCatalogMembershipStatus(
+  socioId: number,
+  status: "active" | "inactive"
+): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const catalog = listaSocios.find((s) => s.id === socioId);
+    if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
+
+    await prisma.catalogMembership.upsert({
+      where: { socioId },
+      create: {
+        socioId,
+        plan: "NEGOCIO_FAMILIAR",
+        status,
+        businessName: catalog.name,
+      },
+      update: { status },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/socios");
+    revalidatePath("/map");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo actualizar la membresía." };
+  }
+}
+
 export async function updateCatalogSocioWebsite(input: {
   socioId: number;
   website: string;
@@ -937,6 +1034,7 @@ export async function updateCatalogSocioWebsite(input: {
 
     revalidatePath("/admin");
     revalidatePath("/socios");
+    revalidatePath("/map");
     revalidatePath("/");
     return { ok: true };
   } catch (error) {

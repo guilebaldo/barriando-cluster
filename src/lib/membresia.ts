@@ -129,8 +129,17 @@ export function compareSociosByPlan(a: Socio, b: Socio): number {
   return a.name.localeCompare(b.name, "es");
 }
 
-/** Asigna nivel de pago según categoría del catálogo estático de socios. */
+/** Asigna nivel de pago: roster/suscripción si existe; si no, heurística por categoría. */
 export function getPlanForSocio(socio: Socio): PaidMembershipPlan {
+  const rosterPlan = socio.membershipPlan;
+  if (
+    rosterPlan === "NEGOCIO_FAMILIAR" ||
+    rosterPlan === "MEDIANA_EMPRESA" ||
+    rosterPlan === "GRAN_EMPRESA" ||
+    rosterPlan === "VECINO"
+  ) {
+    return rosterPlan;
+  }
   if (socio.categoria === "Hospedaje" || socio.categoria === "Hospital") {
     return "GRAN_EMPRESA";
   }

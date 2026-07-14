@@ -21,10 +21,11 @@ export interface Socio {
   logoUrl?: string | null;
   /** Beneficio activo para socios de pago (solo si el negocio lo publicó). */
   benefit?: SocioBenefitInfo | null;
+  /** Plan del roster pagado (CatalogMembership / suscripción vinculada). */
+  membershipPlan?: "NEGOCIO_FAMILIAR" | "MEDIANA_EMPRESA" | "GRAN_EMPRESA" | "VECINO" | null;
 }
 
 export const listaSocios: Socio[] = [
-
   {
     id: 1,
     name: "Acaso Homes",
@@ -95,7 +96,7 @@ export const listaSocios: Socio[] = [
     categoria: "Hospedaje",
     foto: "colonial",
     url: "https://www.colonial.com.mx",
-    direccion: "https://maps.app.goo.gl/AWsc1nQRzNbsgAhw5"
+    direccion: "https://maps.app.goo.gl/Sp1xWLQ5yGSZKLHbA"
   },
   {
     id: 10,
@@ -106,17 +107,9 @@ export const listaSocios: Socio[] = [
     direccion: "https://maps.app.goo.gl/bVdev1FrfBav2Wf59"
   },
   {
-    id: 11,
-    name: "Cosme Tortas",
-    categoria: "Alimentos y Bebidas",
-    foto: "cosme-v2",
-    url: "https://menu.fu.do/cosmetortas",
-    direccion: "https://maps.app.goo.gl/iJoaUtfQk1476t3G7"
-  },
-  {
     id: 12,
     name: "Destilado Urbano",
-    categoria: "Bebidas",
+    categoria: "Alimentos y Bebidas",
     foto: "destilado",
     url: "https://destiladourbano.com",
     direccion: "https://maps.app.goo.gl/yuNNReqNioBenMQa7"
@@ -435,7 +428,7 @@ export const listaSocios: Socio[] = [
   },
   {
     id: 52,
-    name: "Áttico 303",
+    name: "ÁTTICO 303",
     categoria: "Alimentos y Bebidas",
     foto: "attico",
     url: "https://attico-303.com",
@@ -449,5 +442,12 @@ export const listaSocios: Socio[] = [
     url: "https://www.instagram.com/casonafurlong",
     direccion: "https://maps.app.goo.gl/7JieG5XV9Xq1Lgaw8"
   },
+  {
+    id: 54,
+    name: "Cosme Tortas",
+    categoria: "Alimentos y Bebidas",
+    foto: "cosme",
+    url: "https://menu.fu.do/cosmetortas",
+    direccion: "https://maps.app.goo.gl/iJoaUtfQk1476t3G7"
+  },
 ];
-
