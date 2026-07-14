@@ -441,5 +441,13 @@ export const listaSocios: Socio[] = [
     url: "https://attico-303.com",
     direccion: "https://maps.app.goo.gl/8wqzpPTB2WUGenKB9"
   },
+  {
+    id: 53,
+    name: "Casona Furlong",
+    categoria: "Museo",
+    foto: "furlong",
+    url: "https://www.instagram.com/casonafurlong",
+    direccion: "https://maps.app.goo.gl/7JieG5XV9Xq1Lgaw8"
+  },
 ];
 

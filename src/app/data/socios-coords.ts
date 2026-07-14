@@ -47,8 +47,8 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "name": "La Colecturía"
   },
   "9": {
-    "lat": 19.042016953858113,
-    "lng": -98.1980344263691,
+    "lat": 19.042412,
+    "lng": -98.196001,
     "name": "Hotel Colonial"
   },
   "10": {
@@ -265,5 +265,10 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "lat": 19.043492,
     "lng": -98.199249,
     "name": "Áttico 303"
+  },
+  "53": {
+    "lat": 19.046122695455082,
+    "lng": -98.1942450590708,
+    "name": "Casona Furlong"
   }
 };
