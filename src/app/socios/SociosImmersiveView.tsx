@@ -130,7 +130,7 @@ export default function SociosImmersiveView({
     sociosFiltrados.length === 0 ? (
       <p className="text-center text-sm text-slate-400 py-8">No hay socios con ese criterio.</p>
     ) : viewMode === "icons" ? (
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2 max-h-[calc(((min(100vw,32rem)-1.5rem)/3)*1.5+0.25rem)] overflow-y-auto overscroll-contain touch-pan-y scrollbar-none">
         {sociosFiltrados.map((s) => (
           <button
             key={s.id}
@@ -151,7 +151,7 @@ export default function SociosImmersiveView({
         ))}
       </div>
     ) : (
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-slate-100 max-h-[11.5rem] overflow-y-auto overscroll-contain touch-pan-y">
         {sociosFiltrados.map((s) => (
           <li key={s.id}>
             <button
@@ -245,7 +245,7 @@ export default function SociosImmersiveView({
         selectedId={selectedId}
         onSelect={selectSocio}
         immersive
-        bottomSheetHeight={bottomSheetHeight}
+        bottomSheetHeight={sheetExpanded ? bottomSheetHeight : 0}
       />
 
       <div
@@ -257,7 +257,9 @@ export default function SociosImmersiveView({
         <div
           className={`pointer-events-auto mx-auto w-full max-w-lg bg-white rounded-t-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.12)] border border-slate-200/80 border-b-0 overflow-hidden flex flex-col transition-[max-height] duration-200 ${
             sheetExpanded
-              ? "max-h-[min(68vh,600px)]"
+              ? selectedSocio
+                ? "max-h-[min(52vh,460px)]"
+                : "max-h-[min(46vh,400px)]"
               : canRedeemBenefits
                 ? "max-h-[5.75rem]"
                 : "max-h-[8.5rem]"
@@ -288,7 +290,13 @@ export default function SociosImmersiveView({
 
           {sheetExpanded && (
             <>
-              <div className="px-3 pt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y">
+              <div
+                className={`px-3 pt-2 ${
+                  selectedSocio
+                    ? "min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y"
+                    : "shrink-0 overflow-hidden"
+                }`}
+              >
                 {selectedSocio ? detailBody : browseBody}
                 {!selectedSocio && (
                   <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">

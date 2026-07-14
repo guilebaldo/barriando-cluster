@@ -43,8 +43,12 @@ function FocusHighlightedPoint({
     if (!highlightedId) return;
     const point = points.find((p) => p.id === highlightedId);
     if (!point) return;
+    const hasStampPopup = pointHasScannableStamp(point);
+    // Marker sits lower (closer to the sheet) so Leaflet popups opening above stay fully visible.
+    const sheetOffset = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55) : 0;
+    const popupOffset = hasStampPopup ? 88 : 0;
+    const offsetY = sheetOffset + popupOffset;
     map.flyTo([point.latitude, point.longitude], 17, { duration: 0.55 });
-    const offsetY = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.45) : 0;
     if (offsetY > 0) {
       window.setTimeout(() => map.panBy([0, offsetY], { animate: true }), 560);
     }
@@ -101,14 +105,22 @@ function RouteMarker({
     point.order === 1 ? "start" : point.kind === "premium_business" ? "premium" : "milestone";
   const icon = useMemo(() => makeIcon(kind, highlighted), [kind, highlighted]);
 
+  const canStamp = pointHasScannableStamp(point);
+
   useEffect(() => {
-    if (!highlighted) return;
-    if (pointHasScannableStamp(point)) {
-      markerRef.current?.openPopup();
-    } else {
-      markerRef.current?.closePopup();
+    const marker = markerRef.current;
+    if (!marker) return;
+
+    if (!highlighted || !canStamp) {
+      marker.closePopup();
+      return;
     }
-  }, [highlighted, point]);
+
+    const timer = window.setTimeout(() => {
+      marker.openPopup();
+    }, 680);
+    return () => window.clearTimeout(timer);
+  }, [highlighted, canStamp, point.id]);
 
   return (
     <>
@@ -134,17 +146,19 @@ function RouteMarker({
           click: () => onSelect?.(point.id),
         }}
       >
-        <Popup>
-          <MapMarkerPopup point={point} />
-          <a
-            href={point.mapsUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-[#27366D] font-semibold underline mt-2 inline-block text-[11px]"
-          >
-            Abrir en mapas
-          </a>
-        </Popup>
+        {canStamp ? (
+          <Popup>
+            <MapMarkerPopup point={point} />
+            <a
+              href={point.mapsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#27366D] font-semibold underline mt-2 inline-block text-[11px]"
+            >
+              Abrir en mapas
+            </a>
+          </Popup>
+        ) : null}
       </Marker>
     </>
   );
