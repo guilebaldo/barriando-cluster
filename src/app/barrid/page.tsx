@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import BarrIdShell from "./BarrIdShell";
 import BarrIdClient from "./BarrIdClient";
 import { getSession } from "@/lib/auth-utils";
@@ -53,7 +54,7 @@ export default async function BarrIdPage() {
   return (
     <BarrIdShell>
       <Navbar />
-      <main className="flex-1 min-h-0 relative overflow-hidden">
+      <main className="flex-1 min-h-0 relative overflow-hidden md:overflow-visible md:h-auto">
         <BarrIdClient
           user={{
             nombre: user?.nombre?.trim() || session.nombre || "Socio",
@@ -70,6 +71,9 @@ export default async function BarrIdPage() {
           progress={progress}
         />
       </main>
+      <div className="hidden md:block shrink-0">
+        <Footer />
+      </div>
     </BarrIdShell>
   );
 }

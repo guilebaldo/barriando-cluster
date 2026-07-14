@@ -2,11 +2,16 @@
 
 import { useEffect } from "react";
 
-/** Shell inmersivo (como MAP/socios): sin scroll de página; ficha fija abajo. */
+/**
+ * Móvil: fullscreen inmersivo (ficha + QR fijo).
+ * Escritorio: flujo normal con scroll y footer.
+ */
 export default function BarrIdShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
+    const mq = window.matchMedia("(max-width: 767px)");
+
     const previous = {
       htmlOverflow: html.style.overflow,
       htmlOverscroll: html.style.overscrollBehavior,
@@ -14,21 +19,41 @@ export default function BarrIdShell({ children }: { children: React.ReactNode })
       bodyOverscroll: body.style.overscrollBehavior,
     };
 
-    html.style.overflow = "hidden";
-    html.style.overscrollBehavior = "none";
-    body.style.overflow = "hidden";
-    body.style.overscrollBehavior = "none";
+    let locked = false;
 
-    return () => {
+    const lock = () => {
+      if (locked) return;
+      locked = true;
+      html.style.overflow = "hidden";
+      html.style.overscrollBehavior = "none";
+      body.style.overflow = "hidden";
+      body.style.overscrollBehavior = "none";
+    };
+
+    const unlock = () => {
+      if (!locked) return;
+      locked = false;
       html.style.overflow = previous.htmlOverflow;
       html.style.overscrollBehavior = previous.htmlOverscroll;
       body.style.overflow = previous.bodyOverflow;
       body.style.overscrollBehavior = previous.bodyOverscroll;
     };
+
+    const sync = () => {
+      if (mq.matches) lock();
+      else unlock();
+    };
+
+    sync();
+    mq.addEventListener("change", sync);
+    return () => {
+      mq.removeEventListener("change", sync);
+      unlock();
+    };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-0 flex flex-col overflow-hidden overscroll-none bg-slate-50 text-slate-900 font-sans antialiased">
+    <div className="fixed inset-0 z-0 flex flex-col overflow-hidden overscroll-none bg-slate-50 text-slate-900 font-sans antialiased md:static md:inset-auto md:min-h-screen md:h-auto md:overflow-visible md:overscroll-auto">
       {children}
     </div>
   );
