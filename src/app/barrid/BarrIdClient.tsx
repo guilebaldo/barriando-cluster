@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import QRCode from "qrcode";
@@ -40,37 +40,26 @@ function StatusCard({
   stampedCount,
   totalRestaurants,
   progress,
-  compact,
-}: BarrIdClientProps & { compact?: boolean }) {
+}: BarrIdClientProps) {
   return (
-    <section
-      className={`bg-[#27366D] text-white rounded-2xl border border-[#1e2b58] relative ${
-        compact ? "px-4 py-4" : "px-6 sm:px-8 py-6 sm:py-8"
-      }`}
-    >
-      <Link
+    <section className="bg-[#27366D] text-white rounded-2xl border border-[#1e2b58] relative px-4 py-4">
+      <a
         href="/panel"
-        className={`absolute inline-flex items-center justify-center rounded-full border border-white/25 bg-white/10 text-white hover:bg-white/20 transition ${
-          compact ? "top-3 right-3 w-8 h-8" : "top-4 right-4 w-10 h-10"
-        }`}
+        className="absolute top-3 right-3 z-10 inline-flex items-center justify-center w-8 h-8 rounded-full border border-white/25 bg-white/10 text-white hover:bg-white/20 transition"
         aria-label="Configuración / Mi Panel"
-        title="Configuración"
+        title="Mi Panel"
       >
-        <Settings className={compact ? "w-4 h-4" : "w-5 h-5"} />
-      </Link>
+        <Settings className="w-4 h-4" />
+      </a>
 
-      <div className={`flex items-center ${compact ? "gap-3 pr-10" : "gap-4 pr-12"}`}>
-        <div
-          className={`rounded-full overflow-hidden bg-slate-200 shrink-0 border-2 border-amber-400/40 ${
-            compact ? "w-12 h-12" : "w-16 h-16"
-          }`}
-        >
+      <div className="flex items-center gap-3 pr-10">
+        <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200 shrink-0 border-2 border-amber-400/40">
           {user.image ? (
             <Image
               src={user.image}
               alt={user.nombre}
-              width={compact ? 48 : 64}
-              height={compact ? 48 : 64}
+              width={48}
+              height={48}
               className="w-full h-full object-cover"
               unoptimized
             />
@@ -81,47 +70,27 @@ function StatusCard({
           )}
         </div>
         <div className="min-w-0">
-          <p
-            className={`font-bold uppercase tracking-widest text-amber-400 ${
-              compact ? "text-[9px]" : "text-[10px]"
-            }`}
-          >
-            BarrID
-          </p>
-          <h1
-            className={`font-black font-serif-cluster uppercase tracking-wide truncate ${
-              compact ? "text-lg" : "text-2xl"
-            }`}
-          >
+          <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400">BarrID</p>
+          <h1 className="text-lg font-black font-serif-cluster uppercase tracking-wide truncate">
             {user.nombre}
           </h1>
-          <p className={`text-slate-300 truncate ${compact ? "text-[11px]" : "text-sm"}`}>
-            {user.email}
-          </p>
+          <p className="text-[11px] text-slate-300 truncate">{user.email}</p>
         </div>
       </div>
 
-      <div className={compact ? "mt-3" : "mt-5"}>
-        <div
-          className={`flex items-center justify-between font-semibold text-slate-200 ${
-            compact ? "text-[10px]" : "text-xs"
-          }`}
-        >
+      <div className="mt-3">
+        <div className="flex items-center justify-between text-[10px] font-semibold text-slate-200">
           <span>Pasaporte</span>
           <span>
             {stampedCount}/{totalRestaurants}
           </span>
         </div>
-        <div className={`rounded-full bg-white/20 overflow-hidden ${compact ? "mt-1.5 h-2" : "mt-2 h-2.5"}`}>
+        <div className="mt-1.5 h-2 rounded-full bg-white/20 overflow-hidden">
           <div className="h-full bg-amber-400 rounded-full" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
-      <dl
-        className={`border-t border-white/15 ${
-          compact ? "mt-3 pt-3 space-y-1.5 text-xs" : "mt-5 pt-5 space-y-2.5 text-sm"
-        }`}
-      >
+      <dl className="mt-3 pt-3 border-t border-white/15 space-y-1.5 text-xs">
         <div className="flex justify-between gap-3">
           <dt className="text-slate-300">Membresía</dt>
           <dd className="font-semibold text-amber-300 text-right">{planLabel}</dd>
@@ -148,6 +117,10 @@ function StatusCard({
 }
 
 export default function BarrIdClient(props: BarrIdClientProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const [sheetExpanded, setSheetExpanded] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [credError, setCredError] = useState<string | null>(null);
   const [loadingCred, setLoadingCred] = useState(true);
@@ -214,107 +187,135 @@ export default function BarrIdClient(props: BarrIdClientProps) {
     setRefreshKey((key) => key + 1);
   }, [expiresAtMs, loadingCred, secondsLeft]);
 
+  function onSheetTouchStart(e: React.TouchEvent) {
+    touchStartY.current = e.touches[0]?.clientY ?? null;
+  }
+
+  function onSheetTouchEnd(e: React.TouchEvent) {
+    const start = touchStartY.current;
+    touchStartY.current = null;
+    if (start == null) return;
+    const end = e.changedTouches[0]?.clientY;
+    if (end == null) return;
+    const delta = start - end;
+    if (delta > 40) setSheetExpanded(true);
+    if (delta < -40) setSheetExpanded(false);
+  }
+
   const countdown =
     expiresAtMs && !credError ? (
-      <p className="font-semibold tabular-nums text-[#27366D]" aria-live="polite">
+      <p className="font-semibold tabular-nums text-[#27366D] text-sm" aria-live="polite">
         Válido por {formatCountdown(secondsLeft)}
       </p>
     ) : loadingCred && qrDataUrl ? (
-      <p className="font-medium text-slate-500">Actualizando…</p>
+      <p className="font-medium text-slate-500 text-sm">Actualizando…</p>
     ) : null;
 
-  const qrBox = (sizeClass: string, textSize: string) => (
-    <div
-      className={`${sizeClass} bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center overflow-hidden relative`}
-    >
-      {loadingCred && !qrDataUrl && (
-        <p className={`${textSize} text-slate-400 px-4`}>Generando…</p>
-      )}
-      {credError && (
-        <p className={`${textSize} text-red-700 px-3 leading-relaxed`}>{credError}</p>
-      )}
-      {qrDataUrl && !credError && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={qrDataUrl}
-          alt="QR de credencial BarrID"
-          className={`w-full h-full object-contain p-2 sm:p-3 transition-opacity ${loadingCred ? "opacity-40" : "opacity-100"}`}
-        />
-      )}
-    </div>
-  );
-
   return (
-    <>
-      {/* Mobile: fullscreen compact stack (no page scroll) */}
-      <div className="md:hidden flex-1 min-h-0 flex flex-col overflow-hidden overscroll-none px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="flex-1 min-h-0 flex flex-col justify-between gap-4 max-w-lg mx-auto w-full overflow-hidden">
-          <section className="flex flex-col items-center text-center flex-1 min-h-0 justify-center gap-3 overflow-hidden">
-            {qrBox("w-[min(62vw,17rem)] h-[min(62vw,17rem)] shrink-0", "text-xs")}
-            {countdown && <div className="text-sm shrink-0">{countdown}</div>}
-          </section>
-
-          <div className="shrink-0 overflow-hidden">
-            <StatusCard {...props} compact />
+    <div className="relative h-full w-full overflow-hidden overscroll-none">
+      {/* Zona principal: QR + instrucciones (visible con ficha oculta) */}
+      <div
+        className={`absolute inset-x-0 top-0 flex flex-col items-center px-4 transition-[bottom] duration-300 ${
+          sheetExpanded ? "bottom-[min(58vh,480px)]" : "bottom-[6.75rem]"
+        }`}
+      >
+        <div className="flex-1 min-h-0 w-full max-w-sm flex flex-col items-center justify-center gap-3 py-3 text-center">
+          <div className="w-[min(68vw,19rem)] h-[min(68vw,19rem)] bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-center overflow-hidden relative shrink-0">
+            {loadingCred && !qrDataUrl && (
+              <p className="text-xs text-slate-400 px-4">Generando…</p>
+            )}
+            {credError && (
+              <p className="text-xs text-red-700 px-3 leading-relaxed">{credError}</p>
+            )}
+            {qrDataUrl && !credError && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={qrDataUrl}
+                alt="QR de credencial BarrID"
+                className={`w-full h-full object-contain p-2.5 transition-opacity ${
+                  loadingCred ? "opacity-40" : "opacity-100"
+                }`}
+              />
+            )}
           </div>
 
-          <div className="grid grid-cols-3 gap-2 shrink-0">
-            <Link
-              href="/pasaporte"
-              className="inline-flex flex-col items-center justify-center gap-1 border border-[#27366D]/20 text-[#27366D] font-bold text-[10px] uppercase tracking-wider px-2 py-2.5 rounded-lg hover:bg-slate-50 transition"
-            >
-              <BookOpen className="w-4 h-4" />
-              Pasaporte
-            </Link>
-            <Link
-              href="/map"
-              className="inline-flex flex-col items-center justify-center gap-1 border border-[#27366D]/20 text-[#27366D] font-bold text-[10px] uppercase tracking-wider px-2 py-2.5 rounded-lg hover:bg-slate-50 transition"
-            >
-              <MapIcon className="w-4 h-4" />
-              MAP
-            </Link>
-            <Link
-              href="/socios?beneficios=1"
-              className="inline-flex flex-col items-center justify-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[9px] uppercase tracking-wider px-1.5 py-2.5 rounded-lg transition shadow-sm leading-tight text-center"
-            >
-              <Gift className="w-4 h-4" />
-              Mis Beneficios
-            </Link>
+          {countdown}
+
+          <div className="space-y-1 max-w-xs">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+              Credencial de socio
+            </p>
+            <p className="text-sm text-slate-600 font-light leading-snug">
+              Muestra este QR en el mostrador del negocio participante para canjear tu beneficio. Se
+              actualiza solo cada minuto.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Desktop: roomy layout with space for footer */}
-      <div className="hidden md:block max-w-5xl mx-auto w-full px-6 lg:px-8 py-10 lg:py-14">
-        <div className="grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
-          <section className="flex flex-col items-center text-center">
-            {qrBox("w-72 h-72 lg:w-80 lg:h-80", "text-sm")}
-            {countdown && <div className="mt-4 text-base">{countdown}</div>}
-            <p className="mt-3 text-sm text-slate-500 font-light max-w-xs leading-relaxed">
-              Muestra este QR en negocios participantes para canjear tu beneficio.
-            </p>
-          </section>
+      {/* Ficha inferior (mismo patrón que MAP / socios) */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-2 sm:px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div
+          ref={sheetRef}
+          className={`max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl overflow-hidden transition-[max-height] duration-300 ease-out overscroll-contain ${
+            sheetExpanded ? "max-h-[min(58vh,480px)]" : "max-h-[6.5rem]"
+          }`}
+          onTouchStart={onSheetTouchStart}
+          onTouchEnd={onSheetTouchEnd}
+        >
+          <button
+            type="button"
+            onClick={() => setSheetExpanded((v) => !v)}
+            className={`w-full flex justify-center touch-manipulation ${
+              sheetExpanded ? "pt-2.5 pb-1 border-b border-slate-100/80" : "pt-2.5 pb-2"
+            }`}
+            aria-expanded={sheetExpanded}
+            aria-label={sheetExpanded ? "Ocultar ficha" : "Mostrar ficha"}
+          >
+            <span className="w-10 h-1 rounded-full bg-slate-300" />
+          </button>
 
-          <div className="space-y-5">
+          {!sheetExpanded && (
+            <button
+              type="button"
+              onClick={() => setSheetExpanded(true)}
+              className="w-full px-3 pb-2.5 text-center touch-manipulation"
+            >
+              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                Mi membresía
+              </p>
+              <p className="text-sm font-semibold text-[#27366D] truncate leading-tight mt-0.5">
+                {props.user.nombre} · {props.planLabel}
+              </p>
+            </button>
+          )}
+
+          <div
+            className={`p-3.5 space-y-3 overflow-y-auto overscroll-contain touch-pan-y ${
+              sheetExpanded ? "max-h-[min(calc(58vh-2.5rem),440px)]" : "hidden"
+            }`}
+          >
             <StatusCard {...props} />
+
             <Link
               href="/socios?beneficios=1"
-              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
+              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl transition shadow-sm"
             >
-              <Gift className="w-5 h-5" />
+              <Gift className="w-4 h-4" />
               Mis Beneficios
             </Link>
-            <div className="grid grid-cols-2 gap-3">
+
+            <div className="grid grid-cols-2 gap-2">
               <Link
                 href="/pasaporte"
-                className="inline-flex items-center justify-center gap-2 border border-[#27366D]/20 text-[#27366D] font-bold text-xs uppercase tracking-wider px-4 py-3.5 rounded-xl hover:bg-slate-50 transition"
+                className="inline-flex items-center justify-center gap-1.5 border border-[#27366D]/20 text-[#27366D] font-bold text-[11px] uppercase tracking-wider px-3 py-3 rounded-xl hover:bg-slate-50 transition"
               >
                 <BookOpen className="w-4 h-4" />
                 Pasaporte
               </Link>
               <Link
                 href="/map"
-                className="inline-flex items-center justify-center gap-2 border border-[#27366D]/20 text-[#27366D] font-bold text-xs uppercase tracking-wider px-4 py-3.5 rounded-xl hover:bg-slate-50 transition"
+                className="inline-flex items-center justify-center gap-1.5 border border-[#27366D]/20 text-[#27366D] font-bold text-[11px] uppercase tracking-wider px-3 py-3 rounded-xl hover:bg-slate-50 transition"
               >
                 <MapIcon className="w-4 h-4" />
                 MAP
@@ -323,6 +324,6 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
