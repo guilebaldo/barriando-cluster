@@ -194,7 +194,7 @@ export default function SociosImmersiveView({
               aria-label={s.name}
             >
               <span className="absolute inset-0">
-                <SocioLogo foto={s.foto} name={s.name} compact />
+                <SocioLogo foto={s.foto} name={s.name} compact logoUrl={s.logoUrl} />
               </span>
               {s.benefit && (
                 <span className="absolute top-1 right-1 z-[1] w-2 h-2 rounded-full bg-amber-500" />
@@ -227,7 +227,7 @@ export default function SociosImmersiveView({
               }`}
             >
               <div className="relative w-11 h-11 rounded-lg border border-slate-200 bg-white overflow-hidden shrink-0">
-                <SocioLogo foto={s.foto} name={s.name} compact />
+                <SocioLogo foto={s.foto} name={s.name} compact logoUrl={s.logoUrl} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-900 truncate">{s.name}</p>
@@ -244,7 +244,12 @@ export default function SociosImmersiveView({
     <div className="space-y-3">
       <div className="flex items-start gap-3">
         <div className="relative w-16 h-16 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden shrink-0">
-          <SocioLogo foto={selectedSocio.foto} name={selectedSocio.name} compact />
+          <SocioLogo
+            foto={selectedSocio.foto}
+            name={selectedSocio.name}
+            compact
+            logoUrl={selectedSocio.logoUrl}
+          />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">

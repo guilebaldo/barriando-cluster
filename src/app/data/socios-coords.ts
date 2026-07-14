@@ -260,5 +260,10 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "lat": 19.043989152975108,
     "lng": -98.20151522395746,
     "name": "El Sultán Taquería Oriental"
+  },
+  "52": {
+    "lat": 19.0432,
+    "lng": -98.1989,
+    "name": "Guayé"
   }
 };

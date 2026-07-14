@@ -50,7 +50,7 @@ export function getStampDisplayInfo(point: MapRoutePoint): StampDisplayInfo | nu
     title: "Edición especial de temporada",
     subtitle: "Chiles en Nogada",
     businessName: socio.name,
-    logoSrc: `/logos/${socio.foto}.png`,
+    logoSrc: socio.logoUrl?.trim() || `/logos/${socio.foto}.png`,
   };
 }
 
