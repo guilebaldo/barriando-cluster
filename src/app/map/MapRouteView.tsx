@@ -18,10 +18,10 @@ import { getHitoIntro } from "@/lib/map-hito-intro";
 import { getPointStampHref } from "@/lib/map-point-stamp";
 import MapWelcomeFicha from "./MapWelcomeFicha";
 import MapGeoModal from "./MapGeoModal";
-import type { UserMapLocation } from "./GoogleMapRouteMap";
+import type { UserMapLocation } from "./user-map-location";
 import QrScanModal from "../components/QrScanModal";
 
-const GoogleMapRouteMap = dynamic(() => import("./GoogleMapRouteMap"), {
+const MapRouteMap = dynamic(() => import("./MapRouteMap"), {
   ssr: false,
   loading: () => <div className="absolute inset-0 bg-slate-100 animate-pulse" />,
 });
@@ -326,12 +326,11 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   return (
     <div className="relative h-full w-full overflow-hidden overscroll-none">
       <div className="absolute inset-0">
-        <GoogleMapRouteMap
+        <MapRouteMap
           points={route.points}
           walkPath={route.walkPath}
           highlightedId={selectedId}
           userLocation={userLocation}
-          fullScreen
           immersive
           bottomSheetHeight={sheetExpanded ? bottomSheetHeight : 0}
           onPointSelect={selectPoint}

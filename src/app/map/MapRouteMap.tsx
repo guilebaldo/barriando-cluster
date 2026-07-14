@@ -6,7 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { MapRoutePoint } from "@/lib/map-route-client";
 import { circuitViaWalkPath } from "@/lib/map-circuit";
-import type { UserMapLocation } from "./GoogleMapRouteMap";
+import type { UserMapLocation } from "./user-map-location";
 import MapMarkerPopup from "./MapMarkerPopup";
 import { pointHasScannableStamp } from "@/lib/map-point-stamp";
 
@@ -31,9 +31,11 @@ function FitRouteBounds({
 function FocusHighlightedPoint({
   points,
   highlightedId,
+  bottomSheetHeight,
 }: {
   points: MapRoutePoint[];
   highlightedId: string | null;
+  bottomSheetHeight: number;
 }) {
   const map = useMap();
 
@@ -42,7 +44,11 @@ function FocusHighlightedPoint({
     const point = points.find((p) => p.id === highlightedId);
     if (!point) return;
     map.flyTo([point.latitude, point.longitude], 17, { duration: 0.55 });
-  }, [map, points, highlightedId]);
+    const offsetY = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.45) : 0;
+    if (offsetY > 0) {
+      window.setTimeout(() => map.panBy([0, offsetY], { animate: true }), 560);
+    }
+  }, [map, points, highlightedId, bottomSheetHeight]);
 
   return null;
 }
@@ -136,7 +142,7 @@ function RouteMarker({
             rel="noreferrer"
             className="text-[#27366D] font-semibold underline mt-2 inline-block text-[11px]"
           >
-            Abrir en Google Maps
+            Abrir en mapas
           </a>
         </Popup>
       </Marker>
@@ -150,12 +156,16 @@ export default function MapRouteMap({
   highlightedId = null,
   userLocation = null,
   onPointSelect,
+  immersive = false,
+  bottomSheetHeight = 0,
 }: {
   points: MapRoutePoint[];
   walkPath?: Array<[number, number]>;
   highlightedId?: string | null;
   userLocation?: UserMapLocation | null;
   onPointSelect?: (id: string) => void;
+  immersive?: boolean;
+  bottomSheetHeight?: number;
 }) {
   const polyline = useMemo(() => {
     if (walkPath && walkPath.length >= 2) return walkPath;
@@ -177,14 +187,30 @@ export default function MapRouteMap({
   }
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-lg h-[min(70vh,520px)] relative z-0 isolate">
-      <MapContainer center={center} zoom={15} scrollWheelZoom className="h-full w-full z-0">
+    <div
+      className={
+        immersive
+          ? "absolute inset-0 z-0 overflow-hidden"
+          : "rounded-2xl overflow-hidden border border-slate-200 shadow-lg h-[min(70vh,520px)] relative z-0 isolate"
+      }
+    >
+      <MapContainer
+        center={center}
+        zoom={15}
+        scrollWheelZoom
+        className="h-full w-full z-0"
+        zoomControl={!immersive}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitRouteBounds points={points} highlightedId={highlightedId} />
-        <FocusHighlightedPoint points={points} highlightedId={highlightedId} />
+        <FocusHighlightedPoint
+          points={points}
+          highlightedId={highlightedId}
+          bottomSheetHeight={bottomSheetHeight}
+        />
         <Polyline
           positions={polyline}
           pathOptions={{ color: "#27366D", weight: 4, opacity: 0.85, dashArray: "10 12" }}

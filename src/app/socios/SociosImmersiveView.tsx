@@ -17,7 +17,7 @@ import type { Socio, SocioBenefitInfo } from "../data/socios";
 import { registroUrl } from "@/lib/plan-routing";
 import BenefitRedeemQr from "./BenefitRedeemQr";
 
-const GoogleSociosMap = dynamic(() => import("../components/GoogleSociosMap"), {
+const SociosMap = dynamic(() => import("../components/SociosMapLeaflet"), {
   ssr: false,
   loading: () => <div className="absolute inset-0 bg-slate-100 animate-pulse" />,
 });
@@ -240,7 +240,7 @@ export default function SociosImmersiveView({
 
   return (
     <div className="relative h-full w-full overflow-hidden overscroll-none">
-      <GoogleSociosMap
+      <SociosMap
         socios={sociosFiltrados}
         selectedId={selectedId}
         onSelect={selectSocio}
