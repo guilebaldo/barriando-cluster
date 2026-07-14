@@ -433,12 +433,5 @@ export const listaSocios: Socio[] = [
     url: "https://www.facebook.com/taqueriaelsultanpuebla/?locale=es_LA",
     direccion: "https://maps.app.goo.gl/3VHdghswBE2U1UUm7"
   },
-  {
-    id: 52,
-    name: "Guayé",
-    categoria: "Alimentos y Bebidas",
-    foto: "guaye",
-    url: "https://www.instagram.com/guaye.mx/",
-  },
 ];
 

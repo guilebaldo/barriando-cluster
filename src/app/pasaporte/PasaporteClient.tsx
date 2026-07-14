@@ -18,6 +18,7 @@ type RestaurantCard = {
   slug: string;
   foto: string;
   categoria: string;
+  logoUrl?: string | null;
 };
 
 interface PasaporteClientProps {
@@ -703,7 +704,7 @@ function PasaporteInner({
                       >
                         {hasStamp && (
                           <Image
-                            src={`/logos/${restaurant.foto}.png`}
+                            src={restaurant.logoUrl?.trim() || `/logos/${restaurant.foto}.png`}
                             alt={restaurant.name}
                             width={56}
                             height={56}

@@ -5,7 +5,7 @@ import PasaporteClient from "./PasaporteClient";
 import PasaporteImmersiveShell from "./PasaporteImmersiveShell";
 import { getSession } from "@/lib/auth-utils";
 import {
-  getParticipatingRestaurants,
+  getParticipatingRestaurantsAsync,
   getPassportProgress,
   getPassportRank,
   restaurantSlug,
@@ -15,12 +15,13 @@ import { loadPanelUser } from "@/lib/panel-data";
 
 export default async function PasaportePage() {
   const session = await getSession();
-  const restaurants = getParticipatingRestaurants().map((r) => ({
+  const restaurants = (await getParticipatingRestaurantsAsync()).map((r) => ({
     id: r.id,
     name: r.name,
     slug: restaurantSlug(r),
     foto: r.foto,
     categoria: r.categoria,
+    logoUrl: r.logoUrl ?? null,
   }));
 
   let totalStamps = 0;

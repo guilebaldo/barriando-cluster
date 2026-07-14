@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import {
   STAMP_COOLDOWN_MS,
   STAMP_STATUS_VALIDATED,
-  findRestaurantBySlug,
+  findRestaurantBySlugAsync,
   type StampSummary,
 } from "@/lib/pasaporte";
 
@@ -15,7 +15,7 @@ export async function createStampForUser(
   userId: string,
   restaurantSlug: string
 ): Promise<CreateStampResult> {
-  const restaurant = findRestaurantBySlug(restaurantSlug);
+  const restaurant = await findRestaurantBySlugAsync(restaurantSlug);
   if (!restaurant) {
     return { ok: false, error: "invalid_restaurant" };
   }

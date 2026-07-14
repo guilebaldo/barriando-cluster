@@ -1,5 +1,4 @@
 import { listaSocios, type Socio } from "@/app/data/socios";
-import { restaurantSlug } from "@/lib/pasaporte";
 import type { MapRoutePoint } from "@/lib/map-route-client";
 
 export type StampDisplayInfo = {
@@ -18,6 +17,15 @@ function normalizeName(value: string): string {
     .trim();
 }
 
+function restaurantSlugFromName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export function getLinkedSocio(point: MapRoutePoint): Socio | null {
   if (point.socioId) {
     const socio = listaSocios.find((s) => s.id === point.socioId);
@@ -32,7 +40,10 @@ export function getLinkedSocio(point: MapRoutePoint): Socio | null {
 export function getPointStampHref(point: MapRoutePoint): string | null {
   const socio = getLinkedSocio(point);
   if (socio?.categoria === "Alimentos y Bebidas") {
-    return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlug(socio))}`;
+    return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugFromName(socio.name))}`;
+  }
+  if (point.hasSeasonalStamp) {
+    return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugFromName(point.name))}`;
   }
   return null;
 }
@@ -43,14 +54,24 @@ export function pointHasScannableStamp(point: MapRoutePoint): boolean {
 
 export function getStampDisplayInfo(point: MapRoutePoint): StampDisplayInfo | null {
   const socio = getLinkedSocio(point);
-  if (!socio || socio.categoria !== "Alimentos y Bebidas") return null;
+  if (socio?.categoria === "Alimentos y Bebidas") {
+    return {
+      kind: "seasonal_nogada",
+      title: "Edición especial de temporada",
+      subtitle: "Chiles en Nogada",
+      businessName: socio.name,
+      logoSrc: socio.logoUrl?.trim() || `/logos/${socio.foto}.png`,
+    };
+  }
+
+  if (!point.hasSeasonalStamp) return null;
 
   return {
     kind: "seasonal_nogada",
     title: "Edición especial de temporada",
     subtitle: "Chiles en Nogada",
-    businessName: socio.name,
-    logoSrc: socio.logoUrl?.trim() || `/logos/${socio.foto}.png`,
+    businessName: point.name,
+    logoSrc: point.stampLogoSrc?.trim() || `/logos/${restaurantSlugFromName(point.name)}.png`,
   };
 }
 

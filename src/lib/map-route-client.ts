@@ -12,6 +12,8 @@ export type MapRoutePoint = {
   zone?: number;
   socioId?: number;
   hasSeasonalStamp?: boolean;
+  /** Logo para popup de sello (negocios de BD o catálogo). */
+  stampLogoSrc?: string;
 };
 
 export type MapRouteResult = {

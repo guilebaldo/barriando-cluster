@@ -6,7 +6,7 @@ import BarrIdClient from "./BarrIdClient";
 import { getSession } from "@/lib/auth-utils";
 import { loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 import { loadPanelUser, normalizePanelSubscription } from "@/lib/panel-data";
-import { getParticipatingRestaurants, getPassportProgress } from "@/lib/pasaporte";
+import { getParticipatingRestaurantsAsync, getPassportProgress } from "@/lib/pasaporte";
 import { isPaidMember, getPlanLabel, getSubscriptionStatusLabel } from "@/lib/membresia";
 import { isAdminUser } from "@/lib/admin";
 import {
@@ -36,7 +36,7 @@ export default async function BarrIdPage() {
   const user = await loadPanelUser(session.id);
   const subscription = normalizePanelSubscription(user?.subscription);
   const summaries = await loadUserStampSummaries(session.id);
-  const totalRestaurants = getParticipatingRestaurants().length;
+  const totalRestaurants = (await getParticipatingRestaurantsAsync()).length;
   const stampedCount = summaries.length;
   const progress = getPassportProgress(stampedCount, totalRestaurants);
 

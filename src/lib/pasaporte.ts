@@ -3,12 +3,36 @@ import { listaSocios, type Socio } from "@/app/data/socios";
 export const STAMP_COOLDOWN_MS = 18 * 60 * 60 * 1000;
 export const STAMP_STATUS_VALIDATED = "validado";
 
-/** Restaurantes participantes en la temporada de chiles en nogada. */
+function normalizeName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+/** Catálogo estático de temporada (sync). Preferir getParticipatingRestaurantsAsync. */
 export function getParticipatingRestaurants(): Socio[] {
   return listaSocios.filter((s) => s.categoria === "Alimentos y Bebidas");
 }
 
-export function restaurantSlug(socio: Socio): string {
+/** Catálogo + negocios publicados en Alimentos y Bebidas (incluye Guayé y otros de BD). */
+export async function getParticipatingRestaurantsAsync(): Promise<Socio[]> {
+  // Dynamic import keeps Prisma/DATABASE_URL off the client bundle (/map, BarrID, etc.).
+  const { getPublicSociosList } = await import("@/lib/public-socios");
+  const publicList = await getPublicSociosList();
+  const byName = new Map<string, Socio>();
+
+  for (const socio of publicList) {
+    if (socio.categoria !== "Alimentos y Bebidas") continue;
+    const key = normalizeName(socio.name);
+    if (!byName.has(key)) byName.set(key, socio);
+  }
+
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));
+}
+
+export function restaurantSlug(socio: Pick<Socio, "name">): string {
   return socio.name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -21,6 +45,23 @@ export function findRestaurantBySlug(slug: string | null | undefined): Socio | n
   if (!slug?.trim()) return null;
   const normalized = slug.trim().toLowerCase();
   const participants = getParticipatingRestaurants();
+
+  const bySlug = participants.find((s) => restaurantSlug(s) === normalized);
+  if (bySlug) return bySlug;
+
+  const byFoto = participants.find((s) => s.foto.toLowerCase() === normalized);
+  if (byFoto) return byFoto;
+
+  const byId = participants.find((s) => String(s.id) === normalized);
+  return byId ?? null;
+}
+
+export async function findRestaurantBySlugAsync(
+  slug: string | null | undefined
+): Promise<Socio | null> {
+  if (!slug?.trim()) return null;
+  const normalized = slug.trim().toLowerCase();
+  const participants = await getParticipatingRestaurantsAsync();
 
   const bySlug = participants.find((s) => restaurantSlug(s) === normalized);
   if (bySlug) return bySlug;
@@ -75,8 +116,8 @@ export type StampSummary = {
   lastStampAt: string;
 };
 
-export function buildSellarPath(restaurantSlug: string): string {
-  return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlug)}`;
+export function buildSellarPath(restaurantSlugValue: string): string {
+  return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugValue)}`;
 }
 
 export function getMapHrefForRestaurant(socioId: number): string {

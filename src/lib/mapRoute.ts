@@ -13,7 +13,8 @@ import {
   orderPointsByCircuitProgress,
 } from "@/lib/map-circuit";
 import { getPlanForSocio } from "@/lib/membresia";
-import { getParticipatingRestaurants } from "@/lib/pasaporte";
+import { getParticipatingRestaurantsAsync } from "@/lib/pasaporte";
+import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 
 export type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 export { findNearestRoutePoint, reorderRouteFromPoint, buildWalkingItinerary } from "@/lib/map-route-client";
@@ -249,12 +250,13 @@ function loadCatalogRouteBusinesses(): RawPoint[] {
 }
 
 /** Restaurantes con sello de Pasaporte — siempre visibles en el MAP para deep links desde /pasaporte. */
-function loadStampRestaurantPoints(): RawPoint[] {
+async function loadStampRestaurantPoints(): Promise<RawPoint[]> {
   const points: RawPoint[] = [];
   const seenNames = new Set<string>();
+  const restaurants = await getParticipatingRestaurantsAsync();
 
-  for (const socio of getParticipatingRestaurants()) {
-    const coord = sociosCoords[socio.id];
+  for (const socio of restaurants) {
+    const coord = resolveSocioMapCoord(socio);
     if (!coord) continue;
 
     const nameKey = normalizeName(socio.name);
@@ -273,6 +275,7 @@ function loadStampRestaurantPoints(): RawPoint[] {
       category: `${socio.categoria} · Sello Pasaporte`,
       socioId: socio.id,
       hasSeasonalStamp: true,
+      stampLogoSrc: socio.logoUrl?.trim() || `/logos/${socio.foto}.png`,
     });
   }
 
@@ -358,7 +361,7 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
     loadActiveMilestones(),
     loadPremiumGranEmpresaBusinesses(),
     Promise.resolve(loadCatalogRouteBusinesses()),
-    Promise.resolve(loadStampRestaurantPoints()),
+    loadStampRestaurantPoints(),
   ]);
 
   const premiumByName = new Map<string, RawPoint>();
@@ -393,6 +396,7 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
     zone: p.zone,
     socioId: p.socioId,
     hasSeasonalStamp: p.hasSeasonalStamp,
+    stampLogoSrc: p.stampLogoSrc,
   }));
 
   // Polyline fija (via points + hitos densificadores). No usa OSRM / Directions.

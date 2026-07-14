@@ -140,7 +140,7 @@ function userToSocio(user: PublishedUserRow): Socio | null {
   const coords = {
     latitude: profile.latitude ?? null,
     longitude: profile.longitude ?? null,
-    logoUrl: profile.logoUrl ?? null,
+    logoUrl: profile.logoUrl?.trim() || null,
   };
 
   if (user.socioId != null) {
@@ -161,7 +161,10 @@ function userToSocio(user: PublishedUserRow): Socio | null {
   const name = profile.businessName?.trim();
   if (!name) return null;
 
-  const foto = profile.logoUrl?.replace(/^\/logos\//, "").replace(/\.png$/, "") || slugFromName(name);
+  const logoTrim = profile.logoUrl?.trim() || null;
+  const foto = logoTrim
+    ? logoTrim.replace(/^\/logos\//, "").replace(/\.png$/i, "")
+    : slugFromName(name);
 
   return {
     id: dynamicSocioId(user.id),
@@ -171,7 +174,9 @@ function userToSocio(user: PublishedUserRow): Socio | null {
     url: profile.website?.trim() || "#",
     direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || undefined,
     benefit: profileBenefit(profile),
-    ...coords,
+    latitude: profile.latitude ?? null,
+    longitude: profile.longitude ?? null,
+    logoUrl: logoTrim,
   };
 }
 
