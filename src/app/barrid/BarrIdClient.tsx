@@ -284,7 +284,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
 
         <div
           className={`absolute inset-x-0 z-20 transition-[top] duration-300 ease-out ${
-            sheetExpanded ? "top-0 bottom-0" : "bottom-0 top-auto"
+            sheetExpanded ? "top-3 bottom-0" : "bottom-0 top-auto"
           }`}
         >
           <div
