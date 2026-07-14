@@ -95,7 +95,7 @@ export const listaSocios: Socio[] = [
     categoria: "Hospedaje",
     foto: "colonial",
     url: "https://www.colonial.com.mx",
-    direccion: "https://maps.app.goo.gl/Sp1xWLQ5yGSZKLHbA"
+    direccion: "https://maps.app.goo.gl/AWsc1nQRzNbsgAhw5"
   },
   {
     id: 10,
@@ -432,6 +432,14 @@ export const listaSocios: Socio[] = [
     foto: "sultan",
     url: "https://www.facebook.com/taqueriaelsultanpuebla/?locale=es_LA",
     direccion: "https://maps.app.goo.gl/3VHdghswBE2U1UUm7"
+  },
+  {
+    id: 52,
+    name: "Áttico 303",
+    categoria: "Alimentos y Bebidas",
+    foto: "attico",
+    url: "https://attico-303.com",
+    direccion: "https://maps.app.goo.gl/8wqzpPTB2WUGenKB9"
   },
 ];
 
