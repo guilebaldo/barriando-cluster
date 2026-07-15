@@ -31,14 +31,13 @@ import {
 } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContentSection";
-import AdminCatalogSection from "./AdminCatalogSection";
-import AdminRosterSection from "./AdminRosterSection";
+import AdminBusinessesSection from "./AdminBusinessesSection";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
-type AdminTab = "all" | "pending" | "content" | "catalog";
+type AdminTab = "all" | "pending" | "accounts" | "content";
 type ResolvedAction = "approved" | "rejected";
 type HealthStatus = "ok" | "pending" | "expired";
 
@@ -204,6 +203,7 @@ export default function AdminDashboard({
   const pendingLinkages = useMemo(() => users.filter(hasPendingLinkageRequest), [users]);
 
   const visibleUsers = useMemo(() => {
+    if (tab !== "pending" && tab !== "accounts") return [];
     const base = tab === "pending" ? pendingLinkages : users;
     const q = query.trim().toLowerCase();
     if (!q) return base;
@@ -366,7 +366,9 @@ export default function AdminDashboard({
             <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
               Administración Barriando
             </h1>
-            <p className="text-sm text-slate-600 mt-1">Gestión de socios, vinculaciones y certificaciones.</p>
+            <p className="text-sm text-slate-600 mt-1">
+              Negocios del roster, vinculaciones de cuenta y contenido del home.
+            </p>
           </div>
         </div>
       </div>
@@ -383,7 +385,7 @@ export default function AdminDashboard({
             tab === "all" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
-          Todos ({users.length})
+          Todos ({membershipRows.length})
         </button>
         <button
           type="button"
@@ -397,21 +399,21 @@ export default function AdminDashboard({
         </button>
         <button
           type="button"
+          onClick={() => setTab("accounts")}
+          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+            tab === "accounts" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          Cuentas ({users.length})
+        </button>
+        <button
+          type="button"
           onClick={() => setTab("content")}
           className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
             tab === "content" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
           Contenido Home
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("catalog")}
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "catalog" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Catálogo
         </button>
       </div>
 
@@ -420,11 +422,12 @@ export default function AdminDashboard({
           <AdminTestimonialsSection testimonials={testimonials} />
           <AdminHomePromosSection promos={homePromos} />
         </div>
-      ) : tab === "catalog" ? (
-        <div className="space-y-10">
-          <AdminRosterSection rows={membershipRows} />
-          <AdminCatalogSection rows={catalogRows} />
-        </div>
+      ) : tab === "all" ? (
+        <AdminBusinessesSection
+          membershipRows={membershipRows}
+          catalogRows={catalogRows}
+          users={users}
+        />
       ) : (
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
         <div className="px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -436,7 +439,7 @@ export default function AdminDashboard({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar por nombre, correo, negocio, plan o RFC…"
               className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#27366D]/20 focus:border-[#27366D]"
-              aria-label="Buscar socios"
+              aria-label="Buscar cuentas"
             />
             {query.trim() && (
               <button
@@ -451,7 +454,7 @@ export default function AdminDashboard({
           </div>
           <p className="text-[11px] text-slate-500 shrink-0">
             {visibleUsers.length} de {listTotal}{" "}
-            {tab === "pending" ? "pendientes" : "socios"}
+            {tab === "pending" ? "pendientes" : "cuentas"}
             {query.trim() ? " encontrados" : ""}
           </p>
         </div>
@@ -474,10 +477,10 @@ export default function AdminDashboard({
                 <tr>
                   <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                     {query.trim()
-                      ? "No hay socios que coincidan con tu búsqueda."
+                      ? "No hay cuentas que coincidan con tu búsqueda."
                       : tab === "pending"
                         ? "No hay vinculaciones pendientes."
-                        : "No hay usuarios registrados."}
+                        : "No hay cuentas registradas."}
                   </td>
                 </tr>
               ) : (
