@@ -17,7 +17,7 @@ export default function HomeClosingCta() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/planes"
+              href="/planes?tipo=comerciales"
               className="w-full sm:w-auto inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-lg transition"
             >
               Registrar Empresa
