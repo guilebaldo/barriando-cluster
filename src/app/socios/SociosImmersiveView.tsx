@@ -297,7 +297,7 @@ export default function SociosImmersiveView({
             Google Maps
           </a>
         )}
-        {selectedSocio.benefit && canRedeemBenefits ? (
+        {selectedSocio.benefit ? (
           <button
             type="button"
             onClick={() =>
@@ -520,7 +520,7 @@ export default function SociosImmersiveView({
         </div>
       </div>
 
-      {activeBenefit && canRedeemBenefits && (
+      {activeBenefit && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
           <button
             type="button"
@@ -549,29 +549,47 @@ export default function SociosImmersiveView({
               {activeBenefit.name}
             </h2>
 
-            {activeBenefit.benefit.redeemViaQr ? (
-              <BenefitRedeemQr />
+            {canRedeemBenefits ? (
+              <>
+                {activeBenefit.benefit.redeemViaQr ? (
+                  <BenefitRedeemQr />
+                ) : (
+                  <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                      Requisitos para el canje
+                    </p>
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      {activeBenefit.benefit.howToRedeem}
+                    </p>
+                  </div>
+                )}
+                {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
+                  <p className="mt-3 text-[11px] text-slate-500 text-center">
+                    Vigencia
+                    {activeBenefit.benefit.validFrom
+                      ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
+                      : ""}
+                    {activeBenefit.benefit.validUntil
+                      ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
+                      : ""}
+                  </p>
+                )}
+              </>
             ) : (
-              <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-                  Requisitos para el canje
+              <>
+                <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  {activeBenefit.benefit.redeemViaQr
+                    ? "Para mostrar tu QR de canje necesitas membresía activa (Vecino o plan de negocio) y BarrID."
+                    : "Para usar este beneficio necesitas membresía activa (Vecino o plan de negocio) y muestra tu BarrID."}
                 </p>
-                <p className="text-sm text-slate-700 leading-relaxed">
-                  {activeBenefit.benefit.howToRedeem}
-                </p>
-              </div>
-            )}
-
-            {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
-              <p className="mt-3 text-[11px] text-slate-500 text-center">
-                Vigencia
-                {activeBenefit.benefit.validFrom
-                  ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
-                  : ""}
-                {activeBenefit.benefit.validUntil
-                  ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
-                  : ""}
-              </p>
+                <Link
+                  href="/planes"
+                  className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
+                  onClick={() => setActiveBenefit(null)}
+                >
+                  Ver planes de membresía
+                </Link>
+              </>
             )}
           </div>
         </div>
