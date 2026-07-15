@@ -380,10 +380,11 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         <MapRouteMap
           points={route.points}
           walkPath={route.walkPath}
-          highlightedId={selectedId}
+          highlightedId={welcomeOpen ? null : selectedId}
           userLocation={userLocation}
           immersive
           bottomSheetHeight={sheetExpanded ? bottomSheetHeight : 0}
+          showStampPopups={!welcomeOpen}
           onPointSelect={selectPoint}
         />
       </div>

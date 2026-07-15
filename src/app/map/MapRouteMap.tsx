@@ -128,10 +128,12 @@ function makeIcon(kind: "start" | "milestone" | "premium", highlighted: boolean)
 function RouteMarker({
   point,
   highlighted,
+  showStampPopups,
   onSelect,
 }: {
   point: MapRoutePoint;
   highlighted: boolean;
+  showStampPopups: boolean;
   onSelect?: (id: string) => void;
 }) {
   const markerRef = useRef<L.Marker>(null);
@@ -145,7 +147,7 @@ function RouteMarker({
     const marker = markerRef.current;
     if (!marker) return;
 
-    if (!highlighted || !canStamp) {
+    if (!showStampPopups || !highlighted || !canStamp) {
       marker.closePopup();
       return;
     }
@@ -154,7 +156,7 @@ function RouteMarker({
       marker.openPopup();
     }, 680);
     return () => window.clearTimeout(timer);
-  }, [highlighted, canStamp, point.id]);
+  }, [highlighted, canStamp, showStampPopups, point.id]);
 
   return (
     <>
@@ -198,6 +200,7 @@ export default function MapRouteMap({
   onPointSelect,
   immersive = false,
   bottomSheetHeight = 0,
+  showStampPopups = true,
 }: {
   points: MapRoutePoint[];
   walkPath?: Array<[number, number]>;
@@ -206,6 +209,8 @@ export default function MapRouteMap({
   onPointSelect?: (id: string) => void;
   immersive?: boolean;
   bottomSheetHeight?: number;
+  /** False while welcome sheet is open — stamp popups wait until Comenzar recorrido. */
+  showStampPopups?: boolean;
 }) {
   const polyline = useMemo(() => {
     if (walkPath && walkPath.length >= 2) return walkPath;
@@ -253,7 +258,7 @@ export default function MapRouteMap({
         <FitRouteBounds points={points} highlightedId={highlightedId} />
         <FocusHighlightedPoint
           points={points}
-          highlightedId={highlightedId}
+          highlightedId={showStampPopups ? highlightedId : null}
           bottomSheetHeight={bottomSheetHeight}
         />
         <Polyline
@@ -285,6 +290,7 @@ export default function MapRouteMap({
             key={point.id}
             point={point}
             highlighted={highlightedId === point.id}
+            showStampPopups={showStampPopups}
             onSelect={onPointSelect}
           />
         ))}

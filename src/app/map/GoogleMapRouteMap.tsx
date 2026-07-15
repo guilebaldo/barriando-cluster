@@ -36,6 +36,7 @@ export default function GoogleMapRouteMap({
   bottomSheetHeight = 0,
   userLocation = null,
   onPointSelect,
+  showStampPopups = true,
 }: {
   points: MapRoutePoint[];
   walkPath?: Array<[number, number]>;
@@ -45,6 +46,7 @@ export default function GoogleMapRouteMap({
   bottomSheetHeight?: number;
   userLocation?: UserMapLocation | null;
   onPointSelect?: (id: string) => void;
+  showStampPopups?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -207,7 +209,7 @@ export default function GoogleMapRouteMap({
     const map = mapRef.current;
     const hp = highlightedId ? points.find((p) => p.id === highlightedId) : null;
     const hi = highlightedId ? points.findIndex((p) => p.id === highlightedId) : -1;
-    const stampPopup = hp ? pointHasScannableStamp(hp) : false;
+    const stampPopup = Boolean(hp && showStampPopups && pointHasScannableStamp(hp));
 
     const focusHighlighted = () => {
       if (!hp) return;
@@ -247,7 +249,7 @@ export default function GoogleMapRouteMap({
       const bottomPad = bottomSheetHeight > 0 ? bottomSheetHeight + 32 : 48;
       map.fitBounds(bounds, { top: 48, right: 48, bottom: bottomPad, left: 48 });
     }
-  }, [mapReady, highlightedId, points, immersive, bottomSheetHeight]);
+  }, [mapReady, highlightedId, points, immersive, bottomSheetHeight, showStampPopups, userLocation]);
 
   useEffect(() => {
     if (!mapReady || !mapRef.current || !googleRef.current || resolvedWalkPath.length < 2) return;
@@ -297,6 +299,7 @@ export default function GoogleMapRouteMap({
           highlightedId={highlightedId}
           userLocation={userLocation}
           onPointSelect={onPointSelect}
+          showStampPopups={showStampPopups}
         />
       </div>
     );

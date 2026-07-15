@@ -84,18 +84,14 @@ export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
   const wrapper = document.createElement("div");
   wrapper.className = "text-[11px] max-w-[11rem] leading-snug animate-popup-in";
 
+  const stamp = getStampDisplayInfo(point);
+
   const title = document.createElement("p");
   title.className = "font-bold text-slate-900 leading-tight pr-4";
-  title.textContent = point.name;
+  title.textContent = stamp ? "Sello Edición Especial" : point.name;
   wrapper.appendChild(title);
 
-  const stamp = getStampDisplayInfo(point);
   if (!stamp) return wrapper;
-
-  const badge = document.createElement("p");
-  badge.className = "text-[9px] font-bold uppercase tracking-wider text-amber-700 mt-1";
-  badge.textContent = "Sello de temporada";
-  wrapper.appendChild(badge);
 
   const row = document.createElement("div");
   row.className = "mt-1.5 flex items-center gap-2";
