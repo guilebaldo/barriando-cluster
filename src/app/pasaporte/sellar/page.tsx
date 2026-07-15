@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
-import { buildLoginRedirectPath, buildSellarPath } from "@/lib/pasaporte";
+import { buildPasaportePendingStampPath } from "@/lib/pasaporte";
 import { createStampForUser } from "@/lib/pasaporte-stamps";
 
 export default async function SellarPage({
@@ -15,11 +15,11 @@ export default async function SellarPage({
     redirect("/pasaporte?error=restaurante_requerido");
   }
 
-  const sellarPath = buildSellarPath(restaurante);
   const session = await getSession();
 
   if (!session) {
-    redirect(buildLoginRedirectPath(sellarPath));
+    // Guest: show passport preview + Google CTA, then resume sellar after auth.
+    redirect(buildPasaportePendingStampPath(restaurante));
   }
 
   const result = await createStampForUser(session.id, restaurante);

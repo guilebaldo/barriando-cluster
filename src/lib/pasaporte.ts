@@ -124,6 +124,11 @@ export function getMapHrefForRestaurant(socioId: number): string {
   return `/map?socio=${socioId}`;
 }
 
-export function buildLoginRedirectPath(sellarPath: string): string {
-  return `/login?callbackUrl=${encodeURIComponent(sellarPath)}`;
+/** Guest landing after scanning a stamp QR — keeps sell intent for Google CTA. */
+export function buildPasaportePendingStampPath(restaurantSlugValue: string): string {
+  return `/pasaporte?pendiente=${encodeURIComponent(restaurantSlugValue)}`;
+}
+
+export function buildLoginRedirectPath(callbackPath: string): string {
+  return `/login?callbackUrl=${encodeURIComponent(callbackPath)}`;
 }

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
@@ -5,6 +6,7 @@ import PasaporteClient from "./PasaporteClient";
 import PasaporteImmersiveShell from "./PasaporteImmersiveShell";
 import { getSession } from "@/lib/auth-utils";
 import {
+  buildSellarPath,
   getParticipatingRestaurantsAsync,
   getPassportProgress,
   getPassportRank,
@@ -13,8 +15,20 @@ import {
 import { countUserStamps, loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 import { loadPanelUser } from "@/lib/panel-data";
 
-export default async function PasaportePage() {
+export default async function PasaportePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pendiente?: string }>;
+}) {
   const session = await getSession();
+  const params = await searchParams;
+  const pendiente = params.pendiente?.trim();
+
+  // Already signed in with a pending stamp from a QR scan — complete it.
+  if (session && pendiente) {
+    redirect(buildSellarPath(pendiente));
+  }
+
   const restaurants = (await getParticipatingRestaurantsAsync()).map((r) => ({
     id: r.id,
     name: r.name,

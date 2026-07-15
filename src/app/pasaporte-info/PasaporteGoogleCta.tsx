@@ -13,10 +13,14 @@ function GoogleMark() {
   );
 }
 
-export default function PasaporteGoogleCta() {
+export default function PasaporteGoogleCta({
+  callbackUrl = "/pasaporte",
+}: {
+  callbackUrl?: string;
+}) {
   return (
     <GoogleSignInButton
-      callbackUrl="/pasaporte"
+      callbackUrl={callbackUrl}
       loadingLabel="Abriendo Google..."
       className="inline-flex items-center gap-3 bg-white hover:bg-slate-100 text-slate-900 text-sm font-bold px-6 py-3.5 rounded-lg transition active:scale-[0.98] disabled:opacity-60"
     >

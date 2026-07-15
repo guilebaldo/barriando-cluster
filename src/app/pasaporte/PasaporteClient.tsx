@@ -442,6 +442,17 @@ function PasaporteInner({
   } | null>(null);
   const [stampFlashId, setStampFlashId] = useState<number | null>(null);
   const isPreview = !isAuthenticated;
+  const pendingSlug = searchParams.get("pendiente")?.trim() ?? "";
+  const pendingStamp = useMemo(() => {
+    if (!pendingSlug || isAuthenticated) return null;
+    const match = restaurants.find(
+      (r) => r.slug.toLowerCase() === pendingSlug.toLowerCase()
+    );
+    return {
+      slug: pendingSlug,
+      name: match?.name ?? pendingSlug.replace(/-/g, " "),
+    };
+  }, [pendingSlug, restaurants, isAuthenticated]);
   const previewStampIds = useMemo(
     () => (isPreview ? pickPreviewStampIds(restaurants) : []),
     [isPreview, restaurants]
@@ -539,12 +550,20 @@ function PasaporteInner({
     <>
       <div className={`py-2 sm:py-4 px-2 sm:px-4 ${isAuthenticated ? "pb-6" : "pb-6"}`}>
       <div className="max-w-lg sm:max-w-2xl mx-auto">
-        {!isAuthenticated && <PasaporteInfoCard className="mb-5 sm:mb-6" />}
+        {!isAuthenticated && (
+          <PasaporteInfoCard className="mb-5 sm:mb-6" pendingStamp={pendingStamp} />
+        )}
 
-        {isPreview && (
+        {isPreview && !pendingStamp && (
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif-cluster text-[#3d2914] text-center mb-5 sm:mb-6 tracking-wide leading-tight">
             Llénalo todo.
           </h2>
+        )}
+        {isPreview && pendingStamp && (
+          <p className="text-center text-sm text-[#5c3d1e]/90 mb-5 sm:mb-6 font-medium">
+            Vista previa del Pasaporte — al continuar con Google se registrará el sello en{" "}
+            <span className="font-bold">{pendingStamp.name}</span>.
+          </p>
         )}
 
         <div className="relative isolate rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
