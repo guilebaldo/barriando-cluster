@@ -476,15 +476,13 @@ export default function SociosImmersiveView({
 
       {!canRedeemBenefits && (
         <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 shrink-0 bg-white">
-          <p className="text-center text-[11px] text-stone-600 leading-relaxed font-light px-1 py-1.5">
-            ¿Eres vecino? Obtén beneficios exclusivos.{" "}
+          <p className="text-center px-1 py-1.5">
             <Link
               href="/planes?tipo=personales"
-              className="font-semibold text-[#27366D] underline underline-offset-2"
+              className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
             >
-              Adquiere una membresía
+              ¿Eres vecino? Obtén beneficios exclusivos. Regístrate aquí.
             </Link>
-            .
           </p>
         </div>
       )}

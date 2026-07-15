@@ -84,19 +84,45 @@ function getSectionRevealProgress(
   return clamp01((enterAt - relativeTop) / (enterAt - completeAt));
 }
 
+/**
+ * Revela sellos destacados uno por uno al scrollear (orden DOM).
+ * Una vez visibles, se quedan (sticky).
+ */
 function collectVisiblePreviewStamps(
   stampsEl: HTMLElement,
   container: HTMLElement | null,
-  allowedIds: number[]
+  allowedIds: number[],
+  alreadyVisible: Set<number>
 ): Set<number> {
   const allowed = new Set(allowedIds);
-  const visible = new Set<number>();
-  stampsEl.querySelectorAll<HTMLElement>("[data-preview-stamp]").forEach((cell) => {
-    const id = Number(cell.dataset.previewStamp);
-    if (!Number.isFinite(id) || !allowed.has(id)) return;
-    const progress = getSectionRevealProgress(cell, container, 0.94, 0.62);
-    if (progress >= 0.88) visible.add(id);
-  });
+  const cells = Array.from(
+    stampsEl.querySelectorAll<HTMLElement>("[data-preview-stamp]")
+  )
+    .map((cell) => {
+      const id = Number(cell.dataset.previewStamp);
+      if (!Number.isFinite(id) || !allowed.has(id)) return null;
+      return { id, cell };
+    })
+    .filter((item): item is { id: number; cell: HTMLElement } => item != null);
+
+  const visible = new Set(alreadyVisible);
+
+  for (let i = 0; i < cells.length; i++) {
+    const { id, cell } = cells[i]!;
+    if (visible.has(id)) continue;
+
+    const prevId = i > 0 ? cells[i - 1]!.id : null;
+    if (prevId != null && !visible.has(prevId)) break;
+
+    // Entra cuando el sello se acerca a la mitad inferior del viewport.
+    const progress = getSectionRevealProgress(cell, container, 0.92, 0.48);
+    if (progress >= 0.42) {
+      visible.add(id);
+    } else {
+      break;
+    }
+  }
+
   return visible;
 }
 
@@ -115,18 +141,20 @@ function pickPreviewStampIds(
     .map((r) => r.id);
 }
 
-/** Rotación orgánica y estable por id (más variantes). */
+/** Rotación orgánica y estable por id: izq / centro / der. */
 function stampTiltClass(id: number): string {
   const tilts = [
     "rotate-[-14deg]",
     "rotate-[-9deg]",
-    "rotate-[-4deg]",
+    "rotate-[-5deg]",
     "rotate-0",
     "rotate-[5deg]",
-    "rotate-[10deg]",
-    "rotate-[13deg]",
+    "rotate-[9deg]",
+    "rotate-[14deg]",
   ] as const;
-  return tilts[((id * 7) % tilts.length + tilts.length) % tilts.length]!;
+  // Evitar múltiplos de tilts.length (id*7 % 7 === 0 siempre).
+  const idx = Math.abs((id * 2654435761) >>> 0) % tilts.length;
+  return tilts[idx]!;
 }
 
 type PreviewScrollState = {
@@ -176,7 +204,12 @@ function useScrollPreviewDemo(
   useEffect(() => {
     if (!enabled) return;
 
+    sequenceStartedRef.current = false;
+    visibleStampIdsRef.current = new Set();
+    setState(EMPTY_PREVIEW);
+
     const applyFullPreview = () => {
+      visibleStampIdsRef.current = new Set(previewStampIds);
       setState({
         displayName: PREVIEW_NAME,
         displayTemporada: PREVIEW_TEMPORADA,
@@ -258,7 +291,8 @@ function useScrollPreviewDemo(
       visibleStampIdsRef.current = collectVisiblePreviewStamps(
         stampsEl,
         container,
-        previewStampIds
+        previewStampIds,
+        visibleStampIdsRef.current
       );
 
       setState((prev) => ({
@@ -276,8 +310,9 @@ function useScrollPreviewDemo(
     };
 
     const fieldsEl = fieldsRef.current;
+    let observer: IntersectionObserver | null = null;
     if (fieldsEl) {
-      const observer = new IntersectionObserver(
+      observer = new IntersectionObserver(
         ([entry]) => {
           if (!entry?.isIntersecting || entry.intersectionRatio < 0.3) return;
           startTimedSequence();
@@ -289,21 +324,23 @@ function useScrollPreviewDemo(
         }
       );
       observer.observe(fieldsEl);
-
-      const scrollTarget: HTMLElement | Window = scrollContainerRef.current ?? window;
-      updateStamps();
-      scrollTarget.addEventListener("scroll", updateStamps, { passive: true });
-      window.addEventListener("resize", updateStamps);
-
-      return () => {
-        observer.disconnect();
-        scrollTarget.removeEventListener("scroll", updateStamps);
-        window.removeEventListener("resize", updateStamps);
-        cancelAnimationFrame(typingFrameRef.current);
-      };
     }
 
-    return () => cancelAnimationFrame(typingFrameRef.current);
+    // Página deslogueada usa scroll de ventana (usePageScroll); logueada usa el contenedor.
+    const scrollTarget: HTMLElement | Window = scrollContainerRef.current ?? window;
+    updateStamps();
+    scrollTarget.addEventListener("scroll", updateStamps, { passive: true });
+    window.addEventListener("resize", updateStamps);
+    // Por si el layout aún no midió bien en el primer frame.
+    const bootFrame = requestAnimationFrame(updateStamps);
+
+    return () => {
+      observer?.disconnect();
+      scrollTarget.removeEventListener("scroll", updateStamps);
+      window.removeEventListener("resize", updateStamps);
+      cancelAnimationFrame(bootFrame);
+      cancelAnimationFrame(typingFrameRef.current);
+    };
   }, [enabled, previewStampIds, fieldsRef, stampsRef, scrollContainerRef, totalRestaurants]);
 
   return state;
