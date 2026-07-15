@@ -115,6 +115,14 @@ function pickPreviewStampIds(
     .map((r) => r.id);
 }
 
+/** Rotación orgánica y estable por id: izq / der / centro. */
+function stampTiltClass(id: number): string {
+  const variant = ((id % 3) + 3) % 3;
+  if (variant === 0) return "rotate-[-11deg]";
+  if (variant === 1) return "rotate-[10deg]";
+  return "rotate-0";
+}
+
 type PreviewScrollState = {
   displayName: string;
   displayTemporada: string;
@@ -732,7 +740,9 @@ function PasaporteInner({
                       <div
                         className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-700 ${
                           hasStamp
-                            ? `${colorClass} border-solid rotate-[-8deg] scale-100`
+                            ? `${colorClass} border-solid scale-100 ${
+                                isPreview ? stampTiltClass(restaurant.id) : "rotate-[-8deg]"
+                              }`
                             : "border-dashed border-stone-300 scale-95"
                         } ${isFlashing ? "animate-stamp-press" : ""}`}
                       >
