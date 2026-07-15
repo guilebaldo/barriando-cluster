@@ -201,6 +201,16 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const isAuthenticated = status === "authenticated" && session?.user;
 
+  // Logo → role home when signed in; Inicio nav link always keeps the public landing at `/`.
+  const logoHref = isAuthenticated
+    ? resolvePostAuthHomePath({
+        email: session.user.email,
+        role: session.user.role,
+        plan: session.user.plan ?? "TURISTA",
+        subscriptionStatus: session.user.subscriptionStatus ?? "inactive",
+      })
+    : "/";
+
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
@@ -246,8 +256,9 @@ export default function Navbar() {
     >
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
         <Link
-          href="/"
+          href={logoHref}
           onClick={() => window.scrollTo(0, 0)}
+          aria-label={isAuthenticated ? "Ir a mi inicio" : "Ir al inicio"}
           className="flex items-center gap-2 sm:gap-3 min-w-0 group active:opacity-80"
         >
           <Image
