@@ -29,7 +29,25 @@ export default async function PasaportePage({
     redirect(buildSellarPath(pendiente));
   }
 
-  const restaurants = (await getParticipatingRestaurantsAsync()).map((r) => ({
+  const participating = await getParticipatingRestaurantsAsync();
+
+  // Preferential guest stamp demo: Mediana Empresa roster members that are AyB stamp targets.
+  const featuredPreviewStampIds = participating
+    .filter((r) => r.membershipPlan === "MEDIANA_EMPRESA")
+    .sort((a, b) => a.name.localeCompare(b.name, "es"))
+    .map((r) => r.id);
+
+  const restaurantsSorted =
+    session != null
+      ? participating
+      : [...participating].sort((a, b) => {
+          const aFeat = a.membershipPlan === "MEDIANA_EMPRESA" ? 0 : 1;
+          const bFeat = b.membershipPlan === "MEDIANA_EMPRESA" ? 0 : 1;
+          if (aFeat !== bFeat) return aFeat - bFeat;
+          return a.name.localeCompare(b.name, "es");
+        });
+
+  const restaurants = restaurantsSorted.map((r) => ({
     id: r.id,
     name: r.name,
     slug: restaurantSlug(r),
@@ -67,6 +85,7 @@ export default async function PasaportePage({
       isAuthenticated={isAuthenticated}
       usePageScroll={!isAuthenticated}
       restaurants={restaurants}
+      featuredPreviewStampIds={featuredPreviewStampIds}
       stampMap={stampMap}
       totalStamps={totalStamps}
       uniqueStamped={uniqueStampedCount}

@@ -26,6 +26,8 @@ interface PasaporteClientProps {
   isAuthenticated: boolean;
   usePageScroll?: boolean;
   restaurants: RestaurantCard[];
+  /** Sellos destacados en demo logout: Mediana Empresa (roster). */
+  featuredPreviewStampIds?: number[];
   stampMap: Record<number, { count: number; lastStampAt: string }>;
   totalStamps: number;
   uniqueStamped: number;
@@ -98,7 +100,15 @@ function collectVisiblePreviewStamps(
   return visible;
 }
 
-function pickPreviewStampIds(restaurants: RestaurantCard[]): number[] {
+function pickPreviewStampIds(
+  restaurants: RestaurantCard[],
+  featuredIds: number[] = []
+): number[] {
+  const restaurantIds = new Set(restaurants.map((r) => r.id));
+  const featured = featuredIds.filter((id) => restaurantIds.has(id));
+  if (featured.length > 0) return featured;
+
+  // Fallback si no hay Mediana Empresa AyB en el roster aún.
   return [...restaurants]
     .sort((a, b) => ((a.id * 37 + 11) % 101) - ((b.id * 37 + 11) % 101))
     .slice(0, Math.min(5, restaurants.length))
@@ -134,12 +144,16 @@ const EMPTY_PREVIEW: PreviewScrollState = {
 function useScrollPreviewDemo(
   enabled: boolean,
   restaurants: RestaurantCard[],
+  featuredPreviewStampIds: number[],
   totalRestaurants: number,
   fieldsRef: React.RefObject<HTMLElement | null>,
   stampsRef: React.RefObject<HTMLElement | null>,
   scrollContainerRef: React.RefObject<HTMLElement | null>
 ): PreviewScrollState {
-  const previewStampIds = useMemo(() => pickPreviewStampIds(restaurants), [restaurants]);
+  const previewStampIds = useMemo(
+    () => pickPreviewStampIds(restaurants, featuredPreviewStampIds),
+    [restaurants, featuredPreviewStampIds]
+  );
   const [state, setState] = useState<PreviewScrollState>(EMPTY_PREVIEW);
   const sequenceStartedRef = useRef(false);
   const typingFrameRef = useRef(0);
@@ -418,6 +432,7 @@ function PasaporteInner({
   isAuthenticated,
   usePageScroll = false,
   restaurants,
+  featuredPreviewStampIds = [],
   stampMap,
   totalStamps,
   uniqueStamped,
@@ -453,12 +468,13 @@ function PasaporteInner({
     };
   }, [pendingSlug, restaurants, isAuthenticated]);
   const previewStampIds = useMemo(
-    () => (isPreview ? pickPreviewStampIds(restaurants) : []),
-    [isPreview, restaurants]
+    () => (isPreview ? pickPreviewStampIds(restaurants, featuredPreviewStampIds) : []),
+    [isPreview, restaurants, featuredPreviewStampIds]
   );
   const previewScroll = useScrollPreviewDemo(
     isPreview,
     restaurants,
+    featuredPreviewStampIds,
     totalRestaurants,
     previewFieldsRef,
     previewStampsRef,
@@ -767,12 +783,12 @@ function PasaporteInner({
 
         {isPreview && (
           <p className="mt-5 mb-1 text-center text-[11px] text-stone-500 leading-relaxed font-light max-w-sm mx-auto px-2">
-            ¿Tienes un negocio en el barrio?{" "}
+            ¿Quieres estar en el MAP?{" "}
             <Link
               href="/planes?tipo=comerciales"
               className="font-medium text-[#5c3d1e]/80 hover:text-[#27366D] underline decoration-dotted underline-offset-2 transition-colors"
             >
-              Conoce las membresías comerciales
+              Adquiere una membresía
             </Link>
             .
           </p>
