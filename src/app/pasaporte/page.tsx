@@ -12,6 +12,10 @@ import {
   getPassportRank,
   restaurantSlug,
 } from "@/lib/pasaporte";
+import {
+  getFeaturedPassportPreviewIds,
+  scatterFeaturedPassportStamps,
+} from "@/lib/passport-preview-layout";
 import { countUserStamps, loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 import { loadPanelUser } from "@/lib/panel-data";
 
@@ -31,37 +35,13 @@ export default async function PasaportePage({
 
   const participating = await getParticipatingRestaurantsAsync();
 
-  // Preferential guest stamp demo: Mediana Empresa roster members that are AyB stamp targets.
-  const featuredPreviewStampIds = participating
-    .filter((r) => r.membershipPlan === "MEDIANA_EMPRESA")
-    .sort((a, b) => a.name.localeCompare(b.name, "es"))
-    .map((r) => r.id);
-
-  /** Dispersa Mediana entre el resto para que no queden todos juntos en la rejilla. */
-  function interleaveFeaturedStamps<T extends { id: number; membershipPlan?: string | null }>(
-    list: T[]
-  ): T[] {
-    const featured = list.filter((r) => r.membershipPlan === "MEDIANA_EMPRESA");
-    const rest = list.filter((r) => r.membershipPlan !== "MEDIANA_EMPRESA");
-    if (featured.length === 0) return list;
-
-    const out: T[] = [];
-    let fi = 0;
-    let ri = 0;
-    // 2 “vacíos” (o no-mediana) por cada sello destacado → se ven salteados.
-    while (fi < featured.length || ri < rest.length) {
-      for (let k = 0; k < 2 && ri < rest.length; k++) {
-        out.push(rest[ri++]);
-      }
-      if (fi < featured.length) out.push(featured[fi++]);
-    }
-    return out;
-  }
+  // Guest stamp demo: Mediana + Gran Empresa AyB, scattered across the grid.
+  const featuredPreviewStampIds = getFeaturedPassportPreviewIds(participating);
 
   const restaurantsSorted =
     session != null
       ? participating
-      : interleaveFeaturedStamps(
+      : scatterFeaturedPassportStamps(
           [...participating].sort((a, b) => a.name.localeCompare(b.name, "es"))
         );
 

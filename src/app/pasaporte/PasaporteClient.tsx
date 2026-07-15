@@ -26,7 +26,7 @@ interface PasaporteClientProps {
   isAuthenticated: boolean;
   usePageScroll?: boolean;
   restaurants: RestaurantCard[];
-  /** Sellos destacados en demo logout: Mediana Empresa (roster). */
+  /** Sellos destacados en demo logout: Mediana + Gran Empresa (roster). */
   featuredPreviewStampIds?: number[];
   stampMap: Record<number, { count: number; lastStampAt: string }>;
   totalStamps: number;
@@ -108,19 +108,25 @@ function pickPreviewStampIds(
   const featured = featuredIds.filter((id) => restaurantIds.has(id));
   if (featured.length > 0) return featured;
 
-  // Fallback si no hay Mediana Empresa AyB en el roster aún.
+  // Fallback si no hay Mediana/Gran Empresa AyB en el roster aún.
   return [...restaurants]
     .sort((a, b) => ((a.id * 37 + 11) % 101) - ((b.id * 37 + 11) % 101))
     .slice(0, Math.min(5, restaurants.length))
     .map((r) => r.id);
 }
 
-/** Rotación orgánica y estable por id: izq / der / centro. */
+/** Rotación orgánica y estable por id (más variantes). */
 function stampTiltClass(id: number): string {
-  const variant = ((id % 3) + 3) % 3;
-  if (variant === 0) return "rotate-[-11deg]";
-  if (variant === 1) return "rotate-[10deg]";
-  return "rotate-0";
+  const tilts = [
+    "rotate-[-14deg]",
+    "rotate-[-9deg]",
+    "rotate-[-4deg]",
+    "rotate-0",
+    "rotate-[5deg]",
+    "rotate-[10deg]",
+    "rotate-[13deg]",
+  ] as const;
+  return tilts[((id * 7) % tilts.length + tilts.length) % tilts.length]!;
 }
 
 type PreviewScrollState = {
@@ -793,14 +799,12 @@ function PasaporteInner({
 
         {isPreview && (
           <p className="mt-5 mb-1 text-center text-[11px] text-stone-500 leading-relaxed font-light max-w-sm mx-auto px-2">
-            ¿Quieres estar en el MAP?{" "}
             <Link
               href="/planes?tipo=comerciales"
               className="font-medium text-[#5c3d1e]/80 hover:text-[#27366D] underline decoration-dotted underline-offset-2 transition-colors"
             >
-              Adquiere una membresía
+              ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
             </Link>
-            .
           </p>
         )}
 
