@@ -43,20 +43,25 @@ export default function SociosImmersiveView({
   socios,
   canRedeemBenefits,
   initialBenefitsOnly = false,
+  initialSocioId = null,
 }: {
   socios: Socio[];
   canRedeemBenefits: boolean;
   initialBenefitsOnly?: boolean;
+  initialSocioId?: number | null;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
+  const didApplyInitialSocio = useRef(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
-  const [benefitsOnly, setBenefitsOnly] = useState(initialBenefitsOnly);
+  const [benefitsOnly, setBenefitsOnly] = useState(
+    initialSocioId != null ? false : initialBenefitsOnly
+  );
   const [viewMode, setViewMode] = useState<ViewMode>("icons");
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [sheetMode, setSheetMode] = useState<SheetMode>("half");
+  const [selectedId, setSelectedId] = useState<number | null>(initialSocioId);
+  const [sheetMode, setSheetMode] = useState<SheetMode>(initialSocioId != null ? "half" : "half");
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
   const [activeBenefit, setActiveBenefit] = useState<{
     name: string;
@@ -91,6 +96,17 @@ export default function SociosImmersiveView({
       setSelectedId(null);
     }
   }, [sociosFiltrados, selectedId]);
+
+  useEffect(() => {
+    if (didApplyInitialSocio.current || initialSocioId == null) return;
+    if (!socios.some((s) => s.id === initialSocioId)) return;
+    didApplyInitialSocio.current = true;
+    setActiveCategories([]);
+    setBenefitsOnly(false);
+    setSearchQuery("");
+    setSelectedId(initialSocioId);
+    setSheetMode("half");
+  }, [initialSocioId, socios]);
 
   useEffect(() => {
     const el = sheetRef.current;

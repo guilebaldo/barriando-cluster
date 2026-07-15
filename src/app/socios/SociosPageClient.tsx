@@ -9,10 +9,12 @@ export default function SociosPageClient({
   socios,
   canRedeemBenefits,
   initialBenefitsOnly = false,
+  initialSocioId = null,
 }: {
   socios: Socio[];
   canRedeemBenefits: boolean;
   initialBenefitsOnly?: boolean;
+  initialSocioId?: number | null;
 }) {
   return (
     <MapImmersiveShell>
@@ -22,6 +24,7 @@ export default function SociosPageClient({
           socios={socios}
           canRedeemBenefits={canRedeemBenefits}
           initialBenefitsOnly={initialBenefitsOnly}
+          initialSocioId={initialSocioId}
         />
       </main>
     </MapImmersiveShell>

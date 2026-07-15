@@ -80,9 +80,7 @@ export default function SociosCarousel({ socios }: SociosCarouselProps) {
         >
           {items.map((socio, index) => (
             <a
-              href={socio.url}
-              target="_blank"
-              rel="noreferrer"
+              href={`/socios?socio=${socio.id}`}
               key={`${socio.id}-${index}`}
               className="flex flex-col shrink-0 items-center group/card w-64"
             >
