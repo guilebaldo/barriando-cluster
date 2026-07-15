@@ -6,8 +6,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, ChevronDown } from "lucide-react";
-import { isPaidMember } from "@/lib/membresia";
 import { isAdminUser } from "@/lib/admin";
+import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
 
 type NavLink = {
   href: string;
@@ -61,9 +61,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     email: session?.user?.email,
     role: session?.user?.role,
   });
-  const isPaid = Boolean(plan && isPaidMember(plan, subscriptionStatus));
-  // Admin y socios de pago → BarrID; solo turista → Pasaporte
-  const profileHref = isAdmin || isPaid ? "/barrid" : "/pasaporte";
+  const profileHref = resolvePostAuthHomePath({
+    email: session?.user?.email,
+    role: session?.user?.role,
+    plan: plan ?? "TURISTA",
+    subscriptionStatus,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -121,7 +124,7 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
       >
         <div className="inline-flex items-center gap-1">
           <Link
-            href="/barrid"
+            href={profileHref}
             className="text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
           >
             {displayName}

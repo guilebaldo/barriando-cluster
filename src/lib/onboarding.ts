@@ -17,6 +17,11 @@ import {
   isTuristaPlan,
   type PaidMembershipPlan,
 } from "@/lib/membresia";
+import { isAdminUser } from "@/lib/admin";
+import {
+  resolvePostAuthHomePath,
+  resolvePostAuthHomePathAfterPayment,
+} from "@/lib/post-auth-home";
 
 export async function readPendingPlanCookie(): Promise<MembershipPlan | null> {
   const jar = await cookies();
@@ -67,12 +72,17 @@ export async function resolvePlanSelectionPath(plan: MembershipPlan): Promise<st
   const sub = await loadSubscription(session.user.id);
 
   if (sub && hasCommercialAccess(sub.plan, sub.status) && sub.plan === plan) {
-    return "/barrid";
+    return resolvePostAuthHomePath({
+      email: session.user.email,
+      role: session.user.role,
+      plan: sub.plan,
+      subscriptionStatus: sub.status,
+    });
   }
 
   if (isTuristaPlan(plan)) {
     await ensureTuristaSubscription(session.user.id);
-    return "/pasaporte";
+    return "/map";
   }
 
   if (isPaidMembershipPlan(plan)) {
@@ -89,7 +99,10 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
   redirect(path);
 }
 
-/** Tras autenticación: turista → Pasaporte; plan de pago activo → BarrID. */
+/**
+ * Tras autenticación (login sin callbackUrl profundo):
+ * admin → /admin · negocio → /panel · vecino → /barrid · turista → /map
+ */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -100,8 +113,22 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   await syncStripeSubscriptionForUser(session.user.id);
   let sub = await loadSubscription(session.user.id);
 
+  const email = session.user.email;
+  const role = session.user.role;
+
+  if (isAdminUser({ email, role })) {
+    redirect("/admin");
+  }
+
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {
-    redirect("/barrid?pago=exitoso");
+    redirect(
+      resolvePostAuthHomePathAfterPayment({
+        email,
+        role,
+        plan: sub.plan,
+        subscriptionStatus: sub.status,
+      })
+    );
   }
 
   if (pending && isPaidMembershipPlan(pending)) {
@@ -111,7 +138,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
 
   if (!sub || isTuristaPlan(sub.plan)) {
     await ensureTuristaSubscription(session.user.id);
-    redirect("/pasaporte");
+    redirect("/map");
   }
 
   if (sub && isPaidMembershipPlan(sub.plan) && !hasCommercialAccess(sub.plan, sub.status)) {
@@ -121,7 +148,14 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
     redirect("/certificacion/pago");
   }
 
-  redirect("/planes?pago=requiere_plan");
+  redirect(
+    resolvePostAuthHomePath({
+      email,
+      role,
+      plan: sub?.plan ?? "TURISTA",
+      subscriptionStatus: sub?.status ?? "inactive",
+    })
+  );
 }
 
 export { ONBOARDING_CONTINUE_PATH };

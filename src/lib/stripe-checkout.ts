@@ -49,11 +49,16 @@ export async function createStripeCheckoutUrl(
     });
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    // Relative destinations only — production host comes from NEXT_PUBLIC_APP_URL (barriandopuebla.com).
+    const successPath =
+      plan === "VECINO"
+        ? "/barrid?pago=exitoso&bienvenida=1"
+        : "/panel?pago=exitoso&bienvenida=1";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/barrid?pago=exitoso&bienvenida=1`,
+      success_url: `${appUrl}${successPath}`,
       cancel_url: `${appUrl}/certificacion/pago?pago=cancelado`,
       metadata: { userId, plan },
     });

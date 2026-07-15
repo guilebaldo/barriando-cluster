@@ -10,6 +10,7 @@ import {
   needsCertificationPayment,
 } from "@/lib/membresia";
 import { normalizePanelSubscription } from "@/lib/panel-data";
+import { resolvePostAuthHomePathAfterPayment } from "@/lib/post-auth-home";
 
 export default async function CertificacionPagoPage({
   searchParams,
@@ -33,7 +34,14 @@ export default async function CertificacionPagoPage({
   }
 
   if (hasCommercialAccess(sub.plan, sub.status)) {
-    redirect("/barrid?pago=exitoso");
+    redirect(
+      resolvePostAuthHomePathAfterPayment({
+        email: session.email,
+        role: session.role,
+        plan: sub.plan,
+        subscriptionStatus: sub.status,
+      })
+    );
   }
 
   if (!needsCertificationPayment(sub.plan, sub.status) && sub.status === "manual_pending") {
