@@ -101,7 +101,7 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
 
 /**
  * Tras autenticación (login sin callbackUrl profundo):
- * admin → /admin · negocio → /panel · vecino → /barrid · turista → /map
+ * admin → /barrid · negocio → /panel · vecino → /barrid · turista → /map
  */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
@@ -117,7 +117,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   const role = session.user.role;
 
   if (isAdminUser({ email, role })) {
-    redirect("/admin");
+    redirect("/barrid");
   }
 
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {

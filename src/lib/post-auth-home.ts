@@ -17,16 +17,16 @@ export type PostAuthHomeUser = {
 };
 
 /**
- * Default destination after login (or visiting / /entrar while signed in).
+ * Default destination after login (or visiting /entrar while signed in).
  * Deep-link callbackUrls (sellar, beneficios, etc.) override this elsewhere.
  *
- * Admin → /admin
+ * Admin → /barrid (panel /admin sigue en el menú)
  * Negocio activo → /panel
  * Vecino activo → /barrid
  * Turista → /map
  */
 export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
-  if (isAdminUser(user)) return "/admin";
+  if (isAdminUser(user)) return "/barrid";
 
   const { plan, subscriptionStatus: status } = user;
 
