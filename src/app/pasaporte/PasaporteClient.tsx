@@ -7,7 +7,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Camera, X } from "lucide-react";
 import { getMapHrefForRestaurant } from "@/lib/pasaporte";
-import { registroUrl } from "@/lib/plan-routing";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
@@ -556,7 +555,7 @@ function PasaporteInner({
 
         {isPreview && !pendingStamp && (
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-serif-cluster text-[#3d2914] text-center mb-5 sm:mb-6 tracking-wide leading-tight">
-            Llénalo todo.
+            Llénalo todo. Hazte Poblano.
           </h2>
         )}
         {isPreview && pendingStamp && (
@@ -766,6 +765,19 @@ function PasaporteInner({
           </div>
         </div>
 
+        {isPreview && (
+          <p className="mt-5 mb-1 text-center text-[11px] text-stone-500 leading-relaxed font-light max-w-sm mx-auto px-2">
+            ¿Tienes un negocio en el barrio?{" "}
+            <Link
+              href="/planes?tipo=comerciales"
+              className="font-medium text-[#5c3d1e]/80 hover:text-[#27366D] underline decoration-dotted underline-offset-2 transition-colors"
+            >
+              Conoce las membresías comerciales
+            </Link>
+            .
+          </p>
+        )}
+
         {!isPreview && (
           <div className="mt-4 mb-1 max-w-sm mx-auto px-2 space-y-3">
             <button
@@ -779,7 +791,7 @@ function PasaporteInner({
             <p className="text-center text-[11px] text-stone-600 leading-relaxed font-light">
               ¿Tienes un negocio en el barrio?{" "}
               <Link
-                href={registroUrl("NEGOCIO_FAMILIAR")}
+                href="/planes?tipo=comerciales"
                 className="font-semibold text-[#27366D] underline underline-offset-2"
               >
                 Regístralo
