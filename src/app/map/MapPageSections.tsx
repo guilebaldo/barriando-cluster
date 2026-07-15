@@ -92,7 +92,7 @@ export function MapPageBusinessCta() {
         encontrarán caminando el circuito, podrán escanear tu QR y sumar sellos en su Pasaporte Digital.
       </p>
       <Link
-        href="/planes#gran_empresa"
+        href="/planes?tipo=comerciales#gran_empresa"
         className="inline-flex items-center gap-2 mt-6 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg transition-all"
       >
         Inscribir mi negocio al MAP

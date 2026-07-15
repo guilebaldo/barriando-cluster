@@ -480,7 +480,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
                 {navRow}
                 <p className="text-center">
                   <Link
-                    href="/planes#gran_empresa"
+                    href="/planes?tipo=comerciales#gran_empresa"
                     className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
                   >
                     ¿Tu negocio está en el centro? Inscríbete al MAP

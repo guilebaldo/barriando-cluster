@@ -233,7 +233,7 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
               los Barrios Fundacionales.
             </p>
             <Link
-              href="/planes"
+              href="/planes?tipo=comerciales"
               className="inline-flex items-center gap-2 mt-10 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-lg transition"
             >
               Registrar Empresa <ArrowUpRight className="w-4 h-4" />
