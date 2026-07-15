@@ -834,19 +834,8 @@ function PasaporteInner({
           </div>
         </div>
 
-        {isPreview && (
-          <p className="mt-5 mb-1 text-center text-[11px] text-stone-500 leading-relaxed font-light max-w-sm mx-auto px-2">
-            <Link
-              href="/planes?tipo=comerciales"
-              className="font-medium text-[#5c3d1e]/80 hover:text-[#27366D] underline decoration-dotted underline-offset-2 transition-colors"
-            >
-              ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
-            </Link>
-          </p>
-        )}
-
         {!isPreview && (
-          <div className="mt-4 mb-1 max-w-sm mx-auto px-2 space-y-3">
+          <div className="mt-4 mb-1 max-w-sm mx-auto px-2">
             <button
               type="button"
               onClick={() => setScannerOpen(true)}
@@ -855,18 +844,17 @@ function PasaporteInner({
               <Camera className="w-4 h-4" strokeWidth={2.25} />
               Escanear QR
             </button>
-            <p className="text-center text-[11px] text-stone-600 leading-relaxed font-light">
-              ¿Tienes un negocio en el barrio?{" "}
-              <Link
-                href="/planes?tipo=comerciales"
-                className="font-semibold text-[#27366D] underline underline-offset-2"
-              >
-                Regístralo
-              </Link>{" "}
-              para aparecer en el Pasaporte Digital.
-            </p>
           </div>
         )}
+
+        <p className="mt-5 mb-1 text-center max-w-sm mx-auto px-2">
+          <Link
+            href="/planes?tipo=comerciales"
+            className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
+          >
+            ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
+          </Link>
+        </p>
       </div>
       </div>
 
