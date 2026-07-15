@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Gift, RotateCcw, Search, X } from "lucide-react";
+import { Gift, Pencil, RotateCcw, Search, X } from "lucide-react";
 import {
   setCatalogMembershipStatus,
   updateCatalogMembershipBenefit,
@@ -23,6 +23,38 @@ function normalizeName(value: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function StatusSwitch({
+  active,
+  disabled,
+  onToggle,
+  label,
+}: {
+  active: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={active}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onToggle}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-40 ${
+        active ? "bg-emerald-500" : "bg-slate-300"
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+          active ? "translate-x-[1.375rem]" : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  );
 }
 
 function hasPendingLinkageRequest(user: AdminUserRow): boolean {
@@ -281,7 +313,7 @@ export default function AdminBusinessesSection({
                 <th className="px-4 py-3">Pago</th>
                 <th className="px-4 py-3">Cuenta</th>
                 <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3 w-40 text-right">Acciones</th>
+                <th className="px-4 py-3 w-28 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -340,47 +372,41 @@ export default function AdminBusinessesSection({
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              active
-                                ? "bg-emerald-50 text-emerald-800"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            {active ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="inline-flex flex-col items-end gap-1.5">
-                            <div className="inline-flex gap-1">
-                              <AdminEstablishmentQrButton
-                                businessName={row.businessName}
-                                category={row.categoria}
-                                disabled={saving}
-                              />
-                              <button
-                                type="button"
-                                disabled={saving}
-                                onClick={() =>
-                                  expanded ? setExpandedId(null) : openExpand(row)
-                                }
-                                className="text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-                              >
-                                {expanded ? "Cerrar" : "Editar"}
-                              </button>
-                            </div>
-                            <button
-                              type="button"
+                          <div className="inline-flex items-center gap-2">
+                            <StatusSwitch
+                              active={active}
                               disabled={saving}
-                              onClick={() => void toggleStatus(row)}
-                              className={`text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg transition disabled:opacity-40 ${
-                                active
-                                  ? "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                                  : "bg-[#27366D] text-white hover:bg-[#1e2b58]"
+                              onToggle={() => void toggleStatus(row)}
+                              label={`${active ? "Desactivar" : "Activar"} ${row.businessName}`}
+                            />
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider ${
+                                active ? "text-emerald-700" : "text-slate-400"
                               }`}
                             >
-                              {saving ? "…" : active ? "Desactivar" : "Activar"}
+                              {saving ? "…" : active ? "Activo" : "Inactivo"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="inline-flex items-center justify-end gap-0.5">
+                            <button
+                              type="button"
+                              title={expanded ? "Cerrar" : "Editar"}
+                              disabled={saving}
+                              onClick={() =>
+                                expanded ? setExpandedId(null) : openExpand(row)
+                              }
+                              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                            >
+                              {expanded ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                              <span className="sr-only">{expanded ? "Cerrar" : "Editar"}</span>
                             </button>
+                            <AdminEstablishmentQrButton
+                              businessName={row.businessName}
+                              category={row.categoria}
+                              disabled={saving}
+                            />
                           </div>
                         </td>
                       </tr>
