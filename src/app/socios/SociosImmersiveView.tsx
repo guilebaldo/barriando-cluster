@@ -246,6 +246,23 @@ export default function SociosImmersiveView({
           <h2 className="text-lg font-black font-serif-cluster text-[#27366D] leading-tight mt-0.5">
             {selectedSocio.name}
           </h2>
+          {selectedSocio.benefit ? (
+            <div className="mt-2 space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Beneficio para socios
+              </p>
+              {selectedSocio.benefit.title ? (
+                <p className="text-sm font-semibold text-[#27366D] leading-snug">
+                  {selectedSocio.benefit.title}
+                </p>
+              ) : null}
+              {selectedSocio.benefit.description ? (
+                <p className="text-sm text-slate-600 font-light leading-relaxed">
+                  {selectedSocio.benefit.description}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <button
           type="button"
@@ -280,7 +297,7 @@ export default function SociosImmersiveView({
             Google Maps
           </a>
         )}
-        {selectedSocio.benefit && (
+        {selectedSocio.benefit && canRedeemBenefits ? (
           <button
             type="button"
             onClick={() =>
@@ -289,9 +306,9 @@ export default function SociosImmersiveView({
             className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg"
           >
             <Gift className="w-3.5 h-3.5" />
-            Beneficios
+            Activar beneficio
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -503,7 +520,7 @@ export default function SociosImmersiveView({
         </div>
       </div>
 
-      {activeBenefit && (
+      {activeBenefit && canRedeemBenefits && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
           <button
             type="button"
@@ -514,6 +531,7 @@ export default function SociosImmersiveView({
           <div
             role="dialog"
             aria-modal="true"
+            aria-labelledby="activar-beneficio-title"
             className="relative w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-6"
           >
             <button
@@ -525,72 +543,35 @@ export default function SociosImmersiveView({
               <X className="w-5 h-5" />
             </button>
             <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">
-              Beneficio para socios
+              Activar beneficio
             </p>
-            <h2 className="text-lg font-bold text-slate-950 pr-8">{activeBenefit.name}</h2>
-            <p className="mt-3 text-sm font-semibold text-[#27366D]">{activeBenefit.benefit.title}</p>
-            <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-              {activeBenefit.benefit.description}
-            </p>
+            <h2 id="activar-beneficio-title" className="text-lg font-bold text-slate-950 pr-8">
+              {activeBenefit.name}
+            </h2>
 
-            {activeBenefit.benefit.redeemViaQr && canRedeemBenefits ? (
+            {activeBenefit.benefit.redeemViaQr ? (
               <BenefitRedeemQr />
             ) : (
-              <>
-                {!activeBenefit.benefit.redeemViaQr && (
-                  <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-                      Cómo canjearlo
-                    </p>
-                    <p className="text-xs text-slate-700 leading-relaxed">
-                      {activeBenefit.benefit.howToRedeem}
-                    </p>
-                  </div>
-                )}
-                {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
-                  <p className="mt-3 text-[11px] text-slate-500">
-                    Vigencia
-                    {activeBenefit.benefit.validFrom
-                      ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
-                      : ""}
-                    {activeBenefit.benefit.validUntil
-                      ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
-                      : ""}
-                  </p>
-                )}
-                {!canRedeemBenefits && (
-                  <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                    {activeBenefit.benefit.redeemViaQr
-                      ? "Para mostrar tu QR de canje necesitas membresía activa (Vecino o plan de negocio) y BarrID."
-                      : "Para usar este beneficio necesitas membresía activa (Vecino o plan de negocio) y muestra tu BarrID."}
-                  </p>
-                )}
-                {(!canRedeemBenefits || !activeBenefit.benefit.redeemViaQr) && (
-                  <Link
-                    href={canRedeemBenefits ? "/barrid" : "/planes"}
-                    className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
-                    onClick={() => setActiveBenefit(null)}
-                  >
-                    {canRedeemBenefits ? "Usar beneficio" : "Ver planes de membresía"}
-                  </Link>
-                )}
-              </>
+              <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                  Requisitos para el canje
+                </p>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  {activeBenefit.benefit.howToRedeem}
+                </p>
+              </div>
             )}
 
-            {activeBenefit.benefit.redeemViaQr && canRedeemBenefits && (
-              <>
-                {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
-                  <p className="mt-3 text-[11px] text-slate-500 text-center">
-                    Vigencia
-                    {activeBenefit.benefit.validFrom
-                      ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
-                      : ""}
-                    {activeBenefit.benefit.validUntil
-                      ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
-                      : ""}
-                  </p>
-                )}
-              </>
+            {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
+              <p className="mt-3 text-[11px] text-slate-500 text-center">
+                Vigencia
+                {activeBenefit.benefit.validFrom
+                  ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
+                  : ""}
+                {activeBenefit.benefit.validUntil
+                  ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
+                  : ""}
+              </p>
             )}
           </div>
         </div>
