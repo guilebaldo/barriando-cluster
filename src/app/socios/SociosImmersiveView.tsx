@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import SocioLogo from "../components/SocioLogo";
 import type { Socio, SocioBenefitInfo } from "../data/socios";
-import { registroUrl } from "@/lib/plan-routing";
 import BenefitRedeemQr from "./BenefitRedeemQr";
 
 const SociosMap = dynamic(() => import("../components/SociosMapLeaflet"), {
@@ -168,8 +167,6 @@ export default function SociosImmersiveView({
       return m === "full" ? "half" : stepSheet(m, 1);
     });
   };
-
-  const vecinoHref = registroUrl("VECINO");
 
   const browseBody =
     sociosFiltrados.length === 0 ? (
@@ -480,13 +477,14 @@ export default function SociosImmersiveView({
       {!canRedeemBenefits && (
         <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 shrink-0 bg-white">
           <p className="text-center text-[11px] text-stone-600 leading-relaxed font-light px-1 py-1.5">
-            Afíliate como Vecino y disfruta beneficios exclusivos de la red Barriando.{" "}
+            ¿Eres vecino? Obtén beneficios exclusivos.{" "}
             <Link
-              href={vecinoHref}
+              href="/planes?tipo=personales"
               className="font-semibold text-[#27366D] underline underline-offset-2"
             >
-              Adquirir membresía
+              Adquiere una membresía
             </Link>
+            .
           </p>
         </div>
       )}
