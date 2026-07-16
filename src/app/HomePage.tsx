@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import StandaloneHomeRedirect from "./components/StandaloneHomeRedirect";
 import MediaSlot from "./components/MediaSlot";
 import HeroVideoBackground from "./components/HeroVideoBackground";
 import HomePromoBanner from "./components/HomePromoBanner";
@@ -65,6 +66,7 @@ const FESTIVIDADES = [
 export default function HomePage({ liveStats, homePromo, carouselSocios }: HomePageProps) {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-amber-200">
+      <StandaloneHomeRedirect />
       <Navbar />
 
       {/* 1. HERO */}
