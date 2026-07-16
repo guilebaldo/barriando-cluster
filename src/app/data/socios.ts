@@ -450,4 +450,12 @@ export const listaSocios: Socio[] = [
     url: "https://menu.fu.do/cosmetortas",
     direccion: "https://maps.app.goo.gl/iJoaUtfQk1476t3G7"
   },
+  {
+    id: 55,
+    name: "Guayé Mezcalería Experimental",
+    categoria: "Alimentos y Bebidas",
+    foto: "guaye",
+    url: "https://www.instagram.com/guaye.mx/",
+    direccion: "https://maps.app.goo.gl/KHf5pLJj7W4GW3az7"
+  },
 ];
