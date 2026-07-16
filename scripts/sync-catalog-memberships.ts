@@ -309,7 +309,16 @@ async function syncMemberships(socios: SocioRow[]) {
     });
   }
 
-  const catalogNames = new Set(socios.map((s) => normalizeKey(s.name)));
+  function namesReferToSameBusiness(a: string, b: string): boolean {
+    const na = normalizeKey(a);
+    const nb = normalizeKey(b);
+    if (!na || !nb) return false;
+    if (na === nb) return true;
+    const [short, long] = na.length <= nb.length ? [na, nb] : [nb, na];
+    if (short.length < 4) return false;
+    return long.startsWith(`${short} `) || long.endsWith(` ${short}`) || long.includes(` ${short} `);
+  }
+
   const phantoms = await prisma.user.findMany({
     where: {
       socioId: null,
@@ -324,19 +333,35 @@ async function syncMemberships(socios: SocioRow[]) {
     },
   });
 
-  let cleaned = 0;
+  let linked = 0;
   for (const user of phantoms) {
-    const name = normalizeKey(user.socioProfile?.businessName || "");
-    if (!name || !catalogNames.has(name) || !user.socioProfile) continue;
+    const name = user.socioProfile?.businessName || "";
+    if (!name || !user.socioProfile) continue;
+    const matches = socios.filter((s) => namesReferToSameBusiness(s.name, name));
+    if (matches.length !== 1) continue;
+    const match = matches[0]!;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { socioId: match.id },
+    });
     await prisma.socioProfile.update({
       where: { id: user.socioProfile.id },
-      data: { linkageStatus: "rejected" },
+      data: {
+        businessName: match.name,
+        category: match.categoria,
+        website: match.url === "#" ? undefined : match.url,
+        googleBusinessUrl: match.direccion || undefined,
+        latitude: match.coords?.lat ?? undefined,
+        longitude: match.coords?.lng ?? undefined,
+        logoUrl: `/logos/${match.foto}.png`,
+        linkageStatus: "approved",
+      },
     });
-    cleaned += 1;
+    linked += 1;
   }
 
   console.log(
-    `CatalogMembership: ${socios.length} active, ${toDeactivate.length} inactive, ${cleaned} phantom profiles rejected`
+    `CatalogMembership: ${socios.length} active, ${toDeactivate.length} inactive, ${linked} manual profiles linked to catalog`
   );
 }
 

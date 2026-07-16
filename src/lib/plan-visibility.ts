@@ -2,11 +2,11 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 
 /**
  * Entitlements (negocio / paid directory):
- * - Vecino: BarrID, canjear beneficios, escanear sellos de pasaporte (no ofrece sello AyB).
- * - Pequeña (NEGOCIO_FAMILIAR): lo de Vecino/Turista + puede aparecer como sello AyB en pasaporte.
- * - Mediana: lo anterior + carrusel landing + orden preferente en /socios + sellos destacados
- *   en la vista previa de /pasaporte (invitados), junto con Gran Empresa.
- * - Gran: lo anterior + pin de negocio en itinerario MAP + sellos en preview /pasaporte.
+ * - Vecino: BarrID, canjear beneficios, escanear sellos de pasaporte (no ofrece sello).
+ * - Pequeña (NEGOCIO_FAMILIAR): lo de Vecino/Turista + directorio /socios.
+ * - Mediana: lo anterior + carrusel landing + orden preferente en /socios.
+ * - Gran: lo anterior + pin de negocio en itinerario MAP; si su giro es Alimentos y
+ *   Bebidas, ofrece el sello de temporada en /pasaporte (p. ej. hospedaje no sella).
  */
 const DIRECTORY_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 const CAROUSEL_PLANS: MembershipPlan[] = ["MEDIANA_EMPRESA", "GRAN_EMPRESA"];

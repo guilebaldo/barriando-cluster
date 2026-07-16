@@ -16,7 +16,11 @@ export function getParticipatingRestaurants(): Socio[] {
   return listaSocios.filter((s) => s.categoria === "Alimentos y Bebidas");
 }
 
-/** Catálogo + negocios publicados en Alimentos y Bebidas (incluye Guayé y otros de BD). */
+/**
+ * Restaurantes que ofrecen el sello de temporada (Chiles en Nogada):
+ * solo Alimentos y Bebidas con plan Gran Empresa activo.
+ * Un Gran Empresa de otro giro (p. ej. Acaso Homes, hospedaje) no da sello.
+ */
 export async function getParticipatingRestaurantsAsync(): Promise<Socio[]> {
   // Dynamic import keeps Prisma/DATABASE_URL off the client bundle (/map, BarrID, etc.).
   const { getPublicSociosList } = await import("@/lib/public-socios");
@@ -25,6 +29,7 @@ export async function getParticipatingRestaurantsAsync(): Promise<Socio[]> {
 
   for (const socio of publicList) {
     if (socio.categoria !== "Alimentos y Bebidas") continue;
+    if (socio.membershipPlan !== "GRAN_EMPRESA") continue;
     const key = normalizeName(socio.name);
     if (!byName.has(key)) byName.set(key, socio);
   }

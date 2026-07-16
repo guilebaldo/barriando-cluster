@@ -35,6 +35,22 @@ function normalizeName(name: string): string {
     .trim();
 }
 
+/** "Guayé" vs "Guayé Mezcalería Experimental" count as the same business. */
+function namesReferToSameBusiness(a: string, b: string): boolean {
+  const na = normalizeName(a);
+  const nb = normalizeName(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  const [short, long] = na.length <= nb.length ? [na, nb] : [nb, na];
+  if (short.length < 4) return false;
+  return (
+    long === short ||
+    long.startsWith(`${short} `) ||
+    long.endsWith(` ${short}`) ||
+    long.includes(` ${short} `)
+  );
+}
+
 type CatalogMembershipRow = {
   socioId: number;
   plan: MembershipPlan;
@@ -293,14 +309,17 @@ function dedupeByName(socios: Socio[]): Socio[] {
     if (s.id < 900_000) return 1;
     return 2;
   };
-  const best = new Map<string, Socio>();
+  const best: Socio[] = [];
   for (const socio of socios) {
-    const key = normalizeName(socio.name);
-    if (!key) continue;
-    const prev = best.get(key);
-    if (!prev || rank(socio) < rank(prev)) best.set(key, socio);
+    if (!normalizeName(socio.name)) continue;
+    const idx = best.findIndex((prev) => namesReferToSameBusiness(prev.name, socio.name));
+    if (idx < 0) {
+      best.push(socio);
+      continue;
+    }
+    if (rank(socio) < rank(best[idx]!)) best[idx] = socio;
   }
-  return [...best.values()];
+  return best;
 }
 
 /** Socios visibles en /socios: solo membresía de negocio activa (roster o usuario). */
@@ -330,19 +349,14 @@ export async function getPublicSociosList(): Promise<Socio[]> {
     }
   }
 
-  const linkedIds = new Set(
-    publishedUsers.filter((u) => u.socioId != null).map((u) => u.socioId as number)
-  );
   const dynamicOnly = fromUsers.filter((s) => s.id >= 900_000);
-  // Drop dynamic entries whose name matches a catalog/roster id already present.
-  const rosterNames = new Set([...byId.values()].map((s) => normalizeName(s.name)));
+  // Drop dynamic entries whose name matches (or is a short form of) a roster entry.
+  const rosterEntries = [...byId.values()];
   for (const socio of dynamicOnly) {
-    if (rosterNames.has(normalizeName(socio.name))) continue;
+    const overlapsRoster = rosterEntries.some((r) => namesReferToSameBusiness(r.name, socio.name));
+    if (overlapsRoster) continue;
     byId.set(socio.id, socio);
   }
-
-  // Prefer newest user overlay for linked catalog ids (already set).
-  void linkedIds;
 
   return dedupeByName([...byId.values()]).sort(compareSociosByPlan);
 }

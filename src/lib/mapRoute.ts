@@ -259,13 +259,23 @@ async function loadCatalogRouteBusinesses(): Promise<RawPoint[]> {
   return points;
 }
 
-/** Restaurantes con sello de Pasaporte — siempre visibles en el MAP para deep links desde /pasaporte. */
+/**
+ * Restaurantes con sello de Pasaporte que además son Gran Empresa.
+ * Solo Gran Empresa aparece como pin de negocio en el MAP; aporta el logo del sello.
+ */
 async function loadStampRestaurantPoints(): Promise<RawPoint[]> {
   const points: RawPoint[] = [];
   const seenNames = new Set<string>();
-  const restaurants = await getParticipatingRestaurantsAsync();
+  const [restaurants, activeGranIds] = await Promise.all([
+    getParticipatingRestaurantsAsync(),
+    getActiveGranEmpresaCatalogIds(),
+  ]);
 
   for (const socio of restaurants) {
+    const isGran =
+      socio.membershipPlan === "GRAN_EMPRESA" || activeGranIds.has(socio.id);
+    if (!isGran) continue;
+
     const coord = resolveSocioMapCoord(socio);
     if (!coord) continue;
 
@@ -380,15 +390,13 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
   }
   const premium = [...premiumByName.values()];
 
-  const pool = [...milestones, ...premium].filter((p) => {
-    // Evitar duplicar hito y socio con el mismo nombre en el pool.
-    const nameKey = normalizeName(p.name);
-    if (p.kind === "premium_business") {
-      const milestoneDup = milestones.some((m) => normalizeName(m.name) === nameKey);
-      if (milestoneDup) return false;
-    }
-    return true;
-  });
+  // Si un Gran Empresa coincide con un hito (Mural, Mezcalli, Mendrugo…),
+  // gana el pin de negocio: el socio pagó por aparecer como tal en el MAP.
+  const premiumNames = new Set(premium.map((p) => normalizeName(p.name)));
+  const pool = [
+    ...milestones.filter((m) => !premiumNames.has(normalizeName(m.name))),
+    ...premium,
+  ];
 
   const ordered = orderPointsByCircuitProgress(pool);
   const allPoints: MapRoutePoint[] = ordered.map((p, idx) => ({
