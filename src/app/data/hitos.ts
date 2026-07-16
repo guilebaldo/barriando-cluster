@@ -29,11 +29,8 @@ export const listaHitos: Hito[] = [
 
   { id: 20, nombre: "Calle de los Dulces", zona: 2 },
   { id: 21, nombre: "Templo de Nuestra Señora de La luz", zona: 2 },
-  { id: 22, nombre: "Parador de La luz", zona: 2 },
   { id: 23, nombre: "La Acocota", zona: 2 },
-  { id: 24, nombre: "CasaReyna", zona: 2 },
   { id: 25, nombre: "Fábrica de Vidrio", zona: 2 },
-  { id: 26, nombre: "Talavera de La Luz", zona: 2, socioId: 14 },
   { id: 27, nombre: "Centro Alfarero del Barro de La Luz", zona: 2 },
 
   { id: 28, nombre: "Bello y Zetina", zona: 3 },
@@ -45,16 +42,11 @@ export const listaHitos: Hito[] = [
   { id: 34, nombre: "Casa de cultura", zona: 3 },
   { id: 35, nombre: "Biblioteca Palafoxiana", zona: 3 },
   { id: 36, nombre: "Museo Amparo", zona: 3, socioId: 3 },
-  { id: 37, nombre: "Mural de los Poblanos", zona: 3 },
 
-  { id: 38, nombre: "La Casa del Mendrugo", zona: 4, socioId: 16 },
-  { id: 39, nombre: "Hotel Colonial", zona: 4, socioId: 9 },
   { id: 40, nombre: "La Compañía de Jesús", zona: 4 },
   { id: 41, nombre: "La Pasita", zona: 4 },
-  { id: 42, nombre: "Restauro", zona: 4, socioId: 24 },
   { id: 43, nombre: "Callejón de los Sapos", zona: 4 },
   { id: 44, nombre: "Bazar Los Sapos", zona: 4 },
-  { id: 45, nombre: "Salón Mezcalli", zona: 4, socioId: 17 },
   { id: 46, nombre: "Barrio de Analco", zona: 4 },
   { id: 47, nombre: "Tianguis Analco", zona: 4 },
   { id: 48, nombre: "Parroquia del Santo Angel Custodio", zona: 4 },
