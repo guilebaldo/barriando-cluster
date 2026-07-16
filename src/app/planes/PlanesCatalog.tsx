@@ -28,13 +28,19 @@ export default function PlanesCatalog({
   isPlanChange,
   highlightPlan,
   initialFilters = [],
+  currentPlan = null,
 }: {
   isAuthenticated: boolean;
   isPlanChange: boolean;
   highlightPlan: MembershipPlan | null;
   initialFilters?: PlanAudienceFilter[];
+  currentPlan?: MembershipPlan | null;
 }) {
   const [activeFilters, setActiveFilters] = useState<PlanAudienceFilter[]>(initialFilters);
+
+  // Turista ya registrado: su siguiente paso natural es Vecino.
+  const effectiveHighlight =
+    highlightPlan ?? (currentPlan === "TURISTA" ? ("VECINO" as MembershipPlan) : null);
 
   function toggleFilter(id: PlanAudienceFilter) {
     setActiveFilters((prev) =>
@@ -91,9 +97,10 @@ export default function PlanesCatalog({
                       : "Elegir Plan"
                 }
                 featured={planId === "GRAN_EMPRESA"}
-                highlighted={highlightPlan === planId}
+                highlighted={effectiveHighlight === planId}
                 isAuthenticated={isAuthenticated}
                 isPlanChange={isPlanChange}
+                isCurrent={currentPlan === planId}
               />
             </div>
           ))}
@@ -110,6 +117,7 @@ function PlanCard({
   highlighted,
   isAuthenticated,
   isPlanChange,
+  isCurrent,
 }: {
   planId: MembershipPlan;
   cta: string;
@@ -117,6 +125,7 @@ function PlanCard({
   highlighted: boolean;
   isAuthenticated: boolean;
   isPlanChange: boolean;
+  isCurrent: boolean;
 }) {
   const plan = MEMBERSHIP_PLANS[planId];
   const useDirectSelect = isAuthenticated && (isPlanChange || plan.isPaid);
@@ -129,10 +138,16 @@ function PlanCard({
         isEmphasized ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-200"
       }`}
     >
-      {featured && (
-        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-3">
-          Presencia en el MAP
+      {isCurrent ? (
+        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full self-start mb-3">
+          Tu plan actual
         </span>
+      ) : (
+        featured && (
+          <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-3">
+            Presencia en el MAP
+          </span>
+        )
       )}
       <h2 className="font-bold text-slate-950 text-sm">{plan.label}</h2>
       <p className="text-lg font-black text-[#27366D] mt-2">
@@ -148,7 +163,14 @@ function PlanCard({
           </li>
         ))}
       </ul>
-      {useDirectSelect ? (
+      {isCurrent ? (
+        <span
+          aria-disabled="true"
+          className="block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-default select-none"
+        >
+          Plan actual
+        </span>
+      ) : useDirectSelect ? (
         <PlanSelectButton
           planId={planId}
           label={isPlanChange ? "Seleccionar" : cta}

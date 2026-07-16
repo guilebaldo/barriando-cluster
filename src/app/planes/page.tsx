@@ -5,6 +5,8 @@ import SiteShell from "../components/SiteShell";
 import PlanesCatalog, { type PlanAudienceFilter } from "./PlanesCatalog";
 import { parsePlanSlug } from "@/lib/plan-routing";
 import { getSession } from "@/lib/auth-utils";
+import { hasCommercialAccess, isTuristaPlan } from "@/lib/membresia";
+import type { MembershipPlan } from "@/generated/prisma/client";
 
 function parseAudienceFilters(raw?: string | null): PlanAudienceFilter[] {
   if (!raw?.trim()) return [];
@@ -30,6 +32,13 @@ export default async function PlanesPage({
   const isPlanChange = params.cambio === "1" && Boolean(session);
   const highlightPlan = parsePlanSlug(params.plan);
   const initialFilters = parseAudienceFilters(params.tipo);
+
+  // Plan vigente: Turista siempre cuenta; los de pago solo con membresía activa.
+  const currentPlan: MembershipPlan | null =
+    session &&
+    (isTuristaPlan(session.plan) || hasCommercialAccess(session.plan, session.subscriptionStatus))
+      ? session.plan
+      : null;
 
   return (
     <SiteShell>
@@ -60,6 +69,7 @@ export default async function PlanesPage({
           isPlanChange={isPlanChange}
           highlightPlan={highlightPlan}
           initialFilters={initialFilters}
+          currentPlan={currentPlan}
         />
       </main>
       <Footer />
