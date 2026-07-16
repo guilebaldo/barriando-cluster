@@ -21,7 +21,8 @@ function getPasaporteHref() {
 
 function getNavLinks(isAuthenticated: boolean): NavLink[] {
   return [
-    { href: "/", label: "Inicio" },
+    // Landing = presentación de ventas; con sesión el home es el del rol (logo).
+    ...(isAuthenticated ? [] : [{ href: "/", label: "Inicio" }]),
     { href: "/socios", label: "Socios" },
     { href: "/equipo", label: "Equipo" },
     { href: "/map", label: "MAP" },
