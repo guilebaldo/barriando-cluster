@@ -2,7 +2,7 @@
   "name": "BarriApp",
   "short_name": "BarriApp",
   "description": "Clúster Turístico y Asociación de Empresarios del Centro Histórico de Puebla",
-  "start_url": "/",
+  "start_url": "/inicio",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

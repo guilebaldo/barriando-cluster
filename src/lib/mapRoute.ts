@@ -18,6 +18,7 @@ import {
   getActiveCatalogMembershipIds,
   getActiveGranEmpresaCatalogIds,
 } from "@/lib/public-socios";
+import { isSeasonalStampCategory } from "@/lib/plan-visibility";
 
 export type { MapPointKind, MapRoutePoint, MapRouteResult } from "@/lib/map-route-client";
 export { findNearestRoutePoint, reorderRouteFromPoint, buildWalkingItinerary } from "@/lib/map-route-client";
@@ -252,7 +253,7 @@ async function loadCatalogRouteBusinesses(): Promise<RawPoint[]> {
       kind: "premium_business",
       category: featured ? `${socio.categoria} · Socio destacado` : socio.categoria,
       socioId: socio.id,
-      hasSeasonalStamp: socio.categoria === "Alimentos y Bebidas",
+      hasSeasonalStamp: isSeasonalStampCategory(socio.categoria),
     });
   }
 
@@ -321,6 +322,8 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
             latitude: true,
             longitude: true,
             address: true,
+            category: true,
+            logoUrl: true,
           },
         },
       },
@@ -347,7 +350,7 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
             kind: "premium_business",
             category: catalog.categoria,
             socioId: user.socioId,
-            hasSeasonalStamp: catalog.categoria === "Alimentos y Bebidas",
+            hasSeasonalStamp: isSeasonalStampCategory(catalog.categoria),
           });
         }
         continue;
@@ -364,7 +367,9 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
             profile.address?.trim() ||
             `https://www.google.com/maps?q=${profile.latitude},${profile.longitude}`,
           kind: "premium_business",
-          category: "Negocio certificado",
+          category: profile.category?.trim() || "Negocio certificado",
+          hasSeasonalStamp: isSeasonalStampCategory(profile.category),
+          stampLogoSrc: profile.logoUrl?.trim() || undefined,
         });
       }
     }

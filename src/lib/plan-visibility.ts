@@ -6,7 +6,7 @@ import type { MembershipPlan } from "@/generated/prisma/client";
  * - Pequeña (NEGOCIO_FAMILIAR): lo de Vecino/Turista + directorio /socios.
  * - Mediana: lo anterior + carrusel landing + orden preferente en /socios.
  * - Gran: lo anterior + pin de negocio en itinerario MAP; si su giro es Alimentos y
- *   Bebidas, ofrece el sello de temporada en /pasaporte (p. ej. hospedaje no sella).
+ *   Bebidas o Hotel, ofrece el sello de temporada en /pasaporte.
  */
 const DIRECTORY_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 const CAROUSEL_PLANS: MembershipPlan[] = ["MEDIANA_EMPRESA", "GRAN_EMPRESA"];
@@ -30,4 +30,9 @@ export function isMedianaCarouselPlan(plan: MembershipPlan): boolean {
 /** Aparece como negocio premium en la ruta MAP interactiva. */
 export function isVisibleOnMap(plan: MembershipPlan): boolean {
   return MAP_PLANS.includes(plan);
+}
+
+/** Giro habilitado para ofrecer el sello de temporada; también requiere Gran Empresa. */
+export function isSeasonalStampCategory(category: string | null | undefined): boolean {
+  return category === "Alimentos y Bebidas" || category === "Hotel";
 }

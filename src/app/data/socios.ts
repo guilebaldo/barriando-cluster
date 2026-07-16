@@ -77,7 +77,7 @@ export const listaSocios: Socio[] = [
   {
     id: 7,
     name: "Cartesiano",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "cartesiano",
     url: "https://www.cartesiano360.com/?partner=13037&utm_source=google&utm_medium=organic&utm_campaign=MyBusiness",
     direccion: "https://maps.app.goo.gl/sVrcFTNB3w36h2xH9"
@@ -93,7 +93,7 @@ export const listaSocios: Socio[] = [
   {
     id: 9,
     name: "Hotel Colonial",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "colonial",
     url: "https://www.colonial.com.mx",
     direccion: "https://maps.app.goo.gl/Sp1xWLQ5yGSZKLHbA"
@@ -133,7 +133,7 @@ export const listaSocios: Socio[] = [
   {
     id: 15,
     name: "Casona María",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "maria",
     url: "https://www.casonamaria.com",
     direccion: "https://maps.app.goo.gl/b25o2khvCEQySR9XA"
@@ -165,7 +165,7 @@ export const listaSocios: Socio[] = [
   {
     id: 19,
     name: "Hotel Nube",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "nube",
     url: "https://www.hotelnubepuebla.com",
     direccion: "https://maps.app.goo.gl/NR7HJ8X9SojKFu1u8"
@@ -173,7 +173,7 @@ export const listaSocios: Socio[] = [
   {
     id: 20,
     name: "Hotel Casa de la Palma",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "palma",
     url: "https://www.casadelapalmapuebla.com",
     direccion: "https://maps.app.goo.gl/DvKL818pHqHKy3yt7"
@@ -181,7 +181,7 @@ export const listaSocios: Socio[] = [
   {
     id: 21,
     name: "Perla L'Hotel Boutique",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "perla",
     url: "https://laperlahotelboutique.com",
     direccion: "https://maps.app.goo.gl/tbYg39Kuzwox61NH6"
@@ -301,7 +301,7 @@ export const listaSocios: Socio[] = [
   {
     id: 36,
     name: "Hotel El Milagro",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "milagro",
     url: "https://www.milagrohotel.com",
     direccion: "https://maps.app.goo.gl/BT3MgLow3gveR4Jj9"
@@ -325,7 +325,7 @@ export const listaSocios: Socio[] = [
   {
     id: 39,
     name: "Hotel El Sueño",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "sueno",
     url: "https://www.elsueno-hotel.com",
     direccion: "https://maps.app.goo.gl/GinmCfGJ8WzbmYJ17"
@@ -389,7 +389,7 @@ export const listaSocios: Socio[] = [
   {
     id: 47,
     name: "Banyan Tree",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "banyan",
     url: "https://www.banyantree.com/es/mexico/puebla",
     direccion: "https://maps.app.goo.gl/9MDzv1SLkoDFHi236"
@@ -397,7 +397,7 @@ export const listaSocios: Socio[] = [
   {
     id: 48,
     name: "Hotel Escala",
-    categoria: "Hospedaje",
+    categoria: "Hotel",
     foto: "escala",
     url: "https://www.hotelesescala.com/escala-puebla-centro",
     direccion: "https://maps.app.goo.gl/j1pGidP6z4x5cUdd7"

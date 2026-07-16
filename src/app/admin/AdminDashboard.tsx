@@ -653,6 +653,7 @@ function UserRows({
                   ""
                 }
                 category={user.profile?.category}
+                plan={user.plan}
                 disabled={loadingId === user.id}
               />
               <button

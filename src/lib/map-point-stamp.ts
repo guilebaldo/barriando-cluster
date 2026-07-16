@@ -38,14 +38,10 @@ export function getLinkedSocio(point: MapRoutePoint): Socio | null {
 }
 
 export function getPointStampHref(point: MapRoutePoint): string | null {
+  if (!point.hasSeasonalStamp) return null;
   const socio = getLinkedSocio(point);
-  if (socio?.categoria === "Alimentos y Bebidas") {
-    return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugFromName(socio.name))}`;
-  }
-  if (point.hasSeasonalStamp) {
-    return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugFromName(point.name))}`;
-  }
-  return null;
+  const name = socio?.name || point.name;
+  return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugFromName(name))}`;
 }
 
 export function pointHasScannableStamp(point: MapRoutePoint): boolean {
@@ -53,8 +49,9 @@ export function pointHasScannableStamp(point: MapRoutePoint): boolean {
 }
 
 export function getStampDisplayInfo(point: MapRoutePoint): StampDisplayInfo | null {
+  if (!point.hasSeasonalStamp) return null;
   const socio = getLinkedSocio(point);
-  if (socio?.categoria === "Alimentos y Bebidas") {
+  if (socio) {
     return {
       kind: "seasonal_nogada",
       title: "Edición especial de temporada",
@@ -63,8 +60,6 @@ export function getStampDisplayInfo(point: MapRoutePoint): StampDisplayInfo | nu
       logoSrc: socio.logoUrl?.trim() || `/logos/${socio.foto}.png`,
     };
   }
-
-  if (!point.hasSeasonalStamp) return null;
 
   return {
     kind: "seasonal_nogada",

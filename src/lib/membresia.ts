@@ -148,7 +148,11 @@ export function getPlanForSocio(socio: Socio): PaidMembershipPlan {
   ) {
     return rosterPlan;
   }
-  if (socio.categoria === "Hospedaje" || socio.categoria === "Hospital") {
+  if (
+    socio.categoria === "Hospedaje" ||
+    socio.categoria === "Hotel" ||
+    socio.categoria === "Hospital"
+  ) {
     return "GRAN_EMPRESA";
   }
   if (["Museo", "Educación", "Servicios"].includes(socio.categoria)) {

@@ -405,6 +405,7 @@ export default function AdminBusinessesSection({
                             <AdminEstablishmentQrButton
                               businessName={row.businessName}
                               category={row.categoria}
+                              plan={row.plan}
                               disabled={saving}
                             />
                           </div>
