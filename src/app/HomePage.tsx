@@ -283,28 +283,26 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
               {
                 value: String(liveStats.mapMilestones),
                 label: "Hitos patrimoniales MAP",
-                context: "Puntos activos en el circuito peatonal del MAP.",
               },
               {
                 value: String(liveStats.totalSocios),
                 label: "Socios en la red",
-                context: "Miembros registrados con membresía en la plataforma.",
               },
               {
                 value: String(liveStats.certifiedBusinesses),
                 label: "Negocios certificados",
-                context:
-                  "Negocios familiares y empresas comerciales activas en la red Barriando.",
               },
               {
                 value: String(liveStats.registeredTourists),
                 label: "Turistas registrados",
-                context: "Visitantes con cuenta en barriandopuebla.com.",
+              },
+              {
+                value: String(liveStats.sealedPassports),
+                label: "Pasaportes sellados",
               },
               {
                 value: String(liveStats.totalStamps),
                 label: "Sellos emitidos",
-                context: "Validaciones acumuladas en el Pasaporte Digital.",
               },
             ].map((stat, i) => (
               <Reveal key={stat.label} delay={i * 70} className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)] xl:w-56">
@@ -313,7 +311,6 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
                     <CountUp value={stat.value} />
                   </p>
                   <p className="text-xs font-bold text-slate-900 mt-3 uppercase tracking-wide">{stat.label}</p>
-                  <p className="text-[11px] text-slate-500 mt-2 leading-relaxed font-light">{stat.context}</p>
                 </div>
               </Reveal>
             ))}

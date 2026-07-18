@@ -132,7 +132,7 @@ export const civicTechIntro = {
   lead:
     "El civic tech —o tecnología cívica— usa herramientas digitales para fortalecer cómo las personas se relacionan con su territorio, con el gobierno y entre sí: datos útiles, participación real y servicios que facilitan la vida cotidiana. Barriando ya es civic tech en operación: el MAP hace caminable el patrimonio, el Pasaporte Digital convierte visitas en identidad verificada y BarrID articula beneficios entre vecinos y comercios del Centro Histórico.",
   cierre:
-    "Los siguientes proyectos extienden ese mismo principio —innovación tecnológica, tetra hélice y derrama local— hacia datos abiertos, memoria colectiva y gobernanza colaborativa del polígono patrimonial.",
+    "Los siguientes proyectos extienden ese mismo principio —innovación tecnológica, tetra hélice y derrama local— hacia datos abiertos, memoria colectiva, reportes ciudadanos y gobernanza colaborativa del polígono patrimonial.",
 };
 
 export const proyectosFuturosCivicTech = [
@@ -141,6 +141,12 @@ export const proyectosFuturosCivicTech = [
     eje: "Datos públicos",
     descripcion:
       "Publicar indicadores agregados y anónimos del MAP y del Pasaporte —flujos peatonales por zona, sellos por temporada, densidad de oferta certificada— para que gobierno, academia y vecinos tomen decisiones con evidencia del territorio vivo.",
+  },
+  {
+    titulo: "Reportes ciudadanos al barrio",
+    eje: "Servicios urbanos",
+    descripcion:
+      "Canal digital para reportar luminarias fundidas, calles con basura, baches, fugas, accidentes y otras fallas del espacio público, geolocalizadas en el Centro Histórico, y conectar esa información con las autoridades competentes para darles seguimiento hasta su resolución.",
   },
   {
     titulo: "Cartografía participativa de memoria viva",

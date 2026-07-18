@@ -756,6 +756,11 @@ function PasaporteInner({
               </div>
             )}
             <div ref={previewStampsRef} className="relative">
+              {!isPreview && (
+                <p className="passport-value text-[11px] sm:text-xs text-center text-stone-500/80 mb-4 sm:mb-5">
+                  Toca un sello para verlo en el MAP
+                </p>
+              )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
               {restaurants.map((restaurant, index) => {
                 const stamp = stampMap[restaurant.id];
