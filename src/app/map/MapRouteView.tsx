@@ -344,7 +344,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
             className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-lg transition active:scale-95 animate-soft-glow"
           >
             <Camera className="w-4 h-4" />
-            Escanear QR
+            Abrir pasaporte
           </button>
         )}
         <Link
