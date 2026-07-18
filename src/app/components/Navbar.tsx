@@ -370,22 +370,41 @@ export default function Navbar() {
       </div>
 
       {open && (
-        <>
+        <div
+          className="md:hidden fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-[2px]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-nav-title"
+        >
           <button
             type="button"
-            className="md:hidden fixed inset-x-0 bottom-0 top-[calc(4.5rem+env(safe-area-inset-top,0px))] bg-black/50 z-40"
+            className="absolute inset-0 cursor-default"
             aria-label="Cerrar menú"
             onClick={() => setOpen(false)}
           />
-          <div className="md:hidden absolute left-0 right-0 top-full z-50 border-b border-[#1e2b58] bg-[#1e2b58] shadow-xl">
-            <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col gap-1">
+          <div className="relative z-10 w-full max-w-sm rounded-2xl border border-[#314385] bg-[#1e2b58] shadow-2xl animate-popup-in overflow-hidden">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#314385]/70">
+              <p id="mobile-nav-title" className="text-xs font-bold uppercase tracking-widest text-amber-400">
+                Menú
+              </p>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-300 hover:text-white hover:bg-[#27366D] transition"
+                aria-label="Cerrar menú"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-3 py-3 flex flex-col gap-0.5 max-h-[min(70dvh,28rem)] overflow-y-auto overscroll-contain">
               {navLinks.map((link) => {
                 const active = isNavActive(pathname, link);
                 return (
                   <Link
                     key={link.label}
                     href={link.href}
-                    className={`py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold transition ${
+                    onClick={() => setOpen(false)}
+                    className={`py-3 px-3 rounded-xl text-sm uppercase tracking-wider font-bold transition ${
                       active
                         ? "bg-[#27366D] text-amber-400"
                         : "text-white hover:bg-[#27366D] hover:text-amber-400"
@@ -395,10 +414,12 @@ export default function Navbar() {
                   </Link>
                 );
               })}
-              <AuthActions mobile />
+              <div onClick={() => setOpen(false)}>
+                <AuthActions mobile />
+              </div>
             </div>
           </div>
-        </>
+        </div>
       )}
     </nav>
   );

@@ -18,6 +18,7 @@ import {
   HeartHandshake,
   Sparkles,
 } from "lucide-react";
+import EquipoLocationCard from "./EquipoLocationCard";
 
 const GRUPOS: EquipoGrupo[] = ["consejo", "operacion", "comunicacion"];
 
@@ -256,6 +257,21 @@ export default function EquipoPage() {
               </Reveal>
             );
           })}
+
+          <Reveal delay={100}>
+            <section className="space-y-4">
+              <div className="text-center max-w-lg mx-auto">
+                <h3 className="text-xl md:text-2xl font-black font-serif-cluster uppercase tracking-wide text-[#27366D]">
+                  Dónde estamos
+                </h3>
+                <p className="text-sm text-gray-500 mt-2 font-light">
+                  Visítanos en el Centro Histórico. Explora el mapa, abre la ruta en Google Maps o copia las
+                  coordenadas.
+                </p>
+              </div>
+              <EquipoLocationCard />
+            </section>
+          </Reveal>
 
           <Reveal delay={100}>
             <section className="bg-[#27366D] text-white rounded-xl p-6 sm:p-8">
