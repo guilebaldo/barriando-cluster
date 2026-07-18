@@ -71,9 +71,9 @@ export default function PlanesCatalog({
 
   const mobileStartIndex = useMemo(() => {
     if (!effectiveHighlight) return 0;
-    const i = visiblePlans.indexOf(effectiveHighlight);
+    const i = ALL_PLAN_IDS.indexOf(effectiveHighlight);
     return i >= 0 ? i : 0;
-  }, [visiblePlans, effectiveHighlight]);
+  }, [effectiveHighlight]);
 
   function renderPlanCard(planId: MembershipPlan, withAnchor = false) {
     return (
@@ -92,8 +92,8 @@ export default function PlanesCatalog({
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-5 md:block md:flex-none md:space-y-8 md:gap-0">
-      <div className="flex flex-wrap justify-center gap-2 shrink-0">
+    <div className="flex flex-col flex-1 min-h-0 gap-3 md:block md:flex-none md:space-y-8 md:gap-0">
+      <div className="hidden md:flex flex-wrap justify-center gap-2 shrink-0">
         {FILTER_OPTIONS.map((opt) => {
           const active = activeFilters.includes(opt.id);
           return (
@@ -115,29 +115,27 @@ export default function PlanesCatalog({
       </div>
 
       {visiblePlans.length === 0 ? (
-        <p className="text-center text-sm text-slate-500">
+        <p className="hidden md:block text-center text-sm text-slate-500">
           Selecciona Personales y/o Comerciales para ver planes.
         </p>
       ) : (
-        <>
-          <PlanSwipeDeck
-            planIds={visiblePlans}
-            initialIndex={mobileStartIndex}
-            renderCard={renderPlanCard}
-          />
-
-          <div className="hidden md:flex flex-wrap justify-center gap-5">
-            {visiblePlans.map((planId) => (
-              <div
-                key={planId}
-                className="w-full md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] xl:w-[240px] max-w-[320px]"
-              >
-                {renderPlanCard(planId, true)}
-              </div>
-            ))}
-          </div>
-        </>
+        <div className="hidden md:flex flex-wrap justify-center gap-5">
+          {visiblePlans.map((planId) => (
+            <div
+              key={planId}
+              className="w-full md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] xl:w-[240px] max-w-[320px]"
+            >
+              {renderPlanCard(planId, true)}
+            </div>
+          ))}
+        </div>
       )}
+
+      <PlanSwipeDeck
+        planIds={ALL_PLAN_IDS}
+        initialIndex={mobileStartIndex}
+        renderCard={renderPlanCard}
+      />
     </div>
   );
 }

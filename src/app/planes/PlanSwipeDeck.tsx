@@ -88,7 +88,7 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.85}
             onDragEnd={onDragEnd}
-            className="relative z-10 w-full max-h-full overflow-hidden cursor-grab active:cursor-grabbing"
+            className="relative z-10 w-full max-h-full min-h-0 cursor-grab active:cursor-grabbing"
             style={{ touchAction: "pan-x" }}
           >
             {renderCard(activeId)}
