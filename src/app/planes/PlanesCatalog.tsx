@@ -92,8 +92,8 @@ export default function PlanesCatalog({
   }
 
   return (
-    <div className="space-y-3 md:space-y-8">
-      <div className="flex flex-wrap justify-center gap-1.5 md:gap-2">
+    <div className="flex flex-col flex-1 min-h-0 gap-5 md:block md:flex-none md:space-y-8 md:gap-0">
+      <div className="flex flex-wrap justify-center gap-2 shrink-0">
         {FILTER_OPTIONS.map((opt) => {
           const active = activeFilters.includes(opt.id);
           return (
@@ -102,7 +102,7 @@ export default function PlanesCatalog({
               type="button"
               onClick={() => toggleFilter(opt.id)}
               aria-pressed={active}
-              className={`px-3 py-1.5 md:px-3.5 md:py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+              className={`px-3.5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                 active
                   ? "bg-[#27366D] text-white"
                   : "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200/80"
@@ -171,34 +171,34 @@ function PlanCard({
   return (
     <div
       id={withAnchor && planId === "GRAN_EMPRESA" ? "gran_empresa" : undefined}
-      className={`flex flex-col rounded-xl border p-4 md:p-6 bg-white shadow-sm h-full scroll-mt-24 ${
+      className={`flex flex-col rounded-xl border p-5 md:p-6 bg-white shadow-sm h-full scroll-mt-24 ${
         isEmphasized ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-200"
       }`}
     >
       {isCurrent ? (
-        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full self-start mb-1.5 md:mb-3">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full self-start mb-2.5 md:mb-3">
           Tu plan actual
         </span>
       ) : featured ? (
-        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-1.5 md:mb-3">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-2.5 md:mb-3">
           Máxima exposición
         </span>
       ) : (
         recommended && (
-          <span className="text-[9px] font-bold uppercase tracking-wider text-[#27366D] bg-[#27366D]/10 px-2 py-0.5 rounded-full self-start mb-1.5 md:mb-3">
+          <span className="text-[9px] font-bold uppercase tracking-wider text-[#27366D] bg-[#27366D]/10 px-2 py-0.5 rounded-full self-start mb-2.5 md:mb-3">
             Recomendado
           </span>
         )
       )}
-      <h2 className="font-bold text-slate-950 text-sm leading-snug">{plan.label}</h2>
-      <p className="text-base md:text-lg font-black text-[#27366D] mt-1 md:mt-2">
+      <h2 className="font-bold text-slate-950 text-sm md:text-sm leading-snug">{plan.label}</h2>
+      <p className="text-lg font-black text-[#27366D] mt-1.5 md:mt-2">
         {plan.isPaid ? formatPlanPriceMxn(planId as Parameters<typeof formatPlanPriceMxn>[0]) : "Gratis"}
       </p>
-      <p className="text-[11px] text-amber-700 font-semibold mt-0.5 leading-snug">{plan.tagline}</p>
-      <p className="hidden md:block text-xs text-slate-500 mt-3 mb-4 font-light leading-relaxed">
+      <p className="text-[11px] text-amber-700 font-semibold mt-1 leading-snug">{plan.tagline}</p>
+      <p className="text-xs text-slate-500 mt-2.5 md:mt-3 mb-0 md:mb-4 font-light leading-relaxed">
         {plan.description}
       </p>
-      <ul className="space-y-1 md:space-y-2 mt-2.5 md:mt-0 mb-3 md:mb-6 flex-1">
+      <ul className="space-y-1.5 md:space-y-2 mt-3 mb-4 md:mb-6 flex-1">
         {plan.benefits.map((b) => (
           <li key={b} className="flex gap-2 text-[11px] text-slate-600 leading-snug">
             <Check className="w-3.5 h-3.5 text-[#27366D] shrink-0 mt-0.5" />
@@ -207,23 +207,23 @@ function PlanCard({
         ))}
       </ul>
       {plan.highlight && !isCurrent && (
-        <p className="hidden md:block text-[10px] text-slate-400 font-medium mb-4 leading-snug">
+        <p className="text-[10px] text-slate-400 font-medium mb-3 md:mb-4 leading-snug">
           {plan.highlight}
         </p>
       )}
       {isCurrent ? (
         <span
           aria-disabled="true"
-          className="block w-full text-center font-bold text-xs uppercase tracking-wider py-2.5 md:py-3 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-default select-none"
+          className="mt-auto block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-default select-none"
         >
           Plan actual
         </span>
       ) : useDirectSelect ? (
-        <div {...stopDrag}>
+        <div className="mt-auto" {...stopDrag}>
           <PlanSelectButton
             planId={planId}
             label={isPlanChange ? "Seleccionar" : cta}
-            className={`block w-full text-center font-bold text-xs uppercase tracking-wider py-2.5 md:py-3 rounded-lg transition ${
+            className={`block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
               plan.isPaid
                 ? planId === "GRAN_EMPRESA"
                   ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
@@ -236,7 +236,7 @@ function PlanCard({
         <Link
           href={registroUrl(planId)}
           {...stopDrag}
-          className={`block text-center font-bold text-xs uppercase tracking-wider py-2.5 md:py-3 rounded-lg transition ${
+          className={`mt-auto block text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
             plan.isPaid
               ? planId === "GRAN_EMPRESA"
                 ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
