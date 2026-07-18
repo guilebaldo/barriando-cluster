@@ -308,7 +308,7 @@ export async function cancelMembership(): Promise<CancelMembershipResult> {
 
     return {
       ok: false,
-      error: "No encontramos una suscripción activa para cancelar. Contacta a hola@barriandopuebla.com",
+      error: "No encontramos una suscripción activa para cancelar. Contacta a facturacionbarriandopuebla@gmail.com",
     };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

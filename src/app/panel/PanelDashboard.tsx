@@ -469,6 +469,7 @@ export default function PanelDashboard({
           }}
           subscription={subscription}
           showCredential={showCredential}
+          stripeConfigured={stripeConfigured}
         />
       ) : transferPending && !canLink ? (
         <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
