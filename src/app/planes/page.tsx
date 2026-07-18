@@ -43,13 +43,15 @@ export default async function PlanesPage({
   return (
     <SiteShell>
       <Navbar />
-      <main className="flex-1 max-w-5xl mx-auto py-16 px-6 w-full">
-        <div className="text-center mb-10">
-          <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Membresías</span>
-          <h1 className="text-3xl md:text-4xl font-extrabold mt-2 font-serif-cluster uppercase tracking-wide text-slate-950">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-3 md:px-6 md:py-16">
+        <div className="text-center mb-3 md:mb-10">
+          <span className="text-[#27366D] font-bold text-[10px] md:text-xs uppercase tracking-widest">
+            Membresías
+          </span>
+          <h1 className="text-xl sm:text-2xl md:text-4xl font-extrabold mt-1 md:mt-2 font-serif-cluster uppercase tracking-wide text-slate-950 leading-tight">
             {isPlanChange ? "Cambia tu plan" : "Elige tu lugar en el Barrio"}
           </h1>
-          <p className="text-sm text-slate-600 max-w-2xl mx-auto mt-3 font-light">
+          <p className="hidden md:block text-sm text-slate-600 max-w-2xl mx-auto mt-3 font-light">
             {isPlanChange
               ? "Selecciona un nuevo plan. Continuarás al método de pago sin volver a iniciar sesión."
               : "Empieza gratis, desbloquea BarrID como Vecino o certifica tu negocio. Cada nivel suma exposición real en el Centro Histórico."}
@@ -57,7 +59,7 @@ export default async function PlanesPage({
           {isPlanChange && (
             <Link
               href="/certificacion/pago"
-              className="inline-block mt-4 text-xs text-[#27366D] hover:underline"
+              className="inline-block mt-2 md:mt-4 text-xs text-[#27366D] hover:underline"
             >
               ← Volver al pago
             </Link>
@@ -72,7 +74,9 @@ export default async function PlanesPage({
           currentPlan={currentPlan}
         />
       </main>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </SiteShell>
   );
 }
