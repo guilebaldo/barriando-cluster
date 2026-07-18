@@ -3,6 +3,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import BarrIdShell from "./BarrIdShell";
 import BarrIdClient from "./BarrIdClient";
+import RefreshSessionAfterPayment from "../components/RefreshSessionAfterPayment";
 import { getSession } from "@/lib/auth-utils";
 import { loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 import { loadPanelUser, normalizePanelSubscription } from "@/lib/panel-data";
@@ -15,6 +16,7 @@ import {
   safePlanPriceLabel,
 } from "@/lib/panel-display";
 import { isFirstLoginAccount } from "@/lib/add-to-home-screen";
+import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
 
 export const dynamic = "force-dynamic";
 
@@ -23,19 +25,49 @@ export const metadata = {
   description: "Credencial digital de membresía Barriando.",
 };
 
-export default async function BarrIdPage() {
+export default async function BarrIdPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pago?: string; bienvenida?: string; success?: string }>;
+}) {
+  const params = await searchParams;
   const session = await getSession();
   if (!session) {
     redirect("/login?callbackUrl=/barrid");
   }
 
   const isAdmin = isAdminUser({ email: session.email, role: session.role });
-  if (!isPaidMember(session.plan, session.subscriptionStatus) && !isAdmin) {
-    redirect("/pasaporte");
+  const paymentReturn =
+    params.pago === "exitoso" ||
+    params.pago === "procesando" ||
+    params.success === "true";
+
+  let user = await loadPanelUser(session.id);
+  let subscription = normalizePanelSubscription(user?.subscription);
+
+  // JWT can still say TURISTA right after Checkout — sync + gate on DB.
+  const shouldSyncStripe =
+    paymentReturn ||
+    (!isPaidMember(subscription.plan, subscription.status) &&
+      Boolean(subscription.stripeCustomerId));
+
+  if (shouldSyncStripe) {
+    try {
+      await syncStripeSubscriptionForUser(session.id);
+      user = (await loadPanelUser(session.id)) ?? user;
+      subscription = normalizePanelSubscription(user?.subscription);
+    } catch (error) {
+      console.error("[barrid] stripe sync failed:", error);
+    }
   }
 
-  const user = await loadPanelUser(session.id);
-  const subscription = normalizePanelSubscription(user?.subscription);
+  if (!isPaidMember(subscription.plan, subscription.status) && !isAdmin) {
+    if (paymentReturn) {
+      // Checkout success but membership not visible yet — avoid bouncing to /pasaporte.
+      redirect("/panel?pago=procesando");
+    }
+    redirect("/pasaporte");
+  }
   const summaries = await loadUserStampSummaries(session.id);
   const totalRestaurants = (await getParticipatingRestaurantsAsync()).length;
   const stampedCount = summaries.length;
@@ -54,6 +86,7 @@ export default async function BarrIdPage() {
 
   return (
     <BarrIdShell>
+      <RefreshSessionAfterPayment />
       <Navbar />
       <main className="flex-1 min-h-0 relative overflow-hidden md:overflow-visible md:h-auto">
         <BarrIdClient

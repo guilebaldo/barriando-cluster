@@ -54,6 +54,19 @@ export async function POST(request: NextRequest) {
       const periodEnd = (sub as { current_period_end?: number }).current_period_end;
       const status = sub.status === "active" || sub.status === "trialing" ? "active" : sub.status;
 
+      const existing = await prisma.subscription.findUnique({
+        where: { userId },
+        select: { stripeSubscriptionId: true },
+      });
+      const previousSubId = existing?.stripeSubscriptionId;
+      if (previousSubId && previousSubId !== sub.id) {
+        try {
+          await stripe.subscriptions.cancel(previousSubId);
+        } catch (error) {
+          console.warn("[stripe] webhook: no se pudo cancelar suscripción anterior:", previousSubId, error);
+        }
+      }
+
       await prisma.subscription.upsert({
         where: { userId },
         create: {

@@ -282,36 +282,43 @@ export default function PanelDashboard({
   }, [hasBusinessEstablished, user.id]);
 
   useEffect(() => {
-    if (hasSeenPanelNotice(user.id, "payment_confirmed")) {
-      return;
-    }
-
     const params = new URLSearchParams(window.location.search);
     const pago = params.get("pago");
     const success = params.get("success");
+    const isPaymentReturn =
+      pago === "exitoso" || pago === "procesando" || success === "true";
 
-    if (pago === "exitoso" || pago === "procesando" || success === "true") {
-      setLocalPaymentNotice(
-        hasPaidAccess
-          ? "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales."
-          : "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página."
-      );
-    } else if (pago === "cancelado" && !hasPaidAccess) {
-      setLocalPaymentNotice("Pago cancelado. Puedes intentar de nuevo cuando quieras desde tu panel.");
-    } else if (pago === "stripe_no_configurado") {
-      setLocalPaymentNotice("Stripe no está configurado aún. Contacta al equipo de Barriando.");
+    // Always refresh JWT after Checkout — do not skip when notice was dismissed earlier.
+    if (isPaymentReturn) {
+      void update().then(() => router.refresh());
     }
 
-    params.delete("pago");
-    params.delete("bienvenida");
-    params.delete("success");
-    const qs = params.toString();
-    window.history.replaceState(
-      null,
-      "",
-      qs ? `${window.location.pathname}?${qs}` : window.location.pathname
-    );
-  }, [hasPaidAccess, user.id]);
+    if (!hasSeenPanelNotice(user.id, "payment_confirmed")) {
+      if (isPaymentReturn) {
+        setLocalPaymentNotice(
+          hasPaidAccess
+            ? "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales."
+            : "Recibimos tu pago. Estamos activando tu membresía; en unos segundos tendrás acceso completo. Si no cambia, recarga esta página."
+        );
+      } else if (pago === "cancelado" && !hasPaidAccess) {
+        setLocalPaymentNotice("Pago cancelado. Puedes intentar de nuevo cuando quieras desde tu panel.");
+      } else if (pago === "stripe_no_configurado") {
+        setLocalPaymentNotice("Stripe no está configurado aún. Contacta al equipo de Barriando.");
+      }
+    }
+
+    if (isPaymentReturn || pago === "cancelado" || pago === "stripe_no_configurado") {
+      params.delete("pago");
+      params.delete("bienvenida");
+      params.delete("success");
+      const qs = params.toString();
+      window.history.replaceState(
+        null,
+        "",
+        qs ? `${window.location.pathname}?${qs}` : window.location.pathname
+      );
+    }
+  }, [hasPaidAccess, user.id, update, router]);
 
   function dismissPaymentNotice() {
     markPanelNoticeSeen(user.id, "payment_confirmed");

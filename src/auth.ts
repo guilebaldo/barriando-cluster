@@ -190,7 +190,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
       }
 
-      if (token.id && (user?.id || trigger === "update")) {
+      const enrichedAt = typeof token.enrichedAt === "number" ? token.enrichedAt : 0;
+      const stale = Date.now() - enrichedAt > 45_000;
+      // Re-leer plan/status tras pago sin forzar logout (JWT se queda viejo).
+      const shouldEnrich =
+        Boolean(token.id) && (Boolean(user?.id) || trigger === "update" || stale);
+
+      if (shouldEnrich) {
         try {
           const enriched = await enrichTokenFromDb(token.id as string);
           if (enriched) {
@@ -199,6 +205,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.nombre = enriched.nombre;
             token.plan = enriched.plan;
             token.subscriptionStatus = enriched.subscriptionStatus;
+            token.enrichedAt = Date.now();
           }
         } catch (error) {
           // No tumbar OAuth si Neon tarda en el primer callback

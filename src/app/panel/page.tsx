@@ -6,6 +6,7 @@ import SiteShell from "../components/SiteShell";
 import PanelDashboard from "./PanelDashboard";
 import PanelFallback from "./PanelFallback";
 import PanelAuthGate from "./PanelAuthGate";
+import RefreshSessionAfterPayment from "../components/RefreshSessionAfterPayment";
 import { getSession } from "@/lib/auth-utils";
 import { isStripeConfigured } from "@/lib/stripe";
 import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
@@ -34,7 +35,7 @@ export const dynamic = "force-dynamic";
 export default async function PanelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bienvenida?: string; pago?: string; credencial?: string }>;
+  searchParams: Promise<{ bienvenida?: string; pago?: string; credencial?: string; success?: string }>;
 }) {
   const params = await searchParams;
   const session = await getSession();
@@ -53,19 +54,28 @@ export default async function PanelPage({
   try {
     await expireManualSubscriptionsIfNeeded();
 
-    if (params.pago === "exitoso" || params.pago === "procesando") {
+    let panelUser = await loadPanelUser(session.id);
+    if (!panelUser) redirect("/login");
+
+    const peekSub = normalizePanelSubscription(panelUser.subscription);
+    const shouldSyncStripe =
+      params.pago === "exitoso" ||
+      params.pago === "procesando" ||
+      params.success === "true" ||
+      // Upgrade Vecino → negocio: reconcile latest Checkout even without query params.
+      (peekSub.plan === "VECINO" && Boolean(peekSub.stripeCustomerId));
+
+    if (shouldSyncStripe) {
       try {
         await syncStripeSubscriptionForUser(session.id);
+        panelUser = (await loadPanelUser(session.id)) ?? panelUser;
       } catch (error) {
         console.error("[panel] stripe sync failed:", error);
       }
     }
 
-    const user = await loadPanelUser(session.id);
-    if (!user) redirect("/login");
-
-    await cleanupOrphanSocioProfile(session.id, user.socioId ?? null);
-    const panelUser = (await loadPanelUser(session.id)) ?? user;
+    await cleanupOrphanSocioProfile(session.id, panelUser.socioId ?? null);
+    panelUser = (await loadPanelUser(session.id)) ?? panelUser;
 
     const refreshedSub = normalizePanelSubscription(panelUser?.subscription);
 
@@ -121,6 +131,7 @@ export default async function PanelPage({
 
     return (
       <SiteShell>
+        <RefreshSessionAfterPayment />
         <Navbar />
         <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
           <PanelDashboard
