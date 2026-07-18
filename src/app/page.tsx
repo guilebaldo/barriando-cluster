@@ -1,15 +1,26 @@
-import HomePage from "./HomePage";
-import { getLiveStats } from "@/lib/get-live-stats";
-import { getActiveHomePromo } from "@/lib/home-content";
-import { getCarouselSocios } from "@/lib/public-socios";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth-utils";
+import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
 
-/** Public marketing landing — always available, including when signed in. */
-export default async function Page() {
-  const [liveStats, homePromo, carouselSocios] = await Promise.all([
-    getLiveStats(),
-    getActiveHomePromo(),
-    getCarouselSocios(),
-  ]);
+export const dynamic = "force-dynamic";
 
-  return <HomePage liveStats={liveStats} homePromo={homePromo} carouselSocios={carouselSocios} />;
+/**
+ * Entrada del dominio y de la PWA.
+ * Con sesión → home por rol. Sin sesión → presentación pública.
+ */
+export default async function RootPage() {
+  const session = await getSession();
+
+  if (session) {
+    redirect(
+      resolvePostAuthHomePath({
+        email: session.email,
+        role: session.role,
+        plan: session.plan,
+        subscriptionStatus: session.subscriptionStatus,
+      })
+    );
+  }
+
+  redirect("/landing");
 }

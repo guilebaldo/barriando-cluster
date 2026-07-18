@@ -120,3 +120,44 @@ export const alianzasEstrategicas = [
   "Instituciones educativas y de investigación",
   "Dependencias de turismo y desarrollo económico",
 ];
+
+/**
+ * Civic tech = tecnología digital para mejorar la relación entre personas,
+ * territorio e instituciones (transparencia, participación, servicios públicos
+ * y acción comunitaria). Barriando ya opera en ese campo con MAP, Pasaporte
+ * Digital y BarrID; estos proyectos proyectan la siguiente capa.
+ */
+export const civicTechIntro = {
+  titulo: "Civic tech y el futuro del barrio",
+  lead:
+    "El civic tech —o tecnología cívica— usa herramientas digitales para fortalecer cómo las personas se relacionan con su territorio, con el gobierno y entre sí: datos útiles, participación real y servicios que facilitan la vida cotidiana. Barriando ya es civic tech en operación: el MAP hace caminable el patrimonio, el Pasaporte Digital convierte visitas en identidad verificada y BarrID articula beneficios entre vecinos y comercios del Centro Histórico.",
+  cierre:
+    "Los siguientes proyectos extienden ese mismo principio —innovación tecnológica, tetra hélice y derrama local— hacia datos abiertos, memoria colectiva y gobernanza colaborativa del polígono patrimonial.",
+};
+
+export const proyectosFuturosCivicTech = [
+  {
+    titulo: "Observatorio abierto del Centro Histórico",
+    eje: "Datos públicos",
+    descripcion:
+      "Publicar indicadores agregados y anónimos del MAP y del Pasaporte —flujos peatonales por zona, sellos por temporada, densidad de oferta certificada— para que gobierno, academia y vecinos tomen decisiones con evidencia del territorio vivo.",
+  },
+  {
+    titulo: "Cartografía participativa de memoria viva",
+    eje: "Comunidad",
+    descripcion:
+      "Abrir el inventario patrimonial a relatos, oficios y patrimonio inmaterial aportados por residentes de Analco, La Luz, El Alto y la traza histórica: un mapa vivo que complementa los hitos oficiales con la voz del barrio.",
+  },
+  {
+    titulo: "Mesa digital de la tetra hélice",
+    eje: "Participación",
+    descripcion:
+      "Canal compartido entre empresas socias, dependencias, universidades y sociedad civil para proponer activaciones, dar seguimiento a convenios y transparentar avances del Clúster sin depender solo de reuniones presenciales.",
+  },
+  {
+    titulo: "BarrID ciudadano ampliado",
+    eje: "Identidad local",
+    descripcion:
+      "Expandir la credencial digital más allá de beneficios comerciales: acceso a programas culturales, voluntariado en festivales, encuestas barriales y acreditación de vecino comprometido con el Centro Histórico.",
+  },
+] as const;

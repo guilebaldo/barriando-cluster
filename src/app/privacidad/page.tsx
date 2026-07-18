@@ -77,7 +77,7 @@ export default function PrivacidadPage() {
         </article>
 
         <p className="text-center mt-8">
-          <Link href="/" className="text-xs font-bold text-[#27366D] hover:underline uppercase tracking-wider">
+          <Link href="/landing" className="text-xs font-bold text-[#27366D] hover:underline uppercase tracking-wider">
             ← Volver al inicio
           </Link>
         </p>

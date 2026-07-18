@@ -8,8 +8,16 @@ import {
   GRUPO_EQUIPO_LABELS,
   type EquipoGrupo,
 } from "../data/equipo";
-import { definicionInstitucional } from "../data/institucion";
-import { Users, Mail, Building2, Landmark, GraduationCap, HeartHandshake } from "lucide-react";
+import { definicionInstitucional, civicTechIntro, proyectosFuturosCivicTech } from "../data/institucion";
+import {
+  Users,
+  Mail,
+  Building2,
+  Landmark,
+  GraduationCap,
+  HeartHandshake,
+  Sparkles,
+} from "lucide-react";
 
 const GRUPOS: EquipoGrupo[] = ["consejo", "operacion", "comunicacion"];
 
@@ -179,6 +187,37 @@ export default function EquipoPage() {
                   Verificar en el Ordenamiento Jurídico del Estado
                 </a>
               </span>
+            </section>
+          </Reveal>
+
+          <Reveal delay={160}>
+            <section className="border-b border-gray-100 py-8">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-2">
+                Proyectos futuros
+              </p>
+              <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-4">{civicTechIntro.titulo}</h2>
+              <p className="text-base md:text-lg text-gray-600 leading-relaxed">{civicTechIntro.lead}</p>
+              <p className="text-base md:text-lg text-gray-600 leading-relaxed mt-4">{civicTechIntro.cierre}</p>
+
+              <ul className="mt-8 space-y-6">
+                {proyectosFuturosCivicTech.map((proyecto) => (
+                  <li key={proyecto.titulo} className="border-l-2 border-[#27366D]/25 pl-4">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" aria-hidden />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
+                        {proyecto.eje}
+                      </span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        En exploración
+                      </span>
+                    </div>
+                    <h3 className="text-sm md:text-base font-bold text-slate-900">{proyecto.titulo}</h3>
+                    <p className="text-sm md:text-base text-gray-600 leading-relaxed font-light mt-1.5">
+                      {proyecto.descripcion}
+                    </p>
+                  </li>
+                ))}
+              </ul>
             </section>
           </Reveal>
         </div>
