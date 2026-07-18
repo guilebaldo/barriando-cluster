@@ -13,6 +13,7 @@ import {
 } from "./actions";
 import { isLinkagePending } from "@/lib/linkage";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
+import { playCuelume } from "./useAdminCuelume";
 
 type StatusFilter = "all" | "active" | "inactive" | "unlinked" | "linked";
 
@@ -44,6 +45,7 @@ function StatusSwitch({
       aria-label={label}
       disabled={disabled}
       onClick={onToggle}
+      data-cuelume-toggle=""
       className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-40 ${
         active ? "bg-emerald-500" : "bg-slate-300"
       }`}
@@ -170,9 +172,11 @@ export default function AdminBusinessesSection({
     const result = await setCatalogMembershipStatus(row.socioId, next);
     setSavingId(null);
     if (!result.ok) {
+      playCuelume("error");
       setMsg(result.error ?? "Error");
       return;
     }
+    playCuelume("success");
     setMsg(
       next === "active"
         ? `${row.businessName} activado en /socios y MAP.`
@@ -190,9 +194,11 @@ export default function AdminBusinessesSection({
     });
     setSavingId(null);
     if (!result.ok) {
+      playCuelume("error");
       setMsg(result.error ?? "Error al guardar beneficio.");
       return;
     }
+    playCuelume("success");
     setMsg(`Beneficio de ${row.businessName} actualizado.`);
     router.refresh();
   }
@@ -204,9 +210,11 @@ export default function AdminBusinessesSection({
     const result = await updateCatalogSocioWebsite({ socioId: row.socioId, website });
     setSavingId(null);
     if (!result.ok) {
+      playCuelume("error");
       setMsg(result.error ?? "Error al guardar sitio web.");
       return;
     }
+    playCuelume("success");
     setWebsiteDrafts((prev) => {
       const next = { ...prev };
       delete next[row.socioId];
@@ -222,9 +230,11 @@ export default function AdminBusinessesSection({
     const result = await updateCatalogSocioWebsite({ socioId: row.socioId, website: "" });
     setSavingId(null);
     if (!result.ok) {
+      playCuelume("error");
       setMsg(result.error ?? "Error al restablecer.");
       return;
     }
+    playCuelume("success");
     setWebsiteDrafts((prev) => {
       const next = { ...prev };
       delete next[row.socioId];
@@ -265,6 +275,7 @@ export default function AdminBusinessesSection({
                 key={key}
                 type="button"
                 onClick={() => setFilter(key)}
+                data-cuelume-toggle=""
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition ${
                   filter === key
                     ? "bg-[#27366D] text-white"
@@ -397,6 +408,8 @@ export default function AdminBusinessesSection({
                               onClick={() =>
                                 expanded ? setExpandedId(null) : openExpand(row)
                               }
+                              data-cuelume-press=""
+                              data-cuelume-release=""
                               className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40"
                             >
                               {expanded ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
@@ -441,6 +454,8 @@ export default function AdminBusinessesSection({
                                     type="button"
                                     disabled={saving || !websiteDirty}
                                     onClick={() => void saveWebsite(row)}
+                                    data-cuelume-press=""
+                                    data-cuelume-release=""
                                     className="bg-[#27366D] hover:bg-[#1e2b58] disabled:opacity-40 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg"
                                   >
                                     Guardar URL
@@ -450,6 +465,8 @@ export default function AdminBusinessesSection({
                                       type="button"
                                       disabled={saving}
                                       onClick={() => void resetWebsite(row)}
+                                      data-cuelume-press=""
+                                      data-cuelume-release=""
                                       className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700 disabled:opacity-40"
                                     >
                                       <RotateCcw className="w-3 h-3" />
@@ -592,6 +609,8 @@ export default function AdminBusinessesSection({
                                   type="button"
                                   disabled={saving}
                                   onClick={() => void saveBenefit(row)}
+                                  data-cuelume-press=""
+                                  data-cuelume-release=""
                                   className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg disabled:opacity-40"
                                 >
                                   {saving ? "Guardando…" : "Guardar beneficio"}

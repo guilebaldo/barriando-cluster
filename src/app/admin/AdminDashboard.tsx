@@ -34,6 +34,7 @@ import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContent
 import AdminBusinessesSection from "./AdminBusinessesSection";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
+import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
@@ -127,6 +128,8 @@ function ReviewActions({
                 type="button"
                 disabled={busy}
                 onClick={onApprovePayment}
+                data-cuelume-press=""
+                data-cuelume-release=""
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-green-700 bg-green-50 hover:bg-green-100 text-[10px] font-bold disabled:opacity-50"
               >
                 <CheckCircle2 className="w-3 h-3" /> Verificar
@@ -135,6 +138,8 @@ function ReviewActions({
                 type="button"
                 disabled={busy}
                 onClick={onRejectPayment}
+                data-cuelume-press=""
+                data-cuelume-release=""
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-700 bg-red-50 hover:bg-red-100 text-[10px] font-bold disabled:opacity-50"
               >
                 <XCircle className="w-3 h-3" /> Rechazar
@@ -157,6 +162,8 @@ function ReviewActions({
                 type="button"
                 disabled={busy}
                 onClick={onApproveLinkage}
+                data-cuelume-press=""
+                data-cuelume-release=""
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-green-700 bg-green-50 hover:bg-green-100 text-[10px] font-bold disabled:opacity-50"
               >
                 <CheckCircle2 className="w-3 h-3" /> Verificar
@@ -165,6 +172,8 @@ function ReviewActions({
                 type="button"
                 disabled={busy}
                 onClick={onRejectLinkage}
+                data-cuelume-press=""
+                data-cuelume-release=""
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-red-700 bg-red-50 hover:bg-red-100 text-[10px] font-bold disabled:opacity-50"
               >
                 <XCircle className="w-3 h-3" /> Rechazar
@@ -191,6 +200,7 @@ export default function AdminDashboard({
   membershipRows: CatalogMembershipRow[];
 }) {
   const router = useRouter();
+  useAdminCuelume();
   const [tab, setTab] = useState<AdminTab>("all");
   const [query, setQuery] = useState("");
   const [msg, setMsg] = useState("");
@@ -262,9 +272,11 @@ export default function AdminDashboard({
     const result = await action();
     setLoadingId(null);
     if (!result.ok) {
+      playCuelume("error");
       setMsg(result.error ?? "Error");
       return;
     }
+    playCuelume("success");
     setMsg(success);
     router.refresh();
   }
@@ -280,9 +292,11 @@ export default function AdminDashboard({
     const result = await action();
     setLoadingId(null);
     if (!result.ok) {
+      playCuelume("error");
       setMsg(result.error ?? "Error");
       return;
     }
+    playCuelume("success");
     setLinkageResolved((prev) => ({ ...prev, [userId]: outcome }));
     setMsg(success);
     router.refresh();
@@ -299,9 +313,11 @@ export default function AdminDashboard({
     const result = await action();
     setLoadingId(null);
     if (!result.ok) {
+      playCuelume("error");
       setMsg(result.error ?? "Error");
       return;
     }
+    playCuelume("success");
     setPaymentResolved((prev) => ({ ...prev, [userId]: outcome }));
     setMsg(success);
     router.refresh();
@@ -344,9 +360,11 @@ export default function AdminDashboard({
     });
     setLoadingId(null);
     if (!result.ok) {
+      playCuelume("error");
       setMsg(result.error);
       return;
     }
+    playCuelume("success");
     setEditingId(null);
     setMsg("Cambios guardados.");
     router.refresh();
@@ -381,6 +399,7 @@ export default function AdminDashboard({
         <button
           type="button"
           onClick={() => setTab("all")}
+          data-cuelume-toggle=""
           className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
             tab === "all" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
@@ -390,6 +409,7 @@ export default function AdminDashboard({
         <button
           type="button"
           onClick={() => setTab("pending")}
+          data-cuelume-toggle=""
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
             tab === "pending" ? "bg-amber-500 text-slate-950" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
@@ -400,6 +420,7 @@ export default function AdminDashboard({
         <button
           type="button"
           onClick={() => setTab("accounts")}
+          data-cuelume-toggle=""
           className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
             tab === "accounts" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
@@ -409,6 +430,7 @@ export default function AdminDashboard({
         <button
           type="button"
           onClick={() => setTab("content")}
+          data-cuelume-toggle=""
           className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
             tab === "content" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
@@ -660,6 +682,8 @@ function UserRows({
                 type="button"
                 title={isEditing ? "Cerrar" : "Editar"}
                 onClick={onEdit}
+                data-cuelume-press=""
+                data-cuelume-release=""
                 className="p-2 rounded-lg text-slate-600 hover:bg-slate-100"
               >
                 {isEditing ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
@@ -669,6 +693,8 @@ function UserRows({
                 title="Eliminar"
                 disabled={loadingId === user.id}
                 onClick={onDelete}
+                data-cuelume-press=""
+                data-cuelume-release=""
                 className="p-2 rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50"
               >
                 <Trash2 className="w-4 h-4" />
@@ -870,6 +896,8 @@ function UserRows({
                 type="button"
                 disabled={loadingId === user.id}
                 onClick={onSave}
+                data-cuelume-press=""
+                data-cuelume-release=""
                 className="ml-auto bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg disabled:opacity-50"
               >
                 Guardar cambios
