@@ -7,6 +7,7 @@ import { MEMBERSHIP_PLANS, PAID_PLANS, formatPlanPriceMxn } from "@/lib/membresi
 import { registroUrl } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import PlanSelectButton from "./PlanSelectButton";
+import PlanSwipeDeck, { planDeckStopDragProps } from "./PlanSwipeDeck";
 
 export type PlanAudienceFilter = "personales" | "comerciales";
 
@@ -21,6 +22,21 @@ const FILTER_OPTIONS: { id: PlanAudienceFilter; label: string }[] = [
 
 function planAudience(planId: MembershipPlan): PlanAudienceFilter {
   return PERSONAL_PLANS.includes(planId) ? "personales" : "comerciales";
+}
+
+function planCta(planId: MembershipPlan): string {
+  switch (planId) {
+    case "TURISTA":
+      return "Empezar gratis";
+    case "VECINO":
+      return "Quiero BarrID";
+    case "NEGOCIO_FAMILIAR":
+      return "Entrar al directorio";
+    case "MEDIANA_EMPRESA":
+      return "Destacar mi negocio";
+    default:
+      return "Aparecer en el MAP";
+  }
 }
 
 export default function PlanesCatalog({
@@ -53,6 +69,28 @@ export default function PlanesCatalog({
     return ALL_PLAN_IDS.filter((planId) => activeFilters.includes(planAudience(planId)));
   }, [activeFilters]);
 
+  const mobileStartIndex = useMemo(() => {
+    if (!effectiveHighlight) return 0;
+    const i = visiblePlans.indexOf(effectiveHighlight);
+    return i >= 0 ? i : 0;
+  }, [visiblePlans, effectiveHighlight]);
+
+  function renderPlanCard(planId: MembershipPlan, withAnchor = false) {
+    return (
+      <PlanCard
+        planId={planId}
+        cta={planCta(planId)}
+        featured={planId === "GRAN_EMPRESA"}
+        recommended={planId === "MEDIANA_EMPRESA" || planId === "VECINO"}
+        highlighted={effectiveHighlight === planId}
+        isAuthenticated={isAuthenticated}
+        isPlanChange={isPlanChange}
+        isCurrent={currentPlan === planId}
+        withAnchor={withAnchor}
+      />
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap justify-center gap-2">
@@ -81,35 +119,24 @@ export default function PlanesCatalog({
           Selecciona Personales y/o Comerciales para ver planes.
         </p>
       ) : (
-        <div className="flex flex-wrap justify-center gap-5">
-          {visiblePlans.map((planId) => (
-            <div
-              key={planId}
-              className="w-full md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] xl:w-[240px] max-w-[320px]"
-            >
-              <PlanCard
-                planId={planId}
-                cta={
-                  planId === "TURISTA"
-                    ? "Empezar gratis"
-                    : planId === "VECINO"
-                      ? "Quiero BarrID"
-                      : planId === "NEGOCIO_FAMILIAR"
-                        ? "Entrar al directorio"
-                        : planId === "MEDIANA_EMPRESA"
-                          ? "Destacar mi negocio"
-                          : "Aparecer en el MAP"
-                }
-                featured={planId === "GRAN_EMPRESA"}
-                recommended={planId === "MEDIANA_EMPRESA" || planId === "VECINO"}
-                highlighted={effectiveHighlight === planId}
-                isAuthenticated={isAuthenticated}
-                isPlanChange={isPlanChange}
-                isCurrent={currentPlan === planId}
-              />
-            </div>
-          ))}
-        </div>
+        <>
+          <PlanSwipeDeck
+            planIds={visiblePlans}
+            initialIndex={mobileStartIndex}
+            renderCard={renderPlanCard}
+          />
+
+          <div className="hidden md:flex flex-wrap justify-center gap-5">
+            {visiblePlans.map((planId) => (
+              <div
+                key={planId}
+                className="w-full md:w-[calc(50%-10px)] lg:w-[calc(33.333%-14px)] xl:w-[240px] max-w-[320px]"
+              >
+                {renderPlanCard(planId, true)}
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -124,6 +151,7 @@ function PlanCard({
   isAuthenticated,
   isPlanChange,
   isCurrent,
+  withAnchor = false,
 }: {
   planId: MembershipPlan;
   cta: string;
@@ -133,14 +161,16 @@ function PlanCard({
   isAuthenticated: boolean;
   isPlanChange: boolean;
   isCurrent: boolean;
+  withAnchor?: boolean;
 }) {
   const plan = MEMBERSHIP_PLANS[planId];
   const useDirectSelect = isAuthenticated && (isPlanChange || plan.isPaid);
   const isEmphasized = featured || highlighted;
+  const stopDrag = planDeckStopDragProps();
 
   return (
     <div
-      id={planId === "GRAN_EMPRESA" ? "gran_empresa" : undefined}
+      id={withAnchor && planId === "GRAN_EMPRESA" ? "gran_empresa" : undefined}
       className={`flex flex-col rounded-xl border p-6 bg-white shadow-sm h-full scroll-mt-24 ${
         isEmphasized ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-200"
       }`}
@@ -185,20 +215,23 @@ function PlanCard({
           Plan actual
         </span>
       ) : useDirectSelect ? (
-        <PlanSelectButton
-          planId={planId}
-          label={isPlanChange ? "Seleccionar" : cta}
-          className={`block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
-            plan.isPaid
-              ? planId === "GRAN_EMPRESA"
-                ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
-                : "bg-[#27366D] hover:bg-[#1e2b58] text-white"
-              : "bg-amber-500 hover:bg-amber-400 text-slate-950"
-          }`}
-        />
+        <div {...stopDrag}>
+          <PlanSelectButton
+            planId={planId}
+            label={isPlanChange ? "Seleccionar" : cta}
+            className={`block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
+              plan.isPaid
+                ? planId === "GRAN_EMPRESA"
+                  ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
+                  : "bg-[#27366D] hover:bg-[#1e2b58] text-white"
+                : "bg-amber-500 hover:bg-amber-400 text-slate-950"
+            }`}
+          />
+        </div>
       ) : (
         <Link
           href={registroUrl(planId)}
+          {...stopDrag}
           className={`block text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
             plan.isPaid
               ? planId === "GRAN_EMPRESA"
