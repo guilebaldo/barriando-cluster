@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import SiteShell from "../components/SiteShell";
+import PlanesShell from "./PlanesShell";
 import PlanesCatalog, { type PlanAudienceFilter } from "./PlanesCatalog";
 import { parsePlanSlug } from "@/lib/plan-routing";
 import { getSession } from "@/lib/auth-utils";
@@ -41,10 +41,10 @@ export default async function PlanesPage({
       : null;
 
   return (
-    <SiteShell>
+    <PlanesShell>
       <Navbar />
-      <main className="flex-1 flex flex-col min-h-0 max-w-5xl mx-auto w-full px-5 py-5 md:block md:px-6 md:py-16">
-        <div className="text-center shrink-0 mb-5 md:mb-10">
+      <main className="flex-1 flex flex-col min-h-0 max-w-5xl mx-auto w-full px-5 pt-4 pb-0 md:block md:px-6 md:py-16 md:overflow-visible overflow-hidden">
+        <div className="text-center shrink-0 mb-4 md:mb-10">
           <span className="text-[#27366D] font-bold text-[11px] md:text-xs uppercase tracking-[0.2em]">
             Membresías
           </span>
@@ -77,6 +77,6 @@ export default async function PlanesPage({
       <div className="hidden md:block">
         <Footer />
       </div>
-    </SiteShell>
+    </PlanesShell>
   );
 }

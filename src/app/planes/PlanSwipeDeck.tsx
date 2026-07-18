@@ -53,8 +53,8 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
   if (!activeId) return null;
 
   return (
-    <div className="md:hidden flex flex-col flex-1 min-h-0 justify-between gap-4">
-      <div className="relative mx-auto w-full max-w-[340px] flex-1 flex flex-col justify-center min-h-0 py-1">
+    <div className="md:hidden flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div className="relative mx-auto w-full max-w-[340px] flex-1 flex flex-col justify-center min-h-0 overflow-hidden py-1">
         {planIds.length > 1 ? (
           <div
             aria-hidden
@@ -88,8 +88,8 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.85}
             onDragEnd={onDragEnd}
-            className="relative z-10 w-full touch-pan-y cursor-grab active:cursor-grabbing"
-            style={{ touchAction: "pan-y" }}
+            className="relative z-10 w-full max-h-full overflow-hidden cursor-grab active:cursor-grabbing"
+            style={{ touchAction: "pan-x" }}
           >
             {renderCard(activeId)}
           </motion.div>
@@ -97,7 +97,13 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
       </div>
 
       {planIds.length > 1 ? (
-        <div className="shrink-0 flex flex-col items-center gap-2 pb-1 safe-area-bottom">
+        <div
+          className="shrink-0 flex flex-col items-center gap-2 pt-2"
+          style={{
+            // Safari toolbar + home indicator: keep "Desliza…" above the chrome.
+            paddingBottom: "max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))",
+          }}
+        >
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center justify-center gap-1.5" role="tablist" aria-label="Planes">
               {planIds.map((id, i) => (
@@ -122,7 +128,14 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
             Desliza para ver más
           </p>
         </div>
-      ) : null}
+      ) : (
+        <div
+          className="shrink-0"
+          style={{
+            paddingBottom: "max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))",
+          }}
+        />
+      )}
     </div>
   );
 }

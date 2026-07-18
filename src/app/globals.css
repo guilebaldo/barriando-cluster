@@ -160,6 +160,20 @@
   touch-action: manipulation;
 }
 
+.planes-mobile-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+  touch-action: manipulation;
+}
+
+@media (min-width: 768px) {
+  .planes-mobile-shell {
+    height: auto;
+    max-height: none;
+    touch-action: auto;
+  }
+}
+
 .font-passport-mrz {
   font-family: var(--font-passport-mrz);
   letter-spacing: 0.08em;
