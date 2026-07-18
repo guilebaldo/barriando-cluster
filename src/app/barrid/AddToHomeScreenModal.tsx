@@ -16,9 +16,15 @@ import {
 type Props = {
   userId: string;
   eligible: boolean;
+  /** Copy variant: BarrID membership vs first passport use. */
+  purpose?: "barrid" | "pasaporte";
 };
 
-export default function AddToHomeScreenModal({ userId, eligible }: Props) {
+export default function AddToHomeScreenModal({
+  userId,
+  eligible,
+  purpose = "barrid",
+}: Props) {
   const [open, setOpen] = useState(false);
   const [ios, setIos] = useState(false);
   const [installing, setInstalling] = useState(false);
@@ -26,7 +32,10 @@ export default function AddToHomeScreenModal({ userId, eligible }: Props) {
 
   useEffect(() => {
     ensureInstallPromptListener();
-    if (!eligible || !userId) return;
+    if (!eligible || !userId) {
+      setOpen(false);
+      return;
+    }
 
     const evaluate = () => {
       if (!isMobileViewport() || isStandaloneDisplay() || hasDismissedAddToHome(userId)) {
@@ -69,6 +78,19 @@ export default function AddToHomeScreenModal({ userId, eligible }: Props) {
 
   if (!open) return null;
 
+  const blurb =
+    purpose === "pasaporte" ? (
+      <>
+        Guarda el acceso directo para abrir tu Pasaporte como una app. El marcador se guardará
+        como <span className="font-semibold text-[#27366D]">BarriApp</span>.
+      </>
+    ) : (
+      <>
+        Instala el acceso directo para abrir tu BarrID como una app. El marcador se guardará como{" "}
+        <span className="font-semibold text-[#27366D]">BarriApp</span>.
+      </>
+    );
+
   return (
     <div
       className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/45 backdrop-blur-[2px] md:hidden"
@@ -93,10 +115,7 @@ export default function AddToHomeScreenModal({ userId, eligible }: Props) {
         <h2 id="a2hs-title" className="text-lg font-bold text-[#27366D] pr-8">
           Agrega BarriApp a tu inicio
         </h2>
-        <p className="text-sm text-slate-600 font-light leading-relaxed mt-2">
-          Instala el acceso directo para abrir tu BarrID como una app. El marcador se guardará como{" "}
-          <span className="font-semibold text-[#27366D]">BarriApp</span>.
-        </p>
+        <p className="text-sm text-slate-600 font-light leading-relaxed mt-2">{blurb}</p>
 
         {ios ? (
           <ol className="mt-5 space-y-3 text-sm text-slate-700">

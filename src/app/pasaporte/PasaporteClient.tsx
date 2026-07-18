@@ -10,6 +10,7 @@ import { getMapHrefForRestaurant } from "@/lib/pasaporte";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
+import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
 
 type RestaurantCard = {
   id: number;
@@ -23,7 +24,10 @@ type RestaurantCard = {
 interface PasaporteClientProps {
   userName: string;
   userImage: string | null;
+  userId?: string | null;
   isAuthenticated: boolean;
+  /** Account created within the first-login window (A2HS suggestion). */
+  isFirstLoginUser?: boolean;
   usePageScroll?: boolean;
   restaurants: RestaurantCard[];
   /** Sellos destacados en demo logout: Mediana + Gran Empresa (roster). */
@@ -480,7 +484,9 @@ function getInitials(name: string): string {
 function PasaporteInner({
   userName,
   userImage,
+  userId = null,
   isAuthenticated,
+  isFirstLoginUser = false,
   usePageScroll = false,
   restaurants,
   featuredPreviewStampIds = [],
@@ -506,6 +512,7 @@ function PasaporteInner({
     text: string;
   } | null>(null);
   const [stampFlashId, setStampFlashId] = useState<number | null>(null);
+  const [addToHomeEligible, setAddToHomeEligible] = useState(false);
   const isPreview = !isAuthenticated;
   const pendingSlug = searchParams.get("pendiente")?.trim() ?? "";
   const pendingStamp = useMemo(() => {
@@ -611,6 +618,20 @@ function PasaporteInner({
     const autoClose = window.setTimeout(() => setNoticePopup(null), 5000);
     return () => window.clearTimeout(autoClose);
   }, [noticePopup]);
+
+  // First-login passport users: suggest A2HS after any stamp notice clears (or right away).
+  useEffect(() => {
+    if (!isAuthenticated || !isFirstLoginUser || !userId) {
+      setAddToHomeEligible(false);
+      return;
+    }
+    if (noticePopup) {
+      setAddToHomeEligible(false);
+      return;
+    }
+    const t = window.setTimeout(() => setAddToHomeEligible(true), 500);
+    return () => window.clearTimeout(t);
+  }, [isAuthenticated, isFirstLoginUser, userId, noticePopup]);
 
   const pageContent = (
     <>
@@ -868,6 +889,14 @@ function PasaporteInner({
         onClose={() => setScannerOpen(false)}
         hint="Apunta al QR del negocio o hito. Se lee solo al enfocar, sin tomar foto."
       />
+
+      {userId ? (
+        <AddToHomeScreenModal
+          userId={userId}
+          eligible={addToHomeEligible}
+          purpose="pasaporte"
+        />
+      ) : null}
 
       {noticePopup && (
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 pointer-events-none">

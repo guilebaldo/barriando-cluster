@@ -18,6 +18,7 @@ import {
 } from "@/lib/passport-preview-layout";
 import { countUserStamps, loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 import { loadPanelUser } from "@/lib/panel-data";
+import { isFirstLoginAccount } from "@/lib/add-to-home-screen";
 
 export default async function PasaportePage({
   searchParams,
@@ -57,6 +58,8 @@ export default async function PasaportePage({
   let totalStamps = 0;
   let stampMap: Record<number, { count: number; lastStampAt: string }> = {};
   let userImage: string | null = null;
+  let userId: string | null = null;
+  let isFirstLoginUser = false;
 
   if (session) {
     const [summaries, stampTotal, panelUser] = await Promise.all([
@@ -69,6 +72,8 @@ export default async function PasaportePage({
       summaries.map((s) => [s.restaurantId, { count: s.count, lastStampAt: s.lastStampAt }])
     );
     userImage = panelUser?.image ?? null;
+    userId = session.id;
+    isFirstLoginUser = isFirstLoginAccount(panelUser?.createdAt);
   }
 
   const uniqueStampedCount = Object.values(stampMap).filter((s) => s.count > 0).length;
@@ -80,7 +85,9 @@ export default async function PasaportePage({
     <PasaporteClient
       userName={session?.nombre || session?.email || "Visitante"}
       userImage={userImage}
+      userId={userId}
       isAuthenticated={isAuthenticated}
+      isFirstLoginUser={isFirstLoginUser}
       usePageScroll={!isAuthenticated}
       restaurants={restaurants}
       featuredPreviewStampIds={featuredPreviewStampIds}
