@@ -91,12 +91,17 @@ export default function PlanesCatalog({
                 planId={planId}
                 cta={
                   planId === "TURISTA"
-                    ? "Empezar Gratis"
-                    : planId === "GRAN_EMPRESA"
-                      ? "Aparecer en el MAP"
-                      : "Elegir Plan"
+                    ? "Empezar gratis"
+                    : planId === "VECINO"
+                      ? "Quiero BarrID"
+                      : planId === "NEGOCIO_FAMILIAR"
+                        ? "Entrar al directorio"
+                        : planId === "MEDIANA_EMPRESA"
+                          ? "Destacar mi negocio"
+                          : "Aparecer en el MAP"
                 }
                 featured={planId === "GRAN_EMPRESA"}
+                recommended={planId === "MEDIANA_EMPRESA" || planId === "VECINO"}
                 highlighted={effectiveHighlight === planId}
                 isAuthenticated={isAuthenticated}
                 isPlanChange={isPlanChange}
@@ -114,6 +119,7 @@ function PlanCard({
   planId,
   cta,
   featured,
+  recommended,
   highlighted,
   isAuthenticated,
   isPlanChange,
@@ -122,6 +128,7 @@ function PlanCard({
   planId: MembershipPlan;
   cta: string;
   featured: boolean;
+  recommended: boolean;
   highlighted: boolean;
   isAuthenticated: boolean;
   isPlanChange: boolean;
@@ -142,10 +149,14 @@ function PlanCard({
         <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full self-start mb-3">
           Tu plan actual
         </span>
+      ) : featured ? (
+        <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-3">
+          Máxima exposición
+        </span>
       ) : (
-        featured && (
-          <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-3">
-            Presencia en el MAP
+        recommended && (
+          <span className="text-[9px] font-bold uppercase tracking-wider text-[#27366D] bg-[#27366D]/10 px-2 py-0.5 rounded-full self-start mb-3">
+            Recomendado
           </span>
         )
       )}
@@ -154,15 +165,18 @@ function PlanCard({
         {plan.isPaid ? formatPlanPriceMxn(planId as Parameters<typeof formatPlanPriceMxn>[0]) : "Gratis"}
       </p>
       <p className="text-[11px] text-amber-700 font-semibold mt-0.5">{plan.tagline}</p>
-      <p className="text-xs text-slate-500 mt-3 mb-4 font-light leading-relaxed flex-1">{plan.description}</p>
-      <ul className="space-y-2 mb-6">
-        {plan.benefits.slice(0, 4).map((b) => (
+      <p className="text-xs text-slate-500 mt-3 mb-4 font-light leading-relaxed">{plan.description}</p>
+      <ul className="space-y-2 mb-6 flex-1">
+        {plan.benefits.map((b) => (
           <li key={b} className="flex gap-2 text-[11px] text-slate-600">
             <Check className="w-3.5 h-3.5 text-[#27366D] shrink-0 mt-0.5" />
             {b}
           </li>
         ))}
       </ul>
+      {plan.highlight && !isCurrent && (
+        <p className="text-[10px] text-slate-400 font-medium mb-4 leading-snug">{plan.highlight}</p>
+      )}
       {isCurrent ? (
         <span
           aria-disabled="true"

@@ -47,12 +47,12 @@ export default async function PlanesPage({
         <div className="text-center mb-10">
           <span className="text-[#27366D] font-bold text-xs uppercase tracking-widest">Membresías</span>
           <h1 className="text-3xl md:text-4xl font-extrabold mt-2 font-serif-cluster uppercase tracking-wide text-slate-950">
-            {isPlanChange ? "Cambia tu plan" : "Elige cómo sumarte al Barrio"}
+            {isPlanChange ? "Cambia tu plan" : "Elige tu lugar en el Barrio"}
           </h1>
           <p className="text-sm text-slate-600 max-w-2xl mx-auto mt-3 font-light">
             {isPlanChange
               ? "Selecciona un nuevo plan. Continuarás al método de pago sin volver a iniciar sesión."
-              : "Desde la comunidad gratuita hasta la certificación comercial para negocios exclusivos del Clúster Barriando en el Centro Histórico de Puebla."}
+              : "Empieza gratis, desbloquea BarrID como Vecino o certifica tu negocio. Cada nivel suma exposición real en el Centro Histórico."}
           </p>
           {isPlanChange && (
             <Link

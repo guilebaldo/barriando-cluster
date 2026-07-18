@@ -5,9 +5,9 @@ import type { Socio } from "@/app/data/socios";
  * Matriz de productos (resumen):
  * Turista — pasaporte / sellar (gratis).
  * Vecino — BarrID + canjear beneficios de negocios + escanear sellos.
- * Pequeña — lo de Vecino + aparece en pasaporte (AyB) para que le sellen.
- * Mediana — lo de Pequeña + carrusel landing + posición preferente en /socios.
- * Gran — lo de Mediana + negocios en el itinerario MAP.
+ * Pequeña — lo de Vecino + aparece en directorio de socios.
+ * Mediana — lo de Pequeña + carrusel landing + posición preferente en directorio.
+ * Gran — lo de Mediana + pin en el MAP; AyB/Hotel pueden ofrecer sello de temporada.
  */
 export type PaidMembershipPlan = Exclude<MembershipPlan, "TURISTA">;
 
@@ -25,72 +25,69 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
   TURISTA: {
     id: "TURISTA",
     label: "Turista",
-    tagline: "Visitante del Centro Histórico",
-    description:
-      "Perfil gratuito para explorar Puebla, recibir novedades del Clúster y participar en el Pasaporte MAP.",
+    tagline: "Entra gratis al barrio",
+    description: "Empieza a recorrer el Centro Histórico hoy. Cuando quieras más, sube a Vecino.",
     isPaid: false,
     benefits: [
-      "Boletín y novedades del Clúster",
-      "Pasaporte digital MAP y sellos de temporada",
-      "Acceso al itinerario peatonal MAP",
+      "Pasaporte Digital y sellos de temporada",
+      "Circuito peatonal del MAP",
+      "Novedades y convocatorias del Clúster",
     ],
   },
   VECINO: {
     id: "VECINO",
     label: "Vecino",
-    tagline: "Residente local certificado",
-    description:
-      "Suscripción mensual para residentes del Centro Histórico con beneficios exclusivos y reconocimiento comunitario.",
+    tagline: "Vive el barrio con privilegios",
+    description: "Deja de solo visitar: canjea ofertas reales y acredita tu identidad local.",
     isPaid: true,
-    highlight: "Para quienes viven y transitan el barrio cada día",
+    highlight: "El upgrade natural si ya tienes Pasaporte",
     benefits: [
-      "Insignia de vecino certificado en tu perfil",
-      "Descuentos y convocatorias exclusivas para residentes",
-      "Prioridad en eventos barriales del Clúster",
-      "Acceso al Pasaporte MAP y rutas oficiales",
+      "BarrID: tu credencial digital de vecino",
+      "Canjea beneficios exclusivos en negocios socios",
+      "Prioridad en eventos y activaciones del Clúster",
+      "Incluye Pasaporte Digital y MAP",
     ],
   },
   NEGOCIO_FAMILIAR: {
     id: "NEGOCIO_FAMILIAR",
     label: "Negocio Familiar",
-    tagline: "Microempresa local",
-    description: "Para pequeños negocios familiares que quieren dar sus primeros pasos comerciales en Barriando.",
+    tagline: "Que te encuentren en el barrio",
+    description: "Tu primer lugar en la red certificada: visibilidad local sin perder el trato de barrio.",
     isPaid: true,
-    highlight: "Ideal para cafés, tiendas y talleres de barrio",
+    highlight: "Ideal para cafés, talleres y comercios de la traza",
     benefits: [
-      "Presencia en el directorio oficial de socios (/socios)",
-      "Activación en el Pasaporte Digital del Barrio desde este plan inicial ($600 MXN)",
-      "Publicar entradas en el blog del Clúster",
-      "Perfil certificado en la guía Barriando",
+      "Ficha certificada en el directorio de socios",
+      "Publica beneficios para vecinos y turistas",
+      "BarrID para validar canjes en tu negocio",
+      "Espacio en el blog del Clúster",
     ],
   },
   MEDIANA_EMPRESA: {
     id: "MEDIANA_EMPRESA",
     label: "Mediana Empresa",
-    tagline: "Mayor exposición",
-    description: "Para negocios con mayor estructura que buscan visibilidad ampliada en la plataforma.",
+    tagline: "Que te vean antes que al resto",
+    description: "Más exposición donde importa: la portada y el directorio que ya visitan miles.",
     isPaid: true,
-    highlight: "Museos, escuelas y servicios consolidados",
+    highlight: "El plan más elegido para crecer en Barriando",
     benefits: [
-      "Todo lo del plan Negocio Familiar",
-      "Logo destacado en el carrusel de la página principal",
-      "Mayor prioridad en el directorio de socios",
-      "Destacado en campañas del Clúster",
+      "Logo en el carrusel de la página principal",
+      "Posición preferente en el directorio de socios",
+      "Mayor presencia en campañas del Clúster",
+      "Incluye directorio, beneficios y BarrID",
     ],
   },
   GRAN_EMPRESA: {
     id: "GRAN_EMPRESA",
     label: "Gran Empresa",
-    tagline: "Hoteles y restaurantes grandes",
-    description:
-      "Diseñado para hoteles y restaurantes consolidados con más de 20 empleados que requieren máxima visibilidad en el MAP.",
+    tagline: "Domina el circuito del MAP",
+    description: "Máxima exposición: los visitantes te encuentran caminando la ruta oficial del Centro.",
     isPaid: true,
-    highlight: "Máxima visibilidad en el MAP y rutas oficiales",
+    highlight: "Para hoteles y restaurantes que quieren el flujo del MAP",
     benefits: [
-      "Presencia destacada en el mapa interactivo y rutas oficiales del MAP",
-      "Todo lo de los planes anteriores",
-      "Posicionamiento premium en el carrusel y directorio",
-      "Beneficios exclusivos para anfitriones del destino",
+      "Pin propio en el MAP y rutas oficiales",
+      "Sello de temporada si eres hotel o alimentos y bebidas",
+      "Máxima prioridad en carrusel y directorio",
+      "Incluye todo lo de Mediana Empresa",
     ],
   },
 };
@@ -117,10 +114,10 @@ export function formatPlanPriceMxn(plan: PaidMembershipPlan): string {
 }
 
 export const COMMERCIAL_BENEFITS = [
-  "Presencia en el directorio oficial de socios (/socios)",
-  "Logo destacado en el carrusel de la página principal (Mediana y Gran Empresa)",
-  "Presencia destacada en el mapa interactivo y rutas oficiales del MAP (Gran Empresa)",
-  "Redactar entradas en el blog del Clúster",
+  "Ficha certificada en el directorio de socios",
+  "Logo en el carrusel de la página principal (Mediana y Gran Empresa)",
+  "Pin en el MAP y rutas oficiales (Gran Empresa)",
+  "Publicar beneficios y entradas en el blog del Clúster",
 ];
 
 const PLAN_DISPLAY_ORDER: Record<PaidMembershipPlan, number> = {
