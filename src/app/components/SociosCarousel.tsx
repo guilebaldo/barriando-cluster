@@ -1,25 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Socio } from "../data/socios";
 
 interface SociosCarouselProps {
   socios: Socio[];
 }
 
+const SWIPE_THRESHOLD_PX = 36;
+
 export default function SociosCarousel({ socios }: SociosCarouselProps) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [isPaused, setIsPaused] = useState(false);
   const offsetRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const suppressClickRef = useRef(false);
 
   const itemWidth = 272; // w-64 + gap
-  const loopWidth = itemWidth * socios.length;
+  const loopWidth = Math.max(itemWidth * socios.length, itemWidth);
   const speed = 42; // px/s
 
+  // direction 1 → logos se desplazan a la izquierda; -1 → a la derecha
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
@@ -29,12 +33,10 @@ export default function SociosCarousel({ socios }: SociosCarouselProps) {
       const delta = (ts - lastTsRef.current) / 1000;
       lastTsRef.current = ts;
 
-      if (!isPaused) {
-        offsetRef.current += direction * speed * delta;
-        if (offsetRef.current >= loopWidth) offsetRef.current -= loopWidth;
-        if (offsetRef.current < 0) offsetRef.current += loopWidth;
-        track!.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`;
-      }
+      offsetRef.current += direction * speed * delta;
+      if (offsetRef.current >= loopWidth) offsetRef.current -= loopWidth;
+      if (offsetRef.current < 0) offsetRef.current += loopWidth;
+      track!.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`;
 
       rafRef.current = requestAnimationFrame(tick);
     }
@@ -44,34 +46,53 @@ export default function SociosCarousel({ socios }: SociosCarouselProps) {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       lastTsRef.current = null;
     };
-  }, [direction, isPaused, loopWidth]);
+  }, [direction, loopWidth]);
+
+  function setDirectionFromClientX(clientX: number) {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const { left, width } = viewport.getBoundingClientRect();
+    if (width <= 0) return;
+    const ratio = (clientX - left) / width;
+    // Mitad derecha → logos hacia la derecha; mitad izquierda → hacia la izquierda
+    setDirection(ratio >= 0.5 ? -1 : 1);
+  }
+
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+    suppressClickRef.current = false;
+  }
+
+  function onTouchEnd(e: React.TouchEvent) {
+    const startX = touchStartX.current;
+    touchStartX.current = null;
+    if (startX == null) return;
+    const endX = e.changedTouches[0]?.clientX;
+    if (endX == null) return;
+    const delta = endX - startX;
+    if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return;
+    suppressClickRef.current = true;
+    // Deslizar a la derecha → logos hacia la derecha; a la izquierda → hacia la izquierda
+    setDirection(delta > 0 ? -1 : 1);
+  }
+
+  function onCardClick(e: React.MouseEvent) {
+    if (suppressClickRef.current) {
+      e.preventDefault();
+      suppressClickRef.current = false;
+    }
+  }
 
   const items = [...socios, ...socios];
 
   return (
     <div
-      className="relative group"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      ref={viewportRef}
+      className="relative touch-pan-y"
+      onMouseMove={(e) => setDirectionFromClientX(e.clientX)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
-      <button
-        type="button"
-        aria-label="Invertir carrusel hacia la izquierda"
-        onClick={() => setDirection(-1)}
-        className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 border border-slate-200 shadow-md flex items-center justify-center text-[#27366D] opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </button>
-
-      <button
-        type="button"
-        aria-label="Avanzar carrusel hacia la derecha"
-        onClick={() => setDirection(1)}
-        className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 border border-slate-200 shadow-md flex items-center justify-center text-[#27366D] opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
-
       <div className="w-full overflow-hidden relative select-none py-1">
         <div
           ref={trackRef}
@@ -82,6 +103,7 @@ export default function SociosCarousel({ socios }: SociosCarouselProps) {
             <a
               href={`/socios?socio=${socio.id}`}
               key={`${socio.id}-${index}`}
+              onClick={onCardClick}
               className="flex flex-col shrink-0 items-center group/card w-64"
             >
               <div className="w-full h-36 bg-white border border-slate-200/80 rounded-2xl p-6 flex items-center justify-center transition-all duration-300 shadow-sm group-hover/card:border-amber-400 group-hover/card:shadow-premium-hover bg-gradient-to-b from-white to-slate-50/30">
