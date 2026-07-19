@@ -19,6 +19,8 @@ import {
 import { countUserStamps, loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 import { loadPanelUser } from "@/lib/panel-data";
 import { isFirstLoginAccount } from "@/lib/add-to-home-screen";
+import { canOfferPassportStamp } from "@/lib/plan-visibility";
+import type { MembershipPlan } from "@/generated/prisma/client";
 
 export default async function PasaportePage({
   searchParams,
@@ -60,6 +62,7 @@ export default async function PasaportePage({
   let userImage: string | null = null;
   let userId: string | null = null;
   let isFirstLoginUser = false;
+  let alreadyOnPassportRoster = false;
 
   if (session) {
     const [summaries, stampTotal, panelUser] = await Promise.all([
@@ -74,6 +77,8 @@ export default async function PasaportePage({
     userImage = panelUser?.image ?? null;
     userId = session.id;
     isFirstLoginUser = isFirstLoginAccount(panelUser?.createdAt);
+    const dbPlan = (panelUser?.subscription?.plan ?? session.plan) as MembershipPlan;
+    alreadyOnPassportRoster = canOfferPassportStamp(dbPlan);
   }
 
   const uniqueStampedCount = Object.values(stampMap).filter((s) => s.count > 0).length;
@@ -87,6 +92,7 @@ export default async function PasaportePage({
       userImage={userImage}
       userId={userId}
       isAuthenticated={isAuthenticated}
+      alreadyOnPassportRoster={alreadyOnPassportRoster}
       isFirstLoginUser={isFirstLoginUser}
       usePageScroll={!isAuthenticated}
       restaurants={restaurants}
