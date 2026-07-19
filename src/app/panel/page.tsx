@@ -10,7 +10,7 @@ import RefreshSessionAfterPayment from "../components/RefreshSessionAfterPayment
 import { getSession } from "@/lib/auth-utils";
 import { isStripeConfigured } from "@/lib/stripe";
 import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
-import { expireManualSubscriptionsIfNeeded } from "@/lib/subscription-lifecycle";
+import { expireMembershipsAfterGraceIfNeeded } from "@/lib/subscription-lifecycle";
 import {
   canAccessPanel,
   hasCommercialAccess,
@@ -52,7 +52,7 @@ export default async function PanelPage({
   }
 
   try {
-    await expireManualSubscriptionsIfNeeded();
+    await expireMembershipsAfterGraceIfNeeded();
 
     let panelUser = await loadPanelUser(session.id);
     if (!panelUser) redirect("/login");

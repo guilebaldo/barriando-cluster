@@ -6,7 +6,6 @@ import { CheckCircle2, Gift, Pencil, Search, X } from "lucide-react";
 import {
   approveLinkage,
   approveManualCertification,
-  renewCatalogMembership,
   setCatalogMembershipStatus,
   type AdminUserRow,
   type CatalogMembershipRow,
@@ -253,21 +252,6 @@ export default function AdminOperations({
     router.refresh();
   }
 
-  async function handleRenew(row: CatalogMembershipRow) {
-    setMsg("");
-    setSavingId(row.socioId);
-    const result = await renewCatalogMembership(row.socioId);
-    setSavingId(null);
-    if (!result.ok) {
-      playCuelume("error");
-      setMsg(result.error ?? "No se pudo renovar.");
-      return;
-    }
-    playCuelume("success");
-    setMsg(`${row.businessName}: pago validado / renovado (+30 días desde vencimiento).`);
-    router.refresh();
-  }
-
   async function handleApprovePayment(userId: string, label: string) {
     setMsg("");
     setSavingId(userId);
@@ -435,6 +419,7 @@ export default function AdminOperations({
                 }`}
               >
                 {label}
+                {key === "all" ? ` (${membershipRows.length})` : ""}
               </button>
             ))}
           </div>
@@ -485,6 +470,9 @@ export default function AdminOperations({
                       </p>
                       <p className="text-[11px] text-slate-400 mt-0.5">
                         Vence {formatExpiryShort(expiry)}
+                        {row.monthsPastDue > 0
+                          ? ` · ${row.monthsPastDue} mes${row.monthsPastDue === 1 ? "" : "es"} vencido${row.monthsPastDue === 1 ? "" : "s"}`
+                          : ""}
                       </p>
                     </div>
                     <StatusSwitch
@@ -498,17 +486,6 @@ export default function AdminOperations({
                     {linked?.email ?? "Sin cuenta"}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={() => void handleRenew(row)}
-                      data-cuelume-press=""
-                      data-cuelume-release=""
-                      className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 disabled:opacity-40"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Validar / renovar
-                    </button>
                     <AdminEstablishmentQrButton
                       businessName={row.businessName}
                       plan={row.plan}
@@ -618,22 +595,16 @@ export default function AdminOperations({
                         </div>
                       </td>
                       <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                        {formatExpiryShort(expiry)}
+                        <p>{formatExpiryShort(expiry)}</p>
+                        {row.monthsPastDue > 0 ? (
+                          <p className="text-[10px] text-red-600 font-semibold mt-0.5">
+                            {row.monthsPastDue} mes{row.monthsPastDue === 1 ? "" : "es"} vencido
+                            {row.monthsPastDue === 1 ? "" : "s"}
+                          </p>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex items-center justify-end gap-0.5">
-                          <button
-                            type="button"
-                            title="Validar depósito / renovar +30 días desde vencimiento"
-                            disabled={saving}
-                            onClick={() => void handleRenew(row)}
-                            data-cuelume-press=""
-                            data-cuelume-release=""
-                            className="p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span className="sr-only">Validar / renovar</span>
-                          </button>
                           <button
                             type="button"
                             title="Editar"

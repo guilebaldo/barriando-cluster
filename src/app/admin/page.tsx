@@ -12,11 +12,14 @@ import {
   listCatalogSocioRows,
   listCatalogMemberships,
 } from "./actions";
+import { expireMembershipsAfterGraceIfNeeded } from "@/lib/subscription-lifecycle";
 
 export default async function AdminPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!isAdminUser(session)) redirect("/panel");
+
+  await expireMembershipsAfterGraceIfNeeded();
 
   const [users, testimonials, homePromos, catalogRows, membershipRows] = await Promise.all([
     listAdminUsers(),

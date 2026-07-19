@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
 import { listaSocios } from "@/app/data/socios";
 import { getPlanLabel } from "@/lib/membresia";
-import { extendThirtyDaysFromExpiry } from "@/lib/subscription-lifecycle";
+import { advanceBillingAnniversary } from "@/lib/subscription-lifecycle";
 import { isBusinessPlan } from "@/lib/membresia";
 import { publishBusinessPresenceOnPayment } from "@/lib/publish-business";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -30,7 +30,7 @@ export async function approveManualCertification(userId: string): Promise<Action
       where: { userId },
       data: {
         status: "manual_active",
-        currentPeriodEnd: extendThirtyDaysFromExpiry(subscription.currentPeriodEnd),
+        currentPeriodEnd: advanceBillingAnniversary(subscription.currentPeriodEnd),
         ...(subscription.paymentMethod ? {} : { paymentMethod: "transfer" }),
       },
     });
@@ -175,7 +175,7 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
       const existingSub = await prisma.subscription.findUnique({ where: { userId } });
       const nextPeriodEnd =
         status === "manual_active"
-          ? extendThirtyDaysFromExpiry(existingSub?.currentPeriodEnd)
+          ? advanceBillingAnniversary(existingSub?.currentPeriodEnd)
           : undefined;
 
       await prisma.subscription.upsert({
@@ -922,6 +922,7 @@ export type CatalogMembershipRow = {
   paymentLabel: string;
   status: string;
   currentPeriodEnd: string | null;
+  monthsPastDue: number;
   foto: string;
   categoria: string;
   offersBenefit: boolean;
@@ -971,6 +972,7 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
           paymentLabel: paymentMethodLabel(row.paymentMethod),
           status: row.status,
           currentPeriodEnd: row.currentPeriodEnd?.toISOString() ?? null,
+          monthsPastDue: row.monthsPastDue ?? 0,
           foto: catalog?.foto ?? "",
           categoria: catalog?.categoria ?? "",
           offersBenefit: Boolean(row.offersBenefit),
@@ -1006,7 +1008,7 @@ export async function renewCatalogMembership(socioId: number): Promise<ActionRes
     if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
 
     const existing = await prisma.catalogMembership.findUnique({ where: { socioId } });
-    const nextEnd = extendThirtyDaysFromExpiry(existing?.currentPeriodEnd);
+    const nextEnd = advanceBillingAnniversary(existing?.currentPeriodEnd);
     const plan =
       existing?.plan && isBusinessPlan(existing.plan) ? existing.plan : "NEGOCIO_FAMILIAR";
 
@@ -1019,11 +1021,13 @@ export async function renewCatalogMembership(socioId: number): Promise<ActionRes
         businessName: catalog.name,
         paymentMethod: existing?.paymentMethod ?? "transfer",
         currentPeriodEnd: nextEnd,
+        monthsPastDue: 0,
       },
       update: {
         status: "active",
         paymentMethod: existing?.paymentMethod ?? "transfer",
         currentPeriodEnd: nextEnd,
+        monthsPastDue: 0,
         businessName: existing?.businessName?.trim() || catalog.name,
       },
     });

@@ -267,6 +267,8 @@ model CatalogMembership {
   businessName         String?
   /** Vencimiento de membresía en roster (ops admin, aunque no haya cuenta). */
   currentPeriodEnd     DateTime?
+  /** Meses de atraso tras gracia (0 = al día o en gracia). */
+  monthsPastDue        Int            @default(0)
   offersBenefit        Boolean        @default(false)
   benefitTitle         String?
   benefitDescription   String?

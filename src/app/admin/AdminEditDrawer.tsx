@@ -189,7 +189,7 @@ export default function AdminEditDrawer({
       return;
     }
     playCuelume("success");
-    setMsg("Renovado (+30 días desde vencimiento).");
+    setMsg("Renovado al siguiente aniversario mensual (mismo día).");
     router.refresh();
   }
 
@@ -365,7 +365,7 @@ export default function AdminEditDrawer({
                   className="inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg disabled:opacity-40"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  Validar / renovar
+                  Validar / renovar (aniversario mensual)
                 </button>
               </div>
             </div>

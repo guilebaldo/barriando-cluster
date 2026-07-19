@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "CatalogMembership" ADD COLUMN IF NOT EXISTS "monthsPastDue" INTEGER NOT NULL DEFAULT 0;
