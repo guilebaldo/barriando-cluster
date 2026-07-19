@@ -7,7 +7,7 @@ import type { Socio } from "@/app/data/socios";
  * Vecino — BarrID + canjear beneficios de negocios + escanear sellos.
  * Pequeña — lo de Vecino + aparece en directorio de socios.
  * Mediana — lo de Pequeña + carrusel landing + posición preferente en directorio.
- * Gran — lo de Mediana + pin en el MAP; AyB/Hotel pueden ofrecer sello de temporada.
+ * Gran — lo de Mediana + pin en el MAP. Todo negocio $600+ ofrece sello en Pasaporte.
  */
 export type PaidMembershipPlan = Exclude<MembershipPlan, "TURISTA">;
 
@@ -57,9 +57,9 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     highlight: "Ideal para cafés, talleres y comercios de la traza",
     benefits: [
       "Ficha certificada en el directorio de socios",
+      "Sello en Pasaporte Digital con QR descargable",
       "Publica beneficios para vecinos y turistas",
       "BarrID para validar canjes en tu negocio",
-      "Espacio en el blog del Clúster",
     ],
   },
   MEDIANA_EMPRESA: {
@@ -71,8 +71,8 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     highlight: "El plan más elegido para crecer en Barriando",
     benefits: [
       "Logo en el carrusel de la página principal",
+      "Sello en Pasaporte Digital con QR",
       "Posición preferente en el directorio de socios",
-      "Mayor presencia en campañas del Clúster",
       "Incluye directorio, beneficios y BarrID",
     ],
   },
@@ -85,7 +85,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     highlight: "Para hoteles y restaurantes que quieren el flujo del MAP",
     benefits: [
       "Pin propio en el MAP y rutas oficiales",
-      "Sello de temporada si eres hotel o alimentos y bebidas",
+      "Sello en Pasaporte Digital con QR",
       "Máxima prioridad en carrusel y directorio",
       "Incluye todo lo de Mediana Empresa",
     ],

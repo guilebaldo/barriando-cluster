@@ -17,6 +17,25 @@ export function addThirtyDaysFrom(from = new Date()): Date {
   return d;
 }
 
+/**
+ * Renueva +30 días desde la fecha de vencimiento si aún no vence;
+ * si ya venció (o no hay fecha), desde ahora.
+ */
+export function extendThirtyDaysFromExpiry(
+  currentPeriodEnd: Date | string | null | undefined,
+  now = new Date()
+): Date {
+  const end =
+    currentPeriodEnd == null
+      ? null
+      : currentPeriodEnd instanceof Date
+        ? currentPeriodEnd
+        : new Date(currentPeriodEnd);
+  const validEnd = end && !Number.isNaN(end.getTime()) ? end : null;
+  const base = validEnd && validEnd.getTime() > now.getTime() ? validEnd : now;
+  return addThirtyDaysFrom(base);
+}
+
 /** Suma un mes calendario desde la fecha indicada. */
 export function addOneMonthFrom(from = new Date()): Date {
   const d = new Date(from);

@@ -16,7 +16,8 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
   const [error, setError] = useState<string | null>(null);
 
   const catalog = socioId != null ? listaSocios.find((s) => s.id === socioId) ?? null : null;
-  const slug = catalog ? restaurantSlug(catalog) : null;
+  const nameForSlug = catalog?.name?.trim() || businessName.trim();
+  const slug = nameForSlug ? restaurantSlug({ name: nameForSlug }) : null;
   const absoluteUrl =
     typeof window !== "undefined" && slug
       ? `${window.location.origin}${buildSellarPath(slug)}`
@@ -48,10 +49,10 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
   }, [absoluteUrl]);
 
   function handleDownload() {
-    if (!dataUrl || !catalog) return;
+    if (!dataUrl || !slug) return;
     const link = document.createElement("a");
     link.href = dataUrl;
-    link.download = `qr-sello-${restaurantSlug(catalog)}.png`;
+    link.download = `qr-sello-${slug}.png`;
     link.click();
   }
 
@@ -68,26 +69,23 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
         Digital.
       </p>
 
-      {!catalog ? (
+      {!slug ? (
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
-          Tu negocio puede aparecer en el directorio con membresía pagada, pero{" "}
-          <strong>esta cuenta no está vinculada</strong> a un socio del catálogo. En Panel, usa
-          “Vincular negocio” y elige p. ej. Cosme Tortas (u otro del listado). Cuando Admin apruebe
-          la vinculación, aquí podrás descargar el QR de sello. Mientras tanto, Admin también puede
-          descargar el QR desde /admin.
+          Indica el nombre de tu negocio (o vincula un socio del catálogo) para generar el QR de
+          sello del Pasaporte. También puedes pedírselo al administrador en /admin.
         </p>
       ) : (
         <div className="flex flex-col sm:flex-row items-start gap-5">
           <div className="w-40 h-40 bg-white border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden">
             {dataUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={dataUrl} alt={`QR de ${businessName || catalog.name}`} className="w-full h-full" />
+              <img src={dataUrl} alt={`QR de ${nameForSlug}`} className="w-full h-full" />
             ) : (
               <span className="text-[10px] text-slate-400">{error ?? "Generando…"}</span>
             )}
           </div>
           <div className="space-y-3">
-            <p className="text-sm font-bold text-slate-900">{catalog.name}</p>
+            <p className="text-sm font-bold text-slate-900">{nameForSlug}</p>
             <p className="text-[11px] text-slate-500 break-all font-mono">{absoluteUrl}</p>
             <button
               type="button"

@@ -21,7 +21,6 @@ import { PLAN_ADMIN_LABELS, MEMBERSHIP_STATUS_OPTIONS, PAYMENT_METHOD_OPTIONS, r
 import { isLinkagePending } from "@/lib/linkage";
 import {
   CheckCircle2,
-  Clock,
   Pencil,
   Search,
   Shield,
@@ -31,14 +30,14 @@ import {
 } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContentSection";
-import AdminBusinessesSection from "./AdminBusinessesSection";
+import AdminOperations from "./AdminOperations";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
-type AdminTab = "all" | "pending" | "accounts" | "content";
+type AdminTab = "operations" | "accounts" | "content";
 type ResolvedAction = "approved" | "rejected";
 type HealthStatus = "ok" | "pending" | "expired";
 
@@ -201,7 +200,7 @@ export default function AdminDashboard({
 }) {
   const router = useRouter();
   useAdminCuelume();
-  const [tab, setTab] = useState<AdminTab>("all");
+  const [tab, setTab] = useState<AdminTab>("operations");
   const [query, setQuery] = useState("");
   const [msg, setMsg] = useState("");
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -210,14 +209,11 @@ export default function AdminDashboard({
   const [linkageResolved, setLinkageResolved] = useState<Record<string, ResolvedAction>>({});
   const [paymentResolved, setPaymentResolved] = useState<Record<string, ResolvedAction>>({});
 
-  const pendingLinkages = useMemo(() => users.filter(hasPendingLinkageRequest), [users]);
-
   const visibleUsers = useMemo(() => {
-    if (tab !== "pending" && tab !== "accounts") return [];
-    const base = tab === "pending" ? pendingLinkages : users;
+    if (tab !== "accounts") return [];
     const q = query.trim().toLowerCase();
-    if (!q) return base;
-    return base.filter((user) => {
+    if (!q) return users;
+    return users.filter((user) => {
       const business = user.requestedBusinessName ?? user.socioName ?? "";
       const haystack = [
         user.nombre,
@@ -233,9 +229,9 @@ export default function AdminDashboard({
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [tab, pendingLinkages, users, query]);
+  }, [tab, users, query]);
 
-  const listTotal = tab === "pending" ? pendingLinkages.length : users.length;
+  const listTotal = users.length;
 
   function openEdit(user: AdminUserRow) {
     setEditingId(user.id);
@@ -382,10 +378,10 @@ export default function AdminDashboard({
           <Shield className="w-8 h-8 text-[#27366D] shrink-0" />
           <div>
             <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-              Administración Barriando
+              Operaciones Barriando
             </h1>
             <p className="text-sm text-slate-600 mt-1">
-              Negocios del roster, vinculaciones de cuenta y contenido del home.
+              Roster de socios, pagos, QR de pasaporte y cuentas. El roster es la fuente de verdad.
             </p>
           </div>
         </div>
@@ -398,24 +394,13 @@ export default function AdminDashboard({
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setTab("all")}
+          onClick={() => setTab("operations")}
           data-cuelume-toggle=""
           className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "all" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            tab === "operations" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
-          Todos ({membershipRows.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("pending")}
-          data-cuelume-toggle=""
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "pending" ? "bg-amber-500 text-slate-950" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          Pendientes ({pendingLinkages.length})
+          Operaciones ({membershipRows.length})
         </button>
         <button
           type="button"
@@ -444,8 +429,8 @@ export default function AdminDashboard({
           <AdminTestimonialsSection testimonials={testimonials} />
           <AdminHomePromosSection promos={homePromos} />
         </div>
-      ) : tab === "all" ? (
-        <AdminBusinessesSection
+      ) : tab === "operations" ? (
+        <AdminOperations
           membershipRows={membershipRows}
           catalogRows={catalogRows}
           users={users}
@@ -475,8 +460,7 @@ export default function AdminDashboard({
             )}
           </div>
           <p className="text-[11px] text-slate-500 shrink-0">
-            {visibleUsers.length} de {listTotal}{" "}
-            {tab === "pending" ? "pendientes" : "cuentas"}
+            {visibleUsers.length} de {listTotal} cuentas
             {query.trim() ? " encontrados" : ""}
           </p>
         </div>
@@ -500,9 +484,7 @@ export default function AdminDashboard({
                   <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                     {query.trim()
                       ? "No hay cuentas que coincidan con tu búsqueda."
-                      : tab === "pending"
-                        ? "No hay vinculaciones pendientes."
-                        : "No hay cuentas registradas."}
+                      : "No hay cuentas registradas."}
                   </td>
                 </tr>
               ) : (
