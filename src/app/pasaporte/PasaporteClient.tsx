@@ -26,6 +26,8 @@ interface PasaporteClientProps {
   userImage: string | null;
   userId?: string | null;
   isAuthenticated: boolean;
+  /** Ya tiene plan de negocio ($600+) — puede ofrecer sello; no mostrar CTA de alta. */
+  alreadyOnPassportRoster?: boolean;
   /** Account created within the first-login window (A2HS suggestion). */
   isFirstLoginUser?: boolean;
   usePageScroll?: boolean;
@@ -486,6 +488,7 @@ function PasaporteInner({
   userImage,
   userId = null,
   isAuthenticated,
+  alreadyOnPassportRoster = false,
   isFirstLoginUser = false,
   usePageScroll = false,
   restaurants,
@@ -874,12 +877,21 @@ function PasaporteInner({
         )}
 
         <p className="mt-5 mb-1 text-center max-w-sm mx-auto px-2">
-          <Link
-            href="/planes?tipo=comerciales"
-            className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
-          >
-            ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
-          </Link>
+          {alreadyOnPassportRoster ? (
+            <span
+              className="text-[10px] text-slate-300 cursor-default select-none"
+              title="Tu plan de negocio ya incluye presencia en el Pasaporte Digital"
+            >
+              Ya formas parte del Pasaporte Digital con tu plan de negocio.
+            </span>
+          ) : (
+            <Link
+              href="/planes?tipo=comerciales&plan=negocio_familiar#negocio_familiar"
+              className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
+            >
+              ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
+            </Link>
+          )}
         </p>
       </div>
       </div>

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { MEMBERSHIP_PLANS, PAID_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
-import { registroUrl } from "@/lib/plan-routing";
+import { registroUrl, planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import PlanSelectButton from "./PlanSelectButton";
 import PlanSwipeDeck, { planDeckStopDragProps } from "./PlanSwipeDeck";
@@ -168,7 +168,7 @@ function PlanCard({
 
   return (
     <div
-      id={withAnchor && planId === "GRAN_EMPRESA" ? "gran_empresa" : undefined}
+      id={withAnchor ? planToSlug(planId) : undefined}
       className={`flex flex-col rounded-xl border p-5 md:p-6 bg-white shadow-sm h-full scroll-mt-24 ${
         isEmphasized ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-200"
       }`}
