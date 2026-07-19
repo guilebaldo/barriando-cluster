@@ -265,6 +265,8 @@ model CatalogMembership {
   paymentMethod        String?
   status               String         @default("active")
   businessName         String?
+  /** Vencimiento de membresía en roster (ops admin, aunque no haya cuenta). */
+  currentPeriodEnd     DateTime?
   offersBenefit        Boolean        @default(false)
   benefitTitle         String?
   benefitDescription   String?

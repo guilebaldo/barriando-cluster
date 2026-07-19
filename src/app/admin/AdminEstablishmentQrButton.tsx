@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Download } from "lucide-react";
 import { buildSellarPath, restaurantSlug } from "@/lib/pasaporte";
-import { isSeasonalStampCategory } from "@/lib/plan-visibility";
+import { canOfferPassportStamp } from "@/lib/plan-visibility";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 type Props = {
@@ -14,18 +14,14 @@ type Props = {
   disabled?: boolean;
 };
 
-/** QR compacto para sellos de temporada (Gran Empresa de AyB u Hotel). */
+/** QR de sello Pasaporte — disponible para todo plan de negocio ($600+). */
 export default function AdminEstablishmentQrButton({
   businessName,
-  category,
   plan,
   disabled,
 }: Props) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
-  const canStamp =
-    plan === "GRAN_EMPRESA" &&
-    isSeasonalStampCategory(category?.trim()) &&
-    Boolean(businessName.trim());
+  const canStamp = canOfferPassportStamp(plan) && Boolean(businessName.trim());
   const slug = canStamp ? restaurantSlug({ name: businessName.trim() }) : null;
 
   useEffect(() => {

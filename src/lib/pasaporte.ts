@@ -1,5 +1,5 @@
 import { listaSocios, type Socio } from "@/app/data/socios";
-import { isSeasonalStampCategory } from "@/lib/plan-visibility";
+import { canOfferPassportStamp } from "@/lib/plan-visibility";
 
 export const STAMP_COOLDOWN_MS = 18 * 60 * 60 * 1000;
 export const STAMP_STATUS_VALIDATED = "validado";
@@ -12,15 +12,18 @@ function normalizeName(value: string): string {
     .trim();
 }
 
-/** Catálogo estático de temporada (sync). Preferir getParticipatingRestaurantsAsync. */
+/**
+ * Fallback estático: negocios del catálogo con plan de negocio ($600+).
+ * Preferir getParticipatingRestaurantsAsync (roster activo).
+ */
 export function getParticipatingRestaurants(): Socio[] {
-  return listaSocios.filter((s) => s.categoria === "Alimentos y Bebidas");
+  return listaSocios.filter((s) => canOfferPassportStamp(s.membershipPlan ?? null));
 }
 
 /**
- * Restaurantes que ofrecen el sello de temporada (Chiles en Nogada):
- * solo Alimentos y Bebidas u Hotel con plan Gran Empresa activo.
- * Acaso Homes permanece como Hospedaje y no da sello.
+ * Negocios que ofrecen sello en el Pasaporte Digital:
+ * todo plan de negocio activo ($600+: Familiar, Mediana, Gran).
+ * Solo Gran Empresa aparece además en el MAP (ver plan-visibility).
  */
 export async function getParticipatingRestaurantsAsync(): Promise<Socio[]> {
   // Dynamic import keeps Prisma/DATABASE_URL off the client bundle (/map, BarrID, etc.).
@@ -29,8 +32,7 @@ export async function getParticipatingRestaurantsAsync(): Promise<Socio[]> {
   const byName = new Map<string, Socio>();
 
   for (const socio of publicList) {
-    if (!isSeasonalStampCategory(socio.categoria)) continue;
-    if (socio.membershipPlan !== "GRAN_EMPRESA") continue;
+    if (!canOfferPassportStamp(socio.membershipPlan ?? null)) continue;
     const key = normalizeName(socio.name);
     if (!byName.has(key)) byName.set(key, socio);
   }
