@@ -42,6 +42,13 @@ interface SocioProfileFormProps {
   disabled?: boolean;
   hideBusinessName?: boolean;
   embedded?: boolean;
+  /** When false, CFDI/address fields are optional (admin editing roster without account). */
+  requireFiscal?: boolean;
+  /** If set, replaces the default panel `updateSocioProfile` save. */
+  onSave?: (
+    payload: SocioProfileFormInitial
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
+  onSaved?: () => void;
 }
 
 export default function SocioProfileForm({
@@ -50,6 +57,9 @@ export default function SocioProfileForm({
   disabled,
   hideBusinessName,
   embedded = false,
+  requireFiscal = true,
+  onSave,
+  onSaved,
 }: SocioProfileFormProps) {
   const [form, setForm] = useState(initial);
   const [msg, setMsg] = useState("");
@@ -88,7 +98,9 @@ export default function SocioProfileForm({
         ? normalizeWebsiteUrl(form.googleBusinessUrl)
         : "",
     };
-    const result = await updateSocioProfile(payload);
+    const result = onSave
+      ? await onSave(payload)
+      : await updateSocioProfile(payload);
     setLoading(false);
     if (!result.ok) {
       setMsg(result.error);
@@ -96,6 +108,7 @@ export default function SocioProfileForm({
     }
     setForm(payload);
     setMsg("Cambios guardados correctamente.");
+    onSaved?.();
   }
 
   const categoryOptions = useMemo(() => categorySelectOptions(form.category), [form.category]);
@@ -127,9 +140,9 @@ export default function SocioProfileForm({
       )}
 
       <label className={formFieldLabelClass}>
-        <span className={formFieldLegendClass}>Categoría *</span>
+        <span className={formFieldLegendClass}>Categoría{requireFiscal ? " *" : ""}</span>
         <select
-          required
+          required={requireFiscal}
           disabled={disabled || loading}
           value={form.category}
           onChange={(e) => set("category", e.target.value)}
@@ -160,7 +173,9 @@ export default function SocioProfileForm({
       </label>
 
       <label className={`${formFieldLabelClass} sm:col-span-2`}>
-        <span className={formFieldLegendClass}>Ubicación del negocio (Google Maps) *</span>
+        <span className={formFieldLegendClass}>
+          Ubicación del negocio (Google Maps){requireFiscal ? " *" : ""}
+        </span>
         <p className="text-[10px] text-slate-400 font-light mt-0.5 mb-1">
           Busca tu establecimiento. Se usa para la ficha pública y, con plan Gran Empresa, para el MAP.
         </p>
@@ -205,7 +220,9 @@ export default function SocioProfileForm({
       </div>
 
       <label className={`${formFieldLabelClass} sm:col-span-2`}>
-        <span className={formFieldLegendClass}>Dirección fiscal *</span>
+        <span className={formFieldLegendClass}>
+          Dirección fiscal{requireFiscal ? " *" : ""}
+        </span>
         <BillingPlacesAutocomplete
           value={form.billingAddressFull}
           onChange={(v) => set("billingAddressFull", v)}
@@ -256,10 +273,12 @@ export default function SocioProfileForm({
         />
       </label>
       <label className={formFieldLabelClass}>
-        <span className={formFieldLegendClass}>Código postal *</span>
+        <span className={formFieldLegendClass}>
+          Código postal{requireFiscal ? " *" : ""}
+        </span>
         <input
           type="text"
-          required
+          required={requireFiscal}
           disabled={disabled || loading}
           value={form.billingCodigoPostal}
           onChange={(e) => set("billingCodigoPostal", e.target.value)}
@@ -280,10 +299,10 @@ export default function SocioProfileForm({
       </label>
 
       <label className={formFieldLabelClass}>
-        <span className={formFieldLegendClass}>RFC *</span>
+        <span className={formFieldLegendClass}>RFC{requireFiscal ? " *" : ""}</span>
         <input
           type="text"
-          required
+          required={requireFiscal}
           disabled={disabled || loading}
           value={form.rfc}
           onChange={(e) => set("rfc", e.target.value.toUpperCase())}
@@ -292,10 +311,12 @@ export default function SocioProfileForm({
         />
       </label>
       <label className={formFieldLabelClass}>
-        <span className={formFieldLegendClass}>Razón social *</span>
+        <span className={formFieldLegendClass}>
+          Razón social{requireFiscal ? " *" : ""}
+        </span>
         <input
           type="text"
-          required
+          required={requireFiscal}
           disabled={disabled || loading}
           value={form.razonSocial}
           onChange={(e) => set("razonSocial", e.target.value)}
@@ -303,9 +324,11 @@ export default function SocioProfileForm({
         />
       </label>
       <label className={formFieldLabelClass}>
-        <span className={formFieldLegendClass}>Régimen fiscal *</span>
+        <span className={formFieldLegendClass}>
+          Régimen fiscal{requireFiscal ? " *" : ""}
+        </span>
         <select
-          required
+          required={requireFiscal}
           disabled={disabled || loading}
           value={form.regimenFiscal}
           onChange={(e) => set("regimenFiscal", e.target.value)}
@@ -320,9 +343,11 @@ export default function SocioProfileForm({
         </select>
       </label>
       <label className={formFieldLabelClass}>
-        <span className={formFieldLegendClass}>Uso de CFDI *</span>
+        <span className={formFieldLegendClass}>
+          Uso de CFDI{requireFiscal ? " *" : ""}
+        </span>
         <select
-          required
+          required={requireFiscal}
           disabled={disabled || loading}
           value={form.usoCfdi}
           onChange={(e) => set("usoCfdi", e.target.value)}
@@ -351,7 +376,9 @@ export default function SocioProfileForm({
           <p className="text-[10px] text-amber-700">Tienes cambios sin guardar</p>
         )}
       </div>
-      <p className="sm:col-span-2 text-[10px] text-slate-400">* Campos obligatorios</p>
+      <p className="sm:col-span-2 text-[10px] text-slate-400">
+        {requireFiscal ? "* Campos obligatorios" : "Sin cuenta: solo nombre y web se persisten en roster"}
+      </p>
     </form>
   );
 

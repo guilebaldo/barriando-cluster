@@ -1,22 +1,13 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  CheckCircle2,
-  Gift,
-  Pencil,
-  RotateCcw,
-  Search,
-  X,
-} from "lucide-react";
+import { CheckCircle2, Gift, Pencil, Search, X } from "lucide-react";
 import {
   approveLinkage,
   approveManualCertification,
   renewCatalogMembership,
   setCatalogMembershipStatus,
-  updateCatalogMembershipBenefit,
-  updateCatalogSocioWebsite,
   type AdminUserRow,
   type CatalogMembershipRow,
   type CatalogSocioRow,
@@ -24,6 +15,7 @@ import {
 import { isLinkagePending } from "@/lib/linkage";
 import { computeAdminOpsStats, formatExpiryShort } from "@/lib/admin-ops";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
+import AdminEditDrawer from "./AdminEditDrawer";
 import { playCuelume } from "./useAdminCuelume";
 
 type OpsFilter =
@@ -105,17 +97,7 @@ export default function AdminOperations({
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<OpsFilter>("all");
   const [savingId, setSavingId] = useState<number | string | null>(null);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [websiteDrafts, setWebsiteDrafts] = useState<Record<number, string>>({});
-  const [benefitForm, setBenefitForm] = useState({
-    offersBenefit: false,
-    benefitTitle: "",
-    benefitDescription: "",
-    benefitHowToRedeem: "",
-    benefitRedeemViaQr: true,
-    benefitValidFrom: "",
-    benefitValidUntil: "",
-  });
+  const [editingRow, setEditingRow] = useState<CatalogMembershipRow | null>(null);
   const [msg, setMsg] = useState("");
 
   const stats = useMemo(
@@ -251,24 +233,6 @@ export default function AdminOperations({
     },
   ];
 
-  function openExpand(row: CatalogMembershipRow) {
-    setExpandedId(row.socioId);
-    setBenefitForm({
-      offersBenefit: row.offersBenefit,
-      benefitTitle: row.benefitTitle,
-      benefitDescription: row.benefitDescription,
-      benefitHowToRedeem: row.benefitHowToRedeem,
-      benefitRedeemViaQr: row.benefitRedeemViaQr,
-      benefitValidFrom: row.benefitValidFrom,
-      benefitValidUntil: row.benefitValidUntil,
-    });
-  }
-
-  function websiteDraftFor(row: CatalogMembershipRow): string {
-    const catalog = catalogById.get(row.socioId);
-    return websiteDrafts[row.socioId] ?? catalog?.website ?? "";
-  }
-
   async function toggleStatus(row: CatalogMembershipRow) {
     setMsg("");
     setSavingId(row.socioId);
@@ -334,64 +298,10 @@ export default function AdminOperations({
     router.refresh();
   }
 
-  async function saveBenefit(row: CatalogMembershipRow) {
-    setMsg("");
-    setSavingId(row.socioId);
-    const result = await updateCatalogMembershipBenefit({
-      socioId: row.socioId,
-      ...benefitForm,
-    });
-    setSavingId(null);
-    if (!result.ok) {
-      playCuelume("error");
-      setMsg(result.error ?? "Error al guardar beneficio.");
-      return;
-    }
-    playCuelume("success");
-    setMsg(`Beneficio de ${row.businessName} actualizado.`);
-    router.refresh();
-  }
-
-  async function saveWebsite(row: CatalogMembershipRow) {
-    setMsg("");
-    setSavingId(row.socioId);
-    const website = websiteDraftFor(row).trim();
-    const result = await updateCatalogSocioWebsite({ socioId: row.socioId, website });
-    setSavingId(null);
-    if (!result.ok) {
-      playCuelume("error");
-      setMsg(result.error ?? "Error al guardar sitio web.");
-      return;
-    }
-    playCuelume("success");
-    setWebsiteDrafts((prev) => {
-      const next = { ...prev };
-      delete next[row.socioId];
-      return next;
-    });
-    setMsg(`Sitio web de ${row.businessName} actualizado.`);
-    router.refresh();
-  }
-
-  async function resetWebsite(row: CatalogMembershipRow) {
-    setMsg("");
-    setSavingId(row.socioId);
-    const result = await updateCatalogSocioWebsite({ socioId: row.socioId, website: "" });
-    setSavingId(null);
-    if (!result.ok) {
-      playCuelume("error");
-      setMsg(result.error ?? "Error al restablecer.");
-      return;
-    }
-    playCuelume("success");
-    setWebsiteDrafts((prev) => {
-      const next = { ...prev };
-      delete next[row.socioId];
-      return next;
-    });
-    setMsg(`Sitio web de ${row.businessName} restablecido al catálogo.`);
-    router.refresh();
-  }
+  const editingLinked =
+    editingRow != null ? usersBySocioId.get(editingRow.socioId) ?? null : null;
+  const editingCatalog =
+    editingRow != null ? catalogById.get(editingRow.socioId) ?? null : null;
 
   return (
     <div className="space-y-5">
@@ -556,7 +466,6 @@ export default function AdminOperations({
           </div>
         </div>
 
-        {/* Mobile cards */}
         <div className="md:hidden divide-y divide-slate-100">
           {visible.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-slate-500">No hay negocios que coincidan.</p>
@@ -608,63 +517,19 @@ export default function AdminOperations({
                     <button
                       type="button"
                       disabled={saving}
-                      onClick={() => (expandedId === row.socioId ? setExpandedId(null) : openExpand(row))}
+                      onClick={() => setEditingRow(row)}
                       className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       Editar
                     </button>
                   </div>
-                  {expandedId === row.socioId ? (
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
-                        Beneficio
-                      </p>
-                      <label className="inline-flex items-center gap-2 text-xs">
-                        <input
-                          type="checkbox"
-                          checked={benefitForm.offersBenefit}
-                          onChange={(e) =>
-                            setBenefitForm((f) => ({ ...f, offersBenefit: e.target.checked }))
-                          }
-                        />
-                        Ofrece beneficio
-                      </label>
-                      <input
-                        className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white"
-                        placeholder="Título"
-                        value={benefitForm.benefitTitle}
-                        onChange={(e) =>
-                          setBenefitForm((f) => ({ ...f, benefitTitle: e.target.value }))
-                        }
-                        disabled={!benefitForm.offersBenefit}
-                      />
-                      <textarea
-                        className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white min-h-[60px]"
-                        placeholder="Descripción"
-                        value={benefitForm.benefitDescription}
-                        onChange={(e) =>
-                          setBenefitForm((f) => ({ ...f, benefitDescription: e.target.value }))
-                        }
-                        disabled={!benefitForm.offersBenefit}
-                      />
-                      <button
-                        type="button"
-                        disabled={saving}
-                        onClick={() => void saveBenefit(row)}
-                        className="bg-amber-500 text-slate-950 text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg"
-                      >
-                        Guardar beneficio
-                      </button>
-                    </div>
-                  ) : null}
                 </article>
               );
             })
           )}
         </div>
 
-        {/* Desktop table */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-xs min-w-[880px]">
             <thead>
@@ -689,235 +554,107 @@ export default function AdminOperations({
                 visible.map((row) => {
                   const active = row.status === "active";
                   const saving = savingId === row.socioId;
-                  const expanded = expandedId === row.socioId;
                   const linked = usersBySocioId.get(row.socioId) ?? null;
                   const pending =
                     pendingByBusinessName.get(normalizeName(row.businessName)) ?? [];
-                  const catalog = catalogById.get(row.socioId);
-                  const websiteDraft = websiteDraftFor(row);
-                  const websiteDirty =
-                    websiteDraft.trim() !== (catalog?.website ?? "").trim();
                   const expiry = resolveExpiryIso(row, linked);
 
                   return (
-                    <Fragment key={row.socioId}>
-                      <tr className="border-b border-slate-100 align-top hover:bg-slate-50/80">
-                        <td className="px-4 py-3">
-                          <p className="font-semibold text-slate-800">{row.businessName}</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">
-                            {row.categoria || "—"} · id {row.socioId}
+                    <tr
+                      key={row.socioId}
+                      className="border-b border-slate-100 align-top hover:bg-slate-50/80"
+                    >
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-slate-800">{row.businessName}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          {row.categoria || "—"} · id {row.socioId}
+                        </p>
+                        {row.offersBenefit ? (
+                          <p className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-medium mt-1">
+                            <Gift className="w-3 h-3" />
+                            Beneficio activo
                           </p>
-                          {row.offersBenefit ? (
-                            <p className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-medium mt-1">
-                              <Gift className="w-3 h-3" />
-                              Beneficio activo
-                            </p>
-                          ) : null}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{row.planLabel}</td>
-                        <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{row.paymentLabel}</td>
-                        <td className="px-4 py-3">
-                          {linked ? (
-                            <div>
-                              <p className="font-medium text-slate-800 break-all">{linked.email}</p>
-                              <p className="text-[10px] text-slate-500 mt-0.5">{linked.nombre}</p>
-                              {linked.status === "manual_pending" ? (
-                                <p className="text-[10px] text-amber-700 font-semibold mt-0.5">
-                                  Pago pendiente
-                                </p>
-                              ) : null}
-                            </div>
-                          ) : pending.length > 0 ? (
-                            <div>
-                              <p className="text-amber-800 font-medium">Pendiente vincular</p>
-                              <p className="text-[10px] text-slate-500 mt-0.5 break-all">
-                                {pending.map((u) => u.email).join(", ")}
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{row.planLabel}</td>
+                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">{row.paymentLabel}</td>
+                      <td className="px-4 py-3">
+                        {linked ? (
+                          <div>
+                            <p className="font-medium text-slate-800 break-all">{linked.email}</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{linked.nombre}</p>
+                            {linked.status === "manual_pending" ? (
+                              <p className="text-[10px] text-amber-700 font-semibold mt-0.5">
+                                Pago pendiente
                               </p>
-                            </div>
-                          ) : (
-                            <span className="text-slate-400">Sin cuenta</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="inline-flex items-center gap-2">
-                            <StatusSwitch
-                              active={active}
-                              disabled={saving}
-                              onToggle={() => void toggleStatus(row)}
-                              label={`${active ? "Desactivar" : "Activar"} ${row.businessName}`}
-                            />
-                            <span
-                              className={`text-[10px] font-bold uppercase tracking-wider ${
-                                active ? "text-emerald-700" : "text-slate-400"
-                              }`}
-                            >
-                              {saving ? "…" : active ? "Activo" : "Inactivo"}
-                            </span>
+                            ) : null}
                           </div>
-                        </td>
-                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                          {formatExpiryShort(expiry)}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="inline-flex items-center justify-end gap-0.5">
-                            <button
-                              type="button"
-                              title="Validar depósito / renovar +30 días desde vencimiento"
-                              disabled={saving}
-                              onClick={() => void handleRenew(row)}
-                              data-cuelume-press=""
-                              data-cuelume-release=""
-                              className="p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span className="sr-only">Validar / renovar</span>
-                            </button>
-                            <button
-                              type="button"
-                              title={expanded ? "Cerrar" : "Editar"}
-                              disabled={saving}
-                              onClick={() => (expanded ? setExpandedId(null) : openExpand(row))}
-                              data-cuelume-press=""
-                              data-cuelume-release=""
-                              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40"
-                            >
-                              {expanded ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
-                              <span className="sr-only">{expanded ? "Cerrar" : "Editar"}</span>
-                            </button>
-                            <AdminEstablishmentQrButton
-                              businessName={row.businessName}
-                              category={row.categoria}
-                              plan={row.plan}
-                              disabled={saving}
-                            />
+                        ) : pending.length > 0 ? (
+                          <div>
+                            <p className="text-amber-800 font-medium">Pendiente vincular</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5 break-all">
+                              {pending.map((u) => u.email).join(", ")}
+                            </p>
                           </div>
-                        </td>
-                      </tr>
-                      {expanded ? (
-                        <tr className="border-b border-slate-100 bg-slate-50/80">
-                          <td colSpan={7} className="px-4 py-4">
-                            <div className="grid lg:grid-cols-2 gap-6 max-w-4xl">
-                              <div className="space-y-3">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
-                                  Sitio web (/socios)
-                                </p>
-                                <input
-                                  type="url"
-                                  value={websiteDraft}
-                                  onChange={(e) =>
-                                    setWebsiteDrafts((prev) => ({
-                                      ...prev,
-                                      [row.socioId]: e.target.value,
-                                    }))
-                                  }
-                                  className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#27366D]/20 focus:border-[#27366D]"
-                                  placeholder="https://…"
-                                />
-                                <div className="flex flex-wrap gap-2">
-                                  <button
-                                    type="button"
-                                    disabled={saving || !websiteDirty}
-                                    onClick={() => void saveWebsite(row)}
-                                    className="bg-[#27366D] hover:bg-[#1e2b58] disabled:opacity-40 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg"
-                                  >
-                                    Guardar URL
-                                  </button>
-                                  {catalog?.hasOverride ? (
-                                    <button
-                                      type="button"
-                                      disabled={saving}
-                                      onClick={() => void resetWebsite(row)}
-                                      className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700 disabled:opacity-40"
-                                    >
-                                      <RotateCcw className="w-3 h-3" />
-                                      Restablecer
-                                    </button>
-                                  ) : null}
-                                </div>
-                                <div className="pt-3 border-t border-slate-200 text-xs text-slate-600 space-y-1">
-                                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
-                                    Cuenta
-                                  </p>
-                                  {linked ? (
-                                    <>
-                                      <p>{linked.email}</p>
-                                      <p className="text-[10px] text-slate-500">
-                                        Plan cuenta: {linked.planLabel}. Detalle fiscal en pestaña
-                                        Cuentas.
-                                      </p>
-                                    </>
-                                  ) : (
-                                    <p className="text-slate-500">
-                                      Sin cuenta vinculada — puedes operar plan, pago y QR desde aquí.
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="space-y-3">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
-                                  Beneficio en /socios
-                                </p>
-                                <label className="inline-flex items-center gap-2 text-xs text-slate-700">
-                                  <input
-                                    type="checkbox"
-                                    checked={benefitForm.offersBenefit}
-                                    onChange={(e) =>
-                                      setBenefitForm((f) => ({
-                                        ...f,
-                                        offersBenefit: e.target.checked,
-                                      }))
-                                    }
-                                  />
-                                  Ofrece beneficio
-                                </label>
-                                <input
-                                  className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white"
-                                  placeholder="Título del beneficio"
-                                  value={benefitForm.benefitTitle}
-                                  onChange={(e) =>
-                                    setBenefitForm((f) => ({ ...f, benefitTitle: e.target.value }))
-                                  }
-                                  disabled={!benefitForm.offersBenefit}
-                                />
-                                <textarea
-                                  className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white min-h-[70px]"
-                                  placeholder="Descripción"
-                                  value={benefitForm.benefitDescription}
-                                  onChange={(e) =>
-                                    setBenefitForm((f) => ({
-                                      ...f,
-                                      benefitDescription: e.target.value,
-                                    }))
-                                  }
-                                  disabled={!benefitForm.offersBenefit}
-                                />
-                                <textarea
-                                  className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white min-h-[60px]"
-                                  placeholder="Cómo canjearlo (si no usa QR BarrID)"
-                                  value={benefitForm.benefitHowToRedeem}
-                                  onChange={(e) =>
-                                    setBenefitForm((f) => ({
-                                      ...f,
-                                      benefitHowToRedeem: e.target.value,
-                                    }))
-                                  }
-                                  disabled={!benefitForm.offersBenefit}
-                                />
-                                <button
-                                  type="button"
-                                  disabled={saving}
-                                  onClick={() => void saveBenefit(row)}
-                                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg disabled:opacity-40"
-                                >
-                                  {saving ? "Guardando…" : "Guardar beneficio"}
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : null}
-                    </Fragment>
+                        ) : (
+                          <span className="text-slate-400">Sin cuenta</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="inline-flex items-center gap-2">
+                          <StatusSwitch
+                            active={active}
+                            disabled={saving}
+                            onToggle={() => void toggleStatus(row)}
+                            label={`${active ? "Desactivar" : "Activar"} ${row.businessName}`}
+                          />
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider ${
+                              active ? "text-emerald-700" : "text-slate-400"
+                            }`}
+                          >
+                            {saving ? "…" : active ? "Activo" : "Inactivo"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                        {formatExpiryShort(expiry)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex items-center justify-end gap-0.5">
+                          <button
+                            type="button"
+                            title="Validar depósito / renovar +30 días desde vencimiento"
+                            disabled={saving}
+                            onClick={() => void handleRenew(row)}
+                            data-cuelume-press=""
+                            data-cuelume-release=""
+                            className="p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span className="sr-only">Validar / renovar</span>
+                          </button>
+                          <button
+                            type="button"
+                            title="Editar"
+                            disabled={saving}
+                            onClick={() => setEditingRow(row)}
+                            data-cuelume-press=""
+                            data-cuelume-release=""
+                            className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                          >
+                            <Pencil className="w-4 h-4" />
+                            <span className="sr-only">Editar</span>
+                          </button>
+                          <AdminEstablishmentQrButton
+                            businessName={row.businessName}
+                            category={row.categoria}
+                            plan={row.plan}
+                            disabled={saving}
+                          />
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })
               )}
@@ -925,6 +662,14 @@ export default function AdminOperations({
           </table>
         </div>
       </div>
+
+      <AdminEditDrawer
+        open={Boolean(editingRow)}
+        onClose={() => setEditingRow(null)}
+        row={editingRow}
+        linkedUser={editingLinked}
+        catalog={editingCatalog}
+      />
     </div>
   );
 }

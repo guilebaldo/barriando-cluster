@@ -332,6 +332,8 @@ export type AdminUserRow = {
     googleBusinessUrl: string;
     logoUrl: string;
     address: string;
+    latitude: number | null;
+    longitude: number | null;
     category: string;
     rfc: string;
     razonSocial: string;
@@ -426,6 +428,8 @@ const EXTENDED_SOCIO_PROFILE_SELECT = {
   linkageStatus: true,
   isManualEntry: true,
   address: true,
+  latitude: true,
+  longitude: true,
   category: true,
   ...EXTENDED_BILLING_SELECT,
 } as const;
@@ -474,6 +478,8 @@ type AdminUserRecord = {
     linkageStatus?: string | null;
     isManualEntry?: boolean | null;
     address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     category?: string | null;
     rfc?: string | null;
     razonSocial?: string | null;
@@ -562,6 +568,8 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
             googleBusinessUrl: user.socioProfile.googleBusinessUrl ?? "",
             logoUrl: user.socioProfile.logoUrl ?? "",
             address: user.socioProfile.address ?? "",
+            latitude: user.socioProfile.latitude ?? null,
+            longitude: user.socioProfile.longitude ?? null,
             category: user.socioProfile.category ?? "",
             rfc: user.socioProfile.rfc ?? "",
             razonSocial: user.socioProfile.razonSocial ?? "",
@@ -1190,7 +1198,19 @@ export async function updateCatalogMembershipBenefit(input: {
       update: benefitPayload,
     });
 
+    const linked = await prisma.user.findFirst({
+      where: { socioId: data.socioId },
+      select: { id: true },
+    });
+    if (linked) {
+      await prisma.socioProfile.updateMany({
+        where: { userId: linked.id },
+        data: benefitPayload,
+      });
+    }
+
     revalidatePath("/admin");
+    revalidatePath("/panel");
     revalidatePath("/socios");
     revalidatePath("/");
     return { ok: true };
@@ -1291,5 +1311,136 @@ export async function updateCatalogSocioWebsite(input: {
     }
     console.error("[admin] updateCatalogSocioWebsite failed:", error);
     return { ok: false, error: "No se pudo guardar el sitio web." };
+  }
+}
+
+const adminBusinessProfileSchema = z.object({
+  socioId: z.number().int().positive(),
+  businessName: z.string().trim().max(120),
+  website: z.string().trim().max(500),
+  googleBusinessUrl: z.string().trim().max(500),
+  category: z.string().trim().max(120),
+  address: z.string().trim().max(300),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+  rfc: z.string().trim().max(13),
+  razonSocial: z.string().trim().max(200),
+  regimenFiscal: z.string().trim().max(120),
+  usoCfdi: z.string().trim().max(80),
+  billingStreet: z.string().trim().max(200),
+  billingColonia: z.string().trim().max(120),
+  billingCiudad: z.string().trim().max(120),
+  billingEstado: z.string().trim().max(80),
+  billingPais: z.string().trim().max(80),
+  billingCodigoPostal: z.string().trim().max(10),
+  billingAddressFull: z.string().trim().max(400),
+});
+
+/**
+ * Guarda perfil de negocio desde /admin.
+ * Siempre actualiza roster (nombre) + website override.
+ * Si hay cuenta vinculada, también escribe SocioProfile (ubicación + CFDI).
+ */
+export async function adminUpdateBusinessProfile(
+  input: z.infer<typeof adminBusinessProfileSchema>
+): Promise<{ ok: true; warning?: string } | { ok: false; error: string }> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = adminBusinessProfileSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const data = parsed.data;
+    const catalog = listaSocios.find((s) => s.id === data.socioId);
+    if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
+
+    const businessName = data.businessName.trim() || catalog.name;
+    const website = data.website.trim();
+
+    const existing = await prisma.catalogMembership.findUnique({ where: { socioId: data.socioId } });
+    await prisma.catalogMembership.upsert({
+      where: { socioId: data.socioId },
+      create: {
+        socioId: data.socioId,
+        plan: existing?.plan ?? "NEGOCIO_FAMILIAR",
+        status: existing?.status ?? "active",
+        businessName,
+        paymentMethod: existing?.paymentMethod ?? null,
+      },
+      update: { businessName },
+    });
+
+    if (!website) {
+      await prisma.catalogSocioOverride.deleteMany({ where: { socioId: data.socioId } });
+    } else {
+      let normalized = website;
+      if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`;
+      await prisma.catalogSocioOverride.upsert({
+        where: { socioId: data.socioId },
+        create: { socioId: data.socioId, website: normalized },
+        update: { website: normalized },
+      });
+    }
+
+    const linked = await prisma.user.findFirst({
+      where: { socioId: data.socioId },
+      select: { id: true },
+    });
+
+    if (!linked) {
+      revalidatePath("/admin");
+      revalidatePath("/socios");
+      return {
+        ok: true,
+        warning:
+          "Nombre y sitio web guardados en roster. Ubicación y facturación requieren cuenta vinculada.",
+      };
+    }
+
+    const profilePayload = {
+      businessName,
+      website: website || null,
+      googleBusinessUrl: data.googleBusinessUrl.trim() || null,
+      category: data.category.trim() || null,
+      address: data.address.trim() || null,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      rfc: data.rfc.trim() || null,
+      razonSocial: data.razonSocial.trim() || null,
+      regimenFiscal: data.regimenFiscal.trim() || null,
+      usoCfdi: data.usoCfdi.trim() || null,
+      billingStreet: data.billingStreet.trim() || null,
+      billingColonia: data.billingColonia.trim() || null,
+      billingCiudad: data.billingCiudad.trim() || null,
+      billingEstado: data.billingEstado.trim() || null,
+      billingPais: data.billingPais.trim() || null,
+      billingCodigoPostal: data.billingCodigoPostal.trim() || null,
+      billingAddressFull: data.billingAddressFull.trim() || null,
+    };
+
+    await prisma.socioProfile.upsert({
+      where: { userId: linked.id },
+      create: {
+        userId: linked.id,
+        ...profilePayload,
+        linkageStatus: "approved",
+      },
+      update: profilePayload,
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/panel");
+    revalidatePath("/socios");
+    revalidatePath("/map");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] adminUpdateBusinessProfile failed:", error);
+    return { ok: false, error: "No se pudo guardar el perfil del negocio." };
   }
 }

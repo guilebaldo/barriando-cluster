@@ -15,6 +15,16 @@ type BenefitFormProps = {
     benefitValidUntil: string | null;
   };
   onSaved?: () => void;
+  embedded?: boolean;
+  onSave?: (payload: {
+    offersBenefit: boolean;
+    benefitTitle: string;
+    benefitDescription: string;
+    benefitHowToRedeem: string;
+    benefitRedeemViaQr: boolean;
+    benefitValidFrom: string;
+    benefitValidUntil: string;
+  }) => Promise<{ ok: true } | { ok: false; error: string }>;
 };
 
 function toDateInput(value: string | null): string {
@@ -24,7 +34,12 @@ function toDateInput(value: string | null): string {
   return d.toISOString().slice(0, 10);
 }
 
-export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps) {
+export default function SocioBenefitForm({
+  initial,
+  onSaved,
+  embedded = false,
+  onSave,
+}: BenefitFormProps) {
   const [offersBenefit, setOffersBenefit] = useState(initial.offersBenefit);
   const [benefitTitle, setBenefitTitle] = useState(initial.benefitTitle);
   const [benefitDescription, setBenefitDescription] = useState(initial.benefitDescription);
@@ -39,7 +54,7 @@ export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps)
     e.preventDefault();
     setMsg("");
     setLoading(true);
-    const result = await updateSocioBenefit({
+    const payload = {
       offersBenefit,
       benefitTitle,
       benefitDescription,
@@ -47,7 +62,8 @@ export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps)
       benefitRedeemViaQr,
       benefitValidFrom,
       benefitValidUntil,
-    });
+    };
+    const result = onSave ? await onSave(payload) : await updateSocioBenefit(payload);
     setLoading(false);
     if (!result.ok) {
       setMsg(result.error);
@@ -57,19 +73,7 @@ export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps)
     onSaved?.();
   }
 
-  return (
-    <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <Gift className="w-4 h-4 text-[#27366D]" />
-        <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-          Beneficio para socios
-        </h2>
-      </div>
-      <p className="text-xs text-slate-500 mb-4 font-light leading-relaxed">
-        Ofrece un beneficio especial a Vecinos y otros socios con membresía activa. Ellos lo verán en
-        /socios y lo canjearán con su credencial.
-      </p>
-
+  const formBody = (
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="flex items-center gap-2 text-sm text-slate-800">
           <input
@@ -204,6 +208,23 @@ export default function SocioBenefitForm({ initial, onSaved }: BenefitFormProps)
         </button>
         {msg && <p className="text-xs text-slate-600">{msg}</p>}
       </form>
+  );
+
+  if (embedded) return formBody;
+
+  return (
+    <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
+        <Gift className="w-4 h-4 text-[#27366D]" />
+        <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+          Beneficio para socios
+        </h2>
+      </div>
+      <p className="text-xs text-slate-500 mb-4 font-light leading-relaxed">
+        Ofrece un beneficio especial a Vecinos y otros socios con membresía activa. Ellos lo verán en
+        /socios y lo canjearán con su credencial.
+      </p>
+      {formBody}
     </section>
   );
 }
