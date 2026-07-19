@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Home, Share, X } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Download, Home, Menu, PlusSquare, Share, SquarePlus, X } from "lucide-react";
 import {
   clearDeferredInstallPrompt,
   ensureInstallPromptListener,
@@ -19,6 +19,28 @@ type Props = {
   /** Copy variant: BarrID membership vs first passport use. */
   purpose?: "barrid" | "pasaporte";
 };
+
+function StepRow({
+  n,
+  icon,
+  children,
+}: {
+  n: number;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <li className="flex gap-3 items-start">
+      <span className="shrink-0 w-6 h-6 rounded-full bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center mt-0.5">
+        {n}
+      </span>
+      <span className="shrink-0 w-8 h-8 rounded-lg bg-[#27366D]/10 text-[#27366D] flex items-center justify-center">
+        {icon}
+      </span>
+      <span className="leading-snug text-sm text-slate-700 pt-1">{children}</span>
+    </li>
+  );
+}
 
 export default function AddToHomeScreenModal({
   userId,
@@ -118,34 +140,36 @@ export default function AddToHomeScreenModal({
         <p className="text-sm text-slate-600 font-light leading-relaxed mt-2">{blurb}</p>
 
         {ios ? (
-          <ol className="mt-5 space-y-3 text-sm text-slate-700">
-            <li className="flex gap-3">
-              <span className="shrink-0 w-6 h-6 rounded-full bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center">
-                1
-              </span>
-              <span className="leading-snug">
-                Toca <Share className="inline w-4 h-4 text-[#27366D] align-text-bottom" aria-hidden />{" "}
-                <strong>Compartir</strong> en Safari.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="shrink-0 w-6 h-6 rounded-full bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center">
-                2
-              </span>
-              <span className="leading-snug">
-                Elige <strong>Agregar a pantalla de inicio</strong>.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="shrink-0 w-6 h-6 rounded-full bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center">
-                3
-              </span>
-              <span className="leading-snug">
-                Confirma el nombre <strong>BarriApp</strong> y toca Agregar.
-              </span>
-            </li>
+          <ol className="mt-5 space-y-3.5">
+            <StepRow n={1} icon={<Share className="w-4 h-4" aria-hidden />}>
+              Toca el ícono <strong>Compartir</strong> en la barra de Safari.
+            </StepRow>
+            <StepRow n={2} icon={<SquarePlus className="w-4 h-4" aria-hidden />}>
+              Desliza y elige <strong>Agregar a pantalla de inicio</strong>.
+            </StepRow>
+            <StepRow n={3} icon={<PlusSquare className="w-4 h-4" aria-hidden />}>
+              Confirma el nombre <strong>BarriApp</strong> y toca <strong>Agregar</strong>.
+            </StepRow>
           </ol>
-        ) : null}
+        ) : (
+          <ol className="mt-5 space-y-3.5">
+            {canNativeInstall ? (
+              <StepRow n={1} icon={<Download className="w-4 h-4" aria-hidden />}>
+                Toca <strong>Agregar a inicio</strong> abajo para la instalación nativa de Chrome.
+              </StepRow>
+            ) : (
+              <StepRow n={1} icon={<Menu className="w-4 h-4" aria-hidden />}>
+                Abre el menú <strong>⋮</strong> del navegador (arriba a la derecha).
+              </StepRow>
+            )}
+            <StepRow n={2} icon={<Download className="w-4 h-4" aria-hidden />}>
+              Elige <strong>Instalar app</strong> o <strong>Agregar a la pantalla de inicio</strong>.
+            </StepRow>
+            <StepRow n={3} icon={<Home className="w-4 h-4" aria-hidden />}>
+              Confirma el nombre <strong>BarriApp</strong> y listo.
+            </StepRow>
+          </ol>
+        )}
 
         <div className="flex flex-col gap-2 mt-6">
           {!ios && canNativeInstall ? (
@@ -157,12 +181,6 @@ export default function AddToHomeScreenModal({
             >
               {installing ? "Abriendo…" : "Agregar a inicio"}
             </button>
-          ) : null}
-          {!ios && !canNativeInstall ? (
-            <p className="text-xs text-slate-500 leading-relaxed mb-1">
-              En el menú del navegador elige <strong>Instalar app</strong> o{" "}
-              <strong>Agregar a pantalla de inicio</strong>.
-            </p>
           ) : null}
           <button
             type="button"

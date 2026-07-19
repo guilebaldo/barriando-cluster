@@ -265,8 +265,7 @@ export default function EquipoPage() {
                   Dónde estamos
                 </h3>
                 <p className="text-sm text-gray-500 mt-2 font-light">
-                  Visítanos en el Centro Histórico. Explora el mapa, abre la ruta en Google Maps o copia las
-                  coordenadas.
+                  Visítanos en el Centro Histórico. Explora el mapa o abre la ruta en Google Maps.
                 </p>
               </div>
               <EquipoLocationCard />
