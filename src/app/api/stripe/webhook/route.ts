@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      await publishBusinessPresenceOnPayment(userId, plan);
+      await publishBusinessPresenceOnPayment(userId, plan, { reinstateRoster: true });
     }
   }
 

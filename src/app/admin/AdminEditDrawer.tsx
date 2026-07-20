@@ -20,6 +20,7 @@ import {
 import { PLAN_ADMIN_LABELS, PAYMENT_METHOD_OPTIONS } from "@/lib/admin-labels";
 import { formatExpiryShort } from "@/lib/admin-ops";
 import { playCuelume } from "./useAdminCuelume";
+import AdminConfirmDialog from "./AdminConfirmDialog";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 type DrawerTab = "negocio" | "beneficio" | "membresia";
@@ -52,11 +53,13 @@ export default function AdminEditDrawer({
   const [plan, setPlan] = useState<MembershipPlan>("NEGOCIO_FAMILIAR");
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [status, setStatus] = useState<"active" | "inactive">("active");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (!open || !row) return;
     setTab("negocio");
     setMsg("");
+    setConfirmDeleteOpen(false);
     setPlan(row.plan);
     setPaymentMethod(row.paymentMethod ?? "");
     setStatus(row.status === "active" ? "active" : "inactive");
@@ -65,11 +68,11 @@ export default function AdminEditDrawer({
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !confirmDeleteOpen) onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, confirmDeleteOpen]);
 
   const profileInitial = useMemo((): SocioProfileFormInitial => {
     const p = linkedUser?.profile;
@@ -196,14 +199,11 @@ export default function AdminEditDrawer({
 
   async function handleDelete() {
     if (!row) return;
-    const ok = window.confirm(
-      `¿Eliminar «${row.businessName}» del roster de Operaciones?\n\nSe quita del directorio admin. La cuenta de usuario (si existe) no se borra; solo se desvincula.`
-    );
-    if (!ok) return;
     setMsg("");
     setSaving(true);
     const result = await deleteCatalogMembership(row.socioId);
     setSaving(false);
+    setConfirmDeleteOpen(false);
     if (!result.ok) {
       playCuelume("error");
       setMsg(result.error);
@@ -299,7 +299,7 @@ export default function AdminEditDrawer({
               embedded
               requireFiscal={Boolean(linkedUser)}
               onSave={handleSaveProfile}
-              onDelete={() => void handleDelete()}
+              onDelete={() => setConfirmDeleteOpen(true)}
               deleteDisabled={saving}
             />
           ) : null}
@@ -310,7 +310,7 @@ export default function AdminEditDrawer({
               initial={benefitInitial}
               embedded
               onSave={handleSaveBenefit}
-              onDelete={() => void handleDelete()}
+              onDelete={() => setConfirmDeleteOpen(true)}
               deleteDisabled={saving}
             />
           ) : null}
@@ -395,7 +395,7 @@ export default function AdminEditDrawer({
                 <button
                   type="button"
                   disabled={saving}
-                  onClick={() => void handleDelete()}
+                  onClick={() => setConfirmDeleteOpen(true)}
                   className="bg-white hover:bg-red-50 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg disabled:opacity-40"
                 >
                   Eliminar
@@ -405,6 +405,24 @@ export default function AdminEditDrawer({
           ) : null}
         </div>
       </aside>
+
+      <AdminConfirmDialog
+        open={confirmDeleteOpen}
+        danger
+        busy={saving}
+        title={`Eliminar «${row.businessName}»`}
+        description={
+          linkedUser
+            ? "Se quita del roster de Operaciones y del directorio público. La cuenta de usuario no se borra: solo se desvincula y no volverá a aparecer en el roster hasta que valides un pago o renueves la membresía."
+            : "Se quita del roster de Operaciones y del directorio público. Esta acción no se puede deshacer desde aquí."
+        }
+        confirmLabel="Eliminar del roster"
+        cancelLabel="Cancelar"
+        onCancel={() => {
+          if (!saving) setConfirmDeleteOpen(false);
+        }}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 }

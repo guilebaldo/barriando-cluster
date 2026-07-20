@@ -15,11 +15,14 @@ import {
   type HomePromoRow,
 } from "./actions";
 import { Pencil, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import AdminConfirmDialog from "./AdminConfirmDialog";
 
 export function AdminTestimonialsSection({ testimonials }: { testimonials: TestimonialRow[] }) {
   const router = useRouter();
   const [msg, setMsg] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     authorName: "",
     businessName: "",
@@ -130,7 +133,7 @@ export function AdminTestimonialsSection({ testimonials }: { testimonials: Testi
                       <button type="button" title="Publicar/ocultar" onClick={async () => { await toggleTestimonialPublished(row.id); router.refresh(); }} className="p-1.5 rounded-lg hover:bg-slate-100">
                         {row.published ? <ToggleRight className="w-3.5 h-3.5 text-emerald-600" /> : <ToggleLeft className="w-3.5 h-3.5 text-slate-400" />}
                       </button>
-                      <button type="button" title="Eliminar" onClick={async () => { if (!confirm("¿Eliminar testimonio?")) return; await deleteTestimonial(row.id); router.refresh(); }} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                      <button type="button" title="Eliminar" onClick={() => setDeleteId(row.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </td>
                 </tr>
@@ -139,6 +142,28 @@ export function AdminTestimonialsSection({ testimonials }: { testimonials: Testi
           </tbody>
         </table>
       </div>
+
+      <AdminConfirmDialog
+        open={Boolean(deleteId)}
+        danger
+        busy={busy}
+        title="Eliminar testimonio"
+        description="Se borrará este testimonio de forma permanente."
+        confirmLabel="Eliminar"
+        onCancel={() => {
+          if (!busy) setDeleteId(null);
+        }}
+        onConfirm={() => {
+          if (!deleteId) return;
+          void (async () => {
+            setBusy(true);
+            await deleteTestimonial(deleteId);
+            setBusy(false);
+            setDeleteId(null);
+            router.refresh();
+          })();
+        }}
+      />
     </div>
   );
 }
@@ -147,6 +172,8 @@ export function AdminHomePromosSection({ promos }: { promos: HomePromoRow[] }) {
   const router = useRouter();
   const [msg, setMsg] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     headline: "",
     body: "",
@@ -249,7 +276,7 @@ export function AdminHomePromosSection({ promos }: { promos: HomePromoRow[] }) {
                       <button type="button" title="Activar/desactivar" onClick={async () => { await toggleHomePromoActive(row.id); router.refresh(); }} className="p-1.5 rounded-lg hover:bg-slate-100">
                         {row.active ? <ToggleRight className="w-3.5 h-3.5 text-emerald-600" /> : <ToggleLeft className="w-3.5 h-3.5 text-slate-400" />}
                       </button>
-                      <button type="button" title="Eliminar" onClick={async () => { if (!confirm("¿Eliminar promoción?")) return; await deleteHomePromo(row.id); router.refresh(); }} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                      <button type="button" title="Eliminar" onClick={() => setDeleteId(row.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </td>
                 </tr>
@@ -258,6 +285,28 @@ export function AdminHomePromosSection({ promos }: { promos: HomePromoRow[] }) {
           </tbody>
         </table>
       </div>
+
+      <AdminConfirmDialog
+        open={Boolean(deleteId)}
+        danger
+        busy={busy}
+        title="Eliminar promoción"
+        description="Se borrará esta promoción de forma permanente."
+        confirmLabel="Eliminar"
+        onCancel={() => {
+          if (!busy) setDeleteId(null);
+        }}
+        onConfirm={() => {
+          if (!deleteId) return;
+          void (async () => {
+            setBusy(true);
+            await deleteHomePromo(deleteId);
+            setBusy(false);
+            setDeleteId(null);
+            router.refresh();
+          })();
+        }}
+      />
     </div>
   );
 }

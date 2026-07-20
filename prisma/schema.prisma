@@ -136,6 +136,8 @@ model SocioProfile {
   benefitRedeemViaQr  Boolean  @default(false)
   benefitValidFrom    DateTime?
   benefitValidUntil   DateTime?
+  /** Si true, no se vuelve a crear fila en CatalogMembership (admin lo quitó del roster). */
+  rosterExcluded      Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   benefitRedemptions BenefitRedemption[]

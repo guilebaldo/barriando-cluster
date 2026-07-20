@@ -100,16 +100,29 @@ async function migrateSyntheticSocioId(
   return newId;
 }
 
+export async function clearRosterExclusion(userId: string): Promise<void> {
+  await prisma.socioProfile.updateMany({
+    where: { userId },
+    data: { rosterExcluded: false },
+  });
+}
+
 /**
  * Al activar pago de plan de negocio/empresa:
  * - aprueba vinculación del perfil (si no está rechazada)
  * - asegura fila en CatalogMembership para que aparezca en /admin Operaciones
+ * - `reinstateRoster`: limpia exclusión admin (pago nuevo / validación / renovar)
  */
 export async function publishBusinessPresenceOnPayment(
   userId: string,
-  plan: MembershipPlan
+  plan: MembershipPlan,
+  options?: { reinstateRoster?: boolean }
 ): Promise<void> {
   if (!isBusinessPlan(plan)) return;
+
+  if (options?.reinstateRoster) {
+    await clearRosterExclusion(userId);
+  }
 
   await prisma.socioProfile.updateMany({
     where: {
@@ -126,6 +139,7 @@ export async function publishBusinessPresenceOnPayment(
 /**
  * Upsert roster row for a paid business user so /admin "Todos" shows them
  * even when they are not in the CSV catalog yet.
+ * Respects admin `rosterExcluded` (delete from Operaciones).
  */
 export async function ensureCatalogMembershipForPaidUser(userId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
@@ -140,6 +154,8 @@ export async function ensureCatalogMembershipForPaidUser(userId: string): Promis
   }
 
   const profile = user.socioProfile;
+  if (profile?.rosterExcluded) return false;
+
   const businessName =
     profile?.businessName?.trim() ||
     (user.socioId != null ? `Socio #${user.socioId}` : null);
@@ -194,6 +210,7 @@ export async function ensureCatalogMembershipForPaidUser(userId: string): Promis
 /**
  * Backfill: paid business accounts missing from CatalogMembership → create roster rows.
  * Also migrates legacy synthetic socioIds to consecutive ids.
+ * Skips profiles marked rosterExcluded by admin.
  * Safe to run on /admin load.
  */
 export async function reconcilePaidBusinessesIntoRoster(): Promise<number> {
@@ -207,6 +224,7 @@ export async function reconcilePaidBusinessesIntoRoster(): Promise<number> {
         socioProfile: {
           businessName: { not: null },
           linkageStatus: { not: "rejected" },
+          rosterExcluded: false,
         },
       },
       select: { id: true, socioId: true },

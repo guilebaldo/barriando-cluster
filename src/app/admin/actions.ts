@@ -35,7 +35,9 @@ export async function approveManualCertification(userId: string): Promise<Action
       },
     });
 
-    await publishBusinessPresenceOnPayment(userId, subscription.plan);
+    await publishBusinessPresenceOnPayment(userId, subscription.plan, {
+      reinstateRoster: true,
+    });
 
     revalidatePath("/admin");
     revalidatePath("/panel");
@@ -210,7 +212,9 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
         subAfter &&
         (subAfter.status === "active" || subAfter.status === "manual_active")
       ) {
-        await publishBusinessPresenceOnPayment(userId, subAfter.plan);
+        await publishBusinessPresenceOnPayment(userId, subAfter.plan, {
+          reinstateRoster: status === "manual_active" || status === "active",
+        });
       }
     }
 
@@ -315,9 +319,43 @@ export async function deleteSocioUser(userId: string): Promise<ActionResult> {
       return { ok: false, error: "No puedes eliminar tu propia cuenta de administrador." };
     }
 
-    await prisma.user.delete({ where: { id: userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        socioId: true,
+        socioProfile: { select: { businessName: true } },
+      },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      if (user?.socioId != null) {
+        await tx.catalogSocioOverride.deleteMany({ where: { socioId: user.socioId } });
+        await tx.catalogMembership.deleteMany({ where: { socioId: user.socioId } });
+      } else {
+        const name = user?.socioProfile?.businessName?.trim();
+        if (name) {
+          const orphans = await tx.catalogMembership.findMany({
+            where: { businessName: name },
+            select: { socioId: true },
+          });
+          for (const row of orphans) {
+            const stillLinked = await tx.user.findFirst({
+              where: { socioId: row.socioId, NOT: { id: userId } },
+              select: { id: true },
+            });
+            if (stillLinked) continue;
+            await tx.catalogSocioOverride.deleteMany({ where: { socioId: row.socioId } });
+            await tx.catalogMembership.delete({ where: { socioId: row.socioId } });
+          }
+        }
+      }
+      await tx.user.delete({ where: { id: userId } });
+    });
+
     revalidatePath("/admin");
+    revalidatePath("/panel");
     revalidatePath("/socios");
+    revalidatePath("/pasaporte");
     revalidatePath("/map");
     revalidatePath("/");
     return { ok: true };
@@ -1099,7 +1137,7 @@ export async function renewCatalogMembership(socioId: number): Promise<ActionRes
           currentPeriodEnd: nextEnd,
         },
       });
-      await publishBusinessPresenceOnPayment(linked.id, plan);
+      await publishBusinessPresenceOnPayment(linked.id, plan, { reinstateRoster: true });
     }
 
     revalidatePath("/admin");
@@ -1338,10 +1376,20 @@ export async function deleteCatalogMembership(socioId: number): Promise<ActionRe
     await prisma.$transaction(async (tx) => {
       await tx.catalogSocioOverride.deleteMany({ where: { socioId } });
       await tx.catalogMembership.delete({ where: { socioId } });
-      await tx.user.updateMany({
+      const linked = await tx.user.findMany({
         where: { socioId },
-        data: { socioId: null },
+        select: { id: true },
       });
+      if (linked.length > 0) {
+        await tx.user.updateMany({
+          where: { socioId },
+          data: { socioId: null },
+        });
+        await tx.socioProfile.updateMany({
+          where: { userId: { in: linked.map((u) => u.id) } },
+          data: { rosterExcluded: true },
+        });
+      }
     });
 
     revalidatePath("/admin");

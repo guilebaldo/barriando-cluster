@@ -32,6 +32,7 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContentSection";
 import AdminOperations from "./AdminOperations";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
+import AdminConfirmDialog from "./AdminConfirmDialog";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 
@@ -208,6 +209,7 @@ export default function AdminDashboard({
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [linkageResolved, setLinkageResolved] = useState<Record<string, ResolvedAction>>({});
   const [paymentResolved, setPaymentResolved] = useState<Record<string, ResolvedAction>>({});
+  const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
 
   const visibleUsers = useMemo(() => {
     if (tab !== "accounts") return [];
@@ -524,10 +526,7 @@ export default function AdminDashboard({
                       socioOptions={socioOptions}
                       onEdit={() => (isEditing ? setEditingId(null) : openEdit(user))}
                       onSave={() => handleSave(user.id)}
-                      onDelete={() => {
-                        if (!confirm(`¿Eliminar la cuenta de ${user.nombre}?`)) return;
-                        runAction(user.id, () => deleteSocioUser(user.id), "Socio eliminado.");
-                      }}
+                      onDelete={() => setDeleteTarget(user)}
                       onApprovePayment={() =>
                         runPaymentAction(
                           user.id,
@@ -569,6 +568,42 @@ export default function AdminDashboard({
         </div>
       </div>
       )}
+
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        danger
+        busy={deleteTarget != null && loadingId === deleteTarget.id}
+        title={`Eliminar cuenta de ${deleteTarget?.nombre ?? "este usuario"}`}
+        description={
+          deleteTarget?.socioName || deleteTarget?.requestedBusinessName
+            ? `Se borrará la cuenta «${deleteTarget.email}» y también su negocio en el roster de Operaciones (${deleteTarget.socioName || deleteTarget.requestedBusinessName}). Esta acción no se puede deshacer.`
+            : `Se borrará la cuenta «${deleteTarget?.email ?? ""}». Esta acción no se puede deshacer.`
+        }
+        confirmLabel="Eliminar cuenta"
+        cancelLabel="Cancelar"
+        onCancel={() => {
+          if (loadingId) return;
+          setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const target = deleteTarget;
+          void (async () => {
+            setLoadingId(target.id);
+            const result = await deleteSocioUser(target.id);
+            setLoadingId(null);
+            setDeleteTarget(null);
+            if (!result.ok) {
+              playCuelume("error");
+              setMsg(result.error);
+              return;
+            }
+            playCuelume("success");
+            setMsg("Cuenta y roster eliminados.");
+            router.refresh();
+          })();
+        }}
+      />
     </div>
   );
 }
