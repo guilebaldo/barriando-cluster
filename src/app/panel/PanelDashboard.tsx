@@ -596,9 +596,27 @@ export default function PanelDashboard({
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
                     Logotipo
                   </p>
-                  <p className="text-xs text-slate-500 mb-3 font-light leading-relaxed">
-                    La actualización de logotipo estará disponible próximamente. Por ahora se muestra el del
-                    catálogo oficial o el que registraste al vincular tu negocio.
+                  <p className="text-xs text-slate-600 mb-2 font-light leading-relaxed">
+                    La carga desde el panel aún no está habilitada. Mientras tanto, envía tu logotipo en{" "}
+                    <strong className="font-semibold text-slate-800">PNG con fondo transparente</strong>,
+                    idealmente <strong className="font-semibold text-slate-800">512×512 px</strong>{" "}
+                    (máx. 1024×1024), a{" "}
+                    <a
+                      href="mailto:clusterturistico.pue@gmail.com"
+                      className="font-semibold text-[#27366D] underline underline-offset-2"
+                    >
+                      clusterturistico.pue@gmail.com
+                    </a>{" "}
+                    o por WhatsApp{" "}
+                    <a
+                      href="https://wa.me/522214296540"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-[#27366D] underline underline-offset-2"
+                    >
+                      22 14 29 65 40
+                    </a>
+                    .
                   </p>
                   <input
                     type="file"
@@ -607,7 +625,9 @@ export default function PanelDashboard({
                     className="text-xs w-full opacity-40 cursor-not-allowed"
                     aria-disabled
                   />
-                  <p className="text-[10px] text-amber-700 mt-2 font-medium">Próximamente habilitado</p>
+                  <p className="text-[10px] text-amber-700 mt-2 font-medium">
+                    Carga automática próximamente — por ahora envíalo por correo o WhatsApp
+                  </p>
                 </div>
               </div>
 
@@ -688,9 +708,27 @@ export default function PanelDashboard({
                 <Upload className="w-4 h-4 text-slate-400" />
                 <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Actualizar logo</h2>
               </div>
-              <p className="text-xs text-slate-500 mb-3 font-light leading-relaxed">
-                La actualización de logotipo estará disponible próximamente. Por ahora tu logo se muestra desde
-                el catálogo oficial o el que registraste al vincular tu negocio.
+              <p className="text-xs text-slate-600 mb-3 font-light leading-relaxed">
+                La carga desde el panel aún no está habilitada. Mientras tanto, envía tu logotipo en{" "}
+                <strong className="font-semibold text-slate-800">PNG con fondo transparente</strong>,
+                idealmente <strong className="font-semibold text-slate-800">512×512 px</strong> (máx.
+                1024×1024), a{" "}
+                <a
+                  href="mailto:clusterturistico.pue@gmail.com"
+                  className="font-semibold text-[#27366D] underline underline-offset-2"
+                >
+                  clusterturistico.pue@gmail.com
+                </a>{" "}
+                o por WhatsApp{" "}
+                <a
+                  href="https://wa.me/522214296540"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-[#27366D] underline underline-offset-2"
+                >
+                  22 14 29 65 40
+                </a>
+                .
               </p>
               <input
                 type="file"
@@ -699,7 +737,9 @@ export default function PanelDashboard({
                 className="text-xs w-full opacity-40 cursor-not-allowed"
                 aria-disabled
               />
-              <p className="text-[10px] text-amber-700 mt-2 font-medium">Próximamente habilitado</p>
+              <p className="text-[10px] text-amber-700 mt-2 font-medium">
+                Carga automática próximamente — por ahora envíalo por correo o WhatsApp
+              </p>
             </section>
             )}
 

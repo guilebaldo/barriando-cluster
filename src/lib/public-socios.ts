@@ -47,6 +47,15 @@ function namesReferToSameBusiness(a: string, b: string): boolean {
   );
 }
 
+/** Solo URLs http(s) para el botón Google Maps (no dirección postal). */
+function mapsLinkFrom(...candidates: Array<string | null | undefined>): string | undefined {
+  for (const raw of candidates) {
+    const value = raw?.trim();
+    if (value && /^https?:\/\//i.test(value)) return value;
+  }
+  return undefined;
+}
+
 type CatalogMembershipRow = {
   socioId: number;
   plan: MembershipPlan;
@@ -244,7 +253,7 @@ function catalogSocioFromRoster(
       membership.category?.trim() || catalog?.categoria || "Negocio certificado",
     foto,
     url: overrideUrl || catalog?.url || "#",
-    direccion: catalog?.direccion,
+    direccion: mapsLinkFrom(catalog?.direccion),
     membershipPlan: membership.plan as Socio["membershipPlan"],
     benefit: rosterBenefit(membership),
     latitude: catalog?.latitude ?? null,
@@ -283,7 +292,7 @@ function userToSocio(
       ...catalog,
       name: name || roster?.businessName?.trim() || catalog.name,
       url: profile.website?.trim() || overrideUrl || catalog.url,
-      direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || catalog.direccion,
+      direccion: mapsLinkFrom(profile.googleBusinessUrl, catalog.direccion),
       categoria:
         profile.category?.trim() ||
         roster?.category?.trim() ||
@@ -308,7 +317,7 @@ function userToSocio(
       "Negocio certificado",
     foto,
     url: profile.website?.trim() || overrideUrl || "#",
-    direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || undefined,
+    direccion: mapsLinkFrom(profile.googleBusinessUrl),
     benefit: profileBenefit(profile) || (roster ? rosterBenefit(roster) : null),
     membershipPlan: sub.plan as Socio["membershipPlan"],
     latitude: profile.latitude ?? null,

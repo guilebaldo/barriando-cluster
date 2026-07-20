@@ -299,7 +299,7 @@ export default function SociosImmersiveView({
             Sitio web
           </a>
         )}
-        {selectedSocio.direccion && (
+        {selectedSocio.direccion && /^https?:\/\//i.test(selectedSocio.direccion) && (
           <a
             href={selectedSocio.direccion}
             target="_blank"
