@@ -5,7 +5,10 @@ import { ChevronDown, Link2, Search } from "lucide-react";
 import { linkSocioAccount, registerManualBusiness } from "./actions";
 import BusinessProfileFields from "./BusinessProfileFields";
 import type { SocioProfileFormInitial } from "./business-profile-types";
-import { emptyBusinessProfile } from "@/lib/business-address";
+import {
+  emptyBusinessProfile,
+  isManualRegistrationComplete,
+} from "@/lib/business-address";
 import {
   formFieldInputClass,
   formFieldLabelClass,
@@ -38,12 +41,24 @@ export default function LinkSocioSection({
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [linkMsg, setLinkMsg] = useState("");
   const [linkLoading, setLinkLoading] = useState(false);
+  const [submitShake, setSubmitShake] = useState(false);
   const [manualForm, setManualForm] = useState<SocioProfileFormInitial>(() =>
     emptyBusinessProfile(accountEmail)
   );
   const containerRef = useRef<HTMLDivElement>(null);
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isManual = selectedId === NOT_LISTED_ID;
+  const manualReady = useMemo(
+    () => isManualRegistrationComplete(manualForm),
+    [manualForm]
+  );
+
+  useEffect(() => {
+    if (manualReady && linkMsg.startsWith("Aún faltan")) {
+      setLinkMsg("");
+    }
+  }, [manualReady, linkMsg]);
 
   const available = useMemo(() => {
     const taken = new Set(takenSocioIds);
@@ -76,6 +91,12 @@ export default function LinkSocioSection({
     }));
   }, [accountEmail]);
 
+  useEffect(() => {
+    return () => {
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+    };
+  }, []);
+
   function pickOption(id: number, label: string) {
     setSelectedId(id);
     setQuery(label);
@@ -88,6 +109,18 @@ export default function LinkSocioSection({
     value: SocioProfileFormInitial[K]
   ) => setManualForm((prev) => ({ ...prev, [key]: value }));
 
+  function nudgeIncomplete() {
+    setLinkMsg("Aún faltan datos obligatorios. Completa todos los campos marcados con *.");
+    setSubmitShake(true);
+    try {
+      navigator.vibrate?.(40);
+    } catch {
+      /* ignore */
+    }
+    if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+    shakeTimerRef.current = setTimeout(() => setSubmitShake(false), 450);
+  }
+
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     setLinkMsg("");
@@ -95,12 +128,8 @@ export default function LinkSocioSection({
 
     try {
       if (isManual) {
-        if (!manualForm.privacyAccepted) {
-          setLinkMsg("Debes aceptar el aviso de privacidad.");
-          return;
-        }
-        if (manualForm.latitude == null || manualForm.longitude == null) {
-          setLinkMsg("Confirma la ubicación en el mapa.");
+        if (!isManualRegistrationComplete(manualForm)) {
+          nudgeIncomplete();
           return;
         }
         const result = await registerManualBusiness(manualForm);
@@ -225,13 +254,35 @@ export default function LinkSocioSection({
             requireFiscal
             requirePrivacy
           />
-          <button
-            type="submit"
-            disabled={linkLoading}
-            className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg disabled:opacity-40"
-          >
-            {linkLoading ? "Enviando…" : "Enviar solicitud de registro"}
-          </button>
+          <div className="space-y-2">
+            <button
+              type={manualReady ? "submit" : "button"}
+              disabled={linkLoading}
+              aria-disabled={!manualReady || linkLoading}
+              onClick={
+                manualReady || linkLoading
+                  ? undefined
+                  : (e) => {
+                      e.preventDefault();
+                      nudgeIncomplete();
+                    }
+              }
+              className={`text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg transition ${
+                submitShake ? "animate-nudge-shake" : ""
+              } ${
+                manualReady
+                  ? "bg-[#27366D] hover:bg-[#1e2b58] text-white"
+                  : "bg-[#27366D]/30 text-white/80 cursor-not-allowed"
+              } disabled:opacity-40`}
+            >
+              {linkLoading ? "Enviando…" : "Enviar solicitud de registro"}
+            </button>
+            {!manualReady ? (
+              <p className="text-[11px] text-slate-500 font-light">
+                El botón se activa cuando completes todos los campos obligatorios (*).
+              </p>
+            ) : null}
+          </div>
         </form>
       ) : (
         <button
@@ -245,7 +296,14 @@ export default function LinkSocioSection({
       )}
 
       {linkMsg ? (
-        <p className="mt-4 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+        <p
+          className={`mt-4 text-xs rounded-lg px-3 py-2 ${
+            linkMsg.startsWith("Aún faltan")
+              ? "text-amber-950 bg-amber-50 border border-amber-200"
+              : "text-slate-700 bg-slate-50 border border-slate-200"
+          }`}
+          role="status"
+        >
           {linkMsg}
         </p>
       ) : null}

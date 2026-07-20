@@ -13,6 +13,9 @@ export const formFieldLegendClass =
 
 export const formFieldInputClass = formControlBase;
 
+/** Input type=date: centra el valor en WebKit/Safari (suele quedar pegado arriba). */
+export const formFieldDateClass = `${formControlBase} py-0 [&::-webkit-datetime-edit]:h-full [&::-webkit-datetime-edit]:flex [&::-webkit-datetime-edit]:items-center [&::-webkit-datetime-edit]:py-0 [&::-webkit-date-and-time-value]:min-h-[1.25rem] [&::-webkit-date-and-time-value]:leading-none`;
+
 /** Select nativo con el mismo alto/ancho que los inputs (chevron propio via appearance-none). */
 export const formFieldSelectClass = `${formControlBase} appearance-none cursor-pointer pr-10 bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 24 24%27 stroke=%27%2364748b%27%3E%3Cpath stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27M19 9l-7 7-7-7%27/%3E%3C/svg%3E')]`;
 

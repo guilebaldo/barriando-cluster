@@ -39,6 +39,23 @@ export function isVisibleOnMap(plan: MembershipPlan): boolean {
   return MAP_PLANS.includes(plan);
 }
 
+/**
+ * Texto de beneficio de visibilidad pública según el plan
+ * (evita mencionar MAP en Pequeña/Mediana).
+ */
+export function describeBusinessPresenceGoal(plan: MembershipPlan): string {
+  if (isVisibleOnMap(plan)) {
+    return "aparecer en el directorio de socios y en el itinerario MAP";
+  }
+  if (isVisibleInCarousel(plan)) {
+    return "aparecer en el directorio de socios y en el carrusel de la página principal";
+  }
+  if (isVisibleInSociosDirectory(plan)) {
+    return "aparecer en el directorio de socios";
+  }
+  return "activar tu ficha de negocio";
+}
+
 /** Plan de negocio ($600+) que ofrece sello / QR en el Pasaporte Digital. */
 export function canOfferPassportStamp(plan: MembershipPlan | null | undefined): boolean {
   return Boolean(plan && PASSPORT_STAMP_PLANS.includes(plan));

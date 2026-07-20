@@ -12,6 +12,7 @@ import {
   REGIMEN_OPTIONS,
 } from "@/lib/fiscal-options";
 import {
+  formFieldDateClass,
   formFieldInputClass,
   formFieldLabelClass,
   formFieldLegendClass,
@@ -280,7 +281,7 @@ export default function BusinessProfileFields({
               disabled={disabled}
               value={form.contactBirthDate}
               onChange={(e) => set("contactBirthDate", e.target.value)}
-              className={`${formFieldInputClass} mt-1`}
+              className={`${formFieldDateClass} mt-1`}
             />
           </label>
           <label className={formFieldLabelClass}>

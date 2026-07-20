@@ -113,3 +113,56 @@ export function toBusinessProfileFormInitial(
     privacyAccepted: Boolean(partial.privacyAccepted),
   };
 }
+
+/** Campos obligatorios del alta manual «Mi negocio no está listado». */
+export function isManualRegistrationComplete(form: SocioProfileFormInitial): boolean {
+  const filled = (v: string | null | undefined) => Boolean(v?.trim());
+  if (!filled(form.category) || !filled(form.businessName)) return false;
+  if (
+    !filled(form.street) ||
+    !filled(form.streetNumber) ||
+    !filled(form.colonia) ||
+    !filled(form.codigoPostal) ||
+    !filled(form.municipio) ||
+    !filled(form.estado) ||
+    !filled(form.pais)
+  ) {
+    return false;
+  }
+  if (form.latitude == null || form.longitude == null) return false;
+  if (!filled(form.phone)) return false;
+  if (
+    !filled(form.contactFirstName) ||
+    !filled(form.contactLastNamePaternal) ||
+    !filled(form.contactRole) ||
+    !filled(form.contactBirthDate) ||
+    !filled(form.contactWhatsapp) ||
+    !filled(form.contactEmail)
+  ) {
+    return false;
+  }
+  if (
+    !filled(form.rfc) ||
+    !filled(form.razonSocial) ||
+    !filled(form.personaTipo) ||
+    !filled(form.regimenFiscal) ||
+    !filled(form.usoCfdi)
+  ) {
+    return false;
+  }
+  if (
+    !filled(form.billingStreet) ||
+    !filled(form.billingStreetNumber) ||
+    !filled(form.billingColonia) ||
+    !(filled(form.billingMunicipio) || filled(form.billingCiudad)) ||
+    !filled(form.billingEstado) ||
+    !filled(form.billingPais) ||
+    !filled(form.billingCodigoPostal)
+  ) {
+    return false;
+  }
+  if (!form.billingSameWhatsapp && !filled(form.billingWhatsapp)) return false;
+  if (!form.billingSameEmail && !filled(form.billingEmail)) return false;
+  if (!form.privacyAccepted) return false;
+  return true;
+}

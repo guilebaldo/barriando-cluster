@@ -21,6 +21,7 @@ import {
   type PaidMembershipPlan,
 } from "@/lib/membresia";
 import { toBusinessProfileFormInitial } from "@/lib/business-address";
+import { describeBusinessPresenceGoal } from "@/lib/plan-visibility";
 import {
   formatRenewalDisplay,
   formatNextChargeDate,
@@ -496,8 +497,8 @@ export default function PanelDashboard({
                   : "Completa tu ficha mientras gestiones el pago"}
               </p>
               <p className="font-light leading-relaxed">
-                Cuando confirmemos el pago, tu negocio aparecerá automáticamente en el directorio
-                {plan === "GRAN_EMPRESA" ? " y en el MAP" : ""}.{" "}
+                Cuando confirmemos el pago, tu negocio podrá{" "}
+                {describeBusinessPresenceGoal(plan)}.{" "}
                 {!commercial && !transferPending ? (
                   <Link href="/certificacion/pago" className="font-semibold underline">
                     Ir a pagar
@@ -523,7 +524,8 @@ export default function PanelDashboard({
               </button>
               <p className="font-bold mb-1 pr-6">¡Pago confirmado! Siguiente paso: vincula tu negocio</p>
               <p className="text-xs font-light leading-relaxed">
-                Tu membresía está activa. Completa la vinculación para aparecer en el directorio y rutas MAP.
+                Tu membresía está activa. Completa la vinculación para{" "}
+                {describeBusinessPresenceGoal(plan)}.
               </p>
             </div>
           )}
