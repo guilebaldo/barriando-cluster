@@ -132,7 +132,7 @@ async function loadCatalogWebsiteOverrides(): Promise<Map<number, string>> {
 
 /**
  * Negocios con membresía comercial activa.
- * Tras pagar aparecen en /socios sin esperar aprobación editorial (salvo rejected).
+ * El pago (plan + status) valida la aparición en /socios; no se exige vinculación aprobada a mano.
  */
 async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
   try {
@@ -144,7 +144,7 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
         },
         socioProfile: {
           businessName: { not: null },
-          NOT: { linkageStatus: "rejected" },
+          rosterExcluded: false,
         },
       },
       select: {
@@ -261,7 +261,6 @@ function userToSocio(
   const sub = user.subscription;
   const profile = user.socioProfile;
   if (!sub || !profile) return null;
-  if (profile.linkageStatus === "rejected") return null;
   if (!hasCommercialAccess(sub.plan, sub.status)) return null;
 
   const coords = {

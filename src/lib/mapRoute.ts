@@ -311,7 +311,10 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
           plan: "GRAN_EMPRESA",
           status: { in: ["active", "manual_active"] },
         },
-        socioProfile: { linkageStatus: "approved" },
+        socioProfile: {
+          businessName: { not: null },
+          rosterExcluded: false,
+        },
       },
       select: {
         socioId: true,
@@ -334,7 +337,7 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
 
     for (const user of users) {
       const profile = user.socioProfile;
-      if (!profile || profile.linkageStatus !== "approved") continue;
+      if (!profile?.businessName?.trim()) continue;
 
       if (user.socioId != null && !seen.has(user.socioId)) {
         const catalog = listaSocios.find((s) => s.id === user.socioId);

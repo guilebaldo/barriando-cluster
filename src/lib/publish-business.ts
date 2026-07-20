@@ -109,8 +109,8 @@ export async function clearRosterExclusion(userId: string): Promise<void> {
 
 /**
  * Al activar pago de plan de negocio/empresa:
- * - aprueba vinculación del perfil (si no está rechazada)
- * - asegura fila en CatalogMembership para que aparezca en /admin Operaciones
+ * - aprueba vinculación (también si estaba rechazada: el pago manda)
+ * - asegura fila en CatalogMembership para /admin Operaciones
  * - `reinstateRoster`: limpia exclusión admin (pago nuevo / validación / renovar)
  */
 export async function publishBusinessPresenceOnPayment(
@@ -124,10 +124,10 @@ export async function publishBusinessPresenceOnPayment(
     await clearRosterExclusion(userId);
   }
 
+  // El pago valida presencia pública: un pago nuevo (o activo) limpia rechazo anterior.
   await prisma.socioProfile.updateMany({
     where: {
       userId,
-      linkageStatus: { not: "rejected" },
       businessName: { not: null },
     },
     data: { linkageStatus: "approved" },
@@ -160,6 +160,14 @@ export async function ensureCatalogMembershipForPaidUser(userId: string): Promis
     profile?.businessName?.trim() ||
     (user.socioId != null ? `Socio #${user.socioId}` : null);
   if (!businessName) return false;
+
+  // Membresía comercial activa ⇒ vinculación aprobada (el pago manda sobre un rechazo viejo).
+  if (profile && profile.linkageStatus !== "approved") {
+    await prisma.socioProfile.update({
+      where: { userId },
+      data: { linkageStatus: "approved" },
+    });
+  }
 
   const category = profile?.category?.trim() || null;
 
@@ -223,7 +231,6 @@ export async function reconcilePaidBusinessesIntoRoster(): Promise<number> {
         },
         socioProfile: {
           businessName: { not: null },
-          linkageStatus: { not: "rejected" },
           rosterExcluded: false,
         },
       },
