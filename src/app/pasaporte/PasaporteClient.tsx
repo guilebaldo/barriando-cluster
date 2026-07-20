@@ -812,9 +812,7 @@ function PasaporteInner({
                       <div
                         className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-700 ${
                           hasStamp
-                            ? `${colorClass} border-solid scale-100 ${
-                                isPreview ? stampTiltClass(restaurant.id) : "rotate-[-8deg]"
-                              }`
+                            ? `${colorClass} border-solid scale-100 ${stampTiltClass(restaurant.id)}`
                             : "border-dashed border-stone-300 scale-95"
                         } ${isFlashing ? "animate-stamp-press" : ""}`}
                       >
