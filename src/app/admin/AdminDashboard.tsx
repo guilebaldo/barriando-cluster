@@ -845,12 +845,15 @@ function UserRows({
                   onChange={(e) => setEditForm((f) => ({ ...f, website: e.target.value }))}
                 />
               </label>
-              <label className="block">
-                <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Google Business</span>
+              <label className="block sm:col-span-2">
+                <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                  Link de Google Maps
+                </span>
                 <input
                   className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.googleBusinessUrl ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, googleBusinessUrl: e.target.value }))}
+                  placeholder="https://maps.app.goo.gl/… o https://maps.google.com/…"
                 />
               </label>
               <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-white p-4 space-y-3">

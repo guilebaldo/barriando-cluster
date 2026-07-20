@@ -57,7 +57,7 @@ export default function BusinessProfileFields({
           Datos generales de la empresa
         </h3>
         <div className="grid sm:grid-cols-2 gap-3">
-          <label className={formFieldLabelClass}>
+          <label className={`${formFieldLabelClass}${hideBusinessName ? " sm:col-span-2" : ""}`}>
             <span className={formFieldLegendClass}>Giro / categoría *</span>
             <select
               required
@@ -175,6 +175,22 @@ export default function BusinessProfileFields({
             }}
           />
         </div>
+
+        <label className={formFieldLabelClass}>
+          <span className={formFieldLegendClass}>Link de Google Maps</span>
+          <input
+            disabled={disabled}
+            value={form.googleBusinessUrl}
+            onChange={(e) => set("googleBusinessUrl", e.target.value)}
+            className={`${formFieldInputClass} mt-1`}
+            placeholder="https://maps.app.goo.gl/… o https://maps.google.com/…"
+            autoComplete="url"
+            inputMode="url"
+          />
+          <span className="mt-1 block text-[11px] text-slate-500 font-light leading-relaxed">
+            Pega el enlace de tu ficha o ubicación en Google Maps (opcional, complementa el pin).
+          </span>
+        </label>
 
         <div className="grid sm:grid-cols-2 gap-3">
           <label className={formFieldLabelClass}>
@@ -419,7 +435,7 @@ export default function BusinessProfileFields({
           </label>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid gap-3">
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>Uso de CFDI{requireFiscal ? " *" : ""}</span>
             <select
