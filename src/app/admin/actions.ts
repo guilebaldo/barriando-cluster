@@ -1324,6 +1324,42 @@ export async function setCatalogMembershipStatus(
   }
 }
 
+/** Quita el negocio del roster de Operaciones (no borra la cuenta de usuario). */
+export async function deleteCatalogMembership(socioId: number): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const existing = await prisma.catalogMembership.findUnique({ where: { socioId } });
+    if (!existing) {
+      return { ok: false, error: "El negocio no está en el roster." };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.catalogSocioOverride.deleteMany({ where: { socioId } });
+      await tx.catalogMembership.delete({ where: { socioId } });
+      await tx.user.updateMany({
+        where: { socioId },
+        data: { socioId: null },
+      });
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/panel");
+    revalidatePath("/socios");
+    revalidatePath("/pasaporte");
+    revalidatePath("/map");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] deleteCatalogMembership failed:", error);
+    return { ok: false, error: "No se pudo eliminar el negocio del roster." };
+  }
+}
+
 export async function updateCatalogSocioWebsite(input: {
   socioId: number;
   website: string;

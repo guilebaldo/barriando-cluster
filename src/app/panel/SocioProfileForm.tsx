@@ -49,6 +49,10 @@ interface SocioProfileFormProps {
     payload: SocioProfileFormInitial
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   onSaved?: () => void;
+  /** Optional delete control shown next to Guardar cambios (admin drawer). */
+  onDelete?: () => void;
+  deleteDisabled?: boolean;
+  deleteLabel?: string;
 }
 
 export default function SocioProfileForm({
@@ -60,6 +64,9 @@ export default function SocioProfileForm({
   requireFiscal = true,
   onSave,
   onSaved,
+  onDelete,
+  deleteDisabled = false,
+  deleteLabel = "Eliminar",
 }: SocioProfileFormProps) {
   const [form, setForm] = useState(initial);
   const [msg, setMsg] = useState("");
@@ -371,6 +378,16 @@ export default function SocioProfileForm({
           <Save className="w-4 h-4" />
           {loading ? "Guardando..." : "Guardar cambios"}
         </button>
+        {onDelete ? (
+          <button
+            type="button"
+            disabled={disabled || loading || deleteDisabled}
+            onClick={onDelete}
+            className="inline-flex items-center gap-2 bg-white hover:bg-red-50 border border-red-200 text-red-700 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg disabled:opacity-40 transition-all"
+          >
+            {deleteLabel}
+          </button>
+        ) : null}
         {msg && <p className="text-xs text-slate-600">{msg}</p>}
         {isDirty && !msg && (
           <p className="text-[10px] text-amber-700">Tienes cambios sin guardar</p>

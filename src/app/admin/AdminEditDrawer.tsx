@@ -9,6 +9,7 @@ import SocioProfileForm, {
 import SocioBenefitForm from "@/app/panel/SocioBenefitForm";
 import {
   adminUpdateBusinessProfile,
+  deleteCatalogMembership,
   renewCatalogMembership,
   updateCatalogMembershipBenefit,
   updateCatalogMembershipOps,
@@ -193,6 +194,26 @@ export default function AdminEditDrawer({
     router.refresh();
   }
 
+  async function handleDelete() {
+    if (!row) return;
+    const ok = window.confirm(
+      `¿Eliminar «${row.businessName}» del roster de Operaciones?\n\nSe quita del directorio admin. La cuenta de usuario (si existe) no se borra; solo se desvincula.`
+    );
+    if (!ok) return;
+    setMsg("");
+    setSaving(true);
+    const result = await deleteCatalogMembership(row.socioId);
+    setSaving(false);
+    if (!result.ok) {
+      playCuelume("error");
+      setMsg(result.error);
+      return;
+    }
+    playCuelume("success");
+    onClose();
+    router.refresh();
+  }
+
   const tabs: { id: DrawerTab; label: string }[] = [
     { id: "negocio", label: "Negocio" },
     { id: "beneficio", label: "Beneficio" },
@@ -278,6 +299,8 @@ export default function AdminEditDrawer({
               embedded
               requireFiscal={Boolean(linkedUser)}
               onSave={handleSaveProfile}
+              onDelete={() => void handleDelete()}
+              deleteDisabled={saving}
             />
           ) : null}
 
@@ -287,6 +310,8 @@ export default function AdminEditDrawer({
               initial={benefitInitial}
               embedded
               onSave={handleSaveBenefit}
+              onDelete={() => void handleDelete()}
+              deleteDisabled={saving}
             />
           ) : null}
 
@@ -366,6 +391,14 @@ export default function AdminEditDrawer({
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Validar / renovar (aniversario mensual)
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void handleDelete()}
+                  className="bg-white hover:bg-red-50 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg disabled:opacity-40"
+                >
+                  Eliminar
                 </button>
               </div>
             </div>

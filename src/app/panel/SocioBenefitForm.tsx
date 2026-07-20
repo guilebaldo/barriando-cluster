@@ -25,6 +25,8 @@ type BenefitFormProps = {
     benefitValidFrom: string;
     benefitValidUntil: string;
   }) => Promise<{ ok: true } | { ok: false; error: string }>;
+  onDelete?: () => void;
+  deleteDisabled?: boolean;
 };
 
 function toDateInput(value: string | null): string {
@@ -39,6 +41,8 @@ export default function SocioBenefitForm({
   onSaved,
   embedded = false,
   onSave,
+  onDelete,
+  deleteDisabled = false,
 }: BenefitFormProps) {
   const [offersBenefit, setOffersBenefit] = useState(initial.offersBenefit);
   const [benefitTitle, setBenefitTitle] = useState(initial.benefitTitle);
@@ -199,14 +203,26 @@ export default function SocioBenefitForm({
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition disabled:opacity-60"
-        >
-          {loading ? "Guardando…" : "Guardar beneficio"}
-        </button>
-        {msg && <p className="text-xs text-slate-600">{msg}</p>}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={loading}
+            className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition disabled:opacity-60"
+          >
+            {loading ? "Guardando…" : "Guardar beneficio"}
+          </button>
+          {onDelete ? (
+            <button
+              type="button"
+              disabled={loading || deleteDisabled}
+              onClick={onDelete}
+              className="bg-white hover:bg-red-50 border border-red-200 text-red-700 text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition disabled:opacity-40"
+            >
+              Eliminar
+            </button>
+          ) : null}
+          {msg && <p className="text-xs text-slate-600">{msg}</p>}
+        </div>
       </form>
   );
 
