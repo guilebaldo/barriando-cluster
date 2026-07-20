@@ -3,6 +3,7 @@ import { listaSocios, type Socio, type SocioBenefitInfo } from "@/app/data/socio
 import { compareSociosByPlan, getPlanForSocio, hasCommercialAccess } from "@/lib/membresia";
 import { isVisibleInCarousel, isMedianaCarouselPlan } from "@/lib/plan-visibility";
 import { isBenefitCurrentlyValid } from "@/lib/benefit-credential";
+import { dynamicSocioIdFromUserId } from "@/lib/publish-business";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const BUSINESS_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
@@ -19,11 +20,7 @@ function slugFromName(name: string): string {
 }
 
 function dynamicSocioId(seed: string): number {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
-  }
-  return 900_000 + Math.abs(hash % 99_000);
+  return dynamicSocioIdFromUserId(seed);
 }
 
 function normalizeName(name: string): string {

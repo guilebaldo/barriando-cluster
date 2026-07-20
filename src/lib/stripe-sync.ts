@@ -109,6 +109,7 @@ export async function syncStripeSubscriptionForUser(userId: string): Promise<boo
           currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
         },
       });
+      await publishBusinessPresenceOnPayment(userId, sub.plan);
       return hasCommercialAccess(sub.plan, status);
     }
   } catch (error) {

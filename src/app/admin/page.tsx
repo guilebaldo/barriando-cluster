@@ -13,6 +13,7 @@ import {
   listCatalogMemberships,
 } from "./actions";
 import { expireMembershipsAfterGraceIfNeeded } from "@/lib/subscription-lifecycle";
+import { reconcilePaidBusinessesIntoRoster } from "@/lib/publish-business";
 
 export default async function AdminPage() {
   const session = await getSession();
@@ -20,6 +21,7 @@ export default async function AdminPage() {
   if (!isAdminUser(session)) redirect("/panel");
 
   await expireMembershipsAfterGraceIfNeeded();
+  await reconcilePaidBusinessesIntoRoster();
 
   const [users, testimonials, homePromos, catalogRows, membershipRows] = await Promise.all([
     listAdminUsers(),
