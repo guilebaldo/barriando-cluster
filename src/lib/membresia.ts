@@ -50,7 +50,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
   },
   NEGOCIO_FAMILIAR: {
     id: "NEGOCIO_FAMILIAR",
-    label: "Negocio Familiar",
+    label: "Pequeña Empresa",
     tagline: "Que te encuentren en el barrio",
     description: "Tu primer lugar en la red certificada: visibilidad local sin perder el trato de barrio.",
     isPaid: true,

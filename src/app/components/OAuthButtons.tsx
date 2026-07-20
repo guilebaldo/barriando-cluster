@@ -4,25 +4,39 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
-import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
+import { ONBOARDING_CONTINUE_PATH, planToSlug } from "@/lib/plan-routing";
+import type { MembershipPlan } from "@/generated/prisma/client";
 
-export function OAuthButtons() {
+export function OAuthButtons({ plan }: { plan?: MembershipPlan | null }) {
   return (
     <Suspense fallback={null}>
-      <OAuthButtonsInner />
+      <OAuthButtonsInner plan={plan} />
     </Suspense>
   );
 }
 
-function OAuthButtonsInner() {
+function OAuthButtonsInner({ plan }: { plan?: MembershipPlan | null }) {
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
 
   const redirectAfterLogin = useMemo(() => {
     const raw = searchParams.get("callbackUrl");
-    if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
+    if (raw && raw.startsWith("/") && !raw.startsWith("//")) {
+      // Si el callback ya es continue, asegura el plan en la query.
+      if (raw.startsWith(ONBOARDING_CONTINUE_PATH) && plan) {
+        const url = new URL(raw, "http://local");
+        if (!url.searchParams.get("plan")) {
+          url.searchParams.set("plan", planToSlug(plan));
+        }
+        return `${url.pathname}${url.search}`;
+      }
+      return raw;
+    }
+    if (plan) {
+      return `${ONBOARDING_CONTINUE_PATH}?plan=${planToSlug(plan)}`;
+    }
     return ONBOARDING_CONTINUE_PATH;
-  }, [searchParams]);
+  }, [searchParams, plan]);
 
   useEffect(() => {
     const authError = searchParams.get("error");

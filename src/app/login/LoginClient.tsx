@@ -1,13 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
 import { OAuthButtons } from "../components/OAuthButtons";
+import { parsePlanSlug, registroUrl } from "@/lib/plan-routing";
 import { LogIn } from "lucide-react";
 
 export default function LoginClient() {
+  return (
+    <Suspense fallback={null}>
+      <LoginClientInner />
+    </Suspense>
+  );
+}
+
+function LoginClientInner() {
+  const searchParams = useSearchParams();
+  const plan = parsePlanSlug(searchParams.get("plan"));
+  const registerHref = plan ? registroUrl(plan) : "/registro";
+
   return (
     <SiteShell>
       <Navbar />
@@ -22,11 +37,11 @@ export default function LoginClient() {
               </p>
             </div>
 
-            <OAuthButtons />
+            <OAuthButtons plan={plan} />
 
             <p className="text-xs text-slate-500 mt-6 text-center">
               ¿Aún no tienes cuenta?{" "}
-              <Link href="/registro" className="text-[#27366D] font-bold hover:underline">
+              <Link href={registerHref} className="text-[#27366D] font-bold hover:underline">
                 Regístrate
               </Link>
             </p>

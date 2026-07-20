@@ -69,12 +69,6 @@ export default function PlanesCatalog({
     return ALL_PLAN_IDS.filter((planId) => activeFilters.includes(planAudience(planId)));
   }, [activeFilters]);
 
-  const mobileStartIndex = useMemo(() => {
-    if (!effectiveHighlight) return 0;
-    const i = ALL_PLAN_IDS.indexOf(effectiveHighlight);
-    return i >= 0 ? i : 0;
-  }, [effectiveHighlight]);
-
   function renderPlanCard(planId: MembershipPlan, withAnchor = false) {
     return (
       <PlanCard
@@ -132,8 +126,11 @@ export default function PlanesCatalog({
       )}
 
       <PlanSwipeDeck
-        planIds={ALL_PLAN_IDS}
-        initialIndex={mobileStartIndex}
+        planIds={visiblePlans}
+        initialIndex={Math.max(
+          0,
+          visiblePlans.indexOf(effectiveHighlight ?? visiblePlans[0]!)
+        )}
         renderCard={renderPlanCard}
       />
     </div>

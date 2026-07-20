@@ -9,6 +9,7 @@ import {
   isPaidMembershipPlan,
   ONBOARDING_CONTINUE_PATH,
   parsePlanSlug,
+  registroUrl,
 } from "@/lib/plan-routing";
 import { PENDING_PLAN_COOKIE } from "@/lib/pending-plan-cookie";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -66,7 +67,9 @@ async function createStripeCheckoutRedirect(userId: string, plan: PaidMembership
 /** Cambia el plan de un usuario ya autenticado; devuelve la ruta destino. */
 export async function resolvePlanSelectionPath(plan: MembershipPlan): Promise<string> {
   const session = await auth();
-  if (!session?.user?.id) return "/login";
+  if (!session?.user?.id) {
+    return registroUrl(plan);
+  }
 
   await syncStripeSubscriptionForUser(session.user.id);
   const sub = await loadSubscription(session.user.id);
@@ -107,6 +110,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
+  // Query ?plan= manda sobre cookie (evita cookie vieja de otro plan).
   const pending = explicitPlan ?? (await readPendingPlanCookie());
   await clearPendingPlanCookie();
 
@@ -121,6 +125,11 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   }
 
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {
+    // Si eligió otro plan de pago distinto al activo, ir a pagar el cambio.
+    if (pending && isPaidMembershipPlan(pending) && pending !== sub.plan) {
+      await ensurePendingPaidPlan(session.user.id, pending as PaidMembershipPlan);
+      redirect("/certificacion/pago");
+    }
     redirect(
       resolvePostAuthHomePathAfterPayment({
         email,
@@ -134,6 +143,11 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   if (pending && isPaidMembershipPlan(pending)) {
     await ensurePendingPaidPlan(session.user.id, pending as PaidMembershipPlan);
     redirect("/certificacion/pago");
+  }
+
+  if (pending && isTuristaPlan(pending)) {
+    await ensureTuristaSubscription(session.user.id);
+    redirect("/map");
   }
 
   if (!sub || isTuristaPlan(sub.plan)) {

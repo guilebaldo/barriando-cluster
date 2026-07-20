@@ -3,8 +3,8 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 export const PLAN_ADMIN_LABELS: Record<MembershipPlan, string> = {
   TURISTA: "Turista",
   VECINO: "Vecino",
-  NEGOCIO_FAMILIAR: "Pequeña",
-  MEDIANA_EMPRESA: "Mediana",
+  NEGOCIO_FAMILIAR: "Pequeña Empresa",
+  MEDIANA_EMPRESA: "Mediana Empresa",
   GRAN_EMPRESA: "Gran Empresa",
 };
 

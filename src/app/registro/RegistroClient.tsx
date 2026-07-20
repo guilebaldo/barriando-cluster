@@ -7,7 +7,7 @@ import SiteShell from "../components/SiteShell";
 import { OAuthButtons } from "../components/OAuthButtons";
 import { MEMBERSHIP_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
 import { getUpgradePitch } from "@/lib/plan-upgrade";
-import { registroUrl } from "@/lib/plan-routing";
+import { registroUrl, planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { ArrowUpCircle, MapPin, UserPlus } from "lucide-react";
 
@@ -19,6 +19,9 @@ export default function RegistroClient({ plan }: RegistroClientProps) {
   const planDef = MEMBERSHIP_PLANS[plan];
   const isTurista = plan === "TURISTA";
   const upgradePitch = !isTurista ? getUpgradePitch(plan) : null;
+  const planSlug = planToSlug(plan);
+  const continueWithPlan = `/api/onboarding/continue?plan=${planSlug}`;
+  const loginHref = `/login?plan=${planSlug}&callbackUrl=${encodeURIComponent(continueWithPlan)}`;
 
   return (
     <SiteShell>
@@ -61,7 +64,7 @@ export default function RegistroClient({ plan }: RegistroClientProps) {
               </div>
             )}
 
-            <OAuthButtons />
+            <OAuthButtons plan={plan} />
 
             {upgradePitch && (
               <div className="mt-8 rounded-xl border border-amber-200/80 bg-gradient-to-br from-amber-50/80 to-white p-5">
@@ -92,7 +95,7 @@ export default function RegistroClient({ plan }: RegistroClientProps) {
             <p className="text-xs text-slate-500 mt-6 text-center">
               ¿Ya tienes cuenta?{" "}
               <Link
-                href="/login"
+                href={loginHref}
                 className="text-[#27366D] font-bold hover:text-red-800 active:text-red-900 transition-colors"
               >
                 Inicia sesión

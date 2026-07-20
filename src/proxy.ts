@@ -7,9 +7,18 @@ import {
   pendingPlanCookieValue,
 } from "@/lib/pending-plan-cookie";
 
+/**
+ * Solo escribe la cookie si hay `?plan=` válido.
+ * Nunca default a TURISTA: eso borraba el plan elegido en /registro al pasar por /login.
+ */
 function attachPendingPlanCookie(request: NextRequest, response: NextResponse) {
-  const plan = parsePlanSlug(request.nextUrl.searchParams.get("plan")) ?? "TURISTA";
-  response.cookies.set(PENDING_PLAN_COOKIE, pendingPlanCookieValue(plan), pendingPlanCookieOptions());
+  const plan = parsePlanSlug(request.nextUrl.searchParams.get("plan"));
+  if (!plan) return response;
+  response.cookies.set(
+    PENDING_PLAN_COOKIE,
+    pendingPlanCookieValue(plan),
+    pendingPlanCookieOptions()
+  );
   return response;
 }
 
