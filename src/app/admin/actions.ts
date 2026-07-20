@@ -151,7 +151,13 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
 
     if (socioId !== undefined && socioId !== null) {
       const socio = listaSocios.find((s) => s.id === socioId);
-      if (!socio) return { ok: false, error: "Negocio no existe en el catálogo." };
+      const roster = await prisma.catalogMembership.findUnique({
+        where: { socioId },
+        select: { socioId: true },
+      });
+      if (!socio && !roster) {
+        return { ok: false, error: "Negocio no existe en el catálogo ni en el roster." };
+      }
       const taken = await prisma.user.findFirst({
         where: { socioId, NOT: { id: userId } },
       });
@@ -269,6 +275,21 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
           ...(billingCodigoPostal !== undefined ? { billingCodigoPostal } : {}),
         },
       });
+
+      const linkedSocioId =
+        socioId !== undefined ? socioId : user.socioId;
+      if (
+        linkedSocioId != null &&
+        (businessName !== undefined || category !== undefined)
+      ) {
+        await prisma.catalogMembership.updateMany({
+          where: { socioId: linkedSocioId },
+          data: {
+            ...(businessName !== undefined ? { businessName } : {}),
+            ...(category !== undefined ? { category } : {}),
+          },
+        });
+      }
     }
 
     revalidatePath("/admin");
@@ -958,11 +979,30 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
       orderBy: { businessName: "asc" },
     });
 
+    const linkedProfiles = await prisma.user.findMany({
+      where: { socioId: { in: rows.map((r) => r.socioId) } },
+      select: {
+        socioId: true,
+        socioProfile: { select: { category: true } },
+      },
+    });
+    const categoryBySocioId = new Map<number, string>();
+    for (const u of linkedProfiles) {
+      if (u.socioId == null) continue;
+      const cat = u.socioProfile?.category?.trim();
+      if (cat) categoryBySocioId.set(u.socioId, cat);
+    }
+
     return rows
       .map((row) => {
         const catalog = listaSocios.find((s) => s.id === row.socioId);
         const toDateInput = (d: Date | null) =>
           d ? d.toISOString().slice(0, 10) : "";
+        const categoria =
+          catalog?.categoria?.trim() ||
+          row.category?.trim() ||
+          categoryBySocioId.get(row.socioId) ||
+          "";
         return {
           socioId: row.socioId,
           businessName: row.businessName?.trim() || catalog?.name || `Socio #${row.socioId}`,
@@ -974,7 +1014,7 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
           currentPeriodEnd: row.currentPeriodEnd?.toISOString() ?? null,
           monthsPastDue: row.monthsPastDue ?? 0,
           foto: catalog?.foto ?? "",
-          categoria: catalog?.categoria ?? "",
+          categoria,
           offersBenefit: Boolean(row.offersBenefit),
           benefitTitle: row.benefitTitle ?? "",
           benefitDescription: row.benefitDescription ?? "",
@@ -1005,12 +1045,16 @@ export async function renewCatalogMembership(socioId: number): Promise<ActionRes
     if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
 
     const catalog = listaSocios.find((s) => s.id === socioId);
-    if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
-
     const existing = await prisma.catalogMembership.findUnique({ where: { socioId } });
+    if (!catalog && !existing) {
+      return { ok: false, error: "Socio del catálogo no encontrado." };
+    }
+
     const nextEnd = advanceBillingAnniversary(existing?.currentPeriodEnd);
     const plan =
       existing?.plan && isBusinessPlan(existing.plan) ? existing.plan : "NEGOCIO_FAMILIAR";
+    const businessName =
+      existing?.businessName?.trim() || catalog?.name || `Socio #${socioId}`;
 
     await prisma.catalogMembership.upsert({
       where: { socioId },
@@ -1018,7 +1062,8 @@ export async function renewCatalogMembership(socioId: number): Promise<ActionRes
         socioId,
         plan,
         status: "active",
-        businessName: catalog.name,
+        businessName,
+        category: existing?.category ?? catalog?.categoria ?? null,
         paymentMethod: existing?.paymentMethod ?? "transfer",
         currentPeriodEnd: nextEnd,
         monthsPastDue: 0,
@@ -1028,7 +1073,7 @@ export async function renewCatalogMembership(socioId: number): Promise<ActionRes
         paymentMethod: existing?.paymentMethod ?? "transfer",
         currentPeriodEnd: nextEnd,
         monthsPastDue: 0,
-        businessName: existing?.businessName?.trim() || catalog.name,
+        businessName,
       },
     });
 
@@ -1086,9 +1131,13 @@ export async function updateCatalogMembershipOps(
 
     const { socioId, plan, paymentMethod, status } = parsed.data;
     const catalog = listaSocios.find((s) => s.id === socioId);
-    if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
-
     const existing = await prisma.catalogMembership.findUnique({ where: { socioId } });
+    if (!catalog && !existing) {
+      return { ok: false, error: "Socio del catálogo no encontrado." };
+    }
+
+    const businessName =
+      existing?.businessName?.trim() || catalog?.name || `Socio #${socioId}`;
 
     await prisma.catalogMembership.upsert({
       where: { socioId },
@@ -1096,7 +1145,8 @@ export async function updateCatalogMembershipOps(
         socioId,
         plan: plan ?? "NEGOCIO_FAMILIAR",
         status: status ?? "active",
-        businessName: catalog.name,
+        businessName,
+        category: existing?.category ?? catalog?.categoria ?? null,
         paymentMethod: paymentMethod ?? null,
         currentPeriodEnd: existing?.currentPeriodEnd ?? null,
       },
@@ -1104,7 +1154,7 @@ export async function updateCatalogMembershipOps(
         ...(plan !== undefined ? { plan } : {}),
         ...(status !== undefined ? { status } : {}),
         ...(paymentMethod !== undefined ? { paymentMethod } : {}),
-        businessName: existing?.businessName?.trim() || catalog.name,
+        businessName,
       },
     });
 
@@ -1161,7 +1211,12 @@ export async function updateCatalogMembershipBenefit(input: {
 
     const data = parsed.data;
     const catalog = listaSocios.find((s) => s.id === data.socioId);
-    if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
+    const existing = await prisma.catalogMembership.findUnique({
+      where: { socioId: data.socioId },
+    });
+    if (!catalog && !existing) {
+      return { ok: false, error: "Socio del catálogo no encontrado." };
+    }
 
     if (data.offersBenefit) {
       if (!data.benefitTitle.trim()) return { ok: false, error: "Indica el título del beneficio." };
@@ -1194,9 +1249,11 @@ export async function updateCatalogMembershipBenefit(input: {
       where: { socioId: data.socioId },
       create: {
         socioId: data.socioId,
-        plan: "NEGOCIO_FAMILIAR",
-        status: "active",
-        businessName: catalog.name,
+        plan: existing?.plan ?? "NEGOCIO_FAMILIAR",
+        status: existing?.status ?? "active",
+        businessName:
+          existing?.businessName?.trim() || catalog?.name || `Socio #${data.socioId}`,
+        category: existing?.category ?? catalog?.categoria ?? null,
         ...benefitPayload,
       },
       update: benefitPayload,
@@ -1236,7 +1293,10 @@ export async function setCatalogMembershipStatus(
     if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
 
     const catalog = listaSocios.find((s) => s.id === socioId);
-    if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
+    const existing = await prisma.catalogMembership.findUnique({ where: { socioId } });
+    if (!catalog && !existing) {
+      return { ok: false, error: "Socio del catálogo no encontrado." };
+    }
 
     await prisma.catalogMembership.upsert({
       where: { socioId },
@@ -1244,7 +1304,8 @@ export async function setCatalogMembershipStatus(
         socioId,
         plan: "NEGOCIO_FAMILIAR",
         status,
-        businessName: catalog.name,
+        businessName: existing?.businessName?.trim() || catalog?.name || `Socio #${socioId}`,
+        category: existing?.category ?? catalog?.categoria ?? null,
       },
       update: { status },
     });
@@ -1280,7 +1341,8 @@ export async function updateCatalogSocioWebsite(input: {
 
     const { socioId, website } = parsed.data;
     const catalog = listaSocios.find((s) => s.id === socioId);
-    if (!catalog) {
+    const existing = await prisma.catalogMembership.findUnique({ where: { socioId } });
+    if (!catalog && !existing) {
       return { ok: false, error: "Socio del catálogo no encontrado." };
     }
 
@@ -1359,12 +1421,16 @@ export async function adminUpdateBusinessProfile(
 
     const data = parsed.data;
     const catalog = listaSocios.find((s) => s.id === data.socioId);
-    if (!catalog) return { ok: false, error: "Socio del catálogo no encontrado." };
-
-    const businessName = data.businessName.trim() || catalog.name;
-    const website = data.website.trim();
-
     const existing = await prisma.catalogMembership.findUnique({ where: { socioId: data.socioId } });
+    if (!catalog && !existing) {
+      return { ok: false, error: "Socio del catálogo no encontrado." };
+    }
+
+    const businessName =
+      data.businessName.trim() || existing?.businessName?.trim() || catalog?.name || `Socio #${data.socioId}`;
+    const website = data.website.trim();
+    const category = data.category.trim() || existing?.category || catalog?.categoria || null;
+
     await prisma.catalogMembership.upsert({
       where: { socioId: data.socioId },
       create: {
@@ -1372,9 +1438,10 @@ export async function adminUpdateBusinessProfile(
         plan: existing?.plan ?? "NEGOCIO_FAMILIAR",
         status: existing?.status ?? "active",
         businessName,
+        category,
         paymentMethod: existing?.paymentMethod ?? null,
       },
-      update: { businessName },
+      update: { businessName, category },
     });
 
     if (!website) {

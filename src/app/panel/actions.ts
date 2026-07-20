@@ -374,6 +374,16 @@ export async function updateSocioProfile(input: {
       },
     });
 
+    if (session.socioId != null) {
+      await prisma.catalogMembership.updateMany({
+        where: { socioId: session.socioId },
+        data: {
+          businessName,
+          category: data.category?.trim() || null,
+        },
+      });
+    }
+
     revalidatePath("/panel");
     revalidatePath("/admin");
     revalidatePath("/socios");

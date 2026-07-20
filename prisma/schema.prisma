@@ -265,6 +265,8 @@ model CatalogMembership {
   paymentMethod        String?
   status               String         @default("active")
   businessName         String?
+  /** Giro / categoría del negocio (alta manual o sync desde perfil). */
+  category             String?
   /** Vencimiento de membresía en roster (ops admin, aunque no haya cuenta). */
   currentPeriodEnd     DateTime?
   /** Meses de atraso tras gracia (0 = al día o en gracia). */

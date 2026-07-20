@@ -3,7 +3,10 @@ import { listaSocios, type Socio, type SocioBenefitInfo } from "@/app/data/socio
 import { compareSociosByPlan, getPlanForSocio, hasCommercialAccess } from "@/lib/membresia";
 import { isVisibleInCarousel, isMedianaCarouselPlan } from "@/lib/plan-visibility";
 import { isBenefitCurrentlyValid } from "@/lib/benefit-credential";
-import { dynamicSocioIdFromUserId } from "@/lib/publish-business";
+import {
+  dynamicSocioIdFromUserId,
+  isSyntheticSocioId,
+} from "@/lib/publish-business";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 const BUSINESS_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
@@ -17,10 +20,6 @@ function slugFromName(name: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40);
-}
-
-function dynamicSocioId(seed: string): number {
-  return dynamicSocioIdFromUserId(seed);
 }
 
 function normalizeName(name: string): string {
@@ -53,6 +52,7 @@ type CatalogMembershipRow = {
   plan: MembershipPlan;
   status: string;
   businessName: string | null;
+  category: string | null;
   offersBenefit: boolean | null;
   benefitTitle: string | null;
   benefitDescription: string | null;
@@ -96,6 +96,7 @@ async function loadActiveCatalogMemberships(): Promise<Map<number, CatalogMember
         plan: true,
         status: true,
         businessName: true,
+        category: true,
         offersBenefit: true,
         benefitTitle: true,
         benefitDescription: true,
@@ -230,14 +231,25 @@ function catalogSocioFromRoster(
   websiteOverrides: Map<number, string>
 ): Socio | null {
   const catalog = listaSocios.find((s) => s.id === socioId);
-  if (!catalog) return null;
+  const name = membership.businessName?.trim() || catalog?.name;
+  if (!name) return null;
+
   const overrideUrl = websiteOverrides.get(socioId);
+  const foto = catalog?.foto || slugFromName(name);
+
   return {
-    ...catalog,
-    name: membership.businessName?.trim() || catalog.name,
-    url: overrideUrl || catalog.url,
+    id: socioId,
+    name,
+    categoria:
+      membership.category?.trim() || catalog?.categoria || "Negocio certificado",
+    foto,
+    url: overrideUrl || catalog?.url || "#",
+    direccion: catalog?.direccion,
     membershipPlan: membership.plan as Socio["membershipPlan"],
     benefit: rosterBenefit(membership),
+    latitude: catalog?.latitude ?? null,
+    longitude: catalog?.longitude ?? null,
+    logoUrl: catalog?.logoUrl ?? null,
   };
 }
 
@@ -258,26 +270,30 @@ function userToSocio(
     logoUrl: profile.logoUrl?.trim() || null,
   };
 
-  if (user.socioId != null) {
-    const catalog = listaSocios.find((s) => s.id === user.socioId);
-    if (catalog) {
-      const roster = memberships.get(catalog.id);
-      const overrideUrl = websiteOverrides.get(catalog.id);
-      return {
-        ...catalog,
-        name: profile.businessName?.trim() || roster?.businessName?.trim() || catalog.name,
-        url: profile.website?.trim() || overrideUrl || catalog.url,
-        direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || catalog.direccion,
-        categoria: profile.category?.trim() || catalog.categoria,
-        benefit: profileBenefit(profile) || (roster ? rosterBenefit(roster) : null),
-        membershipPlan: sub.plan as Socio["membershipPlan"],
-        ...coords,
-      };
-    }
-  }
-
   const name = profile.businessName?.trim();
   if (!name) return null;
+
+  const socioId = user.socioId ?? dynamicSocioIdFromUserId(user.id);
+
+  const catalog = listaSocios.find((s) => s.id === socioId);
+  const roster = memberships.get(socioId);
+  const overrideUrl = websiteOverrides.get(socioId);
+
+  if (catalog) {
+    return {
+      ...catalog,
+      name: name || roster?.businessName?.trim() || catalog.name,
+      url: profile.website?.trim() || overrideUrl || catalog.url,
+      direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || catalog.direccion,
+      categoria:
+        profile.category?.trim() ||
+        roster?.category?.trim() ||
+        catalog.categoria,
+      benefit: profileBenefit(profile) || (roster ? rosterBenefit(roster) : null),
+      membershipPlan: sub.plan as Socio["membershipPlan"],
+      ...coords,
+    };
+  }
 
   const logoTrim = profile.logoUrl?.trim() || null;
   const foto = logoTrim
@@ -285,13 +301,16 @@ function userToSocio(
     : slugFromName(name);
 
   return {
-    id: dynamicSocioId(user.id),
+    id: socioId,
     name,
-    categoria: profile.category?.trim() || "Negocio certificado",
+    categoria:
+      profile.category?.trim() ||
+      roster?.category?.trim() ||
+      "Negocio certificado",
     foto,
-    url: profile.website?.trim() || "#",
+    url: profile.website?.trim() || overrideUrl || "#",
     direccion: profile.googleBusinessUrl?.trim() || profile.address?.trim() || undefined,
-    benefit: profileBenefit(profile),
+    benefit: profileBenefit(profile) || (roster ? rosterBenefit(roster) : null),
     membershipPlan: sub.plan as Socio["membershipPlan"],
     latitude: profile.latitude ?? null,
     longitude: profile.longitude ?? null,
@@ -302,8 +321,8 @@ function userToSocio(
 /** Prefer linked user overlay, then catalog roster; drop name duplicates. */
 function dedupeByName(socios: Socio[]): Socio[] {
   const rank = (s: Socio) => {
-    if (s.id < 900_000 && (s.logoUrl || s.benefit)) return 0;
-    if (s.id < 900_000) return 1;
+    if (!isSyntheticSocioId(s.id) && (s.logoUrl || s.benefit)) return 0;
+    if (!isSyntheticSocioId(s.id)) return 1;
     return 2;
   };
   const best: Socio[] = [];
@@ -337,21 +356,9 @@ export async function getPublicSociosList(): Promise<Socio[]> {
     .map((user) => userToSocio(user, websiteOverrides, memberships))
     .filter(Boolean) as Socio[];
 
-  // Overlay linked users onto roster ids first.
   const byId = new Map<number, Socio>();
   for (const socio of fromRoster) byId.set(socio.id, socio);
   for (const socio of fromUsers) {
-    if (socio.id < 900_000) {
-      byId.set(socio.id, socio);
-    }
-  }
-
-  const dynamicOnly = fromUsers.filter((s) => s.id >= 900_000);
-  // Drop dynamic entries whose name matches (or is a short form of) a roster entry.
-  const rosterEntries = [...byId.values()];
-  for (const socio of dynamicOnly) {
-    const overlapsRoster = rosterEntries.some((r) => namesReferToSameBusiness(r.name, socio.name));
-    if (overlapsRoster) continue;
     byId.set(socio.id, socio);
   }
 
