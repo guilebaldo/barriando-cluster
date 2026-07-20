@@ -39,5 +39,6 @@ export type SocioProfileFormInitial = {
   billingEmail: string;
   billingSameWhatsapp: boolean;
   billingSameEmail: boolean;
+  billingSameAddress: boolean;
   privacyAccepted: boolean;
 };

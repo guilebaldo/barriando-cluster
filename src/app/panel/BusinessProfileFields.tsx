@@ -362,6 +362,30 @@ export default function BusinessProfileFields({
         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
           Dirección fiscal
         </p>
+        <label className="flex items-start gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            disabled={disabled}
+            checked={form.billingSameAddress}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              set("billingSameAddress", checked);
+              if (checked) {
+                set("billingStreet", form.street);
+                set("billingStreetNumber", form.streetNumber);
+                set("billingColonia", form.colonia);
+                set("billingCodigoPostal", form.codigoPostal);
+                set("billingMunicipio", form.municipio);
+                set("billingCiudad", form.municipio);
+                set("billingEstado", form.estado);
+                set("billingPais", form.pais || "México");
+              }
+            }}
+            className="mt-1"
+          />
+          <span>Usar el mismo domicilio del negocio para facturación</span>
+        </label>
+        {!form.billingSameAddress ? (
         <div className="grid sm:grid-cols-2 gap-3">
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>Calle{requireFiscal ? " *" : ""}</span>
@@ -435,6 +459,7 @@ export default function BusinessProfileFields({
             />
           </label>
         </div>
+        ) : null}
 
         <div className="grid gap-3">
           <label className={formFieldLabelClass}>

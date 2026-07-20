@@ -429,6 +429,7 @@ export type AdminUserRow = {
     billingEmail: string;
     billingSameWhatsapp: boolean;
     billingSameEmail: boolean;
+    billingSameAddress: boolean;
     privacyAccepted: boolean;
   } | null;
   requestedBusinessName: string | null;
@@ -512,6 +513,7 @@ const EXTENDED_BILLING_SELECT = {
   billingEmail: true,
   billingSameWhatsapp: true,
   billingSameEmail: true,
+  billingSameAddress: true,
   privacyAcceptedAt: true,
 } as const;
 
@@ -621,6 +623,7 @@ type AdminUserRecord = {
     billingEmail?: string | null;
     billingSameWhatsapp?: boolean | null;
     billingSameEmail?: boolean | null;
+    billingSameAddress?: boolean | null;
     privacyAcceptedAt?: Date | string | null;
   } | null;
 };
@@ -740,6 +743,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
             billingEmail: user.socioProfile.billingEmail ?? "",
             billingSameWhatsapp: user.socioProfile.billingSameWhatsapp ?? true,
             billingSameEmail: user.socioProfile.billingSameEmail ?? true,
+            billingSameAddress: user.socioProfile.billingSameAddress ?? true,
             privacyAccepted: Boolean(user.socioProfile.privacyAcceptedAt),
           }
         : null,
@@ -1606,6 +1610,7 @@ const adminBusinessProfileSchema = z.object({
   billingEmail: z.string().trim().max(160).optional(),
   billingSameWhatsapp: z.boolean().optional(),
   billingSameEmail: z.boolean().optional(),
+  billingSameAddress: z.boolean().optional(),
   privacyAccepted: z.boolean().optional(),
 });
 
@@ -1721,6 +1726,7 @@ export async function adminUpdateBusinessProfile(
       billingEmail: data.billingEmail ?? "",
       billingSameWhatsapp: data.billingSameWhatsapp ?? true,
       billingSameEmail: data.billingSameEmail ?? true,
+      billingSameAddress: data.billingSameAddress ?? true,
       privacyAccepted: data.privacyAccepted ?? false,
     };
 

@@ -222,6 +222,7 @@ export default function PanelDashboard({
           billingEmail: socioProfile.billingEmail,
           billingSameWhatsapp: socioProfile.billingSameWhatsapp,
           billingSameEmail: socioProfile.billingSameEmail,
+          billingSameAddress: socioProfile.billingSameAddress,
           privacyAccepted: socioProfile.privacyAccepted,
         }
       : {

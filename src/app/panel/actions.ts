@@ -17,7 +17,7 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 import { normalizeWebsiteUrl, parseWebsiteUrl } from "@/lib/url-utils";
 import type { SocioProfileFormInitial } from "./business-profile-types";
 import { toSocioProfileDbFields } from "@/lib/business-profile-payload";
-import { emptyBusinessProfile } from "@/lib/business-address";
+import { emptyBusinessProfile, applyBillingSameFlags } from "@/lib/business-address";
 import { CONTACT_ROLE_OPTIONS, PERSONA_TIPO_OPTIONS } from "@/lib/fiscal-options";
 
 const optionalUrlField = z
@@ -75,6 +75,7 @@ const businessProfileSchema = z.object({
   billingEmail: z.string().trim().max(160).optional(),
   billingSameWhatsapp: z.boolean(),
   billingSameEmail: z.boolean(),
+  billingSameAddress: z.boolean().optional().default(true),
   privacyAccepted: z.boolean().optional(),
 });
 
@@ -225,20 +226,21 @@ export async function registerManualBusiness(
 ): Promise<LinkSocioResult> {
   try {
     const session = await requireSession();
+    const normalized = applyBillingSameFlags(input);
     const parsed = businessProfileSchema.safeParse({
-      ...input,
-      contactLastNameMaternal: input.contactLastNameMaternal ?? "",
+      ...normalized,
+      contactLastNameMaternal: normalized.contactLastNameMaternal ?? "",
     });
     if (!parsed.success) {
       return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
     }
-    if (!input.privacyAccepted) {
+    if (!normalized.privacyAccepted) {
       return { ok: false, error: "Debes aceptar el aviso de privacidad." };
     }
-    if (!input.billingSameWhatsapp && !input.billingWhatsapp?.trim()) {
+    if (!normalized.billingSameWhatsapp && !normalized.billingWhatsapp?.trim()) {
       return { ok: false, error: "Indica el WhatsApp fiscal o marca «usar el mismo»." };
     }
-    if (!input.billingSameEmail && !input.billingEmail?.trim()) {
+    if (!normalized.billingSameEmail && !normalized.billingEmail?.trim()) {
       return { ok: false, error: "Indica el email fiscal o marca «usar el mismo»." };
     }
 
@@ -254,6 +256,7 @@ export async function registerManualBusiness(
       billingAddressFull: parsed.data.billingAddressFull ?? "",
       billingWhatsapp: parsed.data.billingWhatsapp ?? "",
       billingEmail: parsed.data.billingEmail ?? "",
+      billingSameAddress: parsed.data.billingSameAddress ?? true,
       privacyAccepted: true,
     } as SocioProfileFormInitial);
 
@@ -337,9 +340,10 @@ export async function updateSocioProfile(
   try {
     const session = await requireSession();
     const subscription = await prisma.subscription.findUnique({ where: { userId: session.id } });
+    const normalized = applyBillingSameFlags(input);
     const parsed = profileSchema.safeParse({
-      ...input,
-      contactLastNameMaternal: input.contactLastNameMaternal ?? "",
+      ...normalized,
+      contactLastNameMaternal: normalized.contactLastNameMaternal ?? "",
     });
     if (!parsed.success) {
       const labels = parsed.error.issues.map((i) => i.message).join(" · ");
@@ -350,10 +354,10 @@ export async function updateSocioProfile(
       return { ok: false, error: "Ingresa el nombre del negocio." };
     }
 
-    if (!input.billingSameWhatsapp && !input.billingWhatsapp?.trim()) {
+    if (!normalized.billingSameWhatsapp && !normalized.billingWhatsapp?.trim()) {
       return { ok: false, error: "Indica el WhatsApp fiscal o marca «usar el mismo»." };
     }
-    if (!input.billingSameEmail && !input.billingEmail?.trim()) {
+    if (!normalized.billingSameEmail && !normalized.billingEmail?.trim()) {
       return { ok: false, error: "Indica el email fiscal o marca «usar el mismo»." };
     }
 
@@ -364,7 +368,7 @@ export async function updateSocioProfile(
 
     const dbFields = toSocioProfileDbFields({
       ...emptyBusinessProfile(session.email ?? ""),
-      ...input,
+      ...normalized,
       ...parsed.data,
       contactLastNameMaternal: parsed.data.contactLastNameMaternal ?? "",
       googleBusinessUrl: parsed.data.googleBusinessUrl ?? "",
@@ -373,7 +377,8 @@ export async function updateSocioProfile(
       billingAddressFull: parsed.data.billingAddressFull ?? "",
       billingWhatsapp: parsed.data.billingWhatsapp ?? "",
       billingEmail: parsed.data.billingEmail ?? "",
-      privacyAccepted: input.privacyAccepted || Boolean(profile?.privacyAcceptedAt),
+      billingSameAddress: parsed.data.billingSameAddress ?? normalized.billingSameAddress,
+      privacyAccepted: normalized.privacyAccepted || Boolean(profile?.privacyAcceptedAt),
     } as SocioProfileFormInitial);
 
     const { privacyAcceptedAt, ...rest } = dbFields;

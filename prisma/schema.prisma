@@ -154,6 +154,7 @@ model SocioProfile {
   billingEmail        String?
   billingSameWhatsapp Boolean @default(true)
   billingSameEmail    Boolean @default(true)
+  billingSameAddress  Boolean @default(true)
   privacyAcceptedAt   DateTime?
   offersBenefit       Boolean  @default(false)
   benefitTitle        String?

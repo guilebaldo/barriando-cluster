@@ -101,12 +101,17 @@ export default function LeafletLocationPicker({
 
   return (
     <div className={className}>
-      <div className={`h-56 rounded-xl overflow-hidden border border-slate-200 ${disabled ? "opacity-60 pointer-events-none" : ""}`}>
+      <div
+        className={`relative z-0 isolate h-56 rounded-xl overflow-hidden border border-slate-200 ${
+          disabled ? "opacity-60 pointer-events-none" : ""
+        }`}
+      >
         <MapContainer
           center={center}
           zoom={16}
           scrollWheelZoom={!disabled}
-          className="h-full w-full"
+          className="h-full w-full !z-0"
+          style={{ zIndex: 0 }}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'

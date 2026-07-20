@@ -119,6 +119,7 @@ export default function AdminEditDrawer({
         billingEmail: p?.billingEmail || "",
         billingSameWhatsapp: p?.billingSameWhatsapp ?? true,
         billingSameEmail: p?.billingSameEmail ?? true,
+        billingSameAddress: p?.billingSameAddress ?? true,
         privacyAccepted: p?.privacyAccepted ?? false,
       },
       linkedUser?.email || ""

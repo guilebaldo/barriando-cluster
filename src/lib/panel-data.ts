@@ -56,6 +56,7 @@ export type SafeSocioProfile = {
   billingEmail: string;
   billingSameWhatsapp: boolean;
   billingSameEmail: boolean;
+  billingSameAddress: boolean;
   privacyAccepted: boolean;
   offersBenefit: boolean;
   benefitTitle: string;
@@ -162,6 +163,7 @@ export function normalizeSocioProfile(
     billingEmail?: string | null;
     billingSameWhatsapp?: boolean | null;
     billingSameEmail?: boolean | null;
+    billingSameAddress?: boolean | null;
     privacyAcceptedAt?: Date | string | null;
     offersBenefit?: boolean | null;
     benefitTitle?: string | null;
@@ -231,6 +233,7 @@ export function normalizeSocioProfile(
     billingEmail: profile.billingEmail?.trim() ?? "",
     billingSameWhatsapp: profile.billingSameWhatsapp ?? true,
     billingSameEmail: profile.billingSameEmail ?? true,
+    billingSameAddress: profile.billingSameAddress ?? true,
     privacyAccepted: Boolean(profile.privacyAcceptedAt),
     offersBenefit: Boolean(profile.offersBenefit),
     benefitTitle: profile.benefitTitle?.trim() ?? "",

@@ -5,7 +5,7 @@ import { Save } from "lucide-react";
 import { updateSocioProfile } from "./actions";
 import BusinessProfileFields from "./BusinessProfileFields";
 import type { SocioProfileFormInitial } from "./business-profile-types";
-import { composeBillingAddress, composeBusinessAddress } from "@/lib/business-address";
+import { applyBillingSameFlags } from "@/lib/business-address";
 
 export type { SocioProfileFormInitial } from "./business-profile-types";
 
@@ -70,6 +70,20 @@ export default function SocioProfileForm({
       setMsg("Confirma la ubicación en el mapa.");
       return;
     }
+    if (!form.billingSameAddress) {
+      const missingBilling =
+        !form.billingStreet.trim() ||
+        !form.billingStreetNumber.trim() ||
+        !form.billingColonia.trim() ||
+        !(form.billingMunicipio.trim() || form.billingCiudad.trim()) ||
+        !form.billingEstado.trim() ||
+        !form.billingPais.trim() ||
+        !form.billingCodigoPostal.trim();
+      if (missingBilling) {
+        setMsg("Completa la dirección fiscal o marca «usar el mismo domicilio».");
+        return;
+      }
+    }
     if (!form.billingSameWhatsapp && !form.billingWhatsapp.trim()) {
       setMsg("Indica el WhatsApp fiscal o marca «usar el mismo».");
       return;
@@ -81,14 +95,7 @@ export default function SocioProfileForm({
 
     setMsg("");
     setLoading(true);
-    const payload: SocioProfileFormInitial = {
-      ...form,
-      address: composeBusinessAddress(form),
-      billingAddressFull: composeBillingAddress(form),
-      billingCiudad: form.billingMunicipio || form.billingCiudad,
-      billingWhatsapp: form.billingSameWhatsapp ? form.contactWhatsapp : form.billingWhatsapp,
-      billingEmail: form.billingSameEmail ? form.contactEmail : form.billingEmail,
-    };
+    const payload = applyBillingSameFlags(form);
     try {
       const result = onSave
         ? await onSave(payload)

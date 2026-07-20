@@ -47,6 +47,58 @@ export function composeBillingAddress(parts: {
     .join(", ");
 }
 
+/** Copia domicilio comercial → fiscal (checkbox «usar el mismo»). */
+export function copyBusinessAddressToBilling(
+  form: Pick<
+    SocioProfileFormInitial,
+    | "street"
+    | "streetNumber"
+    | "colonia"
+    | "codigoPostal"
+    | "municipio"
+    | "estado"
+    | "pais"
+  >
+): Pick<
+  SocioProfileFormInitial,
+  | "billingStreet"
+  | "billingStreetNumber"
+  | "billingColonia"
+  | "billingCodigoPostal"
+  | "billingMunicipio"
+  | "billingCiudad"
+  | "billingEstado"
+  | "billingPais"
+> {
+  return {
+    billingStreet: form.street,
+    billingStreetNumber: form.streetNumber,
+    billingColonia: form.colonia,
+    billingCodigoPostal: form.codigoPostal,
+    billingMunicipio: form.municipio,
+    billingCiudad: form.municipio,
+    billingEstado: form.estado,
+    billingPais: form.pais || "México",
+  };
+}
+
+/** Aplica checkboxes de «usar el mismo» antes de validar/guardar. */
+export function applyBillingSameFlags(form: SocioProfileFormInitial): SocioProfileFormInitial {
+  let next = { ...form };
+  if (form.billingSameAddress) {
+    next = { ...next, ...copyBusinessAddressToBilling(form) };
+  }
+  if (form.billingSameWhatsapp) {
+    next = { ...next, billingWhatsapp: form.contactWhatsapp };
+  }
+  if (form.billingSameEmail) {
+    next = { ...next, billingEmail: form.contactEmail };
+  }
+  next.billingAddressFull = composeBillingAddress(next);
+  next.address = form.address?.trim() || composeBusinessAddress(form);
+  return next;
+}
+
 export function emptyBusinessProfile(email = ""): SocioProfileFormInitial {
   return {
     businessName: "",
@@ -89,6 +141,7 @@ export function emptyBusinessProfile(email = ""): SocioProfileFormInitial {
     billingEmail: "",
     billingSameWhatsapp: true,
     billingSameEmail: true,
+    billingSameAddress: true,
     privacyAccepted: false,
   };
 }
@@ -151,13 +204,14 @@ export function isManualRegistrationComplete(form: SocioProfileFormInitial): boo
     return false;
   }
   if (
-    !filled(form.billingStreet) ||
-    !filled(form.billingStreetNumber) ||
-    !filled(form.billingColonia) ||
-    !(filled(form.billingMunicipio) || filled(form.billingCiudad)) ||
-    !filled(form.billingEstado) ||
-    !filled(form.billingPais) ||
-    !filled(form.billingCodigoPostal)
+    !form.billingSameAddress &&
+    (!filled(form.billingStreet) ||
+      !filled(form.billingStreetNumber) ||
+      !filled(form.billingColonia) ||
+      !(filled(form.billingMunicipio) || filled(form.billingCiudad)) ||
+      !filled(form.billingEstado) ||
+      !filled(form.billingPais) ||
+      !filled(form.billingCodigoPostal))
   ) {
     return false;
   }
