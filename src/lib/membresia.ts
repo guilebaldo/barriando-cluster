@@ -196,11 +196,27 @@ export function needsCertificationPayment(plan: MembershipPlan, status: string):
   return true;
 }
 
-/** Puede entrar al panel: turista, pago activo o transferencia en revisión. */
+/**
+ * Alta / edición de ficha de negocio: plan comercial aunque el pago aún no esté confirmado
+ * (inactive, manual_pending) o ya activo. Al confirmar el pago, publishBusinessPresenceOnPayment
+ * publica en /socios, /map (Gran Empresa) y /admin.
+ */
+export function canRegisterBusinessProfile(plan: MembershipPlan, status: string): boolean {
+  if (!isBusinessPlan(plan)) return false;
+  return (
+    status === "active" ||
+    status === "manual_active" ||
+    status === "manual_pending" ||
+    status === "inactive"
+  );
+}
+
+/** Puede entrar al panel: turista, pago activo, transferencia en revisión, o negocio pendiente de pago (para llenar ficha). */
 export function canAccessPanel(plan: MembershipPlan, status: string): boolean {
   if (isTuristaPlan(plan)) return true;
   if (hasCommercialAccess(plan, status)) return true;
   if (isTransferPaymentPending(status)) return true;
+  if (canRegisterBusinessProfile(plan, status)) return true;
   return false;
 }
 

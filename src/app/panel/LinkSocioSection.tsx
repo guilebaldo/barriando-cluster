@@ -3,15 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Link2, Search } from "lucide-react";
 import { linkSocioAccount, registerManualBusiness } from "./actions";
-import BusinessPlacesAutocomplete from "./BusinessPlacesAutocomplete";
-import { categorySelectOptions } from "@/lib/business-categories";
-import { REGIMEN_OPTIONS, CFDI_OPTIONS } from "@/lib/fiscal-options";
-import { normalizeWebsiteUrl } from "@/lib/url-utils";
+import BusinessProfileFields from "./BusinessProfileFields";
+import type { SocioProfileFormInitial } from "./business-profile-types";
+import { emptyBusinessProfile } from "@/lib/business-address";
 import {
   formFieldInputClass,
   formFieldLabelClass,
   formFieldLegendClass,
-  formFieldSelectClass,
 } from "@/lib/form-field-styles";
 
 const NOT_LISTED_ID = -1;
@@ -25,27 +23,24 @@ interface SocioOption {
 interface LinkSocioSectionProps {
   socios: SocioOption[];
   takenSocioIds: number[];
+  accountEmail: string;
   onLinked: () => Promise<void>;
 }
 
-export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: LinkSocioSectionProps) {
+export default function LinkSocioSection({
+  socios,
+  takenSocioIds,
+  accountEmail,
+  onLinked,
+}: LinkSocioSectionProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [linkMsg, setLinkMsg] = useState("");
   const [linkLoading, setLinkLoading] = useState(false);
-  const [manualName, setManualName] = useState("");
-  const [manualAddress, setManualAddress] = useState("");
-  const [manualLat, setManualLat] = useState<number | null>(null);
-  const [manualLng, setManualLng] = useState<number | null>(null);
-  const [manualCategory, setManualCategory] = useState("");
-  const [manualWebsite, setManualWebsite] = useState("");
-  const [manualRfc, setManualRfc] = useState("");
-  const [manualRazonSocial, setManualRazonSocial] = useState("");
-  const [manualRegimen, setManualRegimen] = useState("");
-  const [manualUsoCfdi, setManualUsoCfdi] = useState("");
-  const [manualCodigoPostal, setManualCodigoPostal] = useState("");
-  const [manualMapsUrl, setManualMapsUrl] = useState("");
+  const [manualForm, setManualForm] = useState<SocioProfileFormInitial>(() =>
+    emptyBusinessProfile(accountEmail)
+  );
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isManual = selectedId === NOT_LISTED_ID;
@@ -64,13 +59,6 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
     });
   }, [socios, takenSocioIds, query]);
 
-  const selectedLabel = useMemo(() => {
-    if (selectedId === NOT_LISTED_ID) return "Mi negocio no está listado";
-    if (selectedId == null) return "";
-    const found = socios.find((s) => s.id === selectedId);
-    return found ? `${found.name} — ${found.categoria}` : "";
-  }, [selectedId, socios]);
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -81,6 +69,13 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setManualForm((prev) => ({
+      ...prev,
+      contactEmail: prev.contactEmail || accountEmail,
+    }));
+  }, [accountEmail]);
+
   function pickOption(id: number, label: string) {
     setSelectedId(id);
     setQuery(label);
@@ -88,32 +83,33 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
     setLinkMsg("");
   }
 
-  async function handleSubmit() {
+  const setManual = <K extends keyof SocioProfileFormInitial>(
+    key: K,
+    value: SocioProfileFormInitial[K]
+  ) => setManualForm((prev) => ({ ...prev, [key]: value }));
+
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     setLinkMsg("");
     setLinkLoading(true);
 
     try {
       if (isManual) {
-        const result = await registerManualBusiness({
-          businessName: manualName,
-          address: manualAddress,
-          category: manualCategory,
-          website: manualWebsite ? normalizeWebsiteUrl(manualWebsite) : undefined,
-          googleBusinessUrl: manualMapsUrl || undefined,
-          latitude: manualLat,
-          longitude: manualLng,
-          rfc: manualRfc,
-          razonSocial: manualRazonSocial,
-          regimenFiscal: manualRegimen,
-          usoCfdi: manualUsoCfdi,
-          billingCodigoPostal: manualCodigoPostal,
-        });
+        if (!manualForm.privacyAccepted) {
+          setLinkMsg("Debes aceptar el aviso de privacidad.");
+          return;
+        }
+        if (manualForm.latitude == null || manualForm.longitude == null) {
+          setLinkMsg("Confirma la ubicación en el mapa.");
+          return;
+        }
+        const result = await registerManualBusiness(manualForm);
         if (!result.ok) {
           setLinkMsg(result.error);
           return;
         }
         setLinkMsg(
-          `Solicitud enviada para "${result.socioName}". Quedó pendiente de aprobación del administrador.`
+          `Solicitud enviada para «${result.socioName}». Quedó pendiente de aprobación del administrador.`
         );
         await onLinked();
         return;
@@ -130,7 +126,7 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
         return;
       }
       setLinkMsg(
-        `Solicitud enviada para "${result.socioName}". Quedó pendiente de aprobación del administrador.`
+        `Solicitud enviada para «${result.socioName}». Quedó pendiente de aprobación del administrador.`
       );
       setSelectedId(null);
       setQuery("");
@@ -140,18 +136,18 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
     }
   }
 
-  const inputClass = formFieldInputClass;
-
   return (
     <section className="bg-white border border-amber-200 rounded-xl p-6 shadow-sm md:col-span-2">
       <div className="flex items-center gap-2 mb-3">
         <Link2 className="w-5 h-5 text-amber-600" />
-        <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Vincula tu negocio</h2>
+        <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+          Vincula tu negocio
+        </h2>
       </div>
       <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
-        Busca tu establecimiento en la lista. Si no lo encuentras, desplázate hasta el final y selecciona
-        la opción <strong className="text-[#27366D]">&quot;Mi negocio no está listado&quot;</strong> para
-        registrarlo desde cero con ubicación precisa y datos fiscales.
+        Busca tu establecimiento en la lista. Si no lo encuentras, elige{" "}
+        <strong className="text-[#27366D]">«Mi negocio no está listado»</strong> para registrarlo
+        con ubicación y datos fiscales. Puedes completar el alta aunque tu pago aún esté pendiente.
       </p>
 
       <div ref={containerRef} className="relative mb-4">
@@ -168,8 +164,8 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
                 setOpen(true);
               }}
               onFocus={() => setOpen(true)}
-              placeholder="Escribe para buscar por nombre o categoría..."
-              className={`${inputClass} pl-9 pr-9`}
+              placeholder="Escribe para buscar por nombre o categoría…"
+              className={`${formFieldInputClass} pl-9 pr-9`}
               autoComplete="off"
             />
             <button
@@ -183,11 +179,11 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
           </div>
         </label>
 
-        {open && (
-          <ul className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg text-xs">
-            {available.length === 0 && (
+        {open ? (
+          <ul className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg text-sm">
+            {available.length === 0 ? (
               <li className="px-3 py-2 text-slate-500">No hay coincidencias en el catálogo.</li>
-            )}
+            ) : null}
             {available.map((s) => (
               <li key={s.id}>
                 <button
@@ -199,8 +195,7 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
                       : "hover:bg-slate-50"
                   }`}
                 >
-                  <span className="font-semibold text-slate-900">{s.name}</span>
-                  <span className="text-slate-500 ml-2">{s.categoria}</span>
+                  {s.name} — {s.categoria}
                 </button>
               </li>
             ))}
@@ -208,157 +203,52 @@ export default function LinkSocioSection({ socios, takenSocioIds, onLinked }: Li
               <button
                 type="button"
                 onClick={() => pickOption(NOT_LISTED_ID, "Mi negocio no está listado")}
-                className={`w-full text-left px-3 py-2.5 border-t border-amber-100 transition ${
-                  isManual
-                    ? "bg-amber-100 text-amber-900 font-semibold border-l-2 border-l-amber-600"
-                    : "hover:bg-amber-50 text-amber-800 font-semibold"
+                className={`w-full text-left px-3 py-2.5 font-semibold transition ${
+                  selectedId === NOT_LISTED_ID
+                    ? "bg-amber-50 text-amber-900"
+                    : "hover:bg-amber-50/80 text-[#27366D]"
                 }`}
               >
                 Mi negocio no está listado
               </button>
             </li>
           </ul>
-        )}
+        ) : null}
       </div>
 
-      {selectedId != null && !isManual && selectedLabel && (
-        <p className="text-xs text-slate-600 mb-3">
-          Seleccionado: <strong className="text-[#27366D]">{selectedLabel}</strong>
+      {isManual ? (
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
+          <BusinessProfileFields
+            form={manualForm}
+            set={setManual}
+            disabled={linkLoading}
+            requireFiscal
+            requirePrivacy
+          />
+          <button
+            type="submit"
+            disabled={linkLoading}
+            className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg disabled:opacity-40"
+          >
+            {linkLoading ? "Enviando…" : "Enviar solicitud de registro"}
+          </button>
+        </form>
+      ) : (
+        <button
+          type="button"
+          disabled={linkLoading || selectedId == null}
+          onClick={() => void handleSubmit()}
+          className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-lg disabled:opacity-40"
+        >
+          {linkLoading ? "Enviando…" : "Vincular negocio del catálogo"}
+        </button>
+      )}
+
+      {linkMsg ? (
+        <p className="mt-4 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+          {linkMsg}
         </p>
-      )}
-
-      {isManual && (
-        <div className="grid sm:grid-cols-2 gap-3 mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-          <label className={`${formFieldLabelClass} sm:col-span-2`}>
-            <span className={formFieldLegendClass}>Nombre del negocio</span>
-            <input
-              type="text"
-              value={manualName}
-              onChange={(e) => setManualName(e.target.value)}
-              className={`${inputClass} mt-1`}
-              placeholder="Ej. Café del Centro"
-            />
-          </label>
-          <label className={`${formFieldLabelClass} sm:col-span-2`}>
-            <span className={formFieldLegendClass}>Ubicación (Google Places)</span>
-            <BusinessPlacesAutocomplete
-              value={manualAddress}
-              onChange={setManualAddress}
-              onLocationSelected={(loc) => {
-                setManualAddress(loc.address);
-                setManualLat(loc.latitude);
-                setManualLng(loc.longitude);
-                setManualMapsUrl(loc.mapsUrl ?? "");
-              }}
-              className={`${inputClass} mt-1`}
-            />
-          </label>
-          <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Categoría</span>
-            <select
-              value={manualCategory}
-              onChange={(e) => setManualCategory(e.target.value)}
-              className={`${formFieldSelectClass} mt-1`}
-            >
-              <option value="">Selecciona…</option>
-              {categorySelectOptions(manualCategory).map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Sitio web (opcional)</span>
-            <input
-              type="text"
-              value={manualWebsite}
-              onChange={(e) => setManualWebsite(e.target.value)}
-              onBlur={() => setManualWebsite((v) => normalizeWebsiteUrl(v))}
-              className={`${inputClass} mt-1`}
-              placeholder="tunegocio.com"
-            />
-          </label>
-
-          <div className="sm:col-span-2 pt-2 border-t border-slate-200">
-            <p className="text-[10px] font-bold text-[#27366D] uppercase tracking-widest mb-3">
-              Datos fiscales (CFDI 4.0)
-            </p>
-          </div>
-
-          <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>RFC</span>
-            <input
-              type="text"
-              value={manualRfc}
-              onChange={(e) => setManualRfc(e.target.value.toUpperCase())}
-              className={`${inputClass} mt-1 uppercase`}
-              maxLength={13}
-            />
-          </label>
-          <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Razón social</span>
-            <input
-              type="text"
-              value={manualRazonSocial}
-              onChange={(e) => setManualRazonSocial(e.target.value)}
-              className={`${inputClass} mt-1`}
-            />
-          </label>
-          <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Régimen fiscal</span>
-            <select
-              value={manualRegimen}
-              onChange={(e) => setManualRegimen(e.target.value)}
-              className={`${formFieldSelectClass} mt-1`}
-            >
-              <option value="">Selecciona…</option>
-              {REGIMEN_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Uso de CFDI</span>
-            <select
-              value={manualUsoCfdi}
-              onChange={(e) => setManualUsoCfdi(e.target.value)}
-              className={`${formFieldSelectClass} mt-1`}
-            >
-              <option value="">Selecciona…</option>
-              {CFDI_OPTIONS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Código postal fiscal</span>
-            <input
-              type="text"
-              value={manualCodigoPostal}
-              onChange={(e) => setManualCodigoPostal(e.target.value)}
-              className={`${inputClass} mt-1`}
-              maxLength={10}
-              inputMode="numeric"
-            />
-          </label>
-        </div>
-      )}
-
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={linkLoading || (selectedId == null && !query.trim())}
-        className="bg-[#27366D] text-white font-bold text-xs uppercase px-6 py-3 rounded-lg disabled:opacity-50 hover:bg-[#1e2b58] transition"
-      >
-        {linkLoading ? "Enviando solicitud..." : isManual ? "Enviar solicitud de alta" : "Solicitar vinculación"}
-      </button>
-
-      {linkMsg && <p className="text-xs mt-3 text-slate-600">{linkMsg}</p>}
+      ) : null}
     </section>
   );
 }

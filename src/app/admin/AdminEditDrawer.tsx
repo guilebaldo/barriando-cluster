@@ -19,6 +19,7 @@ import {
 } from "./actions";
 import { PLAN_ADMIN_LABELS, PAYMENT_METHOD_OPTIONS } from "@/lib/admin-labels";
 import { formatExpiryShort } from "@/lib/admin-ops";
+import { toBusinessProfileFormInitial } from "@/lib/business-address";
 import { playCuelume } from "./useAdminCuelume";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -76,26 +77,52 @@ export default function AdminEditDrawer({
 
   const profileInitial = useMemo((): SocioProfileFormInitial => {
     const p = linkedUser?.profile;
-    return {
-      businessName: p?.businessName || row?.businessName || catalog?.name || "",
-      website: p?.website || catalog?.website || "",
-      googleBusinessUrl: p?.googleBusinessUrl || "",
-      category: p?.category || row?.categoria || catalog?.categoria || "",
-      address: p?.address || "",
-      latitude: p?.latitude ?? null,
-      longitude: p?.longitude ?? null,
-      rfc: p?.rfc || "",
-      razonSocial: p?.razonSocial || "",
-      regimenFiscal: p?.regimenFiscal || "",
-      usoCfdi: p?.usoCfdi || "",
-      billingStreet: p?.billingStreet || "",
-      billingColonia: p?.billingColonia || "",
-      billingCiudad: p?.billingCiudad || "",
-      billingEstado: p?.billingEstado || "",
-      billingPais: p?.billingPais || "México",
-      billingCodigoPostal: p?.billingCodigoPostal || "",
-      billingAddressFull: p?.billingAddressFull || "",
-    };
+    return toBusinessProfileFormInitial(
+      {
+        businessName: p?.businessName || row?.businessName || catalog?.name || "",
+        website: p?.website || catalog?.website || "",
+        googleBusinessUrl: p?.googleBusinessUrl || "",
+        category: p?.category || row?.categoria || catalog?.categoria || "",
+        address: p?.address || "",
+        street: p?.street || "",
+        streetNumber: p?.streetNumber || "",
+        colonia: p?.colonia || "",
+        codigoPostal: p?.codigoPostal || "",
+        municipio: p?.municipio || "",
+        estado: p?.estado || "",
+        pais: p?.pais || "México",
+        phone: p?.phone || "",
+        latitude: p?.latitude ?? null,
+        longitude: p?.longitude ?? null,
+        contactFirstName: p?.contactFirstName || "",
+        contactLastNamePaternal: p?.contactLastNamePaternal || "",
+        contactLastNameMaternal: p?.contactLastNameMaternal || "",
+        contactRole: p?.contactRole || "",
+        contactBirthDate: p?.contactBirthDate || "",
+        contactWhatsapp: p?.contactWhatsapp || "",
+        contactEmail: p?.contactEmail || linkedUser?.email || "",
+        rfc: p?.rfc || "",
+        razonSocial: p?.razonSocial || "",
+        personaTipo: p?.personaTipo || "",
+        regimenFiscal: p?.regimenFiscal || "",
+        usoCfdi: p?.usoCfdi || "",
+        billingStreet: p?.billingStreet || "",
+        billingStreetNumber: p?.billingStreetNumber || "",
+        billingColonia: p?.billingColonia || "",
+        billingCiudad: p?.billingCiudad || "",
+        billingMunicipio: p?.billingMunicipio || p?.billingCiudad || "",
+        billingEstado: p?.billingEstado || "",
+        billingPais: p?.billingPais || "México",
+        billingCodigoPostal: p?.billingCodigoPostal || "",
+        billingAddressFull: p?.billingAddressFull || "",
+        billingWhatsapp: p?.billingWhatsapp || "",
+        billingEmail: p?.billingEmail || "",
+        billingSameWhatsapp: p?.billingSameWhatsapp ?? true,
+        billingSameEmail: p?.billingSameEmail ?? true,
+        privacyAccepted: p?.privacyAccepted ?? false,
+      },
+      linkedUser?.email || ""
+    );
   }, [linkedUser, row, catalog]);
 
   const benefitInitial = useMemo(

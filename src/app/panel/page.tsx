@@ -13,6 +13,7 @@ import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
 import { expireMembershipsAfterGraceIfNeeded } from "@/lib/subscription-lifecycle";
 import {
   canAccessPanel,
+  canRegisterBusinessProfile,
   hasCommercialAccess,
   isTuristaPlan,
   needsCertificationPayment,
@@ -86,7 +87,12 @@ export default async function PanelPage({
       redirect("/planes?pago=requiere_plan");
     }
 
-    if (needsCertificationPayment(refreshedSub.plan, refreshedSub.status)) {
+    // Plan comercial: pueden llenar la ficha aunque el pago aún esté pendiente.
+    // Vecino / otros planes de pago sin acceso → siguen a certificación.
+    if (
+      needsCertificationPayment(refreshedSub.plan, refreshedSub.status) &&
+      !canRegisterBusinessProfile(refreshedSub.plan, refreshedSub.status)
+    ) {
       redirect("/certificacion/pago");
     }
 

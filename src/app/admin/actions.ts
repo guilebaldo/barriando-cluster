@@ -6,10 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
 import { listaSocios } from "@/app/data/socios";
-import { getPlanLabel } from "@/lib/membresia";
+import { getPlanLabel, isBusinessPlan } from "@/lib/membresia";
 import { advanceBillingAnniversary } from "@/lib/subscription-lifecycle";
-import { isBusinessPlan } from "@/lib/membresia";
 import { publishBusinessPresenceOnPayment } from "@/lib/publish-business";
+import { toSocioProfileDbFields } from "@/lib/business-profile-payload";
+import { emptyBusinessProfile } from "@/lib/business-address";
+import type { SocioProfileFormInitial } from "@/app/panel/business-profile-types";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -391,20 +393,43 @@ export type AdminUserRow = {
     googleBusinessUrl: string;
     logoUrl: string;
     address: string;
+    street: string;
+    streetNumber: string;
+    colonia: string;
+    codigoPostal: string;
+    municipio: string;
+    estado: string;
+    pais: string;
+    phone: string;
     latitude: number | null;
     longitude: number | null;
     category: string;
+    contactFirstName: string;
+    contactLastNamePaternal: string;
+    contactLastNameMaternal: string;
+    contactRole: string;
+    contactBirthDate: string;
+    contactWhatsapp: string;
+    contactEmail: string;
     rfc: string;
     razonSocial: string;
+    personaTipo: string;
     regimenFiscal: string;
     usoCfdi: string;
     billingStreet: string;
+    billingStreetNumber: string;
     billingColonia: string;
     billingCiudad: string;
+    billingMunicipio: string;
     billingEstado: string;
     billingPais: string;
     billingCodigoPostal: string;
     billingAddressFull: string;
+    billingWhatsapp: string;
+    billingEmail: string;
+    billingSameWhatsapp: boolean;
+    billingSameEmail: boolean;
+    privacyAccepted: boolean;
   } | null;
   requestedBusinessName: string | null;
 };
@@ -471,15 +496,23 @@ const BASE_SOCIO_PROFILE_SELECT = {
 const EXTENDED_BILLING_SELECT = {
   rfc: true,
   razonSocial: true,
+  personaTipo: true,
   regimenFiscal: true,
   usoCfdi: true,
   billingStreet: true,
+  billingStreetNumber: true,
   billingColonia: true,
   billingCiudad: true,
+  billingMunicipio: true,
   billingEstado: true,
   billingPais: true,
   billingCodigoPostal: true,
   billingAddressFull: true,
+  billingWhatsapp: true,
+  billingEmail: true,
+  billingSameWhatsapp: true,
+  billingSameEmail: true,
+  privacyAcceptedAt: true,
 } as const;
 
 const EXTENDED_SOCIO_PROFILE_SELECT = {
@@ -487,9 +520,24 @@ const EXTENDED_SOCIO_PROFILE_SELECT = {
   linkageStatus: true,
   isManualEntry: true,
   address: true,
+  street: true,
+  streetNumber: true,
+  colonia: true,
+  codigoPostal: true,
+  municipio: true,
+  estado: true,
+  pais: true,
+  phone: true,
   latitude: true,
   longitude: true,
   category: true,
+  contactFirstName: true,
+  contactLastNamePaternal: true,
+  contactLastNameMaternal: true,
+  contactRole: true,
+  contactBirthDate: true,
+  contactWhatsapp: true,
+  contactEmail: true,
   ...EXTENDED_BILLING_SELECT,
 } as const;
 
@@ -537,20 +585,43 @@ type AdminUserRecord = {
     linkageStatus?: string | null;
     isManualEntry?: boolean | null;
     address?: string | null;
+    street?: string | null;
+    streetNumber?: string | null;
+    colonia?: string | null;
+    codigoPostal?: string | null;
+    municipio?: string | null;
+    estado?: string | null;
+    pais?: string | null;
+    phone?: string | null;
     latitude?: number | null;
     longitude?: number | null;
     category?: string | null;
+    contactFirstName?: string | null;
+    contactLastNamePaternal?: string | null;
+    contactLastNameMaternal?: string | null;
+    contactRole?: string | null;
+    contactBirthDate?: Date | string | null;
+    contactWhatsapp?: string | null;
+    contactEmail?: string | null;
     rfc?: string | null;
     razonSocial?: string | null;
+    personaTipo?: string | null;
     regimenFiscal?: string | null;
     usoCfdi?: string | null;
     billingStreet?: string | null;
+    billingStreetNumber?: string | null;
     billingColonia?: string | null;
     billingCiudad?: string | null;
+    billingMunicipio?: string | null;
     billingEstado?: string | null;
     billingPais?: string | null;
     billingCodigoPostal?: string | null;
     billingAddressFull?: string | null;
+    billingWhatsapp?: string | null;
+    billingEmail?: string | null;
+    billingSameWhatsapp?: boolean | null;
+    billingSameEmail?: boolean | null;
+    privacyAcceptedAt?: Date | string | null;
   } | null;
 };
 
@@ -627,20 +698,49 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
             googleBusinessUrl: user.socioProfile.googleBusinessUrl ?? "",
             logoUrl: user.socioProfile.logoUrl ?? "",
             address: user.socioProfile.address ?? "",
+            street: user.socioProfile.street ?? "",
+            streetNumber: user.socioProfile.streetNumber ?? "",
+            colonia: user.socioProfile.colonia ?? "",
+            codigoPostal: user.socioProfile.codigoPostal ?? "",
+            municipio: user.socioProfile.municipio ?? "",
+            estado: user.socioProfile.estado ?? "",
+            pais: user.socioProfile.pais ?? "México",
+            phone: user.socioProfile.phone ?? "",
             latitude: user.socioProfile.latitude ?? null,
             longitude: user.socioProfile.longitude ?? null,
             category: user.socioProfile.category ?? "",
+            contactFirstName: user.socioProfile.contactFirstName ?? "",
+            contactLastNamePaternal: user.socioProfile.contactLastNamePaternal ?? "",
+            contactLastNameMaternal: user.socioProfile.contactLastNameMaternal ?? "",
+            contactRole: user.socioProfile.contactRole ?? "",
+            contactBirthDate: (() => {
+              const v = user.socioProfile.contactBirthDate;
+              if (!v) return "";
+              const d = v instanceof Date ? v : new Date(v);
+              return Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+            })(),
+            contactWhatsapp: user.socioProfile.contactWhatsapp ?? "",
+            contactEmail: user.socioProfile.contactEmail ?? "",
             rfc: user.socioProfile.rfc ?? "",
             razonSocial: user.socioProfile.razonSocial ?? "",
+            personaTipo: user.socioProfile.personaTipo ?? "",
             regimenFiscal: user.socioProfile.regimenFiscal ?? "",
             usoCfdi: user.socioProfile.usoCfdi ?? "",
             billingStreet: user.socioProfile.billingStreet ?? "",
+            billingStreetNumber: user.socioProfile.billingStreetNumber ?? "",
             billingColonia: user.socioProfile.billingColonia ?? "",
             billingCiudad: user.socioProfile.billingCiudad ?? "",
+            billingMunicipio:
+              user.socioProfile.billingMunicipio ?? user.socioProfile.billingCiudad ?? "",
             billingEstado: user.socioProfile.billingEstado ?? "",
-            billingPais: user.socioProfile.billingPais ?? "",
+            billingPais: user.socioProfile.billingPais ?? "México",
             billingCodigoPostal: user.socioProfile.billingCodigoPostal ?? "",
             billingAddressFull: user.socioProfile.billingAddressFull ?? "",
+            billingWhatsapp: user.socioProfile.billingWhatsapp ?? "",
+            billingEmail: user.socioProfile.billingEmail ?? "",
+            billingSameWhatsapp: user.socioProfile.billingSameWhatsapp ?? true,
+            billingSameEmail: user.socioProfile.billingSameEmail ?? true,
+            privacyAccepted: Boolean(user.socioProfile.privacyAcceptedAt),
           }
         : null,
     };
@@ -1468,22 +1568,45 @@ const adminBusinessProfileSchema = z.object({
   socioId: z.number().int().positive(),
   businessName: z.string().trim().max(120),
   website: z.string().trim().max(500),
-  googleBusinessUrl: z.string().trim().max(500),
+  googleBusinessUrl: z.string().trim().max(500).optional(),
   category: z.string().trim().max(120),
-  address: z.string().trim().max(300),
-  latitude: z.number().nullable(),
-  longitude: z.number().nullable(),
-  rfc: z.string().trim().max(13),
-  razonSocial: z.string().trim().max(200),
-  regimenFiscal: z.string().trim().max(120),
-  usoCfdi: z.string().trim().max(80),
-  billingStreet: z.string().trim().max(200),
-  billingColonia: z.string().trim().max(120),
-  billingCiudad: z.string().trim().max(120),
-  billingEstado: z.string().trim().max(80),
-  billingPais: z.string().trim().max(80),
-  billingCodigoPostal: z.string().trim().max(10),
-  billingAddressFull: z.string().trim().max(400),
+  address: z.string().trim().max(400).optional(),
+  street: z.string().trim().max(200).optional(),
+  streetNumber: z.string().trim().max(40).optional(),
+  colonia: z.string().trim().max(120).optional(),
+  codigoPostal: z.string().trim().max(10).optional(),
+  municipio: z.string().trim().max(120).optional(),
+  estado: z.string().trim().max(80).optional(),
+  pais: z.string().trim().max(80).optional(),
+  phone: z.string().trim().max(30).optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  contactFirstName: z.string().trim().max(80).optional(),
+  contactLastNamePaternal: z.string().trim().max(80).optional(),
+  contactLastNameMaternal: z.string().trim().max(80).optional(),
+  contactRole: z.string().trim().max(40).optional(),
+  contactBirthDate: z.string().trim().max(32).optional(),
+  contactWhatsapp: z.string().trim().max(30).optional(),
+  contactEmail: z.string().trim().max(160).optional(),
+  rfc: z.string().trim().max(13).optional(),
+  razonSocial: z.string().trim().max(200).optional(),
+  personaTipo: z.string().trim().max(20).optional(),
+  regimenFiscal: z.string().trim().max(160).optional(),
+  usoCfdi: z.string().trim().max(160).optional(),
+  billingStreet: z.string().trim().max(200).optional(),
+  billingStreetNumber: z.string().trim().max(40).optional(),
+  billingColonia: z.string().trim().max(120).optional(),
+  billingCiudad: z.string().trim().max(120).optional(),
+  billingMunicipio: z.string().trim().max(120).optional(),
+  billingEstado: z.string().trim().max(80).optional(),
+  billingPais: z.string().trim().max(80).optional(),
+  billingCodigoPostal: z.string().trim().max(10).optional(),
+  billingAddressFull: z.string().trim().max(400).optional(),
+  billingWhatsapp: z.string().trim().max(30).optional(),
+  billingEmail: z.string().trim().max(160).optional(),
+  billingSameWhatsapp: z.boolean().optional(),
+  billingSameEmail: z.boolean().optional(),
+  privacyAccepted: z.boolean().optional(),
 });
 
 /**
@@ -1542,7 +1665,7 @@ export async function adminUpdateBusinessProfile(
 
     const linked = await prisma.user.findFirst({
       where: { socioId: data.socioId },
-      select: { id: true },
+      select: { id: true, email: true },
     });
 
     if (!linked) {
@@ -1555,26 +1678,54 @@ export async function adminUpdateBusinessProfile(
       };
     }
 
-    const profilePayload = {
+    const formPayload: SocioProfileFormInitial = {
+      ...emptyBusinessProfile(linked.email ?? ""),
+      ...data,
       businessName,
-      website: website || null,
-      googleBusinessUrl: data.googleBusinessUrl.trim() || null,
-      category: data.category.trim() || null,
-      address: data.address.trim() || null,
-      latitude: data.latitude,
-      longitude: data.longitude,
-      rfc: data.rfc.trim() || null,
-      razonSocial: data.razonSocial.trim() || null,
-      regimenFiscal: data.regimenFiscal.trim() || null,
-      usoCfdi: data.usoCfdi.trim() || null,
-      billingStreet: data.billingStreet.trim() || null,
-      billingColonia: data.billingColonia.trim() || null,
-      billingCiudad: data.billingCiudad.trim() || null,
-      billingEstado: data.billingEstado.trim() || null,
-      billingPais: data.billingPais.trim() || null,
-      billingCodigoPostal: data.billingCodigoPostal.trim() || null,
-      billingAddressFull: data.billingAddressFull.trim() || null,
+      website,
+      googleBusinessUrl: data.googleBusinessUrl ?? "",
+      category: data.category ?? "",
+      address: data.address ?? "",
+      street: data.street ?? "",
+      streetNumber: data.streetNumber ?? "",
+      colonia: data.colonia ?? "",
+      codigoPostal: data.codigoPostal ?? "",
+      municipio: data.municipio ?? "",
+      estado: data.estado ?? "",
+      pais: data.pais ?? "México",
+      phone: data.phone ?? "",
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
+      contactFirstName: data.contactFirstName ?? "",
+      contactLastNamePaternal: data.contactLastNamePaternal ?? "",
+      contactLastNameMaternal: data.contactLastNameMaternal ?? "",
+      contactRole: data.contactRole ?? "",
+      contactBirthDate: data.contactBirthDate ?? "",
+      contactWhatsapp: data.contactWhatsapp ?? "",
+      contactEmail: data.contactEmail ?? linked.email ?? "",
+      rfc: data.rfc ?? "",
+      razonSocial: data.razonSocial ?? "",
+      personaTipo: data.personaTipo ?? "",
+      regimenFiscal: data.regimenFiscal ?? "",
+      usoCfdi: data.usoCfdi ?? "",
+      billingStreet: data.billingStreet ?? "",
+      billingStreetNumber: data.billingStreetNumber ?? "",
+      billingColonia: data.billingColonia ?? "",
+      billingCiudad: data.billingCiudad ?? "",
+      billingMunicipio: data.billingMunicipio ?? data.billingCiudad ?? "",
+      billingEstado: data.billingEstado ?? "",
+      billingPais: data.billingPais ?? "México",
+      billingCodigoPostal: data.billingCodigoPostal ?? "",
+      billingAddressFull: data.billingAddressFull ?? "",
+      billingWhatsapp: data.billingWhatsapp ?? "",
+      billingEmail: data.billingEmail ?? "",
+      billingSameWhatsapp: data.billingSameWhatsapp ?? true,
+      billingSameEmail: data.billingSameEmail ?? true,
+      privacyAccepted: data.privacyAccepted ?? false,
     };
+
+    const dbFields = toSocioProfileDbFields(formPayload);
+    const { privacyAcceptedAt, ...profilePayload } = dbFields;
 
     await prisma.socioProfile.upsert({
       where: { userId: linked.id },
@@ -1582,8 +1733,12 @@ export async function adminUpdateBusinessProfile(
         userId: linked.id,
         ...profilePayload,
         linkageStatus: "approved",
+        ...(privacyAcceptedAt ? { privacyAcceptedAt } : {}),
       },
-      update: profilePayload,
+      update: {
+        ...profilePayload,
+        ...(privacyAcceptedAt ? { privacyAcceptedAt } : {}),
+      },
     });
 
     revalidatePath("/admin");

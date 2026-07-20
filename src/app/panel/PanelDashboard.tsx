@@ -15,10 +15,12 @@ import {
   isVecinoPlan,
   isBusinessPlan,
   canLinkSocioAccount,
+  canRegisterBusinessProfile,
   isSubscriptionStatusPending,
   isTransferPaymentPending,
   type PaidMembershipPlan,
 } from "@/lib/membresia";
+import { toBusinessProfileFormInitial } from "@/lib/business-address";
 import {
   formatRenewalDisplay,
   formatNextChargeDate,
@@ -42,6 +44,7 @@ import SocioBenefitForm from "./SocioBenefitForm";
 import EstablishmentQrDownload from "./EstablishmentQrDownload";
 import BenefitCredentialCard from "./BenefitCredentialCard";
 import type { MembershipPlan } from "@/generated/prisma/client";
+import type { SafeSocioProfile } from "@/lib/panel-data";
 import {
   Building2,
   CreditCard,
@@ -74,37 +77,7 @@ interface PanelProps {
     stripeSubscriptionId: string | null;
     createdAt: string | null;
   };
-  socioProfile: {
-    id: string;
-    businessName: string;
-    website: string;
-    googleBusinessUrl: string;
-    logoUrl: string;
-    linkageStatus: string;
-    isManualEntry: boolean;
-    address: string;
-    category: string;
-    rfc: string;
-    razonSocial: string;
-    regimenFiscal: string;
-    usoCfdi: string;
-    billingStreet: string;
-    billingColonia: string;
-    billingCiudad: string;
-    billingEstado: string;
-    billingPais: string;
-    billingCodigoPostal: string;
-    billingAddressFull: string;
-    latitude: number | null;
-    longitude: number | null;
-    offersBenefit: boolean;
-    benefitTitle: string;
-    benefitDescription: string;
-    benefitHowToRedeem: string;
-    benefitRedeemViaQr: boolean;
-    benefitValidFrom: string | null;
-    benefitValidUntil: string | null;
-  } | null;
+  socioProfile: SafeSocioProfile | null;
   catalogSocio: {
     name: string;
     categoria: string;
@@ -173,6 +146,7 @@ export default function PanelDashboard({
   const isVecino = isVecinoPlan(plan);
   const isBusiness = isBusinessPlan(plan);
   const commercial = hasCommercialAccess(plan, status);
+  const canRegister = canRegisterBusinessProfile(plan, status);
   const canLink = canLinkSocioAccount(status);
   const pendingValidation = isSubscriptionStatusPending(status);
   const transferPending = isTransferPaymentPending(status);
@@ -193,8 +167,9 @@ export default function PanelDashboard({
   const hasBusinessEstablished =
     linkageApproved && Boolean(user.socioId || socioProfile?.businessName?.trim());
   const hasBusinessLinked = Boolean(user.socioId && linkageApproved);
-  const showLinkSection = canLink && !hasBusinessEstablished && !linkagePending;
-  const showLinkageFirst = canLink && !hasBusinessEstablished && !linkagePending && !linkageApproved;
+  const showLinkSection = canRegister && !hasBusinessEstablished && !linkagePending;
+  const showLinkageFirst =
+    canRegister && !hasBusinessEstablished && !linkagePending && !linkageApproved;
   const autoRenewal =
     getRenewalMode(status, subscription?.stripeSubscriptionId) === "automatic";
   const nextChargeDate = formatNextChargeDate(subscription?.currentPeriodEnd);
@@ -203,26 +178,59 @@ export default function PanelDashboard({
     socioProfile?.businessName || catalogSocio?.name || (linkagePending ? "Solicitud en revisión" : null);
   const displayLogo = socioProfile?.logoUrl || (catalogSocio ? `/logos/${catalogSocio.foto}.png` : null);
 
-  const profileDefaults = {
-    businessName: socioProfile?.businessName ?? catalogSocio?.name ?? "",
-    website: socioProfile?.website ?? catalogSocio?.url ?? "",
-    googleBusinessUrl: socioProfile?.googleBusinessUrl ?? "",
-    category: socioProfile?.category ?? catalogSocio?.categoria ?? "",
-    address: socioProfile?.address ?? catalogSocio?.direccion ?? "",
-    latitude: socioProfile?.latitude ?? null,
-    longitude: socioProfile?.longitude ?? null,
-    rfc: socioProfile?.rfc ?? "",
-    razonSocial: socioProfile?.razonSocial ?? "",
-    regimenFiscal: socioProfile?.regimenFiscal ?? "",
-    usoCfdi: socioProfile?.usoCfdi ?? "",
-    billingStreet: socioProfile?.billingStreet ?? "",
-    billingColonia: socioProfile?.billingColonia ?? "",
-    billingCiudad: socioProfile?.billingCiudad ?? "",
-    billingEstado: socioProfile?.billingEstado ?? "",
-    billingPais: socioProfile?.billingPais ?? "",
-    billingCodigoPostal: socioProfile?.billingCodigoPostal ?? "",
-    billingAddressFull: socioProfile?.billingAddressFull ?? "",
-  };
+  const profileDefaults = toBusinessProfileFormInitial(
+    socioProfile
+      ? {
+          businessName: socioProfile.businessName || catalogSocio?.name || "",
+          website: socioProfile.website || catalogSocio?.url || "",
+          googleBusinessUrl: socioProfile.googleBusinessUrl,
+          category: socioProfile.category || catalogSocio?.categoria || "",
+          address: socioProfile.address || catalogSocio?.direccion || "",
+          street: socioProfile.street,
+          streetNumber: socioProfile.streetNumber,
+          colonia: socioProfile.colonia,
+          codigoPostal: socioProfile.codigoPostal,
+          municipio: socioProfile.municipio,
+          estado: socioProfile.estado,
+          pais: socioProfile.pais,
+          phone: socioProfile.phone,
+          latitude: socioProfile.latitude,
+          longitude: socioProfile.longitude,
+          contactFirstName: socioProfile.contactFirstName,
+          contactLastNamePaternal: socioProfile.contactLastNamePaternal,
+          contactLastNameMaternal: socioProfile.contactLastNameMaternal,
+          contactRole: socioProfile.contactRole,
+          contactBirthDate: socioProfile.contactBirthDate,
+          contactWhatsapp: socioProfile.contactWhatsapp,
+          contactEmail: socioProfile.contactEmail,
+          rfc: socioProfile.rfc,
+          razonSocial: socioProfile.razonSocial,
+          personaTipo: socioProfile.personaTipo,
+          regimenFiscal: socioProfile.regimenFiscal,
+          usoCfdi: socioProfile.usoCfdi,
+          billingStreet: socioProfile.billingStreet,
+          billingStreetNumber: socioProfile.billingStreetNumber,
+          billingColonia: socioProfile.billingColonia,
+          billingCiudad: socioProfile.billingCiudad,
+          billingMunicipio: socioProfile.billingMunicipio,
+          billingEstado: socioProfile.billingEstado,
+          billingPais: socioProfile.billingPais,
+          billingCodigoPostal: socioProfile.billingCodigoPostal,
+          billingAddressFull: socioProfile.billingAddressFull,
+          billingWhatsapp: socioProfile.billingWhatsapp,
+          billingEmail: socioProfile.billingEmail,
+          billingSameWhatsapp: socioProfile.billingSameWhatsapp,
+          billingSameEmail: socioProfile.billingSameEmail,
+          privacyAccepted: socioProfile.privacyAccepted,
+        }
+      : {
+          businessName: catalogSocio?.name || "",
+          website: catalogSocio?.url || "",
+          category: catalogSocio?.categoria || "",
+          address: catalogSocio?.direccion || "",
+        },
+    user.email
+  );
 
   async function refreshSession() {
     await update();
@@ -478,26 +486,27 @@ export default function PanelDashboard({
           showCredential={showCredential}
           stripeConfigured={stripeConfigured}
         />
-      ) : transferPending && !canLink ? (
-        <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <CreditCard className="w-4 h-4 text-[#27366D]" />
-            <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Membresía</h2>
-          </div>
-          <p className="text-sm text-slate-700 mb-1">
-            Plan <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>
-          </p>
-          <p className="text-sm text-slate-700">
-            Estado:{" "}
-            <strong className="text-amber-600">{getSubscriptionStatusLabel(status)}</strong>
-          </p>
-          <p className="text-xs text-slate-500 mt-3 font-light">
-            Te avisaremos por correo cuando confirmemos tu pago.
-          </p>
-        </section>
       ) : showLinkageFirst ? (
         <div className="space-y-6">
-          {showLinkageCtaBanner && (
+          {(transferPending || !commercial) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-950">
+              <p className="font-bold mb-1">
+                {transferPending
+                  ? "Pago en revisión — puedes completar tu ficha ahora"
+                  : "Completa tu ficha mientras gestiones el pago"}
+              </p>
+              <p className="font-light leading-relaxed">
+                Cuando confirmemos el pago, tu negocio aparecerá automáticamente en el directorio
+                {plan === "GRAN_EMPRESA" ? " y en el MAP" : ""}.{" "}
+                {!commercial && !transferPending ? (
+                  <Link href="/certificacion/pago" className="font-semibold underline">
+                    Ir a pagar
+                  </Link>
+                ) : null}
+              </p>
+            </div>
+          )}
+          {showLinkageCtaBanner && commercial && (
             <div className="relative bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-sm text-emerald-900">
               <button
                 type="button"
@@ -521,6 +530,7 @@ export default function PanelDashboard({
           <LinkSocioSection
             socios={socios ?? []}
             takenSocioIds={takenSocioIds ?? []}
+            accountEmail={user.email}
             onLinked={refreshSession}
           />
         </div>
@@ -537,6 +547,7 @@ export default function PanelDashboard({
             <LinkSocioSection
               socios={socios ?? []}
               takenSocioIds={takenSocioIds ?? []}
+              accountEmail={user.email}
               onLinked={refreshSession}
             />
           )}

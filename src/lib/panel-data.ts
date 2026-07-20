@@ -20,20 +20,43 @@ export type SafeSocioProfile = {
   linkageStatus: string;
   isManualEntry: boolean;
   address: string;
+  street: string;
+  streetNumber: string;
+  colonia: string;
+  codigoPostal: string;
+  municipio: string;
+  estado: string;
+  pais: string;
+  phone: string;
   latitude: number | null;
   longitude: number | null;
   category: string;
+  contactFirstName: string;
+  contactLastNamePaternal: string;
+  contactLastNameMaternal: string;
+  contactRole: string;
+  contactBirthDate: string;
+  contactWhatsapp: string;
+  contactEmail: string;
   rfc: string;
   razonSocial: string;
+  personaTipo: string;
   regimenFiscal: string;
   usoCfdi: string;
   billingStreet: string;
+  billingStreetNumber: string;
   billingColonia: string;
   billingCiudad: string;
+  billingMunicipio: string;
   billingEstado: string;
   billingPais: string;
   billingCodigoPostal: string;
   billingAddressFull: string;
+  billingWhatsapp: string;
+  billingEmail: string;
+  billingSameWhatsapp: boolean;
+  billingSameEmail: boolean;
+  privacyAccepted: boolean;
   offersBenefit: boolean;
   benefitTitle: string;
   benefitDescription: string;
@@ -103,20 +126,43 @@ export function normalizeSocioProfile(
     linkageStatus?: string | null;
     isManualEntry?: boolean | null;
     address?: string | null;
+    street?: string | null;
+    streetNumber?: string | null;
+    colonia?: string | null;
+    codigoPostal?: string | null;
+    municipio?: string | null;
+    estado?: string | null;
+    pais?: string | null;
+    phone?: string | null;
     latitude?: number | null;
     longitude?: number | null;
     category?: string | null;
+    contactFirstName?: string | null;
+    contactLastNamePaternal?: string | null;
+    contactLastNameMaternal?: string | null;
+    contactRole?: string | null;
+    contactBirthDate?: Date | string | null;
+    contactWhatsapp?: string | null;
+    contactEmail?: string | null;
     rfc?: string | null;
     razonSocial?: string | null;
+    personaTipo?: string | null;
     regimenFiscal?: string | null;
     usoCfdi?: string | null;
     billingStreet?: string | null;
+    billingStreetNumber?: string | null;
     billingColonia?: string | null;
     billingCiudad?: string | null;
+    billingMunicipio?: string | null;
     billingEstado?: string | null;
     billingPais?: string | null;
     billingCodigoPostal?: string | null;
     billingAddressFull?: string | null;
+    billingWhatsapp?: string | null;
+    billingEmail?: string | null;
+    billingSameWhatsapp?: boolean | null;
+    billingSameEmail?: boolean | null;
+    privacyAcceptedAt?: Date | string | null;
     offersBenefit?: boolean | null;
     benefitTitle?: string | null;
     benefitDescription?: string | null;
@@ -134,6 +180,11 @@ export function normalizeSocioProfile(
     return Number.isNaN(d.getTime()) ? null : d.toISOString();
   };
 
+  const toDateInput = (value?: Date | string | null): string => {
+    const iso = toIso(value);
+    return iso ? iso.slice(0, 10) : "";
+  };
+
   return {
     id: profile.id?.trim() ?? "",
     businessName: profile.businessName?.trim() ?? "",
@@ -143,20 +194,44 @@ export function normalizeSocioProfile(
     linkageStatus: profile.linkageStatus?.trim() ?? "",
     isManualEntry: Boolean(profile.isManualEntry),
     address: profile.address?.trim() ?? "",
+    street: profile.street?.trim() ?? "",
+    streetNumber: profile.streetNumber?.trim() ?? "",
+    colonia: profile.colonia?.trim() ?? "",
+    codigoPostal: profile.codigoPostal?.trim() ?? "",
+    municipio: profile.municipio?.trim() ?? "",
+    estado: profile.estado?.trim() ?? "",
+    pais: profile.pais?.trim() ?? "México",
+    phone: profile.phone?.trim() ?? "",
     latitude: profile.latitude ?? null,
     longitude: profile.longitude ?? null,
     category: profile.category?.trim() ?? "",
+    contactFirstName: profile.contactFirstName?.trim() ?? "",
+    contactLastNamePaternal: profile.contactLastNamePaternal?.trim() ?? "",
+    contactLastNameMaternal: profile.contactLastNameMaternal?.trim() ?? "",
+    contactRole: profile.contactRole?.trim() ?? "",
+    contactBirthDate: toDateInput(profile.contactBirthDate),
+    contactWhatsapp: profile.contactWhatsapp?.trim() ?? "",
+    contactEmail: profile.contactEmail?.trim() ?? "",
     rfc: profile.rfc?.trim() ?? "",
     razonSocial: profile.razonSocial?.trim() ?? "",
+    personaTipo: profile.personaTipo?.trim() ?? "",
     regimenFiscal: profile.regimenFiscal?.trim() ?? "",
     usoCfdi: profile.usoCfdi?.trim() ?? "",
     billingStreet: profile.billingStreet?.trim() ?? "",
+    billingStreetNumber: profile.billingStreetNumber?.trim() ?? "",
     billingColonia: profile.billingColonia?.trim() ?? "",
     billingCiudad: profile.billingCiudad?.trim() ?? "",
+    billingMunicipio:
+      profile.billingMunicipio?.trim() || profile.billingCiudad?.trim() || "",
     billingEstado: profile.billingEstado?.trim() ?? "",
     billingPais: profile.billingPais?.trim() ?? "México",
     billingCodigoPostal: profile.billingCodigoPostal?.trim() ?? "",
     billingAddressFull: profile.billingAddressFull?.trim() ?? "",
+    billingWhatsapp: profile.billingWhatsapp?.trim() ?? "",
+    billingEmail: profile.billingEmail?.trim() ?? "",
+    billingSameWhatsapp: profile.billingSameWhatsapp ?? true,
+    billingSameEmail: profile.billingSameEmail ?? true,
+    privacyAccepted: Boolean(profile.privacyAcceptedAt),
     offersBenefit: Boolean(profile.offersBenefit),
     benefitTitle: profile.benefitTitle?.trim() ?? "",
     benefitDescription: profile.benefitDescription?.trim() ?? "",

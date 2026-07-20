@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { listaSocios } from "@/app/data/socios";
-import { canLinkSocioAccount, getPlanLabel, isBusinessPlan, isPaidMember, isTuristaPlan } from "@/lib/membresia";
+import { canRegisterBusinessProfile, getPlanLabel, isBusinessPlan, isPaidMember, isTuristaPlan } from "@/lib/membresia";
 import { isLinkageApproved } from "@/lib/linkage";
 import {
   buildBenefitVerifyUrl,
@@ -15,6 +15,10 @@ import { BUSINESS_CATEGORY_OPTIONS } from "@/lib/business-categories";
 import { getStripe } from "@/lib/stripe";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { normalizeWebsiteUrl, parseWebsiteUrl } from "@/lib/url-utils";
+import type { SocioProfileFormInitial } from "./business-profile-types";
+import { toSocioProfileDbFields } from "@/lib/business-profile-payload";
+import { emptyBusinessProfile } from "@/lib/business-address";
+import { CONTACT_ROLE_OPTIONS, PERSONA_TIPO_OPTIONS } from "@/lib/fiscal-options";
 
 const optionalUrlField = z
   .string()
@@ -27,52 +31,101 @@ const optionalUrlField = z
   })
   .refine((v) => !v || parseWebsiteUrl(v) !== null, "URL inválida.");
 
-const profileSchema = z.object({
-  businessName: z.string().trim().max(120).optional(),
+const contactRoleValues = CONTACT_ROLE_OPTIONS.map((o) => o.value) as [string, ...string[]];
+const personaTipoValues = PERSONA_TIPO_OPTIONS.map((o) => o.value) as [string, ...string[]];
+
+const businessProfileSchema = z.object({
+  businessName: z.string().trim().min(2, "Ingresa el nombre comercial.").max(120),
   website: optionalUrlField,
   googleBusinessUrl: optionalUrlField,
-  category: z.string().trim().max(80).optional(),
-  address: z.string().trim().max(300).optional(),
-  latitude: z.number().min(-90).max(90).nullable().optional(),
-  longitude: z.number().min(-180).max(180).nullable().optional(),
-  rfc: z.string().trim().min(12, "RFC obligatorio (12–13 caracteres).").max(13),
+  category: z.enum(BUSINESS_CATEGORY_OPTIONS, { message: "Selecciona el giro." }),
+  address: z.string().trim().max(400).optional(),
+  street: z.string().trim().min(1, "Calle obligatoria.").max(200),
+  streetNumber: z.string().trim().min(1, "Número obligatorio.").max(40),
+  colonia: z.string().trim().min(1, "Colonia obligatoria.").max(120),
+  codigoPostal: z.string().trim().min(4, "C.P. obligatorio.").max(10),
+  municipio: z.string().trim().min(1, "Municipio obligatorio.").max(120),
+  estado: z.string().trim().min(1, "Estado obligatorio.").max(80),
+  pais: z.string().trim().min(1, "País obligatorio.").max(80),
+  phone: z.string().trim().min(7, "Teléfono del negocio obligatorio.").max(30),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  contactFirstName: z.string().trim().min(1, "Nombre obligatorio.").max(80),
+  contactLastNamePaternal: z.string().trim().min(1, "Apellido paterno obligatorio.").max(80),
+  contactLastNameMaternal: z.string().trim().max(80).optional(),
+  contactRole: z.enum(contactRoleValues, { message: "Selecciona el rol." }),
+  contactBirthDate: z.string().trim().min(8, "Fecha de nacimiento obligatoria."),
+  contactWhatsapp: z.string().trim().min(7, "WhatsApp obligatorio.").max(30),
+  contactEmail: z.string().trim().email("Email de contacto inválido.").max(160),
+  rfc: z.string().trim().min(12, "RFC inválido.").max(13),
   razonSocial: z.string().trim().min(3, "Razón social obligatoria.").max(200),
-  regimenFiscal: z.string().trim().min(3, "Régimen fiscal obligatorio.").max(120),
-  usoCfdi: z.string().trim().min(3, "Uso de CFDI obligatorio.").max(80),
-  billingStreet: z.string().trim().max(200).optional(),
-  billingColonia: z.string().trim().max(120).optional(),
+  personaTipo: z.enum(personaTipoValues, { message: "Selecciona tipo de persona." }),
+  regimenFiscal: z.string().trim().min(3, "Régimen fiscal obligatorio.").max(160),
+  usoCfdi: z.string().trim().min(3, "Uso de CFDI obligatorio.").max(160),
+  billingStreet: z.string().trim().min(1, "Calle fiscal obligatoria.").max(200),
+  billingStreetNumber: z.string().trim().min(1, "Número fiscal obligatorio.").max(40),
+  billingColonia: z.string().trim().min(1, "Colonia fiscal obligatoria.").max(120),
   billingCiudad: z.string().trim().max(120).optional(),
-  billingEstado: z.string().trim().max(80).optional(),
-  billingPais: z.string().trim().max(80).optional(),
-  billingCodigoPostal: z.string().trim().min(4, "Código postal fiscal obligatorio.").max(10),
+  billingMunicipio: z.string().trim().min(1, "Municipio fiscal obligatorio.").max(120),
+  billingEstado: z.string().trim().min(1, "Estado fiscal obligatorio.").max(80),
+  billingPais: z.string().trim().min(1, "País fiscal obligatorio.").max(80),
+  billingCodigoPostal: z.string().trim().min(4, "C.P. fiscal obligatorio.").max(10),
   billingAddressFull: z.string().trim().max(400).optional(),
+  billingWhatsapp: z.string().trim().max(30).optional(),
+  billingEmail: z.string().trim().max(160).optional(),
+  billingSameWhatsapp: z.boolean(),
+  billingSameEmail: z.boolean(),
+  privacyAccepted: z.boolean().optional(),
 });
 
-const manualBusinessSchema = z.object({
-  businessName: z.string().trim().min(2, "Ingresa el nombre del negocio.").max(120),
-  address: z.string().trim().min(5, "Ingresa la dirección del negocio.").max(300),
-  category: z.enum(BUSINESS_CATEGORY_OPTIONS, { message: "Selecciona la categoría del negocio." }),
-  website: z.string().trim().max(500).optional(),
+const profileSchema = businessProfileSchema.partial({
+  businessName: true,
+  category: true,
+  street: true,
+  streetNumber: true,
+  colonia: true,
+  codigoPostal: true,
+  municipio: true,
+  estado: true,
+  pais: true,
+  phone: true,
+  latitude: true,
+  longitude: true,
+  contactFirstName: true,
+  contactLastNamePaternal: true,
+  contactRole: true,
+  contactBirthDate: true,
+  contactWhatsapp: true,
+  contactEmail: true,
+  rfc: true,
+  razonSocial: true,
+  personaTipo: true,
+  regimenFiscal: true,
+  usoCfdi: true,
+  billingStreet: true,
+  billingStreetNumber: true,
+  billingColonia: true,
+  billingMunicipio: true,
+  billingEstado: true,
+  billingPais: true,
+  billingCodigoPostal: true,
+}).extend({
+  businessName: z.string().trim().max(120).optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
-  rfc: z.string().trim().min(12, "RFC inválido.").max(13),
-  razonSocial: z.string().trim().min(3, "Ingresa la razón social.").max(200),
-  regimenFiscal: z.string().trim().min(3, "Selecciona el régimen fiscal.").max(120),
-  usoCfdi: z.string().trim().min(3, "Selecciona el uso de CFDI.").max(80),
-  billingCodigoPostal: z.string().trim().min(4, "Ingresa el C.P.").max(10),
 });
 
 export type LinkSocioResult =
   | { ok: true; socioName: string; plan: MembershipPlan; planLabel: string; pendingApproval: true }
   | { ok: false; error: string };
 
-async function assertCanLink(userId: string) {
+async function assertCanRegisterBusiness(userId: string) {
   const subscription = await prisma.subscription.findUnique({ where: { userId } });
-  if (!subscription || !canLinkSocioAccount(subscription.status)) {
+  if (!subscription || !canRegisterBusinessProfile(subscription.plan, subscription.status)) {
     return {
       ok: false as const,
       error:
-        "Solo puedes vincular tu negocio cuando tu pago esté verificado (tarjeta activa o transferencia confirmada).",
+        "Selecciona un plan de negocio (Pequeña, Mediana o Gran Empresa) para registrar tu establecimiento. Puedes completar los datos aunque el pago aún esté pendiente.",
     };
   }
   return { ok: true as const, subscription };
@@ -80,56 +133,23 @@ async function assertCanLink(userId: string) {
 
 async function upsertPendingProfile(
   userId: string,
-  data: {
-    businessName: string;
-    website?: string | null;
-    googleBusinessUrl?: string | null;
-    isManualEntry: boolean;
-    address?: string | null;
-    latitude?: number | null;
-    longitude?: number | null;
-    category?: string | null;
-    rfc?: string | null;
-    razonSocial?: string | null;
-    regimenFiscal?: string | null;
-    usoCfdi?: string | null;
-    billingCodigoPostal?: string | null;
-  }
+  data: ReturnType<typeof toSocioProfileDbFields> & { isManualEntry: boolean }
 ) {
+  const { privacyAcceptedAt, isManualEntry, ...rest } = data;
   await prisma.socioProfile.upsert({
     where: { userId },
     create: {
       userId,
-      businessName: data.businessName,
-      website: data.website ?? null,
-      googleBusinessUrl: data.googleBusinessUrl ?? null,
       linkageStatus: "pending",
-      isManualEntry: data.isManualEntry,
-      address: data.address ?? null,
-      latitude: data.latitude ?? null,
-      longitude: data.longitude ?? null,
-      category: data.category ?? null,
-      rfc: data.rfc ?? null,
-      razonSocial: data.razonSocial ?? null,
-      regimenFiscal: data.regimenFiscal ?? null,
-      usoCfdi: data.usoCfdi ?? null,
-      billingCodigoPostal: data.billingCodigoPostal ?? null,
+      isManualEntry,
+      ...rest,
+      ...(privacyAcceptedAt ? { privacyAcceptedAt } : {}),
     },
     update: {
-      businessName: data.businessName,
-      website: data.website ?? null,
-      googleBusinessUrl: data.googleBusinessUrl ?? null,
       linkageStatus: "pending",
-      isManualEntry: data.isManualEntry,
-      address: data.address ?? null,
-      latitude: data.latitude ?? null,
-      longitude: data.longitude ?? null,
-      category: data.category ?? null,
-      rfc: data.rfc ?? null,
-      razonSocial: data.razonSocial ?? null,
-      regimenFiscal: data.regimenFiscal ?? null,
-      usoCfdi: data.usoCfdi ?? null,
-      billingCodigoPostal: data.billingCodigoPostal ?? null,
+      isManualEntry,
+      ...rest,
+      ...(privacyAcceptedAt ? { privacyAcceptedAt } : {}),
     },
   });
 }
@@ -150,10 +170,9 @@ export async function linkSocioAccount(socioId: number): Promise<LinkSocioResult
       return { ok: false, error: "Este negocio ya está vinculado a otra cuenta." };
     }
 
-    const linkCheck = await assertCanLink(session.id);
+    const linkCheck = await assertCanRegisterBusiness(session.id);
     if (!linkCheck.ok) return linkCheck;
 
-    // Respeta el plan pagado; no degradar según categoría del catálogo.
     const paidPlan = linkCheck.subscription.plan;
 
     await prisma.user.update({
@@ -161,12 +180,26 @@ export async function linkSocioAccount(socioId: number): Promise<LinkSocioResult
       data: { socioId },
     });
 
-    await upsertPendingProfile(session.id, {
-      businessName: socio.name,
-      website: socio.url || null,
-      googleBusinessUrl: socio.direccion || null,
-      isManualEntry: false,
-      category: socio.categoria,
+    await prisma.socioProfile.upsert({
+      where: { userId: session.id },
+      create: {
+        userId: session.id,
+        businessName: socio.name,
+        website: socio.url || null,
+        googleBusinessUrl: socio.direccion || null,
+        category: socio.categoria,
+        linkageStatus: "pending",
+        isManualEntry: false,
+        contactEmail: session.email ?? null,
+      },
+      update: {
+        businessName: socio.name,
+        website: socio.url || null,
+        googleBusinessUrl: socio.direccion || null,
+        category: socio.categoria,
+        linkageStatus: "pending",
+        isManualEntry: false,
+      },
     });
 
     revalidatePath("/panel");
@@ -187,66 +220,46 @@ export async function linkSocioAccount(socioId: number): Promise<LinkSocioResult
   }
 }
 
-export async function registerManualBusiness(input: {
-  businessName: string;
-  address: string;
-  category: string;
-  website?: string;
-  googleBusinessUrl?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  rfc: string;
-  razonSocial: string;
-  regimenFiscal: string;
-  usoCfdi: string;
-  billingCodigoPostal: string;
-}): Promise<LinkSocioResult> {
+export async function registerManualBusiness(
+  input: SocioProfileFormInitial
+): Promise<LinkSocioResult> {
   try {
     const session = await requireSession();
-    const parsed = manualBusinessSchema.safeParse(input);
+    const parsed = businessProfileSchema.safeParse({
+      ...input,
+      contactLastNameMaternal: input.contactLastNameMaternal ?? "",
+    });
     if (!parsed.success) {
       return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
     }
-
-    const linkCheck = await assertCanLink(session.id);
-    if (!linkCheck.ok) return linkCheck;
-
-    const {
-      businessName,
-      address,
-      category,
-      website,
-      latitude,
-      longitude,
-      rfc,
-      razonSocial,
-      regimenFiscal,
-      usoCfdi,
-      billingCodigoPostal,
-    } = parsed.data;
-    let websiteUrl: string | null = null;
-    if (website?.trim()) {
-      const parsedUrl = parseWebsiteUrl(website);
-      if (!parsedUrl) {
-        return { ok: false, error: "Ingresa una URL de sitio web válida o déjala vacía." };
-      }
-      websiteUrl = parsedUrl;
+    if (!input.privacyAccepted) {
+      return { ok: false, error: "Debes aceptar el aviso de privacidad." };
+    }
+    if (!input.billingSameWhatsapp && !input.billingWhatsapp?.trim()) {
+      return { ok: false, error: "Indica el WhatsApp fiscal o marca «usar el mismo»." };
+    }
+    if (!input.billingSameEmail && !input.billingEmail?.trim()) {
+      return { ok: false, error: "Indica el email fiscal o marca «usar el mismo»." };
     }
 
+    const linkCheck = await assertCanRegisterBusiness(session.id);
+    if (!linkCheck.ok) return linkCheck;
+
+    const dbFields = toSocioProfileDbFields({
+      ...parsed.data,
+      contactLastNameMaternal: parsed.data.contactLastNameMaternal ?? "",
+      googleBusinessUrl: parsed.data.googleBusinessUrl ?? "",
+      address: parsed.data.address ?? "",
+      billingCiudad: parsed.data.billingCiudad ?? "",
+      billingAddressFull: parsed.data.billingAddressFull ?? "",
+      billingWhatsapp: parsed.data.billingWhatsapp ?? "",
+      billingEmail: parsed.data.billingEmail ?? "",
+      privacyAccepted: true,
+    } as SocioProfileFormInitial);
+
     await upsertPendingProfile(session.id, {
-      businessName,
-      address,
-      category,
-      website: websiteUrl,
-      googleBusinessUrl: input.googleBusinessUrl?.trim() || null,
-      latitude: latitude ?? null,
-      longitude: longitude ?? null,
+      ...dbFields,
       isManualEntry: true,
-      rfc,
-      razonSocial,
-      regimenFiscal,
-      usoCfdi,
-      billingCodigoPostal,
     });
 
     revalidatePath("/panel");
@@ -255,7 +268,7 @@ export async function registerManualBusiness(input: {
     const paidPlan = linkCheck.subscription.plan;
     return {
       ok: true,
-      socioName: businessName,
+      socioName: parsed.data.businessName,
       plan: paidPlan,
       planLabel: getPlanLabel(paidPlan),
       pendingApproval: true,
@@ -318,30 +331,16 @@ export async function cancelMembership(): Promise<CancelMembershipResult> {
   }
 }
 
-export async function updateSocioProfile(input: {
-  businessName: string;
-  website: string;
-  googleBusinessUrl: string;
-  category: string;
-  address: string;
-  latitude: number | null;
-  longitude: number | null;
-  rfc: string;
-  razonSocial: string;
-  regimenFiscal: string;
-  usoCfdi: string;
-  billingStreet: string;
-  billingColonia: string;
-  billingCiudad: string;
-  billingEstado: string;
-  billingPais: string;
-  billingCodigoPostal: string;
-  billingAddressFull: string;
-}): Promise<UpdateProfileResult> {
+export async function updateSocioProfile(
+  input: SocioProfileFormInitial
+): Promise<UpdateProfileResult> {
   try {
     const session = await requireSession();
     const subscription = await prisma.subscription.findUnique({ where: { userId: session.id } });
-    const parsed = profileSchema.safeParse(input);
+    const parsed = profileSchema.safeParse({
+      ...input,
+      contactLastNameMaternal: input.contactLastNameMaternal ?? "",
+    });
     if (!parsed.success) {
       const labels = parsed.error.issues.map((i) => i.message).join(" · ");
       return { ok: false, error: `Faltan datos obligatorios: ${labels}` };
@@ -351,26 +350,49 @@ export async function updateSocioProfile(input: {
       return { ok: false, error: "Ingresa el nombre del negocio." };
     }
 
+    if (!input.billingSameWhatsapp && !input.billingWhatsapp?.trim()) {
+      return { ok: false, error: "Indica el WhatsApp fiscal o marca «usar el mismo»." };
+    }
+    if (!input.billingSameEmail && !input.billingEmail?.trim()) {
+      return { ok: false, error: "Indica el email fiscal o marca «usar el mismo»." };
+    }
+
     const profile = await prisma.socioProfile.findUnique({ where: { userId: session.id } });
     if (!profile && !session.socioId) {
       return { ok: false, error: "Vincula tu negocio antes de editar el perfil." };
     }
 
-    const data = parsed.data;
+    const dbFields = toSocioProfileDbFields({
+      ...emptyBusinessProfile(session.email ?? ""),
+      ...input,
+      ...parsed.data,
+      contactLastNameMaternal: parsed.data.contactLastNameMaternal ?? "",
+      googleBusinessUrl: parsed.data.googleBusinessUrl ?? "",
+      address: parsed.data.address ?? "",
+      billingCiudad: parsed.data.billingCiudad ?? "",
+      billingAddressFull: parsed.data.billingAddressFull ?? "",
+      billingWhatsapp: parsed.data.billingWhatsapp ?? "",
+      billingEmail: parsed.data.billingEmail ?? "",
+      privacyAccepted: input.privacyAccepted || Boolean(profile?.privacyAcceptedAt),
+    } as SocioProfileFormInitial);
+
+    const { privacyAcceptedAt, ...rest } = dbFields;
     const businessName =
-      data.businessName?.trim() || profile?.businessName?.trim() || null;
+      rest.businessName?.trim() || profile?.businessName?.trim() || null;
 
     await prisma.socioProfile.upsert({
       where: { userId: session.id },
       create: {
         userId: session.id,
-        ...data,
+        ...rest,
         businessName,
         linkageStatus: profile?.linkageStatus ?? "pending",
+        ...(privacyAcceptedAt ? { privacyAcceptedAt } : {}),
       },
       update: {
-        ...data,
+        ...rest,
         businessName,
+        ...(privacyAcceptedAt ? { privacyAcceptedAt } : {}),
       },
     });
 
@@ -379,7 +401,7 @@ export async function updateSocioProfile(input: {
         where: { socioId: session.socioId },
         data: {
           businessName,
-          category: data.category?.trim() || null,
+          category: rest.category?.trim() || null,
         },
       });
     }

@@ -118,17 +118,43 @@ model SocioProfile {
   latitude          Float?
   longitude         Float?
   category          String?
+  /** Dirección comercial estructurada */
+  street            String?
+  streetNumber      String?
+  colonia           String?
+  codigoPostal      String?
+  municipio         String?
+  estado            String?
+  pais              String?
+  phone             String?
+  /** Contacto de quien registra */
+  contactFirstName         String?
+  contactLastNamePaternal  String?
+  contactLastNameMaternal  String?
+  contactRole              String?
+  contactBirthDate         DateTime?
+  contactWhatsapp          String?
+  contactEmail             String?
+  /** Facturación */
   rfc               String?
   razonSocial       String?
+  personaTipo       String?
   regimenFiscal     String?
   usoCfdi           String?
   billingStreet     String?
+  billingStreetNumber String?
   billingColonia    String?
   billingCiudad     String?
+  billingMunicipio  String?
   billingEstado     String?
   billingPais       String?
   billingCodigoPostal String?
   billingAddressFull  String?
+  billingWhatsapp     String?
+  billingEmail        String?
+  billingSameWhatsapp Boolean @default(true)
+  billingSameEmail    Boolean @default(true)
+  privacyAcceptedAt   DateTime?
   offersBenefit       Boolean  @default(false)
   benefitTitle        String?
   benefitDescription  String?

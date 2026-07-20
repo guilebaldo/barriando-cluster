@@ -1,0 +1,24 @@
+-- AlterTable SocioProfile: business registration expansion
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "street" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "streetNumber" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "colonia" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "codigoPostal" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "municipio" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "estado" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "pais" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "phone" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "contactFirstName" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "contactLastNamePaternal" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "contactLastNameMaternal" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "contactRole" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "contactBirthDate" TIMESTAMP(3);
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "contactWhatsapp" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "contactEmail" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "personaTipo" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "billingStreetNumber" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "billingMunicipio" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "billingWhatsapp" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "billingEmail" TEXT;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "billingSameWhatsapp" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "billingSameEmail" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "SocioProfile" ADD COLUMN IF NOT EXISTS "privacyAcceptedAt" TIMESTAMP(3);
