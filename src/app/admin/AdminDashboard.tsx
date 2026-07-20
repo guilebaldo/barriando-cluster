@@ -447,7 +447,7 @@ export default function AdminDashboard({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar por nombre, correo, negocio, plan o RFC…"
-              className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#27366D]/20 focus:border-[#27366D]"
+              className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#27366D]/20 focus:border-[#27366D]"
               aria-label="Buscar cuentas"
             />
             {query.trim() && (

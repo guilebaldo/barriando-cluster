@@ -294,7 +294,7 @@ export default function AdminBusinessesSection({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Buscar negocio, correo vinculado, plan…"
-                className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#27366D]/20 focus:border-[#27366D]"
+                className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#27366D]/20 focus:border-[#27366D]"
                 aria-label="Buscar negocios"
               />
               {query.trim() ? (

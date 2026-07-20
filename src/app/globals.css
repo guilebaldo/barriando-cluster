@@ -213,6 +213,20 @@
   animation: barriando-nudge-shake 0.45s ease-in-out;
 }
 
+/* iOS Safari: zoom al enfocar si font-size < 16px. Forzar 1rem en /admin. */
+.admin-touch-forms :is(input, select, textarea):not(
+    [type="checkbox"],
+    [type="radio"],
+    [type="file"],
+    [type="hidden"],
+    [type="button"],
+    [type="submit"],
+    [type="reset"],
+    [type="image"]
+  ) {
+  font-size: 1rem !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-float-y,
   .animate-icon-ring,
