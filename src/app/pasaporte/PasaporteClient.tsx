@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Camera, X } from "lucide-react";
-import { getMapHrefForRestaurant } from "@/lib/pasaporte";
+import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
@@ -781,8 +781,8 @@ function PasaporteInner({
             )}
             <div ref={previewStampsRef} className="relative">
               {!isPreview && (
-                <p className="passport-value text-[11px] sm:text-xs text-center text-stone-500/80 mb-4 sm:mb-5">
-                  Toca un sello para verlo en el MAP
+                <p className="text-[10px] sm:text-[11px] text-center text-stone-400/70 font-light tracking-wide mb-4 sm:mb-5">
+                  Toca un sello para ver la ficha del socio
                 </p>
               )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
@@ -797,7 +797,7 @@ function PasaporteInner({
                 return (
                   <Link
                     key={restaurant.id}
-                    href={getMapHrefForRestaurant(restaurant.id)}
+                    href={getSociosHrefForRestaurant(restaurant.id)}
                     data-stamp-id={restaurant.id}
                     data-preview-stamp={
                       isPreview && previewStampIds.includes(restaurant.id)
@@ -847,14 +847,14 @@ function PasaporteInner({
                   <p className="text-2xl sm:text-3xl md:text-[2.125rem] font-black font-serif-cluster text-[#8b6b3e] leading-tight tracking-wide max-w-lg">
                     ¿Dónde está tu próximo sello?
                   </p>
-                  <p className="mt-3 text-base sm:text-lg text-[#9a8060] font-light leading-relaxed max-w-md">
-                    Recorre el barrio en el MAP y encuentra los lugares que sellan tu pasaporte.
+                  <p className="mt-3 text-sm sm:text-base text-[#9a8060]/80 font-light leading-relaxed max-w-md">
+                    Visita los socios del directorio y reúne sellos en tu pasaporte.
                   </p>
                   <Link
-                    href="/map"
-                    className="mt-6 sm:mt-7 inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm sm:text-base uppercase tracking-[0.2em] px-10 sm:px-12 py-4 sm:py-[1.125rem] rounded-lg transition shadow-lg active:scale-[0.98]"
+                    href="/socios"
+                    className="mt-6 sm:mt-7 inline-flex items-center justify-center bg-amber-500/90 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-[0.18em] px-10 sm:px-12 py-3.5 sm:py-4 rounded-lg transition shadow-md active:scale-[0.98]"
                   >
-                    Entrar al MAP
+                    Ver socios
                   </Link>
                 </div>
               )}

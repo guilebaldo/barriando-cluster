@@ -128,8 +128,14 @@ export function buildSellarPath(restaurantSlugValue: string): string {
   return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugValue)}`;
 }
 
+/** Ficha del socio en el directorio (sellos del pasaporte no siempre están en el MAP). */
+export function getSociosHrefForRestaurant(socioId: number): string {
+  return `/socios?socio=${socioId}`;
+}
+
+/** @deprecated Usa getSociosHrefForRestaurant — no todos los sellos aparecen en /map. */
 export function getMapHrefForRestaurant(socioId: number): string {
-  return `/map?socio=${socioId}`;
+  return getSociosHrefForRestaurant(socioId);
 }
 
 /** Guest landing after scanning a stamp QR — keeps sell intent for Google CTA. */
