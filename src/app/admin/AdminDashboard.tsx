@@ -14,7 +14,6 @@ import {
   type HomePromoRow,
   type CatalogSocioRow,
   type CatalogMembershipRow,
-  type MapMilestoneRow,
 } from "./actions";
 import { listaSocios } from "@/app/data/socios";
 import { needsCertificationPayment } from "@/lib/membresia";
@@ -32,7 +31,6 @@ import {
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContentSection";
 import AdminOperations from "./AdminOperations";
-import AdminHitosSection from "./AdminHitosSection";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
@@ -40,7 +38,7 @@ import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
-type AdminTab = "operations" | "accounts" | "content" | "hitos";
+type AdminTab = "operations" | "accounts" | "content";
 type ResolvedAction = "approved" | "rejected";
 type HealthStatus = "ok" | "pending" | "expired";
 
@@ -194,14 +192,12 @@ export default function AdminDashboard({
   homePromos,
   catalogRows,
   membershipRows,
-  milestones,
 }: {
   users: AdminUserRow[];
   testimonials: TestimonialRow[];
   homePromos: HomePromoRow[];
   catalogRows: CatalogSocioRow[];
   membershipRows: CatalogMembershipRow[];
-  milestones: MapMilestoneRow[];
 }) {
   const router = useRouter();
   useAdminCuelume();
@@ -428,16 +424,6 @@ export default function AdminDashboard({
         >
           Contenido Home
         </button>
-        <button
-          type="button"
-          onClick={() => setTab("hitos")}
-          data-cuelume-toggle=""
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "hitos" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Hitos ({milestones.length})
-        </button>
       </div>
 
       {tab === "content" ? (
@@ -451,8 +437,6 @@ export default function AdminDashboard({
           catalogRows={catalogRows}
           users={users}
         />
-      ) : tab === "hitos" ? (
-        <AdminHitosSection milestones={milestones} />
       ) : (
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
         <div className="px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">

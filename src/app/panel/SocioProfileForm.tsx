@@ -24,7 +24,6 @@ interface SocioProfileFormProps {
   onDelete?: () => void;
   deleteDisabled?: boolean;
   deleteLabel?: string;
-  submitLabel?: string;
 }
 
 export default function SocioProfileForm({
@@ -40,7 +39,6 @@ export default function SocioProfileForm({
   onDelete,
   deleteDisabled = false,
   deleteLabel = "Eliminar",
-  submitLabel = "Guardar cambios",
 }: SocioProfileFormProps) {
   const [form, setForm] = useState<SocioProfileFormInitial>({
     ...initial,
@@ -131,7 +129,7 @@ export default function SocioProfileForm({
           className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] active:scale-95 text-white font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg disabled:opacity-40 transition-all"
         >
           <Save className="w-4 h-4" />
-          {loading ? "Guardando..." : submitLabel}
+          {loading ? "Guardando..." : "Guardar cambios"}
         </button>
         {onDelete ? (
           <button

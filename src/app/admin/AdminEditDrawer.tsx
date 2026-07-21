@@ -2,16 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Copy, X } from "lucide-react";
+import { CheckCircle2, X } from "lucide-react";
 import SocioProfileForm, {
   type SocioProfileFormInitial,
 } from "@/app/panel/SocioProfileForm";
 import SocioBenefitForm from "@/app/panel/SocioBenefitForm";
 import {
   adminUpdateBusinessProfile,
-  createManualSocio,
   deleteCatalogMembership,
-  regenerateSocioInviteLink,
   renewCatalogMembership,
   updateCatalogMembershipBenefit,
   updateCatalogMembershipOps,
@@ -21,8 +19,7 @@ import {
 } from "./actions";
 import { PLAN_ADMIN_LABELS, PAYMENT_METHOD_OPTIONS } from "@/lib/admin-labels";
 import { formatExpiryShort } from "@/lib/admin-ops";
-import { emptyBusinessProfile, toBusinessProfileFormInitial } from "@/lib/business-address";
-import { PENDING_INVITE_STATUS } from "@/lib/socio-invite";
+import { toBusinessProfileFormInitial } from "@/lib/business-address";
 import { playCuelume } from "./useAdminCuelume";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -38,11 +35,9 @@ const BUSINESS_PLANS: MembershipPlan[] = [
 type Props = {
   open: boolean;
   onClose: () => void;
-  /** null + createMode = alta nueva */
   row: CatalogMembershipRow | null;
   linkedUser: AdminUserRow | null;
   catalog: CatalogSocioRow | null;
-  createMode?: boolean;
 };
 
 export default function AdminEditDrawer({
@@ -51,47 +46,25 @@ export default function AdminEditDrawer({
   row,
   linkedUser,
   catalog,
-  createMode = false,
 }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<DrawerTab>("negocio");
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
   const [plan, setPlan] = useState<MembershipPlan>("NEGOCIO_FAMILIAR");
-  const [paymentMethod, setPaymentMethod] = useState<string>("transfer");
-  const [status, setStatus] = useState<"active" | "inactive" | typeof PENDING_INVITE_STATUS>(
-    "active"
-  );
-  const [accountEmail, setAccountEmail] = useState("");
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
+  const [status, setStatus] = useState<"active" | "inactive">("active");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  const isCreate = createMode && !row;
-
   useEffect(() => {
-    if (!open) return;
+    if (!open || !row) return;
     setTab("negocio");
     setMsg("");
     setConfirmDeleteOpen(false);
-    setInviteUrl(null);
-    if (row) {
-      setPlan(row.plan);
-      setPaymentMethod(row.paymentMethod ?? "");
-      setStatus(
-        row.status === PENDING_INVITE_STATUS
-          ? PENDING_INVITE_STATUS
-          : row.status === "active"
-            ? "active"
-            : "inactive"
-      );
-      setAccountEmail(linkedUser?.email ?? "");
-    } else if (createMode) {
-      setPlan("NEGOCIO_FAMILIAR");
-      setPaymentMethod("transfer");
-      setStatus(PENDING_INVITE_STATUS);
-      setAccountEmail("");
-    }
-  }, [open, row, createMode, linkedUser?.email]);
+    setPlan(row.plan);
+    setPaymentMethod(row.paymentMethod ?? "");
+    setStatus(row.status === "active" ? "active" : "inactive");
+  }, [open, row]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,9 +76,6 @@ export default function AdminEditDrawer({
   }, [open, onClose, confirmDeleteOpen]);
 
   const profileInitial = useMemo((): SocioProfileFormInitial => {
-    if (isCreate) {
-      return emptyBusinessProfile(accountEmail || "");
-    }
     const p = linkedUser?.profile;
     return toBusinessProfileFormInitial(
       {
@@ -154,7 +124,7 @@ export default function AdminEditDrawer({
       },
       linkedUser?.email || ""
     );
-  }, [linkedUser, row, catalog, isCreate, accountEmail]);
+  }, [linkedUser, row, catalog]);
 
   const benefitInitial = useMemo(
     () => ({
@@ -169,49 +139,11 @@ export default function AdminEditDrawer({
     [row]
   );
 
-  if (!open || (!row && !createMode)) return null;
+  if (!open || !row) return null;
 
-  const titleName = isCreate ? "Nuevo socio" : row!.businessName;
-  const expiry = linkedUser?.currentPeriodEnd ?? row?.currentPeriodEnd ?? null;
-  const pendingInvite = row?.status === PENDING_INVITE_STATUS || isCreate;
-
-  async function handleCreate(payload: SocioProfileFormInitial) {
-    setMsg("");
-    const email = accountEmail.trim().toLowerCase();
-    if (!email) {
-      playCuelume("error");
-      setMsg("Indica el correo del socio (para Google/Apple).");
-      return { ok: false as const, error: "Correo requerido." };
-    }
-    setSaving(true);
-    const result = await createManualSocio({
-      ...payload,
-      email,
-      plan: plan as "NEGOCIO_FAMILIAR" | "MEDIANA_EMPRESA" | "GRAN_EMPRESA",
-      paymentMethod: (paymentMethod || "transfer") as
-        | "stripe"
-        | "transfer"
-        | "cash"
-        | "oxxo",
-      businessName: payload.businessName,
-    });
-    setSaving(false);
-    if (!result.ok) {
-      playCuelume("error");
-      setMsg(result.error);
-      return result;
-    }
-    playCuelume("success");
-    setInviteUrl(result.inviteUrl);
-    setMsg(
-      "Socio creado. Copia el enlace de verificación y envíaselo (WhatsApp/correo). Aparecerá en /socios y MAP tras confirmar."
-    );
-    router.refresh();
-    return { ok: true as const };
-  }
+  const expiry = linkedUser?.currentPeriodEnd ?? row.currentPeriodEnd;
 
   async function handleSaveProfile(payload: SocioProfileFormInitial) {
-    if (isCreate) return handleCreate(payload);
     setMsg("");
     const result = await adminUpdateBusinessProfile({
       socioId: row!.socioId,
@@ -236,10 +168,9 @@ export default function AdminEditDrawer({
     benefitValidFrom: string;
     benefitValidUntil: string;
   }) {
-    if (!row) return { ok: false as const, error: "Guarda el socio primero." };
     setMsg("");
     const result = await updateCatalogMembershipBenefit({
-      socioId: row.socioId,
+      socioId: row!.socioId,
       ...payload,
     });
     if (!result.ok) {
@@ -265,7 +196,7 @@ export default function AdminEditDrawer({
         | "cash"
         | "oxxo"
         | null,
-      status: status === PENDING_INVITE_STATUS ? "inactive" : status,
+      status,
     });
     setSaving(false);
     if (!result.ok) {
@@ -311,39 +242,11 @@ export default function AdminEditDrawer({
     router.refresh();
   }
 
-  async function handleCopyInvite() {
-    if (!row && !inviteUrl) return;
-    setSaving(true);
-    let url = inviteUrl;
-    if (!url && row) {
-      const result = await regenerateSocioInviteLink(row.socioId);
-      if (!result.ok) {
-        setSaving(false);
-        playCuelume("error");
-        setMsg(result.error);
-        return;
-      }
-      url = result.inviteUrl;
-      setInviteUrl(url);
-    }
-    setSaving(false);
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      playCuelume("success");
-      setMsg("Enlace de verificación copiado.");
-    } catch {
-      setMsg(`Copia este enlace: ${url}`);
-    }
-  }
-
-  const tabs: { id: DrawerTab; label: string }[] = isCreate
-    ? [{ id: "negocio", label: "Negocio" }]
-    : [
-        { id: "negocio", label: "Negocio" },
-        { id: "beneficio", label: "Beneficio" },
-        { id: "membresia", label: "Membresía" },
-      ];
+  const tabs: { id: DrawerTab; label: string }[] = [
+    { id: "negocio", label: "Negocio" },
+    { id: "beneficio", label: "Beneficio" },
+    { id: "membresia", label: "Membresía" },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -362,18 +265,16 @@ export default function AdminEditDrawer({
         <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 shrink-0">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              {isCreate ? "Alta manual" : "Editar socio"}
+              Editar socio
             </p>
             <h2
               id="admin-edit-drawer-title"
               className="text-lg font-black text-slate-950 truncate"
             >
-              {titleName}
+              {row.businessName}
             </h2>
             <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-              {isCreate
-                ? "Sin cuenta aún — se crea al guardar"
-                : `${linkedUser?.email ?? "Sin cuenta vinculada"} · ${row!.planLabel}`}
+              {linkedUser?.email ?? "Sin cuenta vinculada"} · {row.planLabel}
             </p>
           </div>
           <button
@@ -405,14 +306,7 @@ export default function AdminEditDrawer({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {isCreate || pendingInvite ? (
-            <p className="mb-4 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
-              Tras crear, copia el enlace de verificación y envíaselo al socio. Cuando confirme el
-              correo y entre con Google/Apple, aparecerá en /socios y en el MAP (si el plan aplica).
-            </p>
-          ) : null}
-
-          {!linkedUser && !isCreate && tab === "negocio" ? (
+          {!linkedUser && tab === "negocio" ? (
             <p className="mb-4 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
               Sin cuenta vinculada: se guardan nombre y sitio web en el roster. Ubicación y CFDI se
               guardan cuando el dueño tenga cuenta vinculada.
@@ -425,90 +319,20 @@ export default function AdminEditDrawer({
             </p>
           ) : null}
 
-          {(inviteUrl || (row && row.status === PENDING_INVITE_STATUS)) && (
-            <div className="mb-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => void handleCopyInvite()}
-                className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg disabled:opacity-40"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                Copiar enlace de verificación
-              </button>
-            </div>
-          )}
-
           {tab === "negocio" ? (
-            <div className="space-y-4">
-              {isCreate ? (
-                <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <label className="block text-xs">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Correo de la cuenta *
-                    </span>
-                    <input
-                      type="email"
-                      value={accountEmail}
-                      onChange={(e) => setAccountEmail(e.target.value)}
-                      placeholder="negocio@correo.com"
-                      className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
-                    />
-                  </label>
-                  <label className="block text-xs">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Plan
-                    </span>
-                    <select
-                      value={plan}
-                      onChange={(e) => setPlan(e.target.value as MembershipPlan)}
-                      className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
-                    >
-                      {BUSINESS_PLANS.map((p) => (
-                        <option key={p} value={p}>
-                          {PLAN_ADMIN_LABELS[p] ?? p}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block text-xs">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Método de pago
-                    </span>
-                    <select
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
-                    >
-                      {PAYMENT_METHOD_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              ) : null}
-
-              <SocioProfileForm
-                key={
-                  isCreate
-                    ? `create-${accountEmail}`
-                    : `profile-${row!.socioId}-${linkedUser?.id ?? "none"}`
-                }
-                initial={profileInitial}
-                email={isCreate ? accountEmail || "nuevo@barriando.local" : linkedUser?.email ?? "sin-cuenta@barriando.local"}
-                embedded
-                requireFiscal={!isCreate && Boolean(linkedUser)}
-                onSave={handleSaveProfile}
-                onDelete={isCreate ? undefined : () => setConfirmDeleteOpen(true)}
-                deleteDisabled={saving}
-                submitLabel={isCreate ? "Crear socio e invitar" : undefined}
-              />
-            </div>
+            <SocioProfileForm
+              key={`profile-${row.socioId}-${linkedUser?.id ?? "none"}`}
+              initial={profileInitial}
+              email={linkedUser?.email ?? "sin-cuenta@barriando.local"}
+              embedded
+              requireFiscal={Boolean(linkedUser)}
+              onSave={handleSaveProfile}
+              onDelete={() => setConfirmDeleteOpen(true)}
+              deleteDisabled={saving}
+            />
           ) : null}
 
-          {tab === "beneficio" && row ? (
+          {tab === "beneficio" ? (
             <SocioBenefitForm
               key={`benefit-${row.socioId}-${row.benefitTitle}`}
               initial={benefitInitial}
@@ -519,7 +343,7 @@ export default function AdminEditDrawer({
             />
           ) : null}
 
-          {tab === "membresia" && row ? (
+          {tab === "membresia" ? (
             <div className="space-y-4">
               <label className="block text-xs">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -561,7 +385,7 @@ export default function AdminEditDrawer({
                   Estado en roster
                 </span>
                 <select
-                  value={status === PENDING_INVITE_STATUS ? "inactive" : status}
+                  value={status}
                   onChange={(e) => setStatus(e.target.value as "active" | "inactive")}
                   className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
                 >
@@ -569,13 +393,6 @@ export default function AdminEditDrawer({
                   <option value="inactive">Inactivo</option>
                 </select>
               </label>
-
-              {row.status === PENDING_INVITE_STATUS ? (
-                <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  Estado actual: <strong>pendiente de verificación</strong>. No publica en /socios
-                  hasta que confirme el correo.
-                </p>
-              ) : null}
 
               <p className="text-xs text-slate-600">
                 Vence: <span className="font-semibold">{formatExpiryShort(expiry)}</span>
@@ -617,25 +434,23 @@ export default function AdminEditDrawer({
         </div>
       </aside>
 
-      {row ? (
-        <AdminConfirmDialog
-          open={confirmDeleteOpen}
-          danger
-          busy={saving}
-          title={`Eliminar «${row.businessName}»`}
-          description={
-            linkedUser
-              ? "Se quita del roster de Operaciones y del directorio público. La cuenta de usuario no se borra: solo se desvincula y no volverá a aparecer en el roster hasta que valides un pago o renueves la membresía."
-              : "Se quita del roster de Operaciones y del directorio público. Esta acción no se puede deshacer desde aquí."
-          }
-          confirmLabel="Eliminar del roster"
-          cancelLabel="Cancelar"
-          onCancel={() => {
-            if (!saving) setConfirmDeleteOpen(false);
-          }}
-          onConfirm={() => void handleDelete()}
-        />
-      ) : null}
+      <AdminConfirmDialog
+        open={confirmDeleteOpen}
+        danger
+        busy={saving}
+        title={`Eliminar «${row.businessName}»`}
+        description={
+          linkedUser
+            ? "Se quita del roster de Operaciones y del directorio público. La cuenta de usuario no se borra: solo se desvincula y no volverá a aparecer en el roster hasta que valides un pago o renueves la membresía."
+            : "Se quita del roster de Operaciones y del directorio público. Esta acción no se puede deshacer desde aquí."
+        }
+        confirmLabel="Eliminar del roster"
+        cancelLabel="Cancelar"
+        onCancel={() => {
+          if (!saving) setConfirmDeleteOpen(false);
+        }}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 }
