@@ -174,8 +174,8 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
               </button>
             </div>
             <p className="text-[10px] text-slate-500 font-light leading-relaxed">
-              El PDF incluye dos displays iguales por hoja carta, con líneas de <strong>corte</strong>{" "}
-              y <strong>doblez</strong>, el logo Barriando y el texto «¡Hazte Poblano!».
+              El PDF trae <strong>2 displays</strong> (4 QR: frente cream + dorso navy). Corta por la
+              vertical, dobla por la horizontal; el dorso va rotado para leerse de pie.
             </p>
             {actionError ? (
               <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
