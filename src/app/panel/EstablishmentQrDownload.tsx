@@ -7,9 +7,9 @@ import { listaSocios } from "@/app/data/socios";
 import { buildSellarPath, restaurantSlug } from "@/lib/pasaporte";
 import { buildPassportTableDisplayPdfBlob } from "@/lib/passport-table-display-pdf";
 import {
-  canShareFiles,
   dataUrlToFile,
   shareOrDownloadFile,
+  shouldOfferNativeShare,
 } from "@/lib/share-file";
 
 type Props = {
@@ -34,7 +34,10 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
       : null;
 
   useEffect(() => {
-    setShareCapable(canShareFiles());
+    const sync = () => setShareCapable(shouldOfferNativeShare());
+    sync();
+    window.addEventListener("resize", sync);
+    return () => window.removeEventListener("resize", sync);
   }, []);
 
   useEffect(() => {
@@ -119,7 +122,7 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
       : "Compartir display (PDF)"
     : pdfLoading
       ? "Generando PDF…"
-      : "Display mesa (PDF)";
+      : "Descargar display (PDF)";
 
   return (
     <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">

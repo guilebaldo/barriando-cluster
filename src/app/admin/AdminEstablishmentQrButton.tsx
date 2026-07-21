@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import { Download, Share2 } from "lucide-react";
 import { buildSellarPath, restaurantSlug } from "@/lib/pasaporte";
 import { canOfferPassportStamp } from "@/lib/plan-visibility";
-import { canShareFiles, dataUrlToFile, shareOrDownloadFile } from "@/lib/share-file";
+import { dataUrlToFile, shareOrDownloadFile, shouldOfferNativeShare } from "@/lib/share-file";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 type Props = {
@@ -28,7 +28,10 @@ export default function AdminEstablishmentQrButton({
   const slug = canStamp ? restaurantSlug({ name: businessName.trim() }) : null;
 
   useEffect(() => {
-    setShareCapable(canShareFiles());
+    const sync = () => setShareCapable(shouldOfferNativeShare());
+    sync();
+    window.addEventListener("resize", sync);
+    return () => window.removeEventListener("resize", sync);
   }, []);
 
   useEffect(() => {

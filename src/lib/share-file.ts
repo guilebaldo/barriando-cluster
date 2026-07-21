@@ -1,4 +1,13 @@
-/** Web Share API (archivos) con fallback a descarga local — útil en PWA / standalone iOS. */
+/** Web Share en móvil/PWA; en desktop siempre descarga directa. */
+
+function isMobileOrStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  const nav = window.navigator as Navigator & { standalone?: boolean };
+  if (nav.standalone === true) return true;
+  if (window.matchMedia("(display-mode: standalone)").matches) return true;
+  if (window.matchMedia("(max-width: 767px)").matches) return true;
+  return false;
+}
 
 export function canShareFiles(): boolean {
   if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
@@ -9,11 +18,15 @@ export function canShareFiles(): boolean {
     if (typeof navigator.canShare === "function") {
       return navigator.canShare({ files: [probe] });
     }
-    // Safari antiguo: share existe pero canShare puede faltar; intentar share con files
     return true;
   } catch {
     return false;
   }
+}
+
+/** UI y flujo: compartir solo en móvil/standalone si el navegador lo permite. */
+export function shouldOfferNativeShare(): boolean {
+  return isMobileOrStandalone() && canShareFiles();
 }
 
 export async function dataUrlToFile(
@@ -41,14 +54,14 @@ function triggerAnchorDownload(file: File): void {
 export type ShareOrDownloadResult = "shared" | "downloaded" | "aborted";
 
 /**
- * Prefiere la hoja nativa de compartir (Guardar imagen / Archivos / AirDrop).
- * Si no hay soporte o falla, descarga con enlace blob + atributo download.
+ * En móvil/PWA: hoja nativa de compartir.
+ * En desktop (o si Share falla): descarga con blob + download.
  */
 export async function shareOrDownloadFile(
   file: File,
   opts?: { title?: string; text?: string }
 ): Promise<ShareOrDownloadResult> {
-  if (canShareFiles()) {
+  if (shouldOfferNativeShare()) {
     try {
       const payload: ShareData = {
         files: [file],
