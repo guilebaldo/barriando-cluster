@@ -1,4 +1,5 @@
 import { randomBytes } from "crypto";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { advanceBillingAnniversary } from "@/lib/subscription-lifecycle";
 
@@ -54,7 +55,6 @@ export async function getInviteUrlForUser(
 /**
  * Marca email verificado, publica roster y activa membresía.
  * El socio luego entra con Google/Apple usando el mismo correo.
- * (revalidatePath lo hace el caller — este módulo también lo importan clients).
  */
 export async function consumeSocioInviteToken(
   token: string
@@ -118,6 +118,11 @@ export async function consumeSocioInviteToken(
 
     await tx.verificationToken.deleteMany({ where: { identifier: row.identifier } });
   });
+
+  revalidatePath("/socios");
+  revalidatePath("/map");
+  revalidatePath("/admin");
+  revalidatePath("/barrid");
 
   return { ok: true, email: user.email };
 }

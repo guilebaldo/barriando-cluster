@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
 import { consumeSocioInviteToken } from "@/lib/socio-invite";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -16,13 +15,6 @@ export default async function InvitarVerificarPage({
   const result = token?.trim()
     ? await consumeSocioInviteToken(token.trim())
     : { ok: false as const, error: "Falta el token de verificación." };
-
-  if (result.ok) {
-    revalidatePath("/socios");
-    revalidatePath("/map");
-    revalidatePath("/admin");
-    revalidatePath("/barrid");
-  }
 
   return (
     <SiteShell>
