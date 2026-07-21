@@ -5,13 +5,16 @@ import QRCode from "qrcode";
 const PAGE_W = 8.5;
 const PAGE_H = 11;
 const COL_W = PAGE_W / 2; // 4.25 — CORTE vertical
-const FACE_H = PAGE_H / 2; // 5.5 — DOBLEZ horizontal
+const FACE_H = PAGE_H / 2; // 5.5 — DOBLEZ horizontal (pico del tent)
 
-const NAVY: [number, number, number] = [39, 54, 109];
-const AMBER: [number, number, number] = [245, 158, 11];
-const CREAM: [number, number, number] = [255, 252, 247];
-const SLATE: [number, number, number] = [71, 85, 105];
+const NAVY = "#27366D";
+const AMBER = "#F59E0B";
+const CREAM = "#FFFCF7";
+const SLATE = "#475569";
 const GUIDE: [number, number, number] = [148, 163, 184];
+
+/** PPI al rasterizar cada cara (nitidez en impresión). */
+const FACE_PPI = 180;
 
 type FaceTone = "cream" | "navy";
 
@@ -31,6 +34,168 @@ async function fetchAsDataUrl(path: string): Promise<string | null> {
   }
 }
 
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`No se pudo cargar imagen: ${src.slice(0, 48)}`));
+    img.src = src;
+  });
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function wrapLines(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (ctx.measureText(next).width <= maxWidth) {
+      current = next;
+    } else {
+      if (current) lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length ? lines : [text];
+}
+
+/**
+ * Rasteriza una cara del display (título → QR → nombre → subtítulo → logo).
+ * Coordenadas: y=0 = “arriba” de la cara (pico del tent al leerse de pie).
+ */
+async function renderFacePng(opts: {
+  businessName: string;
+  qrDataUrl: string;
+  logoDataUrl: string | null;
+  tone: FaceTone;
+  /** Si true, gira 180° en el bitmap (cara superior del pliego: legible al doblar). */
+  rotate180: boolean;
+}): Promise<string> {
+  const w = Math.round(COL_W * FACE_PPI);
+  const h = Math.round(FACE_H * FACE_PPI);
+  const scale = FACE_PPI; // 1 in → px
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas no disponible");
+
+  const isNavy = opts.tone === "navy";
+  ctx.fillStyle = isNavy ? NAVY : CREAM;
+  ctx.fillRect(0, 0, w, h);
+
+  // Borde interior
+  ctx.strokeStyle = isNavy ? "rgba(255,255,255,0.22)" : "#E2E8F0";
+  ctx.lineWidth = 0.01 * scale;
+  ctx.strokeRect(0.08 * scale, 0.08 * scale, w - 0.16 * scale, h - 0.16 * scale);
+
+  const cx = w / 2;
+  const padX = 0.22 * scale;
+
+  // 1. Título
+  ctx.fillStyle = isNavy ? AMBER : NAVY;
+  ctx.font = `bold ${Math.round(15 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("¡Hazte Poblano!", cx, 0.55 * scale);
+
+  // 2. QR
+  const qrSize = Math.min(2.05 * scale, w - padX * 2 - 0.2 * scale);
+  const qrX = cx - qrSize / 2;
+  const qrY = 0.78 * scale;
+  ctx.fillStyle = "#FFFFFF";
+  roundRect(ctx, qrX - 0.1 * scale, qrY - 0.1 * scale, qrSize + 0.2 * scale, qrSize + 0.2 * scale, 0.07 * scale);
+  ctx.fill();
+  const qrImg = await loadImage(opts.qrDataUrl);
+  ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+
+  // 3. Nombre
+  const nameY = qrY + qrSize + 0.38 * scale;
+  ctx.fillStyle = isNavy ? "#FFFFFF" : NAVY;
+  ctx.font = `bold ${Math.round(9.5 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+  const nameLines = wrapLines(ctx, opts.businessName, w - padX * 2);
+  const nameLineH = 0.16 * scale;
+  nameLines.forEach((line, i) => {
+    ctx.fillText(line, cx, nameY + i * nameLineH);
+  });
+
+  // 4. Subcopy
+  const subY = nameY + 0.28 * scale + (nameLines.length - 1) * nameLineH;
+  ctx.fillStyle = isNavy ? "#DCE4F2" : SLATE;
+  ctx.font = `${Math.round(7.5 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+  const subLines = wrapLines(
+    ctx,
+    "Escanea y sella tu Pasaporte Digital del Barrio",
+    w - padX * 2
+  );
+  subLines.forEach((line, i) => {
+    ctx.fillText(line, cx, subY + i * 0.14 * scale);
+  });
+
+  // 5. Logo / pastilla
+  const logoW = Math.min(1.85 * scale, w - 0.5 * scale);
+  const logoH = 0.34 * scale;
+  const logoY = h - 0.55 * scale;
+  const logoX = cx - logoW / 2;
+  ctx.fillStyle = isNavy ? "#FFFFFF" : NAVY;
+  roundRect(ctx, logoX - 0.1 * scale, logoY - 0.08 * scale, logoW + 0.2 * scale, logoH + 0.16 * scale, 0.05 * scale);
+  ctx.fill();
+
+  if (opts.logoDataUrl) {
+    try {
+      const logoImg = await loadImage(opts.logoDataUrl);
+      ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
+    } catch {
+      ctx.fillStyle = isNavy ? NAVY : "#FFFFFF";
+      ctx.font = `bold ${Math.round(8 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+      ctx.fillText("BARRIANDO", cx, logoY + logoH * 0.72);
+    }
+  } else {
+    ctx.fillStyle = isNavy ? NAVY : "#FFFFFF";
+    ctx.font = `bold ${Math.round(8 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+    ctx.fillText("BARRIANDO", cx, logoY + logoH * 0.72);
+  }
+
+  if (!opts.rotate180) {
+    return canvas.toDataURL("image/png");
+  }
+
+  // Girar 180° en bitmap (sin CTM de jsPDF — evita caras en blanco)
+  const rotated = document.createElement("canvas");
+  rotated.width = w;
+  rotated.height = h;
+  const rctx = rotated.getContext("2d");
+  if (!rctx) throw new Error("Canvas no disponible");
+  rctx.translate(w, h);
+  rctx.rotate(Math.PI);
+  rctx.drawImage(canvas, 0, 0);
+  return rotated.toDataURL("image/png");
+}
+
 function drawDashedLine(
   doc: jsPDF,
   x1: number,
@@ -46,151 +211,9 @@ function drawDashedLine(
 }
 
 /**
- * Dibuja una cara del display en el rectángulo [x,y,w,h].
- * Orden: título → QR → nombre → subtítulo → logo.
- */
-function drawFace(
-  doc: jsPDF,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  opts: {
-    businessName: string;
-    qrDataUrl: string;
-    logoDataUrl: string | null;
-    tone: FaceTone;
-  }
-) {
-  const { businessName, qrDataUrl, logoDataUrl, tone } = opts;
-  const isNavy = tone === "navy";
-  const padX = 0.22;
-  const cx = x + w / 2;
-
-  if (isNavy) {
-    doc.setFillColor(...NAVY);
-  } else {
-    doc.setFillColor(...CREAM);
-  }
-  doc.rect(x, y, w, h, "F");
-
-  // Borde suave interior
-  doc.setDrawColor(isNavy ? 55 : 226, isNavy ? 70 : 232, isNavy ? 120 : 240);
-  doc.setLineWidth(0.01);
-  doc.rect(x + 0.08, y + 0.08, w - 0.16, h - 0.16);
-
-  // 1. Título
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.setTextColor(...(isNavy ? AMBER : NAVY));
-  doc.text("¡Hazte Poblano!", cx, y + 0.55, { align: "center" });
-
-  // 2. QR
-  const qrSize = Math.min(2.05, w - padX * 2 - 0.2);
-  const qrX = cx - qrSize / 2;
-  const qrY = y + 0.78;
-  doc.setFillColor(255, 255, 255);
-  doc.roundedRect(qrX - 0.1, qrY - 0.1, qrSize + 0.2, qrSize + 0.2, 0.07, 0.07, "F");
-  doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
-
-  // 3. Nombre del lugar
-  const nameY = qrY + qrSize + 0.38;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...(isNavy ? ([255, 255, 255] as [number, number, number]) : NAVY));
-  const nameLines = doc.splitTextToSize(businessName, w - padX * 2);
-  doc.text(nameLines, cx, nameY, { align: "center", lineHeightFactor: 1.15 });
-
-  // 4. Subcopy
-  const subY = nameY + 0.28 + (nameLines.length - 1) * 0.16;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(...(isNavy ? ([220, 228, 242] as [number, number, number]) : SLATE));
-  const subLines = doc.splitTextToSize(
-    "Escanea y sella tu Pasaporte Digital del Barrio",
-    w - padX * 2
-  );
-  doc.text(subLines, cx, subY, { align: "center", lineHeightFactor: 1.2 });
-
-  // 5. Logo abajo (pastilla navy si fondo cream; pastilla blanca si fondo navy)
-  const logoW = Math.min(1.85, w - 0.5);
-  const logoH = 0.34;
-  const logoY = y + h - 0.55;
-  const logoX = cx - logoW / 2;
-
-  if (isNavy) {
-    doc.setFillColor(255, 255, 255);
-  } else {
-    doc.setFillColor(...NAVY);
-  }
-  doc.roundedRect(logoX - 0.1, logoY - 0.08, logoW + 0.2, logoH + 0.16, 0.05, 0.05, "F");
-
-  if (logoDataUrl) {
-    try {
-      doc.addImage(logoDataUrl, "PNG", logoX, logoY, logoW, logoH);
-    } catch {
-      /* ignore */
-    }
-  } else {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...(isNavy ? NAVY : ([255, 255, 255] as [number, number, number])));
-    doc.text("BARRIANDO", cx, logoY + logoH * 0.72, { align: "center" });
-  }
-}
-
-/** Dibuja una cara rotada 180° (dorso del tent, legible de pie). */
-function drawFaceRotated180(
-  doc: jsPDF,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  opts: Parameters<typeof drawFace>[5]
-) {
-  const cx = x + w / 2;
-  const cy = y + h / 2;
-  doc.saveGraphicsState();
-  // x' = -x + 2*cx, y' = -y + 2*cy
-  const matrix = doc.Matrix(-1, 0, 0, -1, 2 * cx, 2 * cy);
-  doc.setCurrentTransformationMatrix(matrix);
-  drawFace(doc, x, y, w, h, opts);
-  doc.restoreGraphicsState();
-}
-
-function drawDisplayColumn(
-  doc: jsPDF,
-  colX: number,
-  opts: {
-    businessName: string;
-    qrDataUrl: string;
-    logoDataUrl: string | null;
-  }
-) {
-  // Cara superior (cream) — frente
-  drawFace(doc, colX, 0, COL_W, FACE_H, {
-    ...opts,
-    tone: "cream",
-  });
-
-  // Cara inferior (navy), rotada 180° — dorso
-  drawFaceRotated180(doc, colX, FACE_H, COL_W, FACE_H, {
-    ...opts,
-    tone: "navy",
-  });
-
-  // Guía DOBLEZ horizontal
-  drawDashedLine(doc, colX + 0.1, FACE_H, colX + COL_W - 0.1, FACE_H);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(5.5);
-  doc.setTextColor(...GUIDE);
-  doc.text("DOBLEZ", colX + COL_W / 2, FACE_H - 0.06, { align: "center" });
-}
-
-/**
- * PDF carta: 2 displays (columnas) × 2 caras = 4 QR.
- * CORTE vertical al centro; DOBLEZ horizontal a media altura.
- * Dorso rotado 180° para leerse de pie.
+ * PDF carta: 2 displays × 2 caras.
+ * DOBLEZ = pico del tent. Cara superior (cream) va rotada 180° en el pliego
+ * para leerse de pie al doblar; cara inferior (navy) queda upright.
  */
 export async function buildPassportTableDisplayPdfBlob(opts: {
   businessName: string;
@@ -205,22 +228,42 @@ export async function buildPassportTableDisplayPdfBlob(opts: {
 
   const logoDataUrl = await fetchAsDataUrl("/logobarriando.png");
 
+  const [creamRotated, navyUpright] = await Promise.all([
+    renderFacePng({
+      businessName: opts.businessName,
+      qrDataUrl,
+      logoDataUrl,
+      tone: "cream",
+      rotate180: true,
+    }),
+    renderFacePng({
+      businessName: opts.businessName,
+      qrDataUrl,
+      logoDataUrl,
+      tone: "navy",
+      rotate180: false,
+    }),
+  ]);
+
   const doc = new jsPDF({
     unit: "in",
     format: "letter",
     orientation: "portrait",
   });
 
-  const panelOpts = {
-    businessName: opts.businessName,
-    qrDataUrl,
-    logoDataUrl,
-  };
+  for (const colX of [0, COL_W] as const) {
+    // Superior: cream ya rotada 180° → al doblar por DOBLEZ se lee de pie
+    doc.addImage(creamRotated, "PNG", colX, 0, COL_W, FACE_H);
+    // Inferior: navy upright → dorso del tent
+    doc.addImage(navyUpright, "PNG", colX, FACE_H, COL_W, FACE_H);
 
-  drawDisplayColumn(doc, 0, panelOpts);
-  drawDisplayColumn(doc, COL_W, panelOpts);
+    drawDashedLine(doc, colX + 0.1, FACE_H, colX + COL_W - 0.1, FACE_H);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(5.5);
+    doc.setTextColor(...GUIDE);
+    doc.text("DOBLEZ", colX + COL_W / 2, FACE_H - 0.06, { align: "center" });
+  }
 
-  // CORTE vertical entre displays
   drawDashedLine(doc, COL_W, 0.12, COL_W, PAGE_H - 0.12);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(5.5);
@@ -231,7 +274,7 @@ export async function buildPassportTableDisplayPdfBlob(opts: {
   doc.setFontSize(5);
   doc.setTextColor(170, 170, 170);
   doc.text(
-    "Corta por la vertical · Dobla por la horizontal · Una cara cream, otra navy · 4 QR por hoja",
+    "Corta por la vertical · Dobla por la horizontal (pico) · Cream frente / navy dorso · 4 QR",
     PAGE_W / 2,
     PAGE_H - 0.1,
     { align: "center" }

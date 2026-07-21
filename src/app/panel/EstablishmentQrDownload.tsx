@@ -178,7 +178,8 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
             </div>
             <p className="text-[10px] text-slate-500 font-light leading-relaxed">
               El PDF trae <strong>2 displays</strong> (4 QR: frente cream + dorso navy). Corta por la
-              vertical, dobla por la horizontal; el dorso va rotado para leerse de pie.
+              vertical y dobla por la horizontal (el doblez es el pico). En el pliego la cara de arriba
+              va al revés a propósito para que, al armar el tent, ambas se lean de pie.
             </p>
             {actionError ? (
               <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
