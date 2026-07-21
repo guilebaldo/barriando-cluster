@@ -138,12 +138,12 @@ function drawPanel(
 
 /**
  * PDF carta con 2 displays apilados (8.5×5.5" c/u), guías de corte y doblez.
+ * Devuelve un Blob listo para Web Share o descarga.
  */
-export async function downloadPassportTableDisplayPdf(opts: {
+export async function buildPassportTableDisplayPdfBlob(opts: {
   businessName: string;
   sellarAbsoluteUrl: string;
-  fileSlug: string;
-}): Promise<void> {
+}): Promise<Blob> {
   const qrDataUrl = await QRCode.toDataURL(opts.sellarAbsoluteUrl, {
     width: 720,
     margin: 1,
@@ -185,5 +185,20 @@ export async function downloadPassportTableDisplayPdf(opts: {
     { align: "center" }
   );
 
-  doc.save(`display-pasaporte-${opts.fileSlug}.pdf`);
+  return doc.output("blob");
+}
+
+/** @deprecated Prefer buildPassportTableDisplayPdfBlob + shareOrDownloadFile */
+export async function downloadPassportTableDisplayPdf(opts: {
+  businessName: string;
+  sellarAbsoluteUrl: string;
+  fileSlug: string;
+}): Promise<void> {
+  const blob = await buildPassportTableDisplayPdfBlob(opts);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `display-pasaporte-${opts.fileSlug}.pdf`;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 2_500);
 }

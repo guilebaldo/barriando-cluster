@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Download } from "lucide-react";
+import { Download, Share2 } from "lucide-react";
 import { buildSellarPath, restaurantSlug } from "@/lib/pasaporte";
 import { canOfferPassportStamp } from "@/lib/plan-visibility";
+import { canShareFiles, dataUrlToFile, shareOrDownloadFile } from "@/lib/share-file";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 type Props = {
@@ -21,8 +22,14 @@ export default function AdminEstablishmentQrButton({
   disabled,
 }: Props) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [shareCapable, setShareCapable] = useState(false);
   const canStamp = canOfferPassportStamp(plan) && Boolean(businessName.trim());
   const slug = canStamp ? restaurantSlug({ name: businessName.trim() }) : null;
+
+  useEffect(() => {
+    setShareCapable(canShareFiles());
+  }, []);
 
   useEffect(() => {
     if (!slug || typeof window === "undefined") {
@@ -49,24 +56,30 @@ export default function AdminEstablishmentQrButton({
 
   if (!canStamp) return null;
 
-  function handleDownload() {
+  async function handleShare() {
     if (!dataUrl || !slug) return;
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = `qr-sello-${slug}.png`;
-    link.click();
+    setBusy(true);
+    try {
+      const file = await dataUrlToFile(dataUrl, `qr-sello-${slug}.png`, "image/png");
+      await shareOrDownloadFile(file, {
+        title: `QR Pasaporte · ${businessName.trim()}`,
+        text: "Escanea para sellar el Pasaporte Digital del Barrio",
+      });
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <button
       type="button"
-      title="Descargar QR de sello Pasaporte"
-      disabled={disabled || !dataUrl}
-      onClick={handleDownload}
+      title={shareCapable ? "Compartir / guardar QR de sello Pasaporte" : "Descargar QR de sello Pasaporte"}
+      disabled={disabled || !dataUrl || busy}
+      onClick={() => void handleShare()}
       className="p-2 rounded-lg text-amber-700 hover:bg-amber-50 disabled:opacity-40"
     >
-      <Download className="w-4 h-4" />
-      <span className="sr-only">Descargar QR</span>
+      {shareCapable ? <Share2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+      <span className="sr-only">{shareCapable ? "Compartir QR" : "Descargar QR"}</span>
     </button>
   );
 }

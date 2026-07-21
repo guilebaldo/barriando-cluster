@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Download, FileDown, QrCode } from "lucide-react";
+import { Download, FileDown, QrCode, Share2 } from "lucide-react";
 import { listaSocios } from "@/app/data/socios";
 import { buildSellarPath, restaurantSlug } from "@/lib/pasaporte";
-import { downloadPassportTableDisplayPdf } from "@/lib/passport-table-display-pdf";
+import { buildPassportTableDisplayPdfBlob } from "@/lib/passport-table-display-pdf";
+import {
+  canShareFiles,
+  dataUrlToFile,
+  shareOrDownloadFile,
+} from "@/lib/share-file";
 
 type Props = {
   socioId: number | null;
@@ -16,7 +21,9 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
-  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [pngLoading, setPngLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [shareCapable, setShareCapable] = useState(false);
 
   const catalog = socioId != null ? listaSocios.find((s) => s.id === socioId) ?? null : null;
   const nameForSlug = catalog?.name?.trim() || businessName.trim();
@@ -25,6 +32,10 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
     typeof window !== "undefined" && slug
       ? `${window.location.origin}${buildSellarPath(slug)}`
       : null;
+
+  useEffect(() => {
+    setShareCapable(canShareFiles());
+  }, []);
 
   useEffect(() => {
     if (!absoluteUrl) {
@@ -51,30 +62,64 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
     };
   }, [absoluteUrl]);
 
-  function handleDownloadPng() {
+  async function handleSharePng() {
     if (!dataUrl || !slug) return;
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = `qr-sello-${slug}.png`;
-    link.click();
+    setPngLoading(true);
+    setActionError(null);
+    try {
+      const file = await dataUrlToFile(dataUrl, `qr-sello-${slug}.png`, "image/png");
+      const result = await shareOrDownloadFile(file, {
+        title: `QR Pasaporte · ${nameForSlug}`,
+        text: "Escanea para sellar el Pasaporte Digital del Barrio",
+      });
+      if (result === "aborted") {
+        /* usuario canceló la hoja de compartir */
+      }
+    } catch {
+      setActionError("No se pudo compartir ni descargar el QR.");
+    } finally {
+      setPngLoading(false);
+    }
   }
 
-  async function handleDownloadPdf() {
+  async function handleSharePdf() {
     if (!absoluteUrl || !slug || !nameForSlug) return;
     setPdfLoading(true);
-    setPdfError(null);
+    setActionError(null);
     try {
-      await downloadPassportTableDisplayPdf({
+      const blob = await buildPassportTableDisplayPdfBlob({
         businessName: nameForSlug,
         sellarAbsoluteUrl: absoluteUrl,
-        fileSlug: slug,
+      });
+      const file = new File([blob], `display-pasaporte-${slug}.pdf`, {
+        type: "application/pdf",
+      });
+      await shareOrDownloadFile(file, {
+        title: `Display mesa · ${nameForSlug}`,
+        text: "Display imprimible del Pasaporte Digital (2 por carta)",
       });
     } catch {
-      setPdfError("No se pudo generar el PDF del display.");
+      setActionError("No se pudo compartir ni descargar el PDF del display.");
     } finally {
       setPdfLoading(false);
     }
   }
+
+  const pngLabel = shareCapable
+    ? pngLoading
+      ? "Abriendo…"
+      : "Compartir / guardar QR"
+    : pngLoading
+      ? "Descargando…"
+      : "Descargar QR (PNG)";
+
+  const pdfLabel = shareCapable
+    ? pdfLoading
+      ? "Generando…"
+      : "Compartir display (PDF)"
+    : pdfLoading
+      ? "Generando PDF…"
+      : "Display mesa (PDF)";
 
   return (
     <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
@@ -85,8 +130,9 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
         </h2>
       </div>
       <p className="text-xs text-slate-500 mb-4 font-light leading-relaxed">
-        Descarga el QR puro o el display para mesa (PDF carta, 2 piezas con guías de corte y
-        doblez) para que visitantes sellen su Pasaporte Digital.
+        {shareCapable
+          ? "En el celular puedes compartir o guardar el QR y el display para mesa con la hoja nativa (Archivos, Fotos, AirDrop…)."
+          : "Descarga el QR puro o el display para mesa (PDF carta, 2 piezas con guías de corte y doblez)."}
       </p>
 
       {!slug ? (
@@ -107,33 +153,33 @@ export default function EstablishmentQrDownload({ socioId, businessName }: Props
           <div className="space-y-3 min-w-0 flex-1">
             <p className="text-sm font-bold text-slate-900">{nameForSlug}</p>
             <p className="text-[11px] text-slate-500 break-all font-mono">{absoluteUrl}</p>
-            <div className="flex flex-col xs:flex-row flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2">
               <button
                 type="button"
-                onClick={handleDownloadPng}
-                disabled={!dataUrl}
+                onClick={() => void handleSharePng()}
+                disabled={!dataUrl || pngLoading}
                 className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
               >
-                <Download className="w-4 h-4" />
-                Descargar QR (PNG)
+                {shareCapable ? <Share2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                {pngLabel}
               </button>
               <button
                 type="button"
-                onClick={() => void handleDownloadPdf()}
+                onClick={() => void handleSharePdf()}
                 disabled={!absoluteUrl || pdfLoading}
                 className="inline-flex items-center justify-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
               >
-                <FileDown className="w-4 h-4" />
-                {pdfLoading ? "Generando PDF…" : "Display mesa (PDF)"}
+                {shareCapable ? <Share2 className="w-4 h-4" /> : <FileDown className="w-4 h-4" />}
+                {pdfLabel}
               </button>
             </div>
             <p className="text-[10px] text-slate-500 font-light leading-relaxed">
               El PDF incluye dos displays iguales por hoja carta, con líneas de <strong>corte</strong>{" "}
               y <strong>doblez</strong>, el logo Barriando y el texto «¡Hazte Poblano!».
             </p>
-            {pdfError ? (
+            {actionError ? (
               <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                {pdfError}
+                {actionError}
               </p>
             ) : null}
           </div>
