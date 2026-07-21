@@ -82,6 +82,40 @@ function wrapLines(
   return lines.length ? lines : [text];
 }
 
+function pt(scale: number, size: number): number {
+  return Math.round(size * (scale / 72));
+}
+
+/**
+ * Quita el fondo oscuro/negro del PNG del logo y deja solo las letras claras.
+ * En cream: letras blancas (sobre pastilla navy). En navy: letras blancas directas.
+ */
+function logoGlyphsCanvas(img: HTMLImageElement): HTMLCanvasElement {
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth || img.width;
+  c.height = img.naturalHeight || img.height;
+  const ctx = c.getContext("2d");
+  if (!ctx) throw new Error("Canvas no disponible");
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, c.width, c.height);
+  const px = data.data;
+  for (let i = 0; i < px.length; i += 4) {
+    const lum = (px[i] + px[i + 1] + px[i + 2]) / 3;
+    const alpha = px[i + 3];
+    if (alpha < 12 || lum < 48) {
+      px[i + 3] = 0;
+    } else {
+      // Letras blancas; alpha sigue el brillo para suavizar bordes
+      px[i] = 255;
+      px[i + 1] = 255;
+      px[i + 2] = 255;
+      px[i + 3] = Math.round((alpha / 255) * lum);
+    }
+  }
+  ctx.putImageData(data, 0, 0);
+  return c;
+}
+
 /**
  * Rasteriza una cara del display (título → QR → nombre → subtítulo → logo).
  * Coordenadas: y=0 = “arriba” de la cara (pico del tent al leerse de pie).
@@ -114,69 +148,95 @@ async function renderFacePng(opts: {
   ctx.strokeRect(0.08 * scale, 0.08 * scale, w - 0.16 * scale, h - 0.16 * scale);
 
   const cx = w / 2;
-  const padX = 0.22 * scale;
+  const padX = 0.2 * scale;
+  const contentW = w - padX * 2;
 
-  // 1. Título
+  // 1. Título (más grande)
+  const titleSize = pt(scale, 22);
   ctx.fillStyle = isNavy ? AMBER : NAVY;
-  ctx.font = `bold ${Math.round(15 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+  ctx.font = `bold ${titleSize}px Helvetica, Arial, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
-  ctx.fillText("¡Hazte Poblano!", cx, 0.55 * scale);
+  ctx.fillText("¡Hazte Poblano!", cx, 0.58 * scale);
 
   // 2. QR
-  const qrSize = Math.min(2.05 * scale, w - padX * 2 - 0.2 * scale);
+  const qrSize = Math.min(1.95 * scale, contentW - 0.15 * scale);
   const qrX = cx - qrSize / 2;
-  const qrY = 0.78 * scale;
+  const qrY = 0.88 * scale;
   ctx.fillStyle = "#FFFFFF";
-  roundRect(ctx, qrX - 0.1 * scale, qrY - 0.1 * scale, qrSize + 0.2 * scale, qrSize + 0.2 * scale, 0.07 * scale);
+  roundRect(
+    ctx,
+    qrX - 0.1 * scale,
+    qrY - 0.1 * scale,
+    qrSize + 0.2 * scale,
+    qrSize + 0.2 * scale,
+    0.07 * scale
+  );
   ctx.fill();
   const qrImg = await loadImage(opts.qrDataUrl);
   ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-  // 3. Nombre
-  const nameY = qrY + qrSize + 0.38 * scale;
+  // 3. Nombre (tamaño intacto)
+  const nameY = qrY + qrSize + 0.32 * scale;
   ctx.fillStyle = isNavy ? "#FFFFFF" : NAVY;
-  ctx.font = `bold ${Math.round(9.5 * (scale / 72))}px Helvetica, Arial, sans-serif`;
-  const nameLines = wrapLines(ctx, opts.businessName, w - padX * 2);
+  ctx.font = `bold ${pt(scale, 9.5)}px Helvetica, Arial, sans-serif`;
+  const nameLines = wrapLines(ctx, opts.businessName, contentW);
   const nameLineH = 0.16 * scale;
   nameLines.forEach((line, i) => {
     ctx.fillText(line, cx, nameY + i * nameLineH);
   });
 
-  // 4. Subcopy
-  const subY = nameY + 0.28 * scale + (nameLines.length - 1) * nameLineH;
-  ctx.fillStyle = isNavy ? "#DCE4F2" : SLATE;
-  ctx.font = `${Math.round(7.5 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+  // 4. Subcopy (casi del tamaño del título)
+  const subY = nameY + 0.34 * scale + (nameLines.length - 1) * nameLineH;
+  const subSize = pt(scale, 18);
+  const subLineH = 0.28 * scale;
+  ctx.fillStyle = isNavy ? "#E8EEF8" : SLATE;
+  ctx.font = `bold ${subSize}px Helvetica, Arial, sans-serif`;
   const subLines = wrapLines(
     ctx,
     "Escanea y sella tu Pasaporte Digital del Barrio",
-    w - padX * 2
+    contentW
   );
   subLines.forEach((line, i) => {
-    ctx.fillText(line, cx, subY + i * 0.14 * scale);
+    ctx.fillText(line, cx, subY + i * subLineH);
   });
 
-  // 5. Logo / pastilla
-  const logoW = Math.min(1.85 * scale, w - 0.5 * scale);
-  const logoH = 0.34 * scale;
-  const logoY = h - 0.55 * scale;
+  // 5. Logo más pequeño y no pegado al borde
+  const logoAspect = 915 / 302;
+  const logoW = Math.min(1.35 * scale, contentW * 0.55);
+  const logoH = logoW / logoAspect;
+  const subBottom = subY + (subLines.length - 1) * subLineH;
+  const logoY = Math.min(subBottom + 0.28 * scale, h - logoH - 0.72 * scale);
   const logoX = cx - logoW / 2;
-  ctx.fillStyle = isNavy ? "#FFFFFF" : NAVY;
-  roundRect(ctx, logoX - 0.1 * scale, logoY - 0.08 * scale, logoW + 0.2 * scale, logoH + 0.16 * scale, 0.05 * scale);
-  ctx.fill();
+
+  // Solo en cream: pastilla navy detrás de las letras blancas.
+  // En navy: sin recuadro — letras blancas directo sobre el fondo.
+  if (!isNavy) {
+    ctx.fillStyle = NAVY;
+    roundRect(
+      ctx,
+      logoX - 0.08 * scale,
+      logoY - 0.06 * scale,
+      logoW + 0.16 * scale,
+      logoH + 0.12 * scale,
+      0.04 * scale
+    );
+    ctx.fill();
+  }
 
   if (opts.logoDataUrl) {
     try {
       const logoImg = await loadImage(opts.logoDataUrl);
-      ctx.drawImage(logoImg, logoX, logoY, logoW, logoH);
+      const glyphs = logoGlyphsCanvas(logoImg);
+      ctx.drawImage(glyphs, logoX, logoY, logoW, logoH);
     } catch {
-      ctx.fillStyle = isNavy ? NAVY : "#FFFFFF";
-      ctx.font = `bold ${Math.round(8 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+      ctx.fillStyle = isNavy ? "#FFFFFF" : "#FFFFFF";
+      ctx.font = `bold ${pt(scale, 7)}px Helvetica, Arial, sans-serif`;
       ctx.fillText("BARRIANDO", cx, logoY + logoH * 0.72);
     }
   } else {
-    ctx.fillStyle = isNavy ? NAVY : "#FFFFFF";
-    ctx.font = `bold ${Math.round(8 * (scale / 72))}px Helvetica, Arial, sans-serif`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = `bold ${pt(scale, 7)}px Helvetica, Arial, sans-serif`;
     ctx.fillText("BARRIANDO", cx, logoY + logoH * 0.72);
   }
 
