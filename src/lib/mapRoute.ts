@@ -191,29 +191,32 @@ function loadCsvMilestones(): RawPoint[] {
 }
 
 async function loadActiveMilestones(): Promise<RawPoint[]> {
-  const fromCsv = loadCsvMilestones();
-  if (fromCsv.length > 0) return fromCsv;
-
   try {
     const rows = await prisma.mapMilestone.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
     });
 
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      latitude: row.latitude,
-      longitude: row.longitude,
-      mapsUrl: row.mapsUrl,
-      kind: "milestone" as const,
-      category: row.businessId ? "Hito + Socio certificado" : "Hito patrimonial",
-      zone: row.zone ?? findHitoZone(row.name),
-    }));
+    if (rows.length > 0) {
+      return rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        mapsUrl: row.mapsUrl,
+        kind: "milestone" as const,
+        category: row.businessId ? "Hito + Socio certificado" : "Hito patrimonial",
+        zone: row.zone ?? findHitoZone(row.name),
+        description: row.description,
+      }));
+    }
   } catch (error) {
-    console.error("[map] loadActiveMilestones failed:", error);
-    return [];
+    console.error("[map] loadActiveMilestones DB failed:", error);
   }
+
+  // Fallback: CSV solo si la tabla está vacía / error (seed histórico).
+  const fromCsv = loadCsvMilestones();
+  return fromCsv;
 }
 
 /** Socios Gran Empresa del catálogo + aliados destacados en el corredor MAP (p. ej. Cosme Tortas). */
@@ -318,6 +321,7 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
       },
       select: {
         socioId: true,
+        emailVerified: true,
         socioProfile: {
           select: {
             businessName: true,
@@ -325,8 +329,10 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
             latitude: true,
             longitude: true,
             address: true,
+            googleBusinessUrl: true,
             category: true,
             logoUrl: true,
+            isManualEntry: true,
           },
         },
       },
@@ -338,22 +344,39 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
     for (const user of users) {
       const profile = user.socioProfile;
       if (!profile?.businessName?.trim()) continue;
+      // Alta manual: no aparece en MAP hasta verificar correo
+      if (profile.isManualEntry && !user.emailVerified) continue;
+
+      const mapsFromProfile =
+        profile.googleBusinessUrl?.trim() && /^https?:\/\//i.test(profile.googleBusinessUrl.trim())
+          ? profile.googleBusinessUrl.trim()
+          : null;
 
       if (user.socioId != null && !seen.has(user.socioId)) {
         const catalog = listaSocios.find((s) => s.id === user.socioId);
-        const coord = sociosCoords[user.socioId];
-        if (catalog && coord) {
+        const coord =
+          profile.latitude != null && profile.longitude != null
+            ? { lat: profile.latitude, lng: profile.longitude }
+            : sociosCoords[user.socioId];
+
+        if (coord) {
           seen.add(user.socioId);
           points.push({
             id: `premium-${user.socioId}`,
-            name: profile.businessName?.trim() || catalog.name,
+            name: profile.businessName.trim() || catalog?.name || "Socio certificado",
             latitude: coord.lat,
             longitude: coord.lng,
-            mapsUrl: catalog.direccion || `https://www.google.com/maps?q=${coord.lat},${coord.lng}`,
+            mapsUrl:
+              mapsFromProfile ||
+              catalog?.direccion ||
+              `https://www.google.com/maps?q=${coord.lat},${coord.lng}`,
             kind: "premium_business",
-            category: catalog.categoria,
+            category: catalog?.categoria || profile.category?.trim() || "Negocio certificado",
             socioId: user.socioId,
-            hasSeasonalStamp: isSeasonalStampCategory(catalog.categoria),
+            hasSeasonalStamp: isSeasonalStampCategory(
+              catalog?.categoria || profile.category
+            ),
+            stampLogoSrc: profile.logoUrl?.trim() || undefined,
           });
         }
         continue;
@@ -363,10 +386,11 @@ async function loadPremiumGranEmpresaBusinesses(): Promise<RawPoint[]> {
         const id = `premium-manual-${user.socioId ?? profile.businessName}`;
         points.push({
           id,
-          name: profile.businessName?.trim() || "Socio certificado",
+          name: profile.businessName.trim() || "Socio certificado",
           latitude: profile.latitude,
           longitude: profile.longitude,
           mapsUrl:
+            mapsFromProfile ||
             profile.address?.trim() ||
             `https://www.google.com/maps?q=${profile.latitude},${profile.longitude}`,
           kind: "premium_business",
@@ -420,6 +444,7 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
         ? "Primera parada del circuito"
         : p.category,
     zone: p.zone,
+    description: p.description,
     socioId: p.socioId,
     hasSeasonalStamp: p.hasSeasonalStamp,
     stampLogoSrc: p.stampLogoSrc,

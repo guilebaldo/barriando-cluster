@@ -10,6 +10,8 @@ export type MapRoutePoint = {
   order: number;
   category?: string;
   zone?: number;
+  /** Copy del hito (DB); si falta, el MAP usa intros estáticas. */
+  description?: string | null;
   socioId?: number;
   hasSeasonalStamp?: boolean;
   /** Logo para popup de sello (negocios de BD o catálogo). */

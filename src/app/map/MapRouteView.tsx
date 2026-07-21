@@ -329,7 +329,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       </div>
 
       <p className="text-sm text-slate-600 leading-relaxed font-light mt-3 line-clamp-3">
-        {getHitoIntro(activePoint.name, activePoint.zone)}
+        {getHitoIntro(activePoint.name, activePoint.zone, activePoint.description)}
       </p>
 
       {activePoint.category && (

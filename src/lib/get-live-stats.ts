@@ -76,7 +76,9 @@ async function fetchLiveStats(): Promise<LiveStats> {
     ]);
 
     const certifiedBusinesses = publicSocios.length;
-    const mapMilestones = listaHitos.length;
+    const mapMilestones = await prisma.mapMilestone
+      .count({ where: { active: true } })
+      .catch(() => listaHitos.length);
     const totalSocios = certifiedBusinesses + activeVecinos;
     const sealedPassports = sealedPassportGroups.length;
 

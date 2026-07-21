@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Gift, Pencil, Search, X } from "lucide-react";
+import { CheckCircle2, Gift, Pencil, Plus, Search, X } from "lucide-react";
 import {
   approveLinkage,
   approveManualCertification,
@@ -13,6 +13,7 @@ import {
 } from "./actions";
 import { isLinkagePending } from "@/lib/linkage";
 import { computeAdminOpsStats, formatExpiryShort } from "@/lib/admin-ops";
+import { PENDING_INVITE_STATUS } from "@/lib/socio-invite";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminEditDrawer from "./AdminEditDrawer";
 import { playCuelume } from "./useAdminCuelume";
@@ -97,6 +98,7 @@ export default function AdminOperations({
   const [filter, setFilter] = useState<OpsFilter>("all");
   const [savingId, setSavingId] = useState<number | string | null>(null);
   const [editingRow, setEditingRow] = useState<CatalogMembershipRow | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const [msg, setMsg] = useState("");
 
   const stats = useMemo(
@@ -233,6 +235,12 @@ export default function AdminOperations({
   ];
 
   async function toggleStatus(row: CatalogMembershipRow) {
+    if (row.status === PENDING_INVITE_STATUS) {
+      setMsg(
+        "Este socio espera verificación de correo. Usa el drawer para copiar el enlace; no se publica hasta confirmar."
+      );
+      return;
+    }
     setMsg("");
     setSavingId(row.socioId);
     const next = row.status === "active" ? "inactive" : "active";
@@ -445,6 +453,17 @@ export default function AdminOperations({
                 </button>
               ) : null}
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingRow(null);
+                setCreateOpen(true);
+              }}
+              className="inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Nuevo socio
+            </button>
             <p className="text-[11px] text-slate-500 shrink-0">
               {visible.length} de {membershipRows.length} negocios
             </p>
@@ -457,6 +476,7 @@ export default function AdminOperations({
           ) : (
             visible.map((row) => {
               const active = row.status === "active";
+              const pendingInvite = row.status === PENDING_INVITE_STATUS;
               const saving = savingId === row.socioId;
               const linked = usersBySocioId.get(row.socioId) ?? null;
               const expiry = resolveExpiryIso(row, linked);
@@ -465,6 +485,11 @@ export default function AdminOperations({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900">{row.businessName}</p>
+                      {pendingInvite ? (
+                        <p className="text-[10px] text-amber-700 font-semibold mt-0.5">
+                          Invitación pendiente
+                        </p>
+                      ) : null}
                       <p className="text-[11px] text-slate-500 mt-0.5">
                         {row.planLabel} · {row.paymentLabel}
                       </p>
@@ -477,7 +502,7 @@ export default function AdminOperations({
                     </div>
                     <StatusSwitch
                       active={active}
-                      disabled={saving}
+                      disabled={saving || pendingInvite}
                       onToggle={() => void toggleStatus(row)}
                       label={`${active ? "Desactivar" : "Activar"} ${row.businessName}`}
                     />
@@ -530,6 +555,7 @@ export default function AdminOperations({
               ) : (
                 visible.map((row) => {
                   const active = row.status === "active";
+                  const pendingInvite = row.status === PENDING_INVITE_STATUS;
                   const saving = savingId === row.socioId;
                   const linked = usersBySocioId.get(row.socioId) ?? null;
                   const pending =
@@ -543,6 +569,11 @@ export default function AdminOperations({
                     >
                       <td className="px-4 py-3">
                         <p className="font-semibold text-slate-800">{row.businessName}</p>
+                        {pendingInvite ? (
+                          <p className="text-[10px] text-amber-700 font-semibold mt-0.5">
+                            Invitación pendiente
+                          </p>
+                        ) : null}
                         <p className="text-[10px] text-slate-400 mt-0.5">
                           {row.categoria || "—"} · id {row.socioId}
                         </p>
@@ -581,16 +612,26 @@ export default function AdminOperations({
                         <div className="inline-flex items-center gap-2">
                           <StatusSwitch
                             active={active}
-                            disabled={saving}
+                            disabled={saving || pendingInvite}
                             onToggle={() => void toggleStatus(row)}
                             label={`${active ? "Desactivar" : "Activar"} ${row.businessName}`}
                           />
                           <span
                             className={`text-[10px] font-bold uppercase tracking-wider ${
-                              active ? "text-emerald-700" : "text-slate-400"
+                              pendingInvite
+                                ? "text-amber-700"
+                                : active
+                                  ? "text-emerald-700"
+                                  : "text-slate-400"
                             }`}
                           >
-                            {saving ? "…" : active ? "Activo" : "Inactivo"}
+                            {saving
+                              ? "…"
+                              : pendingInvite
+                                ? "Invitación"
+                                : active
+                                  ? "Activo"
+                                  : "Inactivo"}
                           </span>
                         </div>
                       </td>
@@ -635,11 +676,15 @@ export default function AdminOperations({
       </div>
 
       <AdminEditDrawer
-        open={Boolean(editingRow)}
-        onClose={() => setEditingRow(null)}
+        open={Boolean(editingRow) || createOpen}
+        onClose={() => {
+          setEditingRow(null);
+          setCreateOpen(false);
+        }}
         row={editingRow}
         linkedUser={editingLinked}
         catalog={editingCatalog}
+        createMode={createOpen && !editingRow}
       />
     </div>
   );

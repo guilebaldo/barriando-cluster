@@ -26,7 +26,10 @@ function normalizeName(value: string): string {
     .trim();
 }
 
-export function getHitoIntro(name: string, zone?: number): string {
+export function getHitoIntro(name: string, zone?: number, description?: string | null): string {
+  const fromDb = description?.trim();
+  if (fromDb) return fromDb;
+
   const exact = HITO_INTROS[name];
   if (exact) return exact;
 

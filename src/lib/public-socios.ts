@@ -74,6 +74,7 @@ type CatalogMembershipRow = {
 type PublishedUserRow = {
   id: string;
   socioId: number | null;
+  emailVerified: Date | null;
   subscription: { plan: MembershipPlan; status: string } | null;
   socioProfile: {
     businessName: string | null;
@@ -159,6 +160,7 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
       select: {
         id: true,
         socioId: true,
+        emailVerified: true,
         subscription: { select: { plan: true, status: true } },
         socioProfile: {
           select: {
@@ -187,6 +189,11 @@ async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
     console.error("[public-socios] loadPublishedBusinessUsers failed:", error);
     return [];
   }
+}
+
+function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefitInfo | null {
+  if (!profile) return null;
+  return toSocioBenefit(profile);
 }
 
 function toSocioBenefit(input: {
@@ -223,11 +230,6 @@ function toSocioBenefit(input: {
     validFrom: input.benefitValidFrom?.toISOString() ?? null,
     validUntil: input.benefitValidUntil?.toISOString() ?? null,
   };
-}
-
-function profileBenefit(profile: PublishedUserRow["socioProfile"]): SocioBenefitInfo | null {
-  if (!profile) return null;
-  return toSocioBenefit(profile);
 }
 
 function rosterBenefit(membership: CatalogMembershipRow): SocioBenefitInfo | null {
@@ -271,6 +273,8 @@ function userToSocio(
   const profile = user.socioProfile;
   if (!sub || !profile) return null;
   if (!hasCommercialAccess(sub.plan, sub.status)) return null;
+  // Alta manual: visible en /socios solo tras verificar correo
+  if (profile.isManualEntry && !user.emailVerified) return null;
 
   const coords = {
     latitude: profile.latitude ?? null,
