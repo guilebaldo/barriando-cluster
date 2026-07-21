@@ -1,7 +1,7 @@
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { isTuristaPlan, needsCertificationPayment } from "@/lib/membresia";
 
-/** Enlace y etiqueta unificados para el menú de cuenta (socios de pago). */
+/** Enlace al panel de configuración (engrane en Barrid → /panel). */
 export function getAccountNavItem(
   plan: MembershipPlan | undefined,
   status: string | undefined,

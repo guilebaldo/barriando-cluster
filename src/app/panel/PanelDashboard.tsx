@@ -53,6 +53,7 @@ import {
   Upload,
   Shield,
   ArrowUpCircle,
+  ArrowLeft,
   X,
 } from "lucide-react";
 
@@ -439,6 +440,15 @@ export default function PanelDashboard({
 
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
+          {!isTurista ? (
+            <Link
+              href="/barrid"
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600 mb-2"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Volver a BarrID
+            </Link>
+          ) : null}
           <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
             {isTurista ? "Mi comunidad Barriando" : isVecino ? "Panel del vecino" : "Panel del socio"}
           </h1>

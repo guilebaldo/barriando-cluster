@@ -50,10 +50,8 @@ export async function createStripeCheckoutUrl(
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
     // Relative destinations only — production host comes from NEXT_PUBLIC_APP_URL (barriandopuebla.com).
-    const successPath =
-      plan === "VECINO"
-        ? "/barrid?pago=exitoso&bienvenida=1"
-        : "/panel?pago=exitoso&bienvenida=1";
+    // Socio de pago (vecino o negocio) aterriza en Barrid; el engrane abre /panel.
+    const successPath = "/barrid?pago=exitoso&bienvenida=1";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",

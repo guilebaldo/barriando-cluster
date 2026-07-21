@@ -1,10 +1,8 @@
 import { isAdminUser } from "@/lib/admin";
 import {
   hasCommercialAccess,
-  isBusinessPlan,
   isTransferPaymentPending,
   isTuristaPlan,
-  isVecinoPlan,
   needsCertificationPayment,
 } from "@/lib/membresia";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -20,9 +18,9 @@ export type PostAuthHomeUser = {
  * Default destination after login (or visiting /entrar while signed in).
  * Deep-link callbackUrls (sellar, beneficios, etc.) override this elsewhere.
  *
- * Admin → /barrid (panel /admin sigue en el menú)
- * Negocio activo → /panel
- * Vecino activo → /barrid
+ * Admin / socio de pago activo (negocio o vecino) → /barrid (credencial).
+ * El engrane en Barrid abre /panel (configuración / ficha comercial).
+ * Pago por transferencia pendiente → /panel
  * Turista → /map
  */
 export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
@@ -31,8 +29,6 @@ export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
   const { plan, subscriptionStatus: status } = user;
 
   if (hasCommercialAccess(plan, status)) {
-    if (isBusinessPlan(plan)) return "/panel";
-    if (isVecinoPlan(plan)) return "/barrid";
     return "/barrid";
   }
 

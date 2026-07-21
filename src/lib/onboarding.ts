@@ -104,7 +104,8 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
 
 /**
  * Tras autenticación (login sin callbackUrl profundo):
- * admin → /barrid · negocio → /panel · vecino → /barrid · turista → /map
+ * admin / socio de pago (negocio o vecino) → /barrid · turista → /map
+ * (/panel se abre desde el engrane de Barrid)
  */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
