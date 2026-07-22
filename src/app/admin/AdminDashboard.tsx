@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   approveLinkage,
@@ -21,6 +21,8 @@ import { PLAN_ADMIN_LABELS, MEMBERSHIP_STATUS_OPTIONS, PAYMENT_METHOD_OPTIONS, r
 import { isLinkagePending } from "@/lib/linkage";
 import {
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Pencil,
   Search,
   Trash2,
@@ -40,6 +42,8 @@ const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIA
 type AdminTab = "operations" | "accounts" | "content";
 type ResolvedAction = "approved" | "rejected";
 type HealthStatus = "ok" | "pending" | "expired";
+
+const ACCOUNTS_PAGE_SIZE = 10;
 
 function hasPendingLinkageRequest(user: AdminUserRow): boolean {
   return isLinkagePending(user.linkageStatus) && Boolean(user.profile?.businessName?.trim());
@@ -209,6 +213,7 @@ export default function AdminDashboard({
   const [linkageResolved, setLinkageResolved] = useState<Record<string, ResolvedAction>>({});
   const [paymentResolved, setPaymentResolved] = useState<Record<string, ResolvedAction>>({});
   const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
+  const [accountsPage, setAccountsPage] = useState(1);
 
   const visibleUsers = useMemo(() => {
     if (tab !== "accounts") return [];
@@ -231,6 +236,21 @@ export default function AdminDashboard({
       return haystack.includes(q);
     });
   }, [tab, users, query]);
+
+  useEffect(() => {
+    setAccountsPage(1);
+  }, [query, tab]);
+
+  const accountsTotalPages = Math.max(1, Math.ceil(visibleUsers.length / ACCOUNTS_PAGE_SIZE));
+  const safeAccountsPage = Math.min(accountsPage, accountsTotalPages);
+  const pageUsers = useMemo(() => {
+    const start = (safeAccountsPage - 1) * ACCOUNTS_PAGE_SIZE;
+    return visibleUsers.slice(start, start + ACCOUNTS_PAGE_SIZE);
+  }, [visibleUsers, safeAccountsPage]);
+
+  useEffect(() => {
+    if (accountsPage !== safeAccountsPage) setAccountsPage(safeAccountsPage);
+  }, [accountsPage, safeAccountsPage]);
 
   const listTotal = users.length;
 
@@ -423,7 +443,7 @@ export default function AdminDashboard({
           users={users}
         />
       ) : (
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-hidden md:overflow-x-auto overscroll-y-contain">
         <div className="px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -447,11 +467,12 @@ export default function AdminDashboard({
             )}
           </div>
           <p className="text-[11px] text-slate-500 shrink-0">
-            {visibleUsers.length} de {listTotal} cuentas
-            {query.trim() ? " encontrados" : ""}
+            {visibleUsers.length === 0
+              ? `0 de ${listTotal} cuentas`
+              : `${(safeAccountsPage - 1) * ACCOUNTS_PAGE_SIZE + 1}–${Math.min(safeAccountsPage * ACCOUNTS_PAGE_SIZE, visibleUsers.length)} de ${visibleUsers.length}${query.trim() ? " (filtro)" : ""} · ${listTotal} total`}
           </p>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-hidden md:overflow-x-auto touch-pan-y">
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-[10px] uppercase tracking-wider text-slate-500">
@@ -466,7 +487,7 @@ export default function AdminDashboard({
               </tr>
             </thead>
             <tbody>
-              {visibleUsers.length === 0 ? (
+              {pageUsers.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
                     {query.trim()
@@ -475,7 +496,7 @@ export default function AdminDashboard({
                   </td>
                 </tr>
               ) : (
-                visibleUsers.map((user) => {
+                pageUsers.map((user) => {
                   const health = getAccountHealth(user);
                   const isEditing = editingId === user.id;
                   const pendingPayment = user.status === "manual_pending";
@@ -551,6 +572,33 @@ export default function AdminDashboard({
             </tbody>
           </table>
         </div>
+        {visibleUsers.length > ACCOUNTS_PAGE_SIZE ? (
+          <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 bg-slate-50/80">
+            <p className="text-[11px] text-slate-500">
+              Página {safeAccountsPage} de {accountsTotalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={safeAccountsPage <= 1}
+                onClick={() => setAccountsPage((p) => Math.max(1, p - 1))}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                Anterior
+              </button>
+              <button
+                type="button"
+                disabled={safeAccountsPage >= accountsTotalPages}
+                onClick={() => setAccountsPage((p) => Math.min(accountsTotalPages, p + 1))}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+              >
+                Siguiente
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
       )}
 

@@ -75,6 +75,15 @@ export default function AdminEditDrawer({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose, confirmDeleteOpen]);
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   const profileInitial = useMemo((): SocioProfileFormInitial => {
     const p = linkedUser?.profile;
     return toBusinessProfileFormInitial(

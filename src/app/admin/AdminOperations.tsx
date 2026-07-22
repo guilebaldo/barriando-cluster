@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Gift, Pencil, Search, X } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, Gift, Pencil, Search, X } from "lucide-react";
 import {
   approveLinkage,
   approveManualCertification,
@@ -26,6 +26,8 @@ type OpsFilter =
   | "payments"
   | "linkages"
   | "expiring";
+
+const PAGE_SIZE = 10;
 
 function normalizeName(value: string): string {
   return value
@@ -98,6 +100,7 @@ export default function AdminOperations({
   const [savingId, setSavingId] = useState<number | string | null>(null);
   const [editingRow, setEditingRow] = useState<CatalogMembershipRow | null>(null);
   const [msg, setMsg] = useState("");
+  const [page, setPage] = useState(1);
 
   const stats = useMemo(
     () => computeAdminOpsStats(membershipRows, users),
@@ -192,6 +195,21 @@ export default function AdminOperations({
     now,
     in15,
   ]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, query]);
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return visible.slice(start, start + PAGE_SIZE);
+  }, [visible, safePage]);
+
+  useEffect(() => {
+    if (page !== safePage) setPage(safePage);
+  }, [page, safePage]);
 
   const kpiCards: { key: OpsFilter; label: string; value: string | number; hint: string }[] = [
     {
@@ -446,16 +464,18 @@ export default function AdminOperations({
               ) : null}
             </div>
             <p className="text-[11px] text-slate-500 shrink-0">
-              {visible.length} de {membershipRows.length} negocios
+              {visible.length === 0
+                ? `0 de ${membershipRows.length} negocios`
+                : `${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, visible.length)} de ${visible.length} (filtro) · ${membershipRows.length} total`}
             </p>
           </div>
         </div>
 
-        <div className="md:hidden divide-y divide-slate-100">
-          {visible.length === 0 ? (
+        <div className="md:hidden divide-y divide-slate-100 overflow-x-hidden overscroll-y-contain touch-pan-y">
+          {pageRows.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-slate-500">No hay negocios que coincidan.</p>
           ) : (
-            visible.map((row) => {
+            pageRows.map((row) => {
               const active = row.status === "active";
               const saving = savingId === row.socioId;
               const linked = usersBySocioId.get(row.socioId) ?? null;
@@ -521,14 +541,14 @@ export default function AdminOperations({
               </tr>
             </thead>
             <tbody>
-              {visible.length === 0 ? (
+              {pageRows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center text-slate-500">
                     No hay negocios que coincidan.
                   </td>
                 </tr>
               ) : (
-                visible.map((row) => {
+                pageRows.map((row) => {
                   const active = row.status === "active";
                   const saving = savingId === row.socioId;
                   const linked = usersBySocioId.get(row.socioId) ?? null;
@@ -632,6 +652,34 @@ export default function AdminOperations({
             </tbody>
           </table>
         </div>
+
+        {visible.length > PAGE_SIZE ? (
+          <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 bg-slate-50/80">
+            <p className="text-[11px] text-slate-500">
+              Página {safePage} de {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                Anterior
+              </button>
+              <button
+                type="button"
+                disabled={safePage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+              >
+                Siguiente
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <AdminEditDrawer
