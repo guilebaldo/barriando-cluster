@@ -23,7 +23,6 @@ import {
   CheckCircle2,
   Pencil,
   Search,
-  Shield,
   Trash2,
   X,
   XCircle,
@@ -375,20 +374,6 @@ export default function AdminDashboard({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <Shield className="w-8 h-8 text-[#27366D] shrink-0" />
-          <div>
-            <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-              Operaciones Barriando
-            </h1>
-            <p className="text-sm text-slate-600 mt-1">
-              Roster de socios, pagos, QR de pasaporte y cuentas. El roster es la fuente de verdad.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {msg && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 text-xs">{msg}</div>
       )}
