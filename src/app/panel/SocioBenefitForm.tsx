@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Gift, QrCode } from "lucide-react";
 import { updateSocioBenefit } from "./actions";
 
@@ -36,6 +36,11 @@ function toDateInput(value: string | null): string {
   return d.toISOString().slice(0, 10);
 }
 
+const SAVE_IDLE =
+  "bg-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg cursor-not-allowed";
+const SAVE_READY =
+  "bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition";
+
 export default function SocioBenefitForm({
   initial,
   onSaved,
@@ -54,8 +59,81 @@ export default function SocioBenefitForm({
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const committedFromProps = useMemo(
+    () => ({
+      offersBenefit: initial.offersBenefit,
+      benefitTitle: initial.benefitTitle,
+      benefitDescription: initial.benefitDescription,
+      benefitHowToRedeem: initial.benefitHowToRedeem,
+      benefitRedeemViaQr: initial.benefitRedeemViaQr,
+      benefitValidFrom: toDateInput(initial.benefitValidFrom),
+      benefitValidUntil: toDateInput(initial.benefitValidUntil),
+    }),
+    [
+      initial.offersBenefit,
+      initial.benefitTitle,
+      initial.benefitDescription,
+      initial.benefitHowToRedeem,
+      initial.benefitRedeemViaQr,
+      initial.benefitValidFrom,
+      initial.benefitValidUntil,
+    ],
+  );
+
+  const committedRef = useRef(committedFromProps);
+  if (
+    committedRef.current.offersBenefit !== committedFromProps.offersBenefit ||
+    committedRef.current.benefitTitle !== committedFromProps.benefitTitle ||
+    committedRef.current.benefitDescription !== committedFromProps.benefitDescription ||
+    committedRef.current.benefitHowToRedeem !== committedFromProps.benefitHowToRedeem ||
+    committedRef.current.benefitRedeemViaQr !== committedFromProps.benefitRedeemViaQr ||
+    committedRef.current.benefitValidFrom !== committedFromProps.benefitValidFrom ||
+    committedRef.current.benefitValidUntil !== committedFromProps.benefitValidUntil
+  ) {
+    committedRef.current = committedFromProps;
+  }
+  const stableCommitted = committedRef.current;
+
+  const [localCommitted, setLocalCommitted] = useState(stableCommitted);
+
+  useEffect(() => {
+    setOffersBenefit(stableCommitted.offersBenefit);
+    setBenefitTitle(stableCommitted.benefitTitle);
+    setBenefitDescription(stableCommitted.benefitDescription);
+    setBenefitHowToRedeem(stableCommitted.benefitHowToRedeem);
+    setBenefitRedeemViaQr(stableCommitted.benefitRedeemViaQr);
+    setBenefitValidFrom(stableCommitted.benefitValidFrom);
+    setBenefitValidUntil(stableCommitted.benefitValidUntil);
+    setLocalCommitted(stableCommitted);
+    setMsg("");
+  }, [stableCommitted]);
+
+  const isDirty = useMemo(() => {
+    return (
+      offersBenefit !== localCommitted.offersBenefit ||
+      benefitTitle !== localCommitted.benefitTitle ||
+      benefitDescription !== localCommitted.benefitDescription ||
+      benefitHowToRedeem !== localCommitted.benefitHowToRedeem ||
+      benefitRedeemViaQr !== localCommitted.benefitRedeemViaQr ||
+      benefitValidFrom !== localCommitted.benefitValidFrom ||
+      benefitValidUntil !== localCommitted.benefitValidUntil
+    );
+  }, [
+    offersBenefit,
+    benefitTitle,
+    benefitDescription,
+    benefitHowToRedeem,
+    benefitRedeemViaQr,
+    benefitValidFrom,
+    benefitValidUntil,
+    localCommitted,
+  ]);
+
+  const canSave = isDirty && !loading;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isDirty) return;
     setMsg("");
     setLoading(true);
     const payload = {
@@ -73,6 +151,15 @@ export default function SocioBenefitForm({
       setMsg(result.error);
       return;
     }
+    setLocalCommitted({
+      offersBenefit,
+      benefitTitle,
+      benefitDescription,
+      benefitHowToRedeem,
+      benefitRedeemViaQr,
+      benefitValidFrom,
+      benefitValidUntil,
+    });
     setMsg("Beneficio guardado.");
     onSaved?.();
   }
@@ -206,8 +293,8 @@ export default function SocioBenefitForm({
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            disabled={loading}
-            className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition disabled:opacity-60"
+            disabled={!canSave}
+            className={canSave ? SAVE_READY : SAVE_IDLE}
           >
             {loading ? "Guardando…" : "Guardar beneficio"}
           </button>
@@ -222,6 +309,9 @@ export default function SocioBenefitForm({
             </button>
           ) : null}
           {msg && <p className="text-xs text-slate-600">{msg}</p>}
+          {isDirty && !msg ? (
+            <p className="text-[10px] text-amber-700">Tienes cambios sin guardar</p>
+          ) : null}
         </div>
       </form>
   );

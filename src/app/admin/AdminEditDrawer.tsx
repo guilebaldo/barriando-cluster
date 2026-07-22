@@ -152,6 +152,12 @@ export default function AdminEditDrawer({
 
   const expiry = linkedUser?.currentPeriodEnd ?? row.currentPeriodEnd;
 
+  const membershipDirty =
+    plan !== row.plan ||
+    (paymentMethod || "") !== (row.paymentMethod ?? "") ||
+    status !== (row.status === "active" ? "active" : "inactive");
+  const canSaveMembership = membershipDirty && !saving;
+
   async function handleSaveProfile(payload: SocioProfileFormInitial) {
     setMsg("");
     const result = await adminUpdateBusinessProfile({
@@ -193,7 +199,7 @@ export default function AdminEditDrawer({
   }
 
   async function handleSaveMembership() {
-    if (!row) return;
+    if (!row || !membershipDirty) return;
     setMsg("");
     setSaving(true);
     const result = await updateCatalogMembershipOps({
@@ -410,11 +416,15 @@ export default function AdminEditDrawer({
               <div className="flex flex-wrap gap-2 pt-2">
                 <button
                   type="button"
-                  disabled={saving}
+                  disabled={!canSaveMembership}
                   onClick={() => void handleSaveMembership()}
                   data-cuelume-press=""
                   data-cuelume-release=""
-                  className="bg-[#27366D] hover:bg-[#1e2b58] disabled:opacity-40 text-white text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg"
+                  className={
+                    canSaveMembership
+                      ? "bg-[#27366D] hover:bg-[#1e2b58] text-white text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg"
+                      : "bg-slate-100 text-slate-400 cursor-not-allowed text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg"
+                  }
                 >
                   Guardar membresía
                 </button>
