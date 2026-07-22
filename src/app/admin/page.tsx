@@ -43,7 +43,9 @@ export default async function AdminPage() {
           membershipRows={membershipRows}
         />
       </main>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </SiteShell>
   );
 }

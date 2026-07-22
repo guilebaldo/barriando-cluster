@@ -654,10 +654,22 @@ export default function AdminOperations({
         </div>
 
         {visible.length > PAGE_SIZE ? (
-          <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 bg-slate-50/80">
-            <p className="text-[11px] text-slate-500">
-              Página {safePage} de {totalPages}
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 bg-slate-50/80">
+            <label className="inline-flex items-center gap-2 text-[11px] text-slate-600">
+              <span className="whitespace-nowrap">Página</span>
+              <select
+                value={safePage}
+                onChange={(e) => setPage(Number(e.target.value))}
+                className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white min-w-[4.5rem]"
+                aria-label="Seleccionar página"
+              >
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                  <option key={n} value={n}>
+                    {n} de {totalPages}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="flex items-center gap-2">
               <button
                 type="button"
