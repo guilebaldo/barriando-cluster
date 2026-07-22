@@ -43,10 +43,10 @@ export default function AdminPagination({ page, totalPages, onPageChange }: Prop
         type="button"
         disabled={page <= 1}
         onClick={() => onPageChange(page - 1)}
-        className="inline-flex items-center gap-0.5 shrink-0 px-1.5 sm:px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-600 hover:bg-white hover:text-[#27366D] disabled:opacity-35 disabled:hover:bg-transparent"
+        className="inline-flex items-center justify-center gap-0.5 shrink-0 min-w-10 min-h-10 sm:min-w-0 sm:min-h-0 px-2 sm:px-2.5 py-2 sm:py-1.5 rounded-lg text-[11px] font-medium text-slate-600 hover:bg-white hover:text-[#27366D] disabled:opacity-35 disabled:hover:bg-transparent"
         aria-label="Página anterior"
       >
-        <ChevronLeft className="w-3.5 h-3.5" />
+        <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
         <span className="hidden sm:inline">Anterior</span>
       </button>
 
@@ -81,11 +81,11 @@ export default function AdminPagination({ page, totalPages, onPageChange }: Prop
         type="button"
         disabled={page >= totalPages}
         onClick={() => onPageChange(page + 1)}
-        className="inline-flex items-center gap-0.5 shrink-0 px-1.5 sm:px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-600 hover:bg-white hover:text-[#27366D] disabled:opacity-35 disabled:hover:bg-transparent"
+        className="inline-flex items-center justify-center gap-0.5 shrink-0 min-w-10 min-h-10 sm:min-w-0 sm:min-h-0 px-2 sm:px-2.5 py-2 sm:py-1.5 rounded-lg text-[11px] font-medium text-slate-600 hover:bg-white hover:text-[#27366D] disabled:opacity-35 disabled:hover:bg-transparent"
         aria-label="Página siguiente"
       >
         <span className="hidden sm:inline">Siguiente</span>
-        <ChevronRight className="w-3.5 h-3.5" />
+        <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
       </button>
     </nav>
   );
