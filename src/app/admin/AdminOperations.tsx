@@ -16,7 +16,9 @@ import { computeAdminOpsStats, formatExpiryShort } from "@/lib/admin-ops";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminEditDrawer from "./AdminEditDrawer";
 import AdminPagination from "./AdminPagination";
+import AdminWhatsAppButton from "./AdminWhatsAppButton";
 import { playCuelume } from "./useAdminCuelume";
+import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 
 type OpsFilter =
   | "all"
@@ -506,7 +508,12 @@ export default function AdminOperations({
                   <p className="text-[11px] text-slate-600 truncate">
                     {linked?.email ?? "Sin cuenta"}
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <AdminWhatsAppButton
+                      phone={resolveProfileWhatsApp(linked?.profile)}
+                      message={`Hola ${linked?.nombre?.trim() || row.businessName}, te contactamos desde Barriando.`}
+                      disabled={saving}
+                    />
                     <AdminEstablishmentQrButton
                       businessName={row.businessName}
                       plan={row.plan}
@@ -626,6 +633,11 @@ export default function AdminOperations({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex items-center justify-end gap-0.5">
+                          <AdminWhatsAppButton
+                            phone={resolveProfileWhatsApp(linked?.profile)}
+                            message={`Hola ${linked?.nombre?.trim() || row.businessName}, te contactamos desde Barriando.`}
+                            disabled={saving}
+                          />
                           <button
                             type="button"
                             title="Editar"

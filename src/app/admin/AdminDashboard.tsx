@@ -33,7 +33,9 @@ import AdminOperations from "./AdminOperations";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 import AdminPagination from "./AdminPagination";
+import AdminWhatsAppButton from "./AdminWhatsAppButton";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
+import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
@@ -694,6 +696,11 @@ function UserRows({
         <td className="px-4 py-3 text-right align-top">
           <div className="inline-flex flex-col items-end gap-2">
             <div className="inline-flex gap-1">
+              <AdminWhatsAppButton
+                phone={resolveProfileWhatsApp(user.profile)}
+                message={`Hola${user.nombre?.trim() ? ` ${user.nombre.trim()}` : ""}, te contactamos desde Barriando.`}
+                disabled={loadingId === user.id}
+              />
               <AdminEstablishmentQrButton
                 businessName={
                   user.profile?.businessName?.trim() ||
