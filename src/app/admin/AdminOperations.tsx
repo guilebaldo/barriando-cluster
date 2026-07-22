@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ChevronLeft, ChevronRight, Gift, Pencil, Search, X } from "lucide-react";
+import { CheckCircle2, Gift, Pencil, Search, X } from "lucide-react";
 import {
   approveLinkage,
   approveManualCertification,
@@ -15,6 +15,7 @@ import { isLinkagePending } from "@/lib/linkage";
 import { computeAdminOpsStats, formatExpiryShort } from "@/lib/admin-ops";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminEditDrawer from "./AdminEditDrawer";
+import AdminPagination from "./AdminPagination";
 import { playCuelume } from "./useAdminCuelume";
 
 type OpsFilter =
@@ -653,45 +654,7 @@ export default function AdminOperations({
           </table>
         </div>
 
-        {visible.length > PAGE_SIZE ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 bg-slate-50/80">
-            <label className="inline-flex items-center gap-2 text-[11px] text-slate-600">
-              <span className="whitespace-nowrap">Página</span>
-              <select
-                value={safePage}
-                onChange={(e) => setPage(Number(e.target.value))}
-                className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white min-w-[4.5rem]"
-                aria-label="Seleccionar página"
-              >
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n} de {totalPages}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={safePage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                Anterior
-              </button>
-              <button
-                type="button"
-                disabled={safePage >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-              >
-                Siguiente
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        ) : null}
+        <AdminPagination page={safePage} totalPages={totalPages} onPageChange={setPage} />
       </div>
 
       <AdminEditDrawer
