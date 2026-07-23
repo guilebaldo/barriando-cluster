@@ -12,19 +12,21 @@ export const PAYMENT_METHOD_OPTIONS = [
   { value: "stripe", label: "Domiciliación (Stripe)" },
   {
     value: "transfer",
-    label: "Transferencia electrónica (incl. depósito en ventanilla)",
+    label: "Transferencia CLABE (validación manual)",
   },
+  { value: "spei", label: "Transferencia SPEI (Stripe)" },
+  { value: "oxxo", label: "OXXO (Stripe)" },
   { value: "cash", label: "Efectivo" },
-  { value: "oxxo", label: "OXXO (próximamente)" },
 ] as const;
 
 export type PaymentMethodValue = (typeof PAYMENT_METHOD_OPTIONS)[number]["value"];
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodValue, string> = {
   stripe: "Domiciliación (Stripe)",
-  transfer: "Transferencia electrónica (incl. depósito en ventanilla)",
+  transfer: "Transferencia CLABE (validación manual)",
+  spei: "Transferencia SPEI (Stripe)",
+  oxxo: "OXXO (Stripe)",
   cash: "Efectivo",
-  oxxo: "OXXO (próximamente)",
 };
 
 export function resolvePaymentMethodLabel(

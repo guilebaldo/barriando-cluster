@@ -7,6 +7,7 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import SiteShell from "@/app/components/SiteShell";
 import TransferPaymentSection from "@/app/panel/TransferPaymentSection";
+import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
 import {
   MEMBERSHIP_PLANS,
   formatPlanPriceMxn,
@@ -126,7 +127,7 @@ export default function CertificacionPagoClient({
                 className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition disabled:opacity-50"
               >
                 <CreditCard className="w-4 h-4" />
-                {loading ? "Redirigiendo..." : "Pagar con tarjeta bancaria"}
+                {loading ? "Redirigiendo..." : "Pagar con tarjeta (domiciliación mensual)"}
               </button>
             ) : (
               <p className="text-xs text-amber-700 text-center">
@@ -134,12 +135,26 @@ export default function CertificacionPagoClient({
               </p>
             )}
 
+            {stripeConfigured ? (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-[10px] uppercase">
+                    <span className="bg-white px-2 text-slate-400">pago de un mes</span>
+                  </div>
+                </div>
+                <StripeLocalPaymentButtons plan={plan} disabled={loading} />
+              </>
+            ) : null}
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase">
-                <span className="bg-white px-2 text-slate-400">o</span>
+                <span className="bg-white px-2 text-slate-400">o CLABE manual</span>
               </div>
             </div>
 
@@ -158,8 +173,8 @@ export default function CertificacionPagoClient({
           )}
 
           <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-            Al pagar con tarjeta, tu plan se activará automáticamente al confirmar el pago. Con
-            transferencia, un administrador validará tu comprobante antes de habilitar las herramientas.
+            Tarjeta: domiciliación automática. OXXO y SPEI: pago único; al confirmar Stripe se activa tu
+            mes (sin cargo recurrente). CLABE: un administrador valida tu comprobante.
           </p>
 
           <Link

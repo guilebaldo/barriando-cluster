@@ -38,6 +38,7 @@ import {
 import { reportManualPayment, cancelMembership } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
+import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
 import LinkSocioSection from "./LinkSocioSection";
 import TouristPanel from "./TouristPanel";
 import VecinoPanel from "./VecinoPanel";
@@ -296,16 +297,24 @@ export default function PanelDashboard({
     const params = new URLSearchParams(window.location.search);
     const pago = params.get("pago");
     const success = params.get("success");
+    const metodo = params.get("metodo");
     const isPaymentReturn =
       pago === "exitoso" || pago === "procesando" || success === "true";
+    const isLocalPending = pago === "local_pendiente";
 
     // Always refresh JWT after Checkout — do not skip when notice was dismissed earlier.
-    if (isPaymentReturn) {
+    if (isPaymentReturn || isLocalPending) {
       void update().then(() => router.refresh());
     }
 
     if (!hasSeenPanelNotice(user.id, "payment_confirmed")) {
-      if (isPaymentReturn) {
+      if (isLocalPending) {
+        const via =
+          metodo === "oxxo" ? "OXXO" : metodo === "spei" ? "SPEI" : "pago local";
+        setLocalPaymentNotice(
+          `Instrucciones de ${via} generadas. Completa el pago; cuando Stripe lo confirme (puede tardar unas horas), tu membresía de un mes se activará sola. Puedes cerrar esta ventana y volver más tarde.`
+        );
+      } else if (isPaymentReturn) {
         setLocalPaymentNotice(
           hasPaidAccess
             ? "¡Pago confirmado! Ya puedes vincular tu negocio certificado y usar las herramientas comerciales."
@@ -318,10 +327,16 @@ export default function PanelDashboard({
       }
     }
 
-    if (isPaymentReturn || pago === "cancelado" || pago === "stripe_no_configurado") {
+    if (
+      isPaymentReturn ||
+      isLocalPending ||
+      pago === "cancelado" ||
+      pago === "stripe_no_configurado"
+    ) {
       params.delete("pago");
       params.delete("bienvenida");
       params.delete("success");
+      params.delete("metodo");
       const qs = params.toString();
       window.history.replaceState(
         null,
@@ -810,6 +825,9 @@ export default function PanelDashboard({
                   >
                     {stripeButtonLabel}
                   </button>
+                )}
+                {stripeConfigured && !autoRenewal && plan !== "TURISTA" && (
+                  <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
                 )}
                 {!commercial && plan !== "TURISTA" && (
                   <TransferPaymentSection

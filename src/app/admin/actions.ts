@@ -90,7 +90,7 @@ const adminUpdateSchema = z.object({
   socioId: z.number().int().positive().nullable().optional(),
   plan: z.enum(["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"]).optional(),
   status: z.string().trim().max(40).optional(),
-  paymentMethod: z.enum(["stripe", "transfer", "cash", "oxxo"]).nullable().optional(),
+  paymentMethod: z.enum(["stripe", "transfer", "spei", "cash", "oxxo"]).nullable().optional(),
   businessName: z.string().trim().max(120).optional(),
   website: z.string().trim().max(500).optional(),
   googleBusinessUrl: z.string().trim().max(500).optional(),
@@ -1100,7 +1100,9 @@ export type CatalogMembershipRow = {
 function paymentMethodLabel(method: string | null): string {
   switch (method) {
     case "transfer":
-      return "Transferencia";
+      return "Transferencia CLABE";
+    case "spei":
+      return "SPEI";
     case "cash":
       return "Efectivo";
     case "stripe":
@@ -1176,7 +1178,7 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
 const catalogOpsSchema = z.object({
   socioId: z.number().int().positive(),
   plan: z.enum(["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"]).optional(),
-  paymentMethod: z.enum(["stripe", "transfer", "cash", "oxxo"]).nullable().optional(),
+  paymentMethod: z.enum(["stripe", "transfer", "spei", "cash", "oxxo"]).nullable().optional(),
   status: z.enum(["active", "inactive"]).optional(),
 });
 

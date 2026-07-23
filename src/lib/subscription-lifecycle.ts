@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { MEMBERSHIP_GRACE_DAYS } from "@/lib/membership-constants";
+
+export { MEMBERSHIP_GRACE_DAYS };
 
 export {
   EXPIRY_DISPLAY_FALLBACK,
@@ -9,9 +12,6 @@ export {
   getRenewalModeLabel,
   type RenewalMode,
 } from "@/lib/panel-display";
-
-/** Días de gracia tras el vencimiento antes de desactivar. */
-export const MEMBERSHIP_GRACE_DAYS = 5;
 
 /** Suma 30 días desde la fecha indicada (legacy / usos puntuales). */
 export function addThirtyDaysFrom(from = new Date()): Date {

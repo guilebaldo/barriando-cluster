@@ -25,6 +25,7 @@ import { planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import BenefitCredentialCard from "./BenefitCredentialCard";
+import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
 import { cancelMembership } from "./actions";
 
 type VecinoPanelProps = {
@@ -173,14 +174,17 @@ export default function VecinoPanel({
           </p>
         )}
 
-        {stripeConfigured && paidActive && !autoRenewal && (
-          <button
-            type="button"
-            onClick={() => void handleStripePay(subscription.plan)}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
-          >
-            Domiciliar membresía
-          </button>
+        {stripeConfigured && !autoRenewal && (
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => void handleStripePay(subscription.plan)}
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
+            >
+              {paidActive ? "Domiciliar membresía" : "Pagar con tarjeta (domiciliación)"}
+            </button>
+            <StripeLocalPaymentButtons plan={subscription.plan} />
+          </div>
         )}
 
         {upgradePlans.length > 0 && (
