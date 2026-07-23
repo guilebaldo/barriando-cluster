@@ -82,11 +82,15 @@ export default function VecinoPanel({
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, method: "card" }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      if (data.url) window.location.href = data.url;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No se pudo iniciar el pago con tarjeta");
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error("Stripe no devolvió una URL de pago.");
     } catch (err) {
       setPayMsg(err instanceof Error ? err.message : "Error al iniciar pago");
     }

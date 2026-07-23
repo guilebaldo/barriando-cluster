@@ -25,7 +25,7 @@ export default function StripeLocalPaymentButtons({ plan, disabled, className }:
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan, method: "oxxo" }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "No se pudo iniciar el pago");
       if (data.url) {
         window.location.href = data.url;

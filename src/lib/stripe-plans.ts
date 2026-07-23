@@ -8,12 +8,10 @@ const PRICE_ENV: Record<PaidMembershipPlan, string> = {
   GRAN_EMPRESA: "STRIPE_PRICE_ID_GRAN_EMPRESA",
 };
 
-const VECINO_FALLBACK_PRICE_ID = "price_1To9tAPfUUsx84z9imooOqbi";
-
 export function getStripePriceId(plan: PaidMembershipPlan): string | null {
   const specific = process.env[PRICE_ENV[plan]]?.trim();
   if (specific) return specific;
-  if (plan === "VECINO") return VECINO_FALLBACK_PRICE_ID;
+  // Solo fallback genérico — nunca un price_ hardcodeado de test (rompe Live).
   return process.env.STRIPE_PRICE_ID?.trim() || null;
 }
 
@@ -29,4 +27,21 @@ export function isStripeConfigured(): boolean {
     process.env.STRIPE_SECRET_KEY?.trim() &&
       process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
   );
+}
+
+/** Mensaje legible de errores de la API de Stripe (sin filtrar en prod al usuario). */
+export function formatStripeError(error: unknown): string {
+  if (!error || typeof error !== "object") {
+    return "Error desconocido de Stripe.";
+  }
+  const err = error as {
+    message?: string;
+    type?: string;
+    code?: string;
+    raw?: { message?: string };
+  };
+  const msg = err.raw?.message || err.message;
+  if (msg?.trim()) return msg.trim();
+  if (err.code) return `Stripe error (${err.code}).`;
+  return "Error desconocido de Stripe.";
 }

@@ -26,31 +26,34 @@ export async function POST(request: NextRequest) {
 
     if (method === "card") {
       if (!isStripeConfiguredForPlan(plan)) {
-        return secureError("Stripe no está configurado para este plan.", 503);
+        return secureError(
+          `Stripe no está listo para ${plan}: revisa STRIPE_SECRET_KEY, la publishable key y STRIPE_PRICE_ID_${plan} (Live) en Vercel.`,
+          503
+        );
       }
-      const url = await createStripeCheckoutUrl(session.id, plan);
-      if (!url) {
-        return secureError("No se pudo iniciar el pago", 500);
+      const result = await createStripeCheckoutUrl(session.id, plan);
+      if (!result.ok) {
+        return secureError(result.error, 500);
       }
-      return secureJson({ url });
+      return secureJson({ url: result.url });
     }
 
     if (!isStripeConfigured()) {
-      return secureError("Stripe no está configurado.", 503);
+      return secureError("Stripe no está configurado (keys en Vercel).", 503);
     }
 
-    const url = await createStripeLocalPaymentCheckoutUrl(session.id, plan, "oxxo");
-    if (!url) {
-      return secureError(
-        "No se pudo iniciar el pago con OXXO. Verifica que OXXO esté activo en Stripe (Live).",
-        500
-      );
+    const result = await createStripeLocalPaymentCheckoutUrl(session.id, plan, "oxxo");
+    if (!result.ok) {
+      return secureError(result.error, 500);
     }
 
-    return secureJson({ url });
+    return secureJson({ url: result.url });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return secureError("Debes iniciar sesión", 401);
+    }
+    if (error instanceof z.ZodError) {
+      return secureError(error.issues[0]?.message ?? "Datos inválidos", 400);
     }
     console.error("Stripe checkout error:", error);
     return secureError("No se pudo iniciar el pago", 500);

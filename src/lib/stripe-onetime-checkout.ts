@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, formatStripeError } from "@/lib/stripe";
 import { PLAN_PRICES_MXN, getPlanLabel, type PaidMembershipPlan } from "@/lib/membresia";
 import type { StripeLocalPaymentMethod } from "@/lib/stripe-local-payment";
+import type { StripeCheckoutResult } from "@/lib/stripe-checkout";
 
 export type { StripeLocalPaymentMethod };
 
@@ -13,12 +14,14 @@ export async function createStripeLocalPaymentCheckoutUrl(
   userId: string,
   plan: PaidMembershipPlan,
   method: StripeLocalPaymentMethod = "oxxo"
-): Promise<string | null> {
+): Promise<StripeCheckoutResult> {
   const stripe = getStripe();
   const amountMxn = PLAN_PRICES_MXN[plan];
-  if (!stripe || !amountMxn || method !== "oxxo") {
-    console.warn("[stripe] local checkout omitido:", { plan, method, hasClient: Boolean(stripe) });
-    return null;
+  if (!stripe) {
+    return { ok: false, error: "Stripe no está configurado (falta STRIPE_SECRET_KEY)." };
+  }
+  if (!amountMxn || method !== "oxxo") {
+    return { ok: false, error: "Plan o método de pago local no válido." };
   }
 
   try {
@@ -26,9 +29,16 @@ export async function createStripeLocalPaymentCheckoutUrl(
       where: { id: userId },
       include: { subscription: true },
     });
-    if (!user) return null;
+    if (!user) return { ok: false, error: "Usuario no encontrado." };
 
-    let customerId = user.subscription?.stripeCustomerId;
+    let customerId = user.subscription?.stripeCustomerId ?? null;
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch {
+        customerId = null;
+      }
+    }
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email ?? undefined,
@@ -88,9 +98,12 @@ export async function createStripeLocalPaymentCheckoutUrl(
       locale: "es",
     });
 
-    return session.url ?? null;
+    if (!session.url) {
+      return { ok: false, error: "Stripe no devolvió URL de Checkout OXXO." };
+    }
+    return { ok: true, url: session.url };
   } catch (error) {
     console.error("[stripe] createStripeLocalPaymentCheckoutUrl failed:", method, error);
-    return null;
+    return { ok: false, error: formatStripeError(error) };
   }
 }

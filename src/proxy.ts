@@ -30,13 +30,30 @@ export function proxy(request: NextRequest) {
   }
 
   const proto = request.headers.get("x-forwarded-proto");
-  const host = request.headers.get("host");
+  const hostHeader = request.headers.get("host") ?? "";
+  const hostname = hostHeader.split(":")[0]?.toLowerCase() ?? "";
+
+  // Dominio canónico: barriando.org (apex). Redirige el dominio legacy y www.
+  if (process.env.NODE_ENV === "production") {
+    const legacyHosts = new Set([
+      "barriandopuebla.com",
+      "www.barriandopuebla.com",
+      "www.barriando.org",
+    ]);
+    if (legacyHosts.has(hostname)) {
+      const dest = request.nextUrl.clone();
+      dest.protocol = "https:";
+      dest.hostname = "barriando.org";
+      dest.port = "";
+      return NextResponse.redirect(dest, 308);
+    }
+  }
 
   if (
     process.env.NODE_ENV === "production" &&
     proto === "http" &&
-    host &&
-    !host.includes("localhost")
+    hostname &&
+    !hostname.includes("localhost")
   ) {
     const url = request.nextUrl.clone();
     url.protocol = "https:";

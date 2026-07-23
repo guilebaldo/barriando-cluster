@@ -1,7 +1,7 @@
 import Stripe from "stripe";
-import { getStripePriceId, isStripeConfigured, isStripeConfiguredForPlan } from "./stripe-plans";
+import { getStripePriceId, isStripeConfigured, isStripeConfiguredForPlan, formatStripeError } from "./stripe-plans";
 
-export { getStripePriceId, isStripeConfigured, isStripeConfiguredForPlan };
+export { getStripePriceId, isStripeConfigured, isStripeConfiguredForPlan, formatStripeError };
 
 let stripeClient: Stripe | null = null;
 let stripeClientKey: string | null = null;

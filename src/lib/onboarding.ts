@@ -59,9 +59,9 @@ async function loadSubscription(userId: string) {
 }
 
 async function createStripeCheckoutRedirect(userId: string, plan: PaidMembershipPlan) {
-  const url = await createStripeCheckoutUrl(userId, plan);
-  if (!url) redirect("/certificacion/pago?pago=stripe_no_configurado");
-  redirect(url);
+  const result = await createStripeCheckoutUrl(userId, plan);
+  if (!result.ok) redirect("/certificacion/pago?pago=stripe_no_configurado");
+  redirect(result.url);
 }
 
 /** Cambia el plan de un usuario ya autenticado; devuelve la ruta destino. */

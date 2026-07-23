@@ -1,17 +1,26 @@
 import { prisma } from "@/lib/prisma";
-import { getStripe, getStripePriceId } from "@/lib/stripe";
+import { getStripe, getStripePriceId, formatStripeError } from "@/lib/stripe";
 import type { PaidMembershipPlan } from "@/lib/membresia";
 import type { MembershipPlan } from "@/generated/prisma/client";
+
+export type StripeCheckoutResult =
+  | { ok: true; url: string }
+  | { ok: false; error: string };
 
 export async function createStripeCheckoutUrl(
   userId: string,
   plan: PaidMembershipPlan
-): Promise<string | null> {
+): Promise<StripeCheckoutResult> {
   const stripe = getStripe();
   const priceId = getStripePriceId(plan);
-  if (!stripe || !priceId) {
-    console.warn("[stripe] checkout omitido:", { plan, hasClient: Boolean(stripe), hasPriceId: Boolean(priceId) });
-    return null;
+  if (!stripe) {
+    return { ok: false, error: "Stripe no está configurado (falta STRIPE_SECRET_KEY)." };
+  }
+  if (!priceId) {
+    return {
+      ok: false,
+      error: `Falta el Price ID Live para el plan ${plan} (STRIPE_PRICE_ID_${plan} en Vercel).`,
+    };
   }
 
   try {
@@ -19,9 +28,17 @@ export async function createStripeCheckoutUrl(
       where: { id: userId },
       include: { subscription: true },
     });
-    if (!user) return null;
+    if (!user) return { ok: false, error: "Usuario no encontrado." };
 
-    let customerId = user.subscription?.stripeCustomerId;
+    let customerId = user.subscription?.stripeCustomerId ?? null;
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch {
+        // Customer de otro modo (test/live) o borrado → crear de nuevo.
+        customerId = null;
+      }
+    }
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email ?? undefined,
@@ -34,7 +51,6 @@ export async function createStripeCheckoutUrl(
     const existingPlan: MembershipPlan = user.subscription?.plan ?? "TURISTA";
     const existingStatus = user.subscription?.status ?? "inactive";
 
-    // No promover plan hasta webhook exitoso: solo persistir customer de Stripe.
     await prisma.subscription.upsert({
       where: { userId },
       create: {
@@ -49,8 +65,6 @@ export async function createStripeCheckoutUrl(
     });
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
-    // Relative destinations only — production host comes from NEXT_PUBLIC_APP_URL (barriandopuebla.com).
-    // Socio de pago (vecino o negocio) aterriza en Barrid; el engrane abre /panel.
     const successPath = "/barrid?pago=exitoso&bienvenida=1";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -61,9 +75,12 @@ export async function createStripeCheckoutUrl(
       metadata: { userId, plan },
     });
 
-    return session.url ?? null;
+    if (!session.url) {
+      return { ok: false, error: "Stripe no devolvió URL de Checkout." };
+    }
+    return { ok: true, url: session.url };
   } catch (error) {
     console.error("[stripe] createStripeCheckoutUrl failed:", error);
-    return null;
+    return { ok: false, error: formatStripeError(error) };
   }
 }
