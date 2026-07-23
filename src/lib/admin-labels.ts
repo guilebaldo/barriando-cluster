@@ -14,9 +14,10 @@ export const PAYMENT_METHOD_OPTIONS = [
     value: "transfer",
     label: "Transferencia CLABE (validación manual)",
   },
-  { value: "spei", label: "Transferencia SPEI (Stripe)" },
   { value: "oxxo", label: "OXXO (Stripe)" },
   { value: "cash", label: "Efectivo" },
+  /** Histórico / deshabilitado en checkout hasta verificar cuenta Stripe */
+  { value: "spei", label: "Transferencia SPEI (Stripe, pausado)" },
 ] as const;
 
 export type PaymentMethodValue = (typeof PAYMENT_METHOD_OPTIONS)[number]["value"];
@@ -24,7 +25,7 @@ export type PaymentMethodValue = (typeof PAYMENT_METHOD_OPTIONS)[number]["value"
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethodValue, string> = {
   stripe: "Domiciliación (Stripe)",
   transfer: "Transferencia CLABE (validación manual)",
-  spei: "Transferencia SPEI (Stripe)",
+  spei: "Transferencia SPEI (Stripe, pausado)",
   oxxo: "OXXO (Stripe)",
   cash: "Efectivo",
 };

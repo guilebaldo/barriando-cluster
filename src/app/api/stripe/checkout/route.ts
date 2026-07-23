@@ -10,8 +10,8 @@ const bodySchema = z.object({
   plan: z
     .enum(["VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"])
     .optional(),
-  /** card = suscripción Stripe; oxxo/spei = pago único de un mes */
-  method: z.enum(["card", "oxxo", "spei"]).optional().default("card"),
+  /** card = suscripción Stripe; oxxo = pago único de un mes */
+  method: z.enum(["card", "oxxo"]).optional().default("card"),
 });
 
 export async function POST(request: NextRequest) {
@@ -39,12 +39,10 @@ export async function POST(request: NextRequest) {
       return secureError("Stripe no está configurado.", 503);
     }
 
-    const url = await createStripeLocalPaymentCheckoutUrl(session.id, plan, method);
+    const url = await createStripeLocalPaymentCheckoutUrl(session.id, plan, "oxxo");
     if (!url) {
       return secureError(
-        method === "oxxo"
-          ? "No se pudo iniciar el pago con OXXO. Verifica que OXXO esté activo en Stripe."
-          : "No se pudo iniciar la transferencia SPEI. Verifica que las transferencias MX estén activas en Stripe.",
+        "No se pudo iniciar el pago con OXXO. Verifica que OXXO esté activo en Stripe (Live).",
         500
       );
     }

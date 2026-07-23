@@ -173,8 +173,8 @@ export default function CertificacionPagoClient({
           )}
 
           <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-            Tarjeta: domiciliación automática. OXXO y SPEI: pago único; al confirmar Stripe se activa tu
-            mes (sin cargo recurrente). CLABE: un administrador valida tu comprobante.
+            Tarjeta: domiciliación automática. OXXO: pago único; al confirmar Stripe se activa tu mes
+            (sin cargo recurrente). CLABE: un administrador valida tu comprobante.
           </p>
 
           <Link

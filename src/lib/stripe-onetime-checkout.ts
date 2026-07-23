@@ -6,17 +6,17 @@ import type { StripeLocalPaymentMethod } from "@/lib/stripe-local-payment";
 export type { StripeLocalPaymentMethod };
 
 /**
- * Checkout de un mes (no suscripción): OXXO o SPEI.
+ * Checkout de un mes (no suscripción): OXXO.
  * Al confirmar Stripe → webhook activa membership como pago manual (cash-like).
  */
 export async function createStripeLocalPaymentCheckoutUrl(
   userId: string,
   plan: PaidMembershipPlan,
-  method: StripeLocalPaymentMethod
+  method: StripeLocalPaymentMethod = "oxxo"
 ): Promise<string | null> {
   const stripe = getStripe();
   const amountMxn = PLAN_PRICES_MXN[plan];
-  if (!stripe || !amountMxn) {
+  if (!stripe || !amountMxn || method !== "oxxo") {
     console.warn("[stripe] local checkout omitido:", { plan, method, hasClient: Boolean(stripe) });
     return null;
   }
@@ -50,11 +50,11 @@ export async function createStripeLocalPaymentCheckoutUrl(
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
     const planLabel = getPlanLabel(plan);
-    const methodLabel = method === "oxxo" ? "OXXO" : "SPEI";
 
-    const sessionParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
+    const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "payment",
+      payment_method_types: ["oxxo"],
       line_items: [
         {
           quantity: 1,
@@ -62,48 +62,32 @@ export async function createStripeLocalPaymentCheckoutUrl(
             currency: "mxn",
             unit_amount: amountMxn * 100,
             product_data: {
-              name: `Membresía ${planLabel} — 1 mes (${methodLabel})`,
+              name: `Membresía ${planLabel} — 1 mes (OXXO)`,
               description:
                 "Pago único de un mes. No es domiciliación automática; la vigencia se renueva al pagar de nuevo.",
             },
           },
         },
       ],
-      success_url: `${appUrl}/panel?pago=local_pendiente&metodo=${method}`,
+      success_url: `${appUrl}/panel?pago=local_pendiente&metodo=oxxo`,
       cancel_url: `${appUrl}/certificacion/pago?pago=cancelado`,
       metadata: {
         userId,
         plan,
         billingKind: "one_time_manual",
-        paymentMethod: method,
+        paymentMethod: "oxxo",
       },
       payment_intent_data: {
         metadata: {
           userId,
           plan,
           billingKind: "one_time_manual",
-          paymentMethod: method,
+          paymentMethod: "oxxo",
         },
       },
       locale: "es",
-    };
+    });
 
-    // Botones dedicados: restringir al método local (no tarjeta / no suscripción).
-    if (method === "oxxo") {
-      sessionParams.payment_method_types = ["oxxo"];
-    } else {
-      sessionParams.payment_method_types = ["customer_balance"];
-      sessionParams.payment_method_options = {
-        customer_balance: {
-          funding_type: "bank_transfer",
-          bank_transfer: {
-            type: "mx_bank_transfer",
-          },
-        },
-      };
-    }
-
-    const session = await stripe.checkout.sessions.create(sessionParams);
     return session.url ?? null;
   } catch (error) {
     console.error("[stripe] createStripeLocalPaymentCheckoutUrl failed:", method, error);

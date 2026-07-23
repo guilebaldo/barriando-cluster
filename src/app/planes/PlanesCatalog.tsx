@@ -24,7 +24,9 @@ function planAudience(planId: MembershipPlan): PlanAudienceFilter {
   return PERSONAL_PLANS.includes(planId) ? "personales" : "comerciales";
 }
 
-function planCta(planId: MembershipPlan): string {
+function planCta(planId: MembershipPlan, opts: { isAuthenticated: boolean; isCurrent: boolean }): string {
+  if (opts.isCurrent) return "Plan actual";
+  if (planId === "TURISTA" && opts.isAuthenticated) return "Ya tienes acceso gratis";
   switch (planId) {
     case "TURISTA":
       return "Empezar gratis";
@@ -70,16 +72,20 @@ export default function PlanesCatalog({
   }, [activeFilters]);
 
   function renderPlanCard(planId: MembershipPlan, withAnchor = false) {
+    const isCurrent =
+      currentPlan === planId ||
+      // Cuenta iniciada ya incluye el nivel Turista (no volver a “empezar gratis”).
+      (planId === "TURISTA" && isAuthenticated);
     return (
       <PlanCard
         planId={planId}
-        cta={planCta(planId)}
+        cta={planCta(planId, { isAuthenticated, isCurrent })}
         featured={planId === "GRAN_EMPRESA"}
         recommended={planId === "MEDIANA_EMPRESA" || planId === "VECINO"}
         highlighted={effectiveHighlight === planId}
         isAuthenticated={isAuthenticated}
         isPlanChange={isPlanChange}
-        isCurrent={currentPlan === planId}
+        isCurrent={isCurrent}
         withAnchor={withAnchor}
       />
     );
@@ -172,7 +178,7 @@ function PlanCard({
     >
       {isCurrent ? (
         <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full self-start mb-2.5 md:mb-3">
-          Tu plan actual
+          {planId === "TURISTA" ? "Incluido en tu cuenta" : "Tu plan actual"}
         </span>
       ) : featured ? (
         <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full self-start mb-2.5 md:mb-3">
@@ -211,7 +217,7 @@ function PlanCard({
           aria-disabled="true"
           className="mt-auto block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-default select-none"
         >
-          Plan actual
+          {planId === "TURISTA" ? "Ya tienes acceso gratis" : "Plan actual"}
         </span>
       ) : useDirectSelect ? (
         <div className="mt-auto" {...stopDrag}>

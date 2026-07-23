@@ -309,10 +309,9 @@ export default function PanelDashboard({
 
     if (!hasSeenPanelNotice(user.id, "payment_confirmed")) {
       if (isLocalPending) {
-        const via =
-          metodo === "oxxo" ? "OXXO" : metodo === "spei" ? "SPEI" : "pago local";
+        const via = metodo === "oxxo" ? "OXXO" : "pago local";
         setLocalPaymentNotice(
-          `Instrucciones de ${via} generadas. Completa el pago; cuando Stripe lo confirme (puede tardar unas horas), tu membresía de un mes se activará sola. Puedes cerrar esta ventana y volver más tarde.`
+          `Listo: ya tienes tu ficha/código de ${via}. Paga en la tienda (conserva el comprobante). Cuando Stripe confirme el pago —a menudo al siguiente día hábil—, tu membresía de un mes se activa sola. No hace falta que el admin lo valide. Puedes cerrar esta ventana y volver más tarde.`
         );
       } else if (isPaymentReturn) {
         setLocalPaymentNotice(
