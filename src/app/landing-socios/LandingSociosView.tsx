@@ -90,8 +90,11 @@ export default function LandingSociosView({
 
         <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-28 pb-16 md:py-28">
           <Reveal>
-            <p className="font-serif-cluster text-amber-400 text-2xl sm:text-3xl md:text-4xl tracking-wide">
-              Barriando
+            <p className="font-serif-cluster text-amber-400 text-xl sm:text-2xl md:text-3xl tracking-wide leading-snug max-w-3xl">
+              Plataforma Digital Turística del Barrio
+            </p>
+            <p className="mt-2 text-[11px] sm:text-xs font-medium uppercase tracking-[0.14em] text-amber-200/85 max-w-2xl leading-relaxed">
+              Plataforma inteligente poblana de operaciones y planificación estratégica — PIPOPE
             </p>
           </Reveal>
           <Reveal delay={90}>
@@ -230,8 +233,13 @@ export default function LandingSociosView({
       <section className="bg-[#27366D] text-white py-20 px-6">
         <div className="max-w-xl mx-auto text-center">
           <Reveal>
-            <p className="font-serif-cluster text-amber-400 text-xl tracking-wide">Barriando</p>
-            <h2 className="mt-3 text-2xl md:text-3xl font-black font-serif-cluster uppercase tracking-wide leading-tight">
+            <p className="font-serif-cluster text-amber-400 text-lg sm:text-xl tracking-wide leading-snug">
+              Plataforma Digital Turística del Barrio
+            </p>
+            <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-200/80 leading-relaxed">
+              PIPOPE — operaciones y planificación estratégica
+            </p>
+            <h2 className="mt-4 text-2xl md:text-3xl font-black font-serif-cluster uppercase tracking-wide leading-tight">
               Abre tu cuenta de socio hoy.
             </h2>
             <p className="mt-4 text-sm text-slate-300 font-light leading-relaxed">
