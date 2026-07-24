@@ -262,7 +262,7 @@ export default function SociosImmersiveView({
           {selectedSocio.benefit ? (
             <div className="mt-2 space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Beneficio para socios
+                Cupón para socios
               </p>
               {selectedSocio.benefit.title ? (
                 <p className="text-sm font-semibold text-[#27366D] leading-snug">
@@ -319,7 +319,7 @@ export default function SociosImmersiveView({
             className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg"
           >
             <Gift className="w-3.5 h-3.5" />
-            Activar beneficio
+            Activar cupón
           </button>
         ) : null}
       </div>
@@ -386,7 +386,7 @@ export default function SociosImmersiveView({
           }`}
         >
           <Gift className="w-3 h-3" />
-          Beneficios
+          Cupones
         </button>
         {categorias.map((cat) => {
           const active = activeCategories.includes(cat);
@@ -481,7 +481,7 @@ export default function SociosImmersiveView({
               href="/planes?tipo=personales"
               className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
             >
-              ¿Eres vecino? Obtén beneficios exclusivos. Regístrate aquí.
+              ¿Eres vecino? Obtén cupones exclusivos. Regístrate aquí.
             </Link>
           </p>
         </div>
@@ -555,7 +555,7 @@ export default function SociosImmersiveView({
               <X className="w-5 h-5" />
             </button>
             <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">
-              Activar beneficio
+              Activar cupón
             </p>
             <h2 id="activar-beneficio-title" className="text-lg font-bold text-slate-950 pr-8">
               {activeBenefit.name}
@@ -592,7 +592,7 @@ export default function SociosImmersiveView({
                 <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
                   {activeBenefit.benefit.redeemViaQr
                     ? "Para mostrar tu QR de canje necesitas membresía activa (Vecino o plan de negocio) y BarrID."
-                    : "Para usar este beneficio necesitas membresía activa (Vecino o plan de negocio) y muestra tu BarrID."}
+                    : "Para usar este cupón necesitas membresía activa (Vecino o plan de negocio) y muestra tu BarrID."}
                 </p>
                 <Link
                   href="/planes"

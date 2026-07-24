@@ -498,12 +498,12 @@ export async function updateSocioBenefit(input: {
     const session = await requireSession();
     const subscription = await prisma.subscription.findUnique({ where: { userId: session.id } });
     if (!subscription || !isBusinessPlan(subscription.plan) || !isPaidMember(subscription.plan, subscription.status)) {
-      return { ok: false, error: "Solo negocios con membresía activa pueden publicar beneficios." };
+      return { ok: false, error: "Solo negocios con membresía activa pueden publicar cupones." };
     }
 
     const profile = await prisma.socioProfile.findUnique({ where: { userId: session.id } });
     if (!profile || !isLinkageApproved(profile.linkageStatus)) {
-      return { ok: false, error: "Tu negocio debe estar vinculado y aprobado para publicar beneficios." };
+      return { ok: false, error: "Tu negocio debe estar vinculado y aprobado para publicar cupones." };
     }
 
     const parsed = benefitSchema.safeParse(input);
@@ -513,10 +513,10 @@ export async function updateSocioBenefit(input: {
 
     const data = parsed.data;
     if (data.offersBenefit) {
-      if (!data.benefitTitle.trim()) return { ok: false, error: "Indica el título del beneficio." };
-      if (!data.benefitDescription.trim()) return { ok: false, error: "Describe qué ofrece el beneficio." };
+      if (!data.benefitTitle.trim()) return { ok: false, error: "Indica el título del cupón." };
+      if (!data.benefitDescription.trim()) return { ok: false, error: "Describe qué ofrece el cupón." };
       if (!data.benefitRedeemViaQr && !data.benefitHowToRedeem.trim()) {
-        return { ok: false, error: "Explica cómo se hace válido el beneficio." };
+        return { ok: false, error: "Explica cómo se hace válido el cupón." };
       }
     }
 
@@ -566,7 +566,7 @@ export async function updateSocioBenefit(input: {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return { ok: false, error: "Debes iniciar sesión." };
     }
-    return { ok: false, error: "No se pudo guardar el beneficio. Intenta de nuevo." };
+    return { ok: false, error: "No se pudo guardar el cupón. Intenta de nuevo." };
   }
 }
 
@@ -577,7 +577,7 @@ export async function createBenefitCredential(): Promise<BenefitCredentialResult
     if (!subscription || !isPaidMember(subscription.plan, subscription.status)) {
       return {
         ok: false,
-        error: "Necesitas una membresía de pago activa para usar beneficios.",
+        error: "Necesitas una membresía de pago activa para usar cupones.",
       };
     }
 

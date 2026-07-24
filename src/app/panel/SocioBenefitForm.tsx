@@ -160,7 +160,7 @@ export default function SocioBenefitForm({
       benefitValidFrom,
       benefitValidUntil,
     });
-    setMsg("Beneficio guardado.");
+    setMsg("Cupón guardado.");
     onSaved?.();
   }
 
@@ -173,7 +173,7 @@ export default function SocioBenefitForm({
             onChange={(e) => setOffersBenefit(e.target.checked)}
             className="rounded border-slate-300"
           />
-          Publicar beneficio para socios de pago
+          Publicar cupón para socios de pago
         </label>
 
         {offersBenefit && (
@@ -201,7 +201,7 @@ export default function SocioBenefitForm({
                 maxLength={600}
                 rows={3}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                placeholder="Describe el beneficio con claridad"
+                placeholder="Describe el cupón con claridad"
                 required={offersBenefit}
               />
             </div>
@@ -296,7 +296,7 @@ export default function SocioBenefitForm({
             disabled={!canSave}
             className={canSave ? SAVE_READY : SAVE_IDLE}
           >
-            {loading ? "Guardando…" : "Guardar beneficio"}
+            {loading ? "Guardando…" : "Guardar cupón"}
           </button>
           {onDelete ? (
             <button
@@ -323,11 +323,11 @@ export default function SocioBenefitForm({
       <div className="flex items-center gap-2 mb-4">
         <Gift className="w-4 h-4 text-[#27366D]" />
         <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-          Beneficio para socios
+          Cupón para socios
         </h2>
       </div>
       <p className="text-xs text-slate-500 mb-4 font-light leading-relaxed">
-        Ofrece un beneficio especial a Vecinos y otros socios con membresía activa. Ellos lo verán en
+        Ofrece un cupón especial a Vecinos y otros socios con membresía activa. Ellos lo verán en
         /socios y lo canjearán con su credencial.
       </p>
       {formBody}

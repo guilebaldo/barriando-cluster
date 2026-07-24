@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function SociosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ beneficios?: string; socio?: string }>;
+  searchParams: Promise<{ cupones?: string; beneficios?: string; socio?: string }>;
 }) {
   const [socios, session, params] = await Promise.all([
     getPublicSociosList(),
@@ -23,7 +23,7 @@ export default async function SociosPage({
   const canRedeemBenefits = Boolean(
     session?.plan && isPaidMember(session.plan, session.subscriptionStatus ?? "inactive")
   );
-  const initialBenefitsOnly = params.beneficios === "1";
+  const initialBenefitsOnly = params.cupones === "1" || params.beneficios === "1";
   const socioParam = Number(params.socio);
   const initialSocioId =
     Number.isFinite(socioParam) && socios.some((s) => s.id === socioParam) ? socioParam : null;

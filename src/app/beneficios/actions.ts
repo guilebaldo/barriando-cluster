@@ -38,7 +38,7 @@ export async function loadBenefitVerifyPayload(
     ) {
       return {
         ok: false,
-        error: "Debes iniciar sesión como socio de negocio con membresía activa para validar beneficios.",
+        error: "Debes iniciar sesión como socio de negocio con membresía activa para validar cupones.",
       };
     }
 
@@ -87,7 +87,7 @@ export async function loadBenefitVerifyPayload(
     };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
-      return { ok: false, error: "Debes iniciar sesión para validar el beneficio." };
+      return { ok: false, error: "Debes iniciar sesión para validar el cupón." };
     }
     return { ok: false, error: "No se pudo verificar la credencial." };
   }

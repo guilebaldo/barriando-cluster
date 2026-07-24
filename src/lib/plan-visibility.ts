@@ -2,7 +2,7 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 
 /**
  * Entitlements (negocio / paid directory):
- * - Vecino: BarrID, canjear beneficios, escanear sellos de pasaporte (no ofrece sello).
+ * - Vecino: BarrID, canjear cupones, escanear sellos de pasaporte (no ofrece sello).
  * - Pequeña (NEGOCIO_FAMILIAR, $600+): directorio /socios + sello en Pasaporte Digital.
  * - Mediana: lo anterior + carrusel landing + orden preferente en /socios.
  * - Gran: lo anterior + pin de negocio en itinerario MAP.

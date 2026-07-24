@@ -130,7 +130,7 @@ export const alianzasEstrategicas = [
 export const civicTechIntro = {
   titulo: "Civic tech y el futuro del barrio",
   lead:
-    "El civic tech —o tecnología cívica— usa herramientas digitales para fortalecer cómo las personas se relacionan con su territorio, con el gobierno y entre sí: datos útiles, participación real y servicios que facilitan la vida cotidiana. Barriando ya es civic tech en operación: el MAP hace caminable el patrimonio, el Pasaporte Digital convierte visitas en identidad verificada y BarrID articula beneficios entre vecinos y comercios del Centro Histórico.",
+    "El civic tech —o tecnología cívica— usa herramientas digitales para fortalecer cómo las personas se relacionan con su territorio, con el gobierno y entre sí: datos útiles, participación real y servicios que facilitan la vida cotidiana. Barriando ya es civic tech en operación: el MAP hace caminable el patrimonio, el Pasaporte Digital convierte visitas en identidad verificada y BarrID articula cupones entre vecinos y comercios del Centro Histórico.",
   cierre:
     "Los siguientes proyectos extienden ese mismo principio —innovación tecnológica, tetra hélice y derrama local— hacia datos abiertos, memoria colectiva, reportes ciudadanos y gobernanza colaborativa del polígono patrimonial.",
 };
@@ -164,6 +164,6 @@ export const proyectosFuturosCivicTech = [
     titulo: "BarrID ciudadano ampliado",
     eje: "Identidad local",
     descripcion:
-      "Expandir la credencial digital más allá de beneficios comerciales: acceso a programas culturales, voluntariado en festivales, encuestas barriales y acreditación de vecino comprometido con el Centro Histórico.",
+      "Expandir la credencial digital más allá de cupones comerciales: acceso a programas culturales, voluntariado en festivales, encuestas barriales y acreditación de vecino comprometido con el Centro Histórico.",
   },
 ] as const;

@@ -5,7 +5,7 @@ const CREDENTIAL_TTL_SECONDS = 15 * 60;
 function getSecretKey() {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (!secret) {
-    throw new Error("Falta AUTH_SECRET para firmar credenciales de beneficio.");
+    throw new Error("Falta AUTH_SECRET para firmar credenciales de cupón.");
   }
   return new TextEncoder().encode(secret);
 }

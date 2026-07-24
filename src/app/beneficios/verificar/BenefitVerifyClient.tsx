@@ -44,7 +44,7 @@ export default function BenefitVerifyClient({ token, beneficiary }: Props) {
           </h1>
         </div>
         <p className="text-sm text-slate-700">
-          Beneficio otorgado a <strong>{confirmedName}</strong>. El registro quedó guardado.
+          Cupón otorgado a <strong>{confirmedName}</strong>. El registro quedó guardado.
         </p>
         <Link
           href="/panel"
@@ -59,7 +59,7 @@ export default function BenefitVerifyClient({ token, beneficiary }: Props) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-5">
       <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-        Validar beneficio
+        Validar cupón
       </h1>
       <p className="text-sm text-slate-600 font-light">
         Revisa los datos del socio antes de confirmar el canje.

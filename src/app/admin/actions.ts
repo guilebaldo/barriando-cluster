@@ -1363,12 +1363,12 @@ export async function updateCatalogMembershipBenefit(input: {
     }
 
     if (data.offersBenefit) {
-      if (!data.benefitTitle.trim()) return { ok: false, error: "Indica el título del beneficio." };
+      if (!data.benefitTitle.trim()) return { ok: false, error: "Indica el título del cupón." };
       if (!data.benefitDescription.trim()) {
-        return { ok: false, error: "Describe qué ofrece el beneficio." };
+        return { ok: false, error: "Describe qué ofrece el cupón." };
       }
       if (!data.benefitRedeemViaQr && !data.benefitHowToRedeem.trim()) {
-        return { ok: false, error: "Explica cómo se hace válido el beneficio." };
+        return { ok: false, error: "Explica cómo se hace válido el cupón." };
       }
     }
 
@@ -1424,7 +1424,7 @@ export async function updateCatalogMembershipBenefit(input: {
       return { ok: false, error: "Debes iniciar sesión." };
     }
     console.error("[admin] updateCatalogMembershipBenefit failed:", error);
-    return { ok: false, error: "No se pudo guardar el beneficio." };
+    return { ok: false, error: "No se pudo guardar el cupón." };
   }
 }
 

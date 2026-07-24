@@ -16,7 +16,7 @@ export type PostAuthHomeUser = {
 
 /**
  * Default destination after login (or visiting /entrar while signed in).
- * Deep-link callbackUrls (sellar, beneficios, etc.) override this elsewhere.
+ * Deep-link callbackUrls (sellar, cupones, etc.) override this elsewhere.
  *
  * Admin / socio de pago activo (negocio o vecino) → /barrid (credencial).
  * El engrane en Barrid abre /panel (configuración / ficha comercial).

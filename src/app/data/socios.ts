@@ -19,7 +19,7 @@ export interface Socio {
   latitude?: number | null;
   longitude?: number | null;
   logoUrl?: string | null;
-  /** Beneficio activo para socios de pago (solo si el negocio lo publicó). */
+  /** Cupón activo para socios de pago (solo si el negocio lo publicó). */
   benefit?: SocioBenefitInfo | null;
   /** Plan del roster pagado (CatalogMembership / suscripción vinculada). */
   membershipPlan?: "NEGOCIO_FAMILIAR" | "MEDIANA_EMPRESA" | "GRAN_EMPRESA" | "VECINO" | null;

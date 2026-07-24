@@ -250,7 +250,7 @@ export default function VecinoPanel({
         <div className="flex items-center gap-2 mb-3">
           <Gift className="w-4 h-4 text-[#27366D]" />
           <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-            Beneficios y convenios
+            Cupones y convenios
           </h2>
         </div>
         <p className="text-sm text-slate-600 font-light mb-4">
@@ -258,10 +258,10 @@ export default function VecinoPanel({
           pago.
         </p>
         <Link
-          href="/socios?beneficios=1"
+          href="/socios?cupones=1"
           className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition"
         >
-          Consultar beneficios
+          Consultar cupones
         </Link>
       </section>
 

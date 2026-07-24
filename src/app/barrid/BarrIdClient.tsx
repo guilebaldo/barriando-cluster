@@ -166,7 +166,7 @@ function QrPanel({
             Credencial de socio
           </p>
           <p className="text-sm text-slate-600 font-light leading-snug">
-            Muestra este QR en el mostrador del negocio participante para canjear tu beneficio. Se
+            Muestra este QR en el mostrador del negocio participante para canjear tu cupón. Se
             actualiza solo cada minuto.
           </p>
         </div>
@@ -405,11 +405,11 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 </dl>
 
                 <Link
-                  href="/socios?beneficios=1"
+                  href="/socios?cupones=1"
                   className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-4 py-4 rounded-2xl transition shadow-sm"
                 >
                   <Gift className="w-5 h-5" />
-                  Mis Beneficios
+                  Mis Cupones
                 </Link>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -457,11 +457,11 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           <div className="space-y-5">
             <StatusCard {...props} />
             <Link
-              href="/socios?beneficios=1"
+              href="/socios?cupones=1"
               className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
             >
               <Gift className="w-5 h-5" />
-              Mis Beneficios
+              Mis Cupones
             </Link>
             <div className="grid grid-cols-2 gap-3">
               <Link

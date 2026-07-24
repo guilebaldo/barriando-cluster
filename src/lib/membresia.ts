@@ -4,7 +4,7 @@ import type { Socio } from "@/app/data/socios";
 /**
  * Matriz de productos (resumen):
  * Turista — pasaporte / sellar (gratis).
- * Vecino — BarrID + canjear beneficios de negocios + escanear sellos.
+ * Vecino — BarrID + canjear cupones de negocios + escanear sellos.
  * Pequeña — lo de Vecino + aparece en directorio de socios.
  * Mediana — lo de Pequeña + carrusel landing + posición preferente en directorio.
  * Gran — lo de Mediana + pin en el MAP. Todo negocio $600+ ofrece sello en Pasaporte.
@@ -43,7 +43,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     highlight: "El upgrade natural si ya tienes Pasaporte",
     benefits: [
       "BarrID: tu credencial digital de vecino",
-      "Canjea beneficios exclusivos en negocios socios",
+      "Canjea cupones exclusivos en negocios socios",
       "Prioridad en eventos y activaciones del Clúster",
       "Incluye Pasaporte Digital y MAP",
     ],
@@ -58,7 +58,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     benefits: [
       "Ficha certificada en el directorio de socios",
       "Sello en Pasaporte Digital con QR descargable",
-      "Publica beneficios para vecinos y turistas",
+      "Publica cupones para vecinos y turistas",
       "BarrID para validar canjes en tu negocio",
     ],
   },
@@ -73,7 +73,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
       "Logo en el carrusel de la página principal",
       "Sello en Pasaporte Digital con QR",
       "Posición preferente en el directorio de socios",
-      "Incluye directorio, beneficios y BarrID",
+      "Incluye directorio, cupones y BarrID",
     ],
   },
   GRAN_EMPRESA: {
@@ -117,7 +117,7 @@ export const COMMERCIAL_BENEFITS = [
   "Ficha certificada en el directorio de socios",
   "Logo en el carrusel de la página principal (Mediana y Gran Empresa)",
   "Pin en el MAP y rutas oficiales (Gran Empresa)",
-  "Publicar beneficios y entradas en el blog del Clúster",
+  "Publicar cupones y entradas en el blog del Clúster",
 ];
 
 const PLAN_DISPLAY_ORDER: Record<PaidMembershipPlan, number> = {

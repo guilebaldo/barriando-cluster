@@ -38,7 +38,7 @@ export default async function BenefitVerifyPage({
         <main className="flex-1 max-w-lg mx-auto py-12 px-6 w-full">
           <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
             <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-              Validar beneficio
+              Validar cupón
             </h1>
             <p className="text-sm text-slate-600">
               Inicia sesión como socio del negocio para verificar la credencial y confirmar el canje.

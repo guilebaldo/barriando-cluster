@@ -195,11 +195,11 @@ export default function AdminBusinessesSection({
     setSavingId(null);
     if (!result.ok) {
       playCuelume("error");
-      setMsg(result.error ?? "Error al guardar beneficio.");
+      setMsg(result.error ?? "Error al guardar cupón.");
       return;
     }
     playCuelume("success");
-    setMsg(`Beneficio de ${row.businessName} actualizado.`);
+    setMsg(`Cupón de ${row.businessName} actualizado.`);
     router.refresh();
   }
 
@@ -359,7 +359,7 @@ export default function AdminBusinessesSection({
                           {row.offersBenefit ? (
                             <p className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-medium mt-1">
                               <Gift className="w-3 h-3" />
-                              Beneficio activo
+                              Cupón activo
                             </p>
                           ) : null}
                         </td>
@@ -511,7 +511,7 @@ export default function AdminBusinessesSection({
 
                               <div className="space-y-3">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
-                                  Beneficio en /socios
+                                  Cupón en /socios
                                 </p>
                                 <label className="inline-flex items-center gap-2 text-xs text-slate-700">
                                   <input
@@ -524,11 +524,11 @@ export default function AdminBusinessesSection({
                                       }))
                                     }
                                   />
-                                  Ofrece beneficio
+                                  Ofrece cupón
                                 </label>
                                 <input
                                   className="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white"
-                                  placeholder="Título del beneficio"
+                                  placeholder="Título del cupón"
                                   value={benefitForm.benefitTitle}
                                   onChange={(e) =>
                                     setBenefitForm((f) => ({ ...f, benefitTitle: e.target.value }))
@@ -613,7 +613,7 @@ export default function AdminBusinessesSection({
                                   data-cuelume-release=""
                                   className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg disabled:opacity-40"
                                 >
-                                  {saving ? "Guardando…" : "Guardar beneficio"}
+                                  {saving ? "Guardando…" : "Guardar cupón"}
                                 </button>
                               </div>
                             </div>

@@ -60,7 +60,7 @@ export default function BenefitCredentialCard({ userName, plan, expiryLabel }: P
         </h2>
       </div>
       <p className="text-xs text-slate-500 mb-4 font-light leading-relaxed">
-        Muestra este QR al negocio para que valide tu membresía y otorgue el beneficio. Expira en unos
+        Muestra este QR al negocio para que valide tu membresía y otorgue el cupón. Expira en unos
         minutos; recarga la página si necesitas uno nuevo.
       </p>
       {loadingCred && <p className="text-xs text-slate-500">Generando credencial…</p>}
@@ -73,7 +73,7 @@ export default function BenefitCredentialCard({ userName, plan, expiryLabel }: P
         <div className="flex flex-col sm:flex-row items-start gap-5">
           <div className="w-44 h-44 border border-slate-200 rounded-lg overflow-hidden bg-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrDataUrl} alt="Credencial QR de beneficio" className="w-full h-full" />
+            <img src={qrDataUrl} alt="Credencial QR de cupón" className="w-full h-full" />
           </div>
           <div className="text-sm space-y-1">
             <p className="font-bold text-slate-900">{userName}</p>

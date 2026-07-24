@@ -50,7 +50,7 @@ export default function TerminosPage() {
           <h2 className="text-base font-bold text-slate-950 mt-8 mb-3">4. Pagos y membresía</h2>
           <p className="text-sm text-slate-600 leading-relaxed">
             Los pagos procesados vía Stripe están sujetos a las políticas del proveedor. La membresía activa
-            habilita beneficios descritos en el panel del socio. Barriando puede modificar tarifas con aviso previo.
+            habilita cupones descritos en el panel del socio. Barriando puede modificar tarifas con aviso previo.
           </p>
 
           <h2 className="text-base font-bold text-slate-950 mt-8 mb-3">5. Propiedad intelectual</h2>

@@ -577,7 +577,7 @@ export default function AdminOperations({
                         {row.offersBenefit ? (
                           <p className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-medium mt-1">
                             <Gift className="w-3 h-3" />
-                            Beneficio activo
+                            Cupón activo
                           </p>
                         ) : null}
                       </td>

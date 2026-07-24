@@ -193,7 +193,7 @@ export default function AdminEditDrawer({
       return result;
     }
     playCuelume("success");
-    setMsg("Beneficio guardado.");
+    setMsg("Cupón guardado.");
     router.refresh();
     return { ok: true as const };
   }
@@ -259,7 +259,7 @@ export default function AdminEditDrawer({
 
   const tabs: { id: DrawerTab; label: string }[] = [
     { id: "negocio", label: "Negocio" },
-    { id: "beneficio", label: "Beneficio" },
+    { id: "beneficio", label: "Cupón" },
     { id: "membresia", label: "Membresía" },
   ];
 
