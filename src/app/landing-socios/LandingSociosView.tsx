@@ -9,6 +9,10 @@ import {
   Store,
   TicketPercent,
   ChartColumnIncreasing,
+  FileText,
+  Siren,
+  Hexagon,
+  Ticket,
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -21,38 +25,61 @@ import type { LiveStats } from "@/lib/get-live-stats";
 const PANEL_FEATURES = [
   {
     icon: Receipt,
-    title: "Paga como te acomode",
-    body: "Activa tu membresía con tarjeta, OXXO o transferencia. El panel te guía hasta quedar al corriente.",
+    title: "Cobro flexible",
+    body: "Activa tu membresía con tarjeta, OXXO o transferencia. Entras al sistema operativo del barrio sin fricción.",
   },
   {
     icon: BadgeCheck,
-    title: "Status de membresía al día",
-    body: "Consulta plan activo, vencimiento y método de pago sin adivinar ni escribir al Clúster.",
+    title: "Status de membresía",
+    body: "Plan, vigencia y método de pago visibles: sabes si tu negocio está online en la red del Clúster.",
   },
   {
     icon: Store,
-    title: "Actualiza tu negocio",
-    body: "Nombre, dirección, categoría, web, WhatsApp y logo: tu ficha del directorio siempre vigente.",
+    title: "Ficha de negocio viva",
+    body: "Actualiza nombre, ubicación, categoría, web, WhatsApp y logo. Cada mejora refuerza tu nodo en el directorio.",
   },
   {
     icon: FileSpreadsheet,
-    title: "Datos fiscales listos",
-    body: "RFC, razón social, régimen y domicilio fiscal para facturación cuando lo necesites.",
+    title: "Datos fiscales",
+    body: "RFC, razón social y domicilio listos para cuando factures desde la plataforma.",
   },
   {
     icon: QrCode,
-    title: "QR del Pasaporte",
-    body: "Descarga el código de sello para mesa o vitrina. Cada visita suma en el Pasaporte Digital.",
+    title: "QR de Pasaporte",
+    body: "Descarga el sello para mesa o vitrina. Cada visita captura demanda que luego circula entre socios.",
   },
   {
     icon: TicketPercent,
-    title: "Configura cupones",
-    body: "Publica ofertas para vecinos con BarrID y define cómo se canjean en tu mostrador.",
+    title: "Cupones para vecinos",
+    body: "Publica ofertas canjeables con BarrID y convierte el tráfico de la red en tickets en tu mostrador.",
   },
   {
     icon: ChartColumnIncreasing,
-    title: "Lee tu presencia",
-    body: "Revisa cómo aparece tu negocio en el clúster: directorio, sellos y alcance según tu plan.",
+    title: "Señales de presencia",
+    body: "Lee cómo aparece tu negocio en directorio, sellos y alcance según tu plan — datos para decidir, no intuición.",
+  },
+] as const;
+
+const ROADMAP = [
+  {
+    icon: FileText,
+    title: "Facturación automática",
+    body: "Emisión y envío de facturas desde la plataforma, acoplada a tu membresía y a tus datos fiscales.",
+  },
+  {
+    icon: Siren,
+    title: "App de incidencias",
+    body: "Reporta y da seguimiento a incidencias del barrio o de tu operación, con un canal compartido del Clúster.",
+  },
+  {
+    icon: Hexagon,
+    title: "Sellos como NFTs",
+    body: "Convierte colecciones del Pasaporte Digital en activos verificables: lealtad con prueba on-chain.",
+  },
+  {
+    icon: Ticket,
+    title: "Marketplace de accesos",
+    body: "Vende boletos y entradas a eventos del Centro Histórico; la misma red que te descubre, te compra.",
   },
 ] as const;
 
@@ -61,6 +88,39 @@ type LandingSociosViewProps = {
   sealedPassports: number;
   stampsLast30Days: number;
 };
+
+function PipopeBrand({
+  align = "left",
+  size = "hero",
+}: {
+  align?: "left" | "center";
+  size?: "hero" | "compact";
+}) {
+  const alignCls = align === "center" ? "text-center mx-auto" : "";
+  const nameCls =
+    size === "hero"
+      ? "text-4xl sm:text-5xl md:text-6xl tracking-[0.08em]"
+      : "text-2xl sm:text-3xl tracking-[0.08em]";
+  const tagCls =
+    size === "hero"
+      ? "text-[10px] sm:text-[11px] tracking-[0.16em] max-w-xl"
+      : "text-[9px] sm:text-[10px] tracking-[0.14em] max-w-md";
+
+  return (
+    <div className={alignCls}>
+      <p className={`font-serif-cluster font-black text-amber-400 uppercase leading-none ${nameCls}`}>
+        PIPOPE
+      </p>
+      <p
+        className={`mt-3 font-bold uppercase text-amber-200/90 leading-relaxed ${tagCls} ${
+          align === "center" ? "mx-auto" : ""
+        }`}
+      >
+        Plataforma inteligente poblana de operaciones y planificación estratégica
+      </p>
+    </div>
+  );
+}
 
 export default function LandingSociosView({
   certifiedBusinesses,
@@ -74,7 +134,7 @@ export default function LandingSociosView({
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-amber-200">
       <Navbar />
 
-      {/* HERO — una sola composición */}
+      {/* HERO */}
       <header className="relative bg-[#27366D] text-white min-h-[100svh] md:min-h-[42rem] flex items-end md:items-center overflow-hidden">
         <div className="absolute inset-0">
           <HeroVideoBackground />
@@ -90,28 +150,24 @@ export default function LandingSociosView({
 
         <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-28 pb-16 md:py-28">
           <Reveal>
-            <p className="font-serif-cluster text-amber-400 text-xl sm:text-2xl md:text-3xl tracking-wide leading-snug max-w-3xl">
-              Plataforma Digital Turística del Barrio
-            </p>
-            <p className="mt-2 text-[11px] sm:text-xs font-medium uppercase tracking-[0.14em] text-amber-200/85 max-w-2xl leading-relaxed">
-              Plataforma inteligente poblana de operaciones y planificación estratégica — PIPOPE
-            </p>
+            <PipopeBrand />
           </Reveal>
           <Reveal delay={90}>
-            <h1 className="mt-4 text-3xl sm:text-5xl md:text-6xl font-black font-serif-cluster uppercase tracking-wide leading-[1.05] text-amber-50 max-w-3xl">
-              Tu negocio, en el mapa del Centro Histórico.
+            <h1 className="mt-8 text-2xl sm:text-4xl md:text-5xl font-black font-serif-cluster uppercase tracking-wide leading-[1.08] text-amber-50 max-w-3xl">
+              El sistema operativo digital para empresas turísticas del Centro Histórico.
             </h1>
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-5 text-sm sm:text-base text-slate-200 font-light leading-relaxed max-w-xl">
-              Membresía empresa con panel propio: pagos, ficha, fiscales, QR de Pasaporte y cupones —
-              desde {formatPlanPriceMxn("NEGOCIO_FAMILIAR")}.
+              Cada socio suma demanda al Pasaporte, al MAP y al directorio; cada visitante alimenta al
+              siguiente negocio. Tú cosechas esos network effects — desde{" "}
+              {formatPlanPriceMxn("NEGOCIO_FAMILIAR")}.
             </p>
           </Reveal>
           <Reveal delay={240}>
             <div id="registro" className="mt-10 scroll-mt-28">
               <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.22em] text-amber-400/90">
-                Regístrate como socio empresa
+                Entra a la red como socio empresa
               </p>
               <SociosRegisterCta />
               <p className="mt-4 text-center text-[11px] text-slate-300 font-light max-w-sm mx-auto">
@@ -120,7 +176,7 @@ export default function LandingSociosView({
                   href="/planes?tipo=comerciales"
                   className="underline decoration-white/30 underline-offset-2 hover:text-white"
                 >
-                  Ver todos los planes
+                  Ver planes
                 </Link>
               </p>
             </div>
@@ -128,7 +184,26 @@ export default function LandingSociosView({
         </div>
       </header>
 
-      {/* PANEL FEATURES — una sección, un propósito */}
+      {/* NETWORK EFFECTS */}
+      <section className="py-20 md:py-24 px-6 bg-[#f8fafc]">
+        <div className="max-w-3xl mx-auto">
+          <Reveal>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#27366D]">
+              Efectos de red
+            </p>
+            <h2 className="mt-3 text-2xl md:text-4xl font-black font-serif-cluster uppercase tracking-wide text-[#27366D] leading-tight">
+              Más socios, más visitas, más valor para todos.
+            </h2>
+            <p className="mt-5 text-sm md:text-base text-slate-600 font-light leading-relaxed">
+              PIPOPE concentra la operación turística del barrio en un solo producto digital: el
+              visitante sella, el vecino canjea, tu negocio aparece donde la demanda ya camina. No
+              compites solo por atención suelta — operas dentro de una red que crece con cada alta.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* PANEL FEATURES */}
       <section className="relative py-20 md:py-24 px-6 overflow-hidden">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.35]"
@@ -141,14 +216,14 @@ export default function LandingSociosView({
           <Reveal>
             <div className="flex items-center gap-3 text-[#27366D]">
               <Building2 className="w-5 h-5" aria-hidden />
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em]">Panel de socio</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em]">Operaciones hoy</p>
             </div>
             <h2 className="mt-3 text-2xl md:text-4xl font-black font-serif-cluster uppercase tracking-wide text-[#27366D] max-w-2xl leading-tight">
-              Todo lo que controlas desde tu cuenta.
+              Tu consola de socio, lista desde el día uno.
             </h2>
             <p className="mt-4 text-sm md:text-base text-slate-600 font-light leading-relaxed max-w-xl">
-              Después de registrarte y activar tu plan, el panel concentra la operación diaria de tu
-              negocio en Barriando.
+              Pagos, ficha, fiscales, QR y cupones: lo esencial para que tu empresa turística opere
+              conectada al clúster.
             </p>
           </Reveal>
 
@@ -180,8 +255,8 @@ export default function LandingSociosView({
       {/* ATMÓSFERA + NÚMEROS */}
       <section className="relative min-h-[28rem] md:min-h-[32rem] flex items-end overflow-hidden text-white">
         <Image
-          src="/festividades/mercado-oficios-mi-barrio-fest.png"
-          alt="Ambiente del barrio y economía local en el Centro Histórico de Puebla"
+          src="/festividades/cinco-de-mayo-fest.png"
+          alt="Cinco de Mayo Fest en el Centro Histórico de Puebla"
           fill
           className="object-cover object-center"
           sizes="100vw"
@@ -191,11 +266,11 @@ export default function LandingSociosView({
         <div className="relative z-10 w-full max-w-5xl mx-auto px-6 py-16 md:py-20">
           <Reveal>
             <h2 className="text-2xl md:text-4xl font-black font-serif-cluster uppercase tracking-wide max-w-xl leading-tight text-amber-50">
-              Visibilidad real en el barrio que camina.
+              Demanda que ya camina el barrio.
             </h2>
             <p className="mt-4 text-sm md:text-base text-slate-200 font-light leading-relaxed max-w-lg">
-              Directorio certificado, Pasaporte Digital y — en planes superiores — carrusel de home y pin
-              en el MAP.
+              Directorio, Pasaporte y MAP concentran tráfico peatonal real. Tu ficha y tus sellos
+              capturan una fracción de esa red.
             </p>
           </Reveal>
           <Reveal delay={120}>
@@ -229,21 +304,57 @@ export default function LandingSociosView({
         </div>
       </section>
 
+      {/* ROADMAP */}
+      <section className="py-20 md:py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <Reveal>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600">
+              Próximamente en PIPOPE
+            </p>
+            <h2 className="mt-3 text-2xl md:text-4xl font-black font-serif-cluster uppercase tracking-wide text-[#27366D] max-w-2xl leading-tight">
+              La plataforma sigue expandiendo módulos.
+            </h2>
+            <p className="mt-4 text-sm md:text-base text-slate-600 font-light leading-relaxed max-w-xl">
+              Entras hoy a la capa operativa; los siguientes módulos amplían facturación, campo,
+              lealtad y venta de accesos sobre la misma red.
+            </p>
+          </Reveal>
+
+          <ul className="mt-12 space-y-0 divide-y divide-[#27366D]/12 border-y border-[#27366D]/12">
+            {ROADMAP.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <Reveal key={item.title} delay={index * 80}>
+                  <li className="grid grid-cols-[auto_1fr] gap-4 md:gap-6 py-6 md:py-7 items-start">
+                    <span className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-full border border-[#27366D]/20 bg-amber-50 text-[#27366D]">
+                      <Icon className="w-5 h-5" aria-hidden />
+                    </span>
+                    <div>
+                      <h3 className="text-sm md:text-base font-bold uppercase tracking-wide text-[#27366D]">
+                        {item.title}
+                      </h3>
+                      <p className="mt-1.5 text-sm text-slate-600 font-light leading-relaxed max-w-2xl">
+                        {item.body}
+                      </p>
+                    </div>
+                  </li>
+                </Reveal>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+
       {/* CIERRE CTA */}
       <section className="bg-[#27366D] text-white py-20 px-6">
         <div className="max-w-xl mx-auto text-center">
           <Reveal>
-            <p className="font-serif-cluster text-amber-400 text-lg sm:text-xl tracking-wide leading-snug">
-              Plataforma Digital Turística del Barrio
-            </p>
-            <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-amber-200/80 leading-relaxed">
-              PIPOPE — operaciones y planificación estratégica
-            </p>
-            <h2 className="mt-4 text-2xl md:text-3xl font-black font-serif-cluster uppercase tracking-wide leading-tight">
-              Abre tu cuenta de socio hoy.
+            <PipopeBrand align="center" size="compact" />
+            <h2 className="mt-6 text-2xl md:text-3xl font-black font-serif-cluster uppercase tracking-wide leading-tight">
+              Suma tu empresa a la red.
             </h2>
             <p className="mt-4 text-sm text-slate-300 font-light leading-relaxed">
-              Google o correo: en minutos pasas al pago y a configurar tu ficha.
+              Google o correo: en minutos activas tu nodo y empiezas a operar en PIPOPE.
             </p>
           </Reveal>
           <Reveal delay={100}>
