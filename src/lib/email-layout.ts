@@ -20,7 +20,7 @@ export type BrandedEmailContent = {
 
 /**
  * Shell HTML compartido (verificación por correo, notificaciones).
- * El favicon va embebido vía CID (no URL remota) para que se vea en el cliente de correo.
+ * Wordmark de navbar embebido vía CID (no URL remota).
  */
 export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
   const siteUrl = resolveAppOrigin();
@@ -53,6 +53,7 @@ export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
       </table>`
     : "";
 
+  // Wordmark 915×302 → ~220×73 en cabecera (mismo asset que la navbar).
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -72,20 +73,17 @@ export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;background:#ffffff;border:1px solid #e2e8f0;">
           <tr>
-            <td style="background:${BRAND};padding:24px 28px;text-align:center;">
-              <a href="${siteUrl}" style="text-decoration:none;color:#ffffff;display:inline-block;">
+            <td align="center" style="background:${BRAND};padding:28px 28px 22px;text-align:center;">
+              <a href="${siteUrl}" style="text-decoration:none;color:#ffffff;display:inline-block;text-align:center;">
                 <img
                   src="cid:${BRAND_LOGO_CID}"
-                  width="64"
-                  height="64"
+                  width="220"
+                  height="73"
                   alt="Barriando"
-                  style="display:block;margin:0 auto 12px;border:0;outline:none;width:64px;height:64px;border-radius:12px;"
+                  style="display:block;margin:0 auto;border:0;outline:none;width:220px;max-width:80%;height:auto;"
                 />
-                <span style="display:block;font-size:14px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:#ffffff;">
-                  Barriando
-                </span>
               </a>
-              <p style="margin:8px 0 0;font-size:11px;letter-spacing:0.04em;color:#c7d0e8;">
+              <p style="margin:14px 0 0;font-size:11px;letter-spacing:0.04em;color:#c7d0e8;text-align:center;">
                 Clúster Turístico · Centro Histórico de Puebla
               </p>
             </td>

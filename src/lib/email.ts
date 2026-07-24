@@ -1,8 +1,8 @@
-import { BRAND_FAVICON_PNG_BASE64 } from "@/lib/brand-favicon-base64";
+import { BRAND_LOGO_PNG_BASE64 } from "@/lib/brand-logo-base64";
 
 /** Envío de correos vía Resend (API HTTP). */
 
-/** Content-ID del favicon embebido (inline). Debe coincidir con cid: en el HTML. */
+/** Content-ID del wordmark embebido (inline). Debe coincidir con cid: en el HTML. */
 export const BRAND_LOGO_CID = "barriando-logo";
 
 function readEnv(...keys: string[]): string | undefined {
@@ -34,7 +34,7 @@ export type SendEmailParams = {
   text: string;
   /** Idempotency / debugging tag in logs */
   tags?: string[];
-  /** Embebe favicon como CID (default true). */
+  /** Embebe wordmark de navbar como CID (default true). */
   includeBrandLogo?: boolean;
 };
 
@@ -46,8 +46,8 @@ export type SendEmailResult =
  * Envía un correo con Resend. No lanza: el caller decide si fallar el flujo.
  * Si falta RESEND_API_KEY, retorna skipped (útil en local / preview).
  *
- * El favicon viaja embebido (CID + base64): no depende de cargar
- * https://barriando.org/logos/... (que a veces responde 403 a bots/proxies).
+ * El logo viaja embebido (CID + base64): no depende de cargar URLs remotas
+ * (barriando.org a veces responde 403 a bots/proxies de correo).
  */
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   const apiKey = getResendApiKey();
@@ -69,10 +69,10 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     content_id: string;
   }> = [];
 
-  if (includeBrandLogo && BRAND_FAVICON_PNG_BASE64) {
+  if (includeBrandLogo && BRAND_LOGO_PNG_BASE64) {
     attachments.push({
-      filename: "barriando-favicon.png",
-      content: BRAND_FAVICON_PNG_BASE64,
+      filename: "logobarriando.png",
+      content: BRAND_LOGO_PNG_BASE64,
       content_type: "image/png",
       content_id: BRAND_LOGO_CID,
     });
