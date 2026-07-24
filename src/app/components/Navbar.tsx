@@ -338,12 +338,18 @@ export default function Navbar() {
     };
   }, [open, isMapPage]);
 
-  function AuthActions({ mobile = false }: { mobile?: boolean }) {
+  function AuthActions({
+    mobile = false,
+    onNavigate,
+  }: {
+    mobile?: boolean;
+    onNavigate?: () => void;
+  }) {
     if (isAuthenticated) {
       return <UserMenu mobile={mobile} />;
     }
 
-    return <EntrarMenu mobile={mobile} />;
+    return <EntrarMenu mobile={mobile} onNavigate={onNavigate} />;
   }
 
   const navLinks = getNavLinks(Boolean(isAuthenticated));
@@ -408,8 +414,12 @@ export default function Navbar() {
             aria-label="Cerrar menú"
             onClick={() => setOpen(false)}
           />
-          <div className="relative z-10 w-full max-w-sm rounded-2xl border border-[#314385] bg-[#1e2b58] shadow-2xl animate-popup-in overflow-hidden">
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#314385]/70">
+          <div
+            className="relative z-10 w-full max-w-sm rounded-2xl border border-[#314385] bg-[#1e2b58] shadow-2xl animate-popup-in overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 pt-4 pb-2.5 border-b border-[#314385]/70">
               <p id="mobile-nav-title" className="text-xs font-bold uppercase tracking-widest text-amber-400">
                 Menú
               </p>
@@ -422,7 +432,7 @@ export default function Navbar() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="px-3 py-3 flex flex-col gap-0.5 max-h-[min(70dvh,28rem)] overflow-y-auto overscroll-contain">
+            <div className="px-3 py-2.5 flex flex-col gap-0.5">
               {navLinks.map((link) => {
                 const active = isNavActive(pathname, link);
                 return (
@@ -430,7 +440,7 @@ export default function Navbar() {
                     key={link.label}
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className={`py-3 px-3 rounded-xl text-sm uppercase tracking-wider font-bold transition ${
+                    className={`py-2.5 px-3 rounded-xl text-sm uppercase tracking-wider font-bold transition ${
                       active
                         ? "bg-[#27366D] text-amber-400"
                         : "text-white hover:bg-[#27366D] hover:text-amber-400"
@@ -440,9 +450,7 @@ export default function Navbar() {
                   </Link>
                 );
               })}
-              <div onClick={() => setOpen(false)}>
-                <AuthActions mobile />
-              </div>
+              <AuthActions mobile onNavigate={() => setOpen(false)} />
             </div>
           </div>
         </div>
