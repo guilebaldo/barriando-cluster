@@ -11,12 +11,15 @@ type MagicLinkFormProps = {
   submitLabel?: string;
   /** Espaciado más compacto (menú móvil). */
   compact?: boolean;
+  /** Clases del botón de envío (p. ej. ámbar sobre fondos navy). */
+  submitClassName?: string;
 };
 
 export function MagicLinkForm({
   callbackUrl,
   submitLabel = "Enviar enlace de acceso",
   compact = false,
+  submitClassName,
 }: MagicLinkFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -84,9 +87,12 @@ export function MagicLinkForm({
       <button
         type="submit"
         disabled={loading}
-        className={`w-full rounded-lg bg-[#27366D] text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#1e2a55] disabled:opacity-50 ${
-          compact ? "py-2.5" : "py-3.5"
-        }`}
+        className={
+          submitClassName ??
+          `w-full rounded-lg bg-[#27366D] text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#1e2a55] disabled:opacity-50 ${
+            compact ? "py-2.5" : "py-3.5"
+          }`
+        }
       >
         {loading ? "Enviando…" : submitLabel}
       </button>
