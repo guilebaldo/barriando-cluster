@@ -18,6 +18,7 @@ import { getHitoIntro } from "@/lib/map-hito-intro";
 import { getPointStampHref } from "@/lib/map-point-stamp";
 import MapWelcomeFicha from "./MapWelcomeFicha";
 import MapGeoModal from "./MapGeoModal";
+import { MapBusinessSignupLink } from "./MapBusinessSignupLink";
 import type { UserMapLocation } from "./user-map-location";
 import QrScanModal from "../components/QrScanModal";
 
@@ -479,12 +480,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
                 {fichaBody}
                 {navRow}
                 <p className="text-center">
-                  <Link
-                    href="/planes?tipo=comerciales#gran_empresa"
-                    className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
-                  >
-                    ¿Quieres estar en el MAP? Regístrate aquí.
-                  </Link>
+                  <MapBusinessSignupLink />
                 </p>
               </>
             )}

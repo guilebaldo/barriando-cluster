@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { MapRouteResult } from "@/lib/map-route-client";
+import { MapBusinessSignupLink } from "./MapBusinessSignupLink";
 
 export default function MapWelcomeFicha({
   route,
@@ -59,12 +59,7 @@ export default function MapWelcomeFicha({
       </button>
 
       <p className="text-center">
-        <Link
-          href="/planes?tipo=comerciales#gran_empresa"
-          className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
-        >
-          ¿Quieres estar en el MAP? Regístrate aquí.
-        </Link>
+        <MapBusinessSignupLink />
       </p>
     </div>
   );

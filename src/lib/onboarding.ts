@@ -35,6 +35,19 @@ export async function clearPendingPlanCookie() {
 }
 
 async function ensureTuristaSubscription(userId: string) {
+  const existing = await prisma.subscription.findUnique({ where: { userId } });
+  if (existing && hasCommercialAccess(existing.plan, existing.status)) {
+    console.warn("[onboarding] no degradar a TURISTA: membresía activa", {
+      userId,
+      plan: existing.plan,
+      status: existing.status,
+    });
+    return;
+  }
+  if (existing && isPaidMembershipPlan(existing.plan) && existing.status === "manual_pending") {
+    console.warn("[onboarding] no degradar a TURISTA: pago manual pendiente", userId);
+    return;
+  }
   await prisma.subscription.upsert({
     where: { userId },
     create: { userId, plan: "TURISTA", status: "inactive" },
@@ -43,6 +56,16 @@ async function ensureTuristaSubscription(userId: string) {
 }
 
 async function ensurePendingPaidPlan(userId: string, plan: PaidMembershipPlan) {
+  const existing = await prisma.subscription.findUnique({ where: { userId } });
+  if (existing && hasCommercialAccess(existing.plan, existing.status)) {
+    // Nunca apagar una membresía activa solo para iniciar otro checkout.
+    console.warn("[onboarding] no sobrescribir membresía activa con pending", {
+      userId,
+      currentPlan: existing.plan,
+      requestedPlan: plan,
+    });
+    return;
+  }
   await prisma.subscription.upsert({
     where: { userId },
     create: { userId, plan, status: "inactive" },
@@ -75,6 +98,16 @@ export async function resolvePlanSelectionPath(plan: MembershipPlan): Promise<st
   const sub = await loadSubscription(session.user.id);
 
   if (sub && hasCommercialAccess(sub.plan, sub.status) && sub.plan === plan) {
+    return resolvePostAuthHomePath({
+      email: session.user.email,
+      role: session.user.role,
+      plan: sub.plan,
+      subscriptionStatus: sub.status,
+    });
+  }
+
+  // Ya tiene membresía de pago activa: no degradar al elegir otro plan desde UI.
+  if (sub && hasCommercialAccess(sub.plan, sub.status)) {
     return resolvePostAuthHomePath({
       email: session.user.email,
       role: session.user.role,
@@ -126,11 +159,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   }
 
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {
-    // Si eligió otro plan de pago distinto al activo, ir a pagar el cambio.
-    if (pending && isPaidMembershipPlan(pending) && pending !== sub.plan) {
-      await ensurePendingPaidPlan(session.user.id, pending as PaidMembershipPlan);
-      redirect("/certificacion/pago");
-    }
+    // No degradar membresía activa si hay cookie de otro plan; ir a su espacio.
     redirect(
       resolvePostAuthHomePathAfterPayment({
         email,

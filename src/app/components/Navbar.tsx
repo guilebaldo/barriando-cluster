@@ -77,7 +77,7 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
   }, [open, mobile]);
 
   const authMethods = (
-    <div className="space-y-2">
+    <div className="space-y-2" onMouseDown={(e) => e.stopPropagation()}>
       <GoogleSignInButton
         callbackUrl={ONBOARDING_CONTINUE_PATH}
         label="Continuar con Google"
@@ -114,12 +114,7 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
   }
 
   return (
-    <div
-      ref={ref}
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
+    <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -131,9 +126,13 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full pt-2 z-50 w-[18rem]">
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 w-[18rem] pt-1"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl p-3 space-y-2">
-            <div role="menuitem">{authMethods}</div>
+            {authMethods}
             <Link
               href="/planes"
               role="menuitem"

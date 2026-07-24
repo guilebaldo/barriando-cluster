@@ -213,7 +213,7 @@
   animation: barriando-nudge-shake 0.45s ease-in-out;
 }
 
-/* iOS Safari: zoom al enfocar si font-size < 16px. Forzar 1rem en /admin. */
+/* iOS Safari: zoom al enfocar si font-size < 16px. */
 .admin-touch-forms :is(input, select, textarea):not(
     [type="checkbox"],
     [type="radio"],
@@ -225,6 +225,26 @@
     [type="image"]
   ) {
   font-size: 1rem !important;
+}
+
+/* Sitio completo en móvil: inputs/búsqueda ≥16px para evitar zoom al foco. */
+@media (max-width: 768px) {
+  input:not(
+      [type="checkbox"],
+      [type="radio"],
+      [type="file"],
+      [type="hidden"],
+      [type="button"],
+      [type="submit"],
+      [type="reset"],
+      [type="image"],
+      [type="range"],
+      [type="color"]
+    ),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

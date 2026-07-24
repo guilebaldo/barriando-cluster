@@ -35,7 +35,8 @@ export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
           <tr>
             <td align="center" style="padding:0 0 24px;">
               <a href="${content.ctaUrl}"
-                 style="display:inline-block;background:${BRAND};color:#ffffff;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;padding:14px 28px;border-radius:6px;">
+                 bgcolor="${BRAND}"
+                 style="display:inline-block;background-color:${BRAND};background:${BRAND};color:#ffffff;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;padding:14px 28px;border-radius:6px;">
                 ${escapeHtml(content.ctaLabel)}
               </a>
             </td>
@@ -54,13 +55,18 @@ export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
     : "";
 
   // Wordmark 915×302 → ~220×73 en cabecera (mismo asset que la navbar).
+  // bgcolor en <td> + color sólido: Gmail a veces ignora background en style.
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="light" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="supported-color-schemes" content="light only" />
   <title>${escapeHtml(content.title)} — Barriando</title>
+  <style>
+    :root { color-scheme: light only; }
+  </style>
 </head>
 <body style="margin:0;padding:0;background:#f4f6fa;font-family:Helvetica,Arial,sans-serif;">
   ${
@@ -73,19 +79,34 @@ export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;background:#ffffff;border:1px solid #e2e8f0;">
           <tr>
-            <td align="center" style="background:${BRAND};padding:28px 28px 22px;text-align:center;">
-              <a href="${siteUrl}" style="text-decoration:none;color:#ffffff;display:inline-block;text-align:center;">
-                <img
-                  src="cid:${BRAND_LOGO_CID}"
-                  width="220"
-                  height="73"
-                  alt="Barriando"
-                  style="display:block;margin:0 auto;border:0;outline:none;width:220px;max-width:80%;height:auto;"
-                />
-              </a>
-              <p style="margin:14px 0 0;font-size:11px;letter-spacing:0.04em;color:#c7d0e8;text-align:center;">
-                Clúster Turístico · Centro Histórico de Puebla
-              </p>
+            <td align="center" bgcolor="${BRAND}" style="background-color:${BRAND};padding:28px 28px 22px;text-align:center;">
+              <!--[if gte mso 9]>
+              <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:520px;">
+              <v:fill type="tile" color="${BRAND}" />
+              <v:textbox style="mso-fit-shape-to-text:true" inset="0,0,0,0">
+              <![endif]-->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td align="center" bgcolor="${BRAND}" style="background-color:${BRAND};">
+                    <a href="${siteUrl}" style="text-decoration:none;color:#ffffff;display:inline-block;text-align:center;">
+                      <img
+                        src="cid:${BRAND_LOGO_CID}"
+                        width="220"
+                        height="73"
+                        alt="Barriando"
+                        style="display:block;margin:0 auto;border:0;outline:none;width:220px;max-width:80%;height:auto;"
+                      />
+                    </a>
+                    <p style="margin:14px 0 0;font-size:11px;letter-spacing:0.04em;color:#d6dceb;text-align:center;">
+                      Clúster Turístico · Centro Histórico de Puebla
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <!--[if gte mso 9]>
+              </v:textbox>
+              </v:rect>
+              <![endif]-->
             </td>
           </tr>
           <tr>

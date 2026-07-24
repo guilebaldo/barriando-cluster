@@ -72,7 +72,7 @@ export function MagicLinkForm({
             onChange={(ev) => setEmail(ev.target.value)}
             placeholder="tu@correo.com"
             disabled={loading}
-            className="w-full rounded-lg border border-slate-200 bg-white py-3.5 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#27366D] focus:outline-none focus:ring-1 focus:ring-[#27366D] disabled:opacity-50"
+            className="w-full rounded-lg border border-slate-200 bg-white py-3.5 pl-10 pr-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-[#27366D] focus:outline-none focus:ring-1 focus:ring-[#27366D] disabled:opacity-50"
           />
         </div>
       </label>
