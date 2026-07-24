@@ -110,8 +110,9 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
         a: (
           <>
             Elige el plan en <Link href="/planes">/planes</Link>, inicia sesión y completa el pago.
-            Puedes pagar con <strong>tarjeta</strong> (suscripción) o <strong>OXXO</strong> (pago de un
-            mes). Cuando OXXO se acredita, tu membresía se activa y te avisamos por correo.
+            Puedes pagar con <strong>tarjeta</strong> (suscripción), <strong>OXXO</strong> (pago de un
+            mes) o <strong>transferencia bancaria</strong> (verificación manual por el Clúster). Cuando
+            el pago queda acreditado, tu membresía se activa; en OXXO y tarjeta te avisamos por correo.
           </>
         ),
       },
@@ -180,8 +181,7 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
           <>
             Son ofertas que publican los negocios con membresía activa para Vecinos y otros socios de
             pago. Las encuentras en el directorio{" "}
-            <Link href="/socios?cupones=1">Socios · cupones</Link>. Antes se llamaban “beneficios”;
-            el producto es el mismo.
+            <Link href="/socios?cupones=1">Socios · cupones</Link>.
           </>
         ),
       },
@@ -224,8 +224,21 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
         q: "¿Qué métodos de pago aceptan?",
         a: (
           <>
-            <strong>Tarjeta</strong> (Checkout Stripe, membresía recurrente) y <strong>OXXO</strong>{" "}
-            (pago único de un mes). Los montos se muestran en Planes y al pagar.
+            <strong>Tarjeta</strong> (Checkout Stripe, membresía recurrente), <strong>OXXO</strong>{" "}
+            (pago único de un mes) y <strong>transferencia bancaria</strong>. La transferencia se
+            verifica de forma <strong>manual</strong> por el equipo del Clúster por el momento: al
+            confirmar el depósito, activamos tu membresía. Los montos se muestran en Planes y al
+            pagar.
+          </>
+        ),
+      },
+      {
+        q: "Pagué por transferencia y aún no veo mi plan activo",
+        a: (
+          <>
+            La verificación es manual. Envía tu comprobante al correo o WhatsApp del Clúster (al pie
+            de esta página). Cuando el equipo confirme el pago, tu membresía queda activa. Si ya
+            enviaste el comprobante y pasó mucho tiempo, vuelve a escribirnos.
           </>
         ),
       },
