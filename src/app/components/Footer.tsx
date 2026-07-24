@@ -108,6 +108,9 @@ export default function Footer() {
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-4 text-slate-400">
+            <Link href="/FAQ" className="hover:text-white transition">
+              FAQ
+            </Link>
             <Link href="/privacidad" className="hover:text-white transition flex items-center gap-1">
               <Shield className="w-3 h-3" /> Aviso de Privacidad
             </Link>
