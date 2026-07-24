@@ -11,19 +11,20 @@ export function VerifyEmailClient() {
       <p className="text-xs font-light leading-relaxed text-slate-600">
         {email ? (
           <>
-            Enviamos un enlace mágico a{" "}
+            Enviamos un enlace de verificación a{" "}
             <strong className="font-semibold text-slate-900">{email}</strong>. Ábrelo en este
-            dispositivo para entrar.
+            dispositivo para confirmar tu acceso.
           </>
         ) : (
           <>
-            Enviamos un enlace mágico a tu correo. Ábrelo en este dispositivo para entrar a tu
-            cuenta.
+            Enviamos un enlace de verificación a tu correo. Ábrelo en este dispositivo para
+            confirmar tu acceso.
           </>
         )}
       </p>
       <p className="text-[11px] font-light leading-relaxed text-slate-500">
-        Si no lo ves en unos minutos, revisa spam o promociones. El enlace caduca en 24 horas.
+        Si no lo ves en unos minutos, revisa spam o promociones. El enlace caduca en 24 horas y
+        solo se puede usar una vez.
       </p>
     </div>
   );

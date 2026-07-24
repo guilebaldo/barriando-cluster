@@ -85,7 +85,7 @@ function OAuthButtonsInner({ plan }: { plan?: MembershipPlan | null }) {
 
       <div>
         <p className="mb-3 text-center text-[11px] font-light text-slate-500">
-          Te enviamos un enlace a tu correo. Sin contraseña.
+          Te enviamos un enlace de verificación a tu correo.
         </p>
         <MagicLinkForm callbackUrl={redirectAfterLogin} />
       </div>

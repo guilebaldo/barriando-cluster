@@ -38,7 +38,7 @@ export default function PasaporteGoogleCta({
 
       <div>
         <p className="mb-3 text-center text-[11px] font-light text-slate-300">
-          Te enviamos un enlace a tu correo. Sin contraseña.
+          Te enviamos un enlace de verificación a tu correo.
         </p>
         <MagicLinkForm callbackUrl={callbackUrl} />
       </div>

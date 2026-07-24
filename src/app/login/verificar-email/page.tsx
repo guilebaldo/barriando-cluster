@@ -7,7 +7,7 @@ import SiteShell from "@/app/components/SiteShell";
 import { VerifyEmailClient } from "./VerifyEmailClient";
 
 export const metadata = {
-  title: "Revisa tu correo | Barriando",
+  title: "Verifica tu correo | Barriando",
 };
 
 export default function VerificarEmailPage() {
@@ -19,7 +19,7 @@ export default function VerificarEmailPage() {
           <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm text-center">
             <Mail className="mx-auto mb-4 h-8 w-8 text-[#27366D]" />
             <h1 className="mb-2 font-serif-cluster text-xl font-bold uppercase tracking-wide">
-              Revisa tu correo
+              Verifica tu correo
             </h1>
             <Suspense fallback={<p className="text-xs text-slate-500 font-light">Cargando…</p>}>
               <VerifyEmailClient />

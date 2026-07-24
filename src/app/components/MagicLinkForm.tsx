@@ -13,7 +13,7 @@ type MagicLinkFormProps = {
 
 export function MagicLinkForm({
   callbackUrl,
-  submitLabel = "Enviar enlace mágico",
+  submitLabel = "Enviar enlace de acceso",
 }: MagicLinkFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");

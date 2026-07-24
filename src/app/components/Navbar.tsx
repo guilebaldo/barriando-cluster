@@ -91,10 +91,10 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
         <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">o</span>
         <div className="h-px flex-1 bg-[#314385]" />
       </div>
-      <p className="text-center text-[10px] font-light text-slate-400">Enlace mágico al correo</p>
+      <p className="text-center text-[10px] font-light text-slate-400">Enlace de verificación</p>
       <MagicLinkForm
         callbackUrl={ONBOARDING_CONTINUE_PATH}
-        submitLabel="Enviar enlace"
+        submitLabel="Enviar enlace de acceso"
       />
     </div>
   );

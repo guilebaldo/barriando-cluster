@@ -33,7 +33,7 @@ function LoginClientInner() {
               <LogIn className="w-6 h-6 text-[#27366D]" />
               <h1 className="text-xl font-bold font-serif-cluster uppercase tracking-wide">Iniciar sesión</h1>
               <p className="text-xs text-slate-600 font-light mt-1">
-                Accede con Google o con un enlace mágico a tu correo.
+                Accede con Google o con un enlace de verificación a tu correo.
               </p>
             </div>
 

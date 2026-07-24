@@ -49,7 +49,7 @@ function logAuthBoot() {
     console.warn("[auth] Faltan GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET en producción.");
   }
   if (isProduction && !resendApiKey) {
-    console.warn("[auth] Falta RESEND_API_KEY: magic link por correo deshabilitado.");
+    console.warn("[auth] Falta RESEND_API_KEY: acceso por correo deshabilitado.");
   }
 }
 
@@ -99,13 +99,13 @@ function buildProviders(): Provider[] {
           const { host } = new URL(url);
           const result = await sendEmail({
             to,
-            subject: "Tu enlace para entrar a Barriando",
+            subject: "Verifica tu correo para entrar a Barriando",
             html: magicLinkEmailHtml({ url, host }),
             text: magicLinkEmailText({ url, host }),
-            tags: ["magic-link"],
+            tags: ["email-verification"],
           });
           if (!result.ok) {
-            throw new Error("No se pudo enviar el correo de acceso.");
+            throw new Error("No se pudo enviar el correo de verificación.");
           }
         },
       })
@@ -190,7 +190,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
         }
         if (account?.provider === "resend" || account?.provider === "email") {
-          console.info("[auth] Magic link sign-in:", { email, userId: user.id });
+          console.info("[auth] Email verification sign-in:", { email, userId: user.id });
         }
         return true;
       } catch (error) {
