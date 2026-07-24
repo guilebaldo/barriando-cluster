@@ -19,7 +19,7 @@ export type BrandedEmailContent = {
 };
 
 /**
- * Shell HTML compartido (magic link, notificaciones).
+ * Shell HTML compartido (verificación por correo, notificaciones).
  * El favicon va embebido vía CID (no URL remota) para que se vea en el cliente de correo.
  */
 export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
