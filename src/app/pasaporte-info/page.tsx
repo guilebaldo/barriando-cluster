@@ -8,7 +8,7 @@ import { getSession } from "@/lib/auth-utils";
 export const metadata = {
   title: "Abre tu Pasaporte | Barriando",
   description:
-    "Identifícate con Google para entrar directo a tu Pasaporte y ver tus sellos.",
+    "Escanea QR, abre tu cuenta gratis y colecciona sellos del Centro Histórico. Hazte Poblano con el Pasaporte Digital Barriando.",
 };
 
 export default async function PasaporteInfoPage() {
@@ -18,7 +18,7 @@ export default async function PasaporteInfoPage() {
   return (
     <SiteShell>
       <Navbar />
-      <main className="flex-1 max-w-3xl mx-auto px-6 py-16 w-full flex items-center">
+      <main className="flex-1 max-w-3xl mx-auto px-5 sm:px-6 py-10 sm:py-14 w-full flex items-center">
         <PasaporteInfoCard />
       </main>
       <Footer />
