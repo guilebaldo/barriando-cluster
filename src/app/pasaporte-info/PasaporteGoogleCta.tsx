@@ -1,6 +1,7 @@
 "use client";
 
 import { GoogleSignInButton } from "../components/GoogleSignInButton";
+import { MagicLinkForm } from "../components/MagicLinkForm";
 
 function GoogleMark() {
   return (
@@ -19,13 +20,28 @@ export default function PasaporteGoogleCta({
   callbackUrl?: string;
 }) {
   return (
-    <GoogleSignInButton
-      callbackUrl={callbackUrl}
-      loadingLabel="Abriendo Google..."
-      className="inline-flex items-center gap-3 bg-white hover:bg-slate-100 text-slate-900 text-sm font-bold px-6 py-3.5 rounded-lg transition active:scale-[0.98] disabled:opacity-60"
-    >
-      <GoogleMark />
-      Continuar con Google
-    </GoogleSignInButton>
+    <div className="w-full max-w-sm space-y-4">
+      <GoogleSignInButton
+        callbackUrl={callbackUrl}
+        loadingLabel="Abriendo Google..."
+        className="w-full inline-flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 text-sm font-bold px-6 py-3.5 rounded-lg transition active:scale-[0.98] disabled:opacity-60 border border-slate-200 shadow-sm"
+      >
+        <GoogleMark />
+        Continuar con Google
+      </GoogleSignInButton>
+
+      <div className="relative flex items-center gap-3" aria-hidden="true">
+        <div className="h-px flex-1 bg-white/25" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">o</span>
+        <div className="h-px flex-1 bg-white/25" />
+      </div>
+
+      <div>
+        <p className="mb-3 text-center text-[11px] font-light text-slate-300">
+          Te enviamos un enlace a tu correo. Sin contraseña.
+        </p>
+        <MagicLinkForm callbackUrl={callbackUrl} />
+      </div>
+    </div>
   );
 }

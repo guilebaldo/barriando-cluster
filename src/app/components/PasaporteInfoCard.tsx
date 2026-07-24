@@ -22,12 +22,13 @@ export default function PasaporteInfoCard({
           <>
             Escaneaste el QR de{" "}
             <span className="font-semibold text-white">{pendingStamp.name}</span>. Continúa con
-            Google para crear tu cuenta y registrar el sello en tu Pasaporte.
+            Google o con un enlace a tu correo para crear tu cuenta y registrar el sello en tu
+            Pasaporte.
           </>
         ) : (
           <>
             Guarda tus sellos del MAP, sigue tu progreso en temporada y desbloquea recompensas del
-            barrio. Continúa con Google para crear o activar tu cuenta en un solo paso.
+            barrio. Continúa con Google o con un enlace a tu correo para crear o activar tu cuenta.
           </>
         )}
       </p>
