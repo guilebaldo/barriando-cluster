@@ -63,7 +63,14 @@ function navLinkClass(pathname: string, link: NavLink) {
     : "text-white hover:text-amber-400 active:text-red-300 transition-colors duration-200";
 }
 
-function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
+function EntrarMenu({
+  mobile = false,
+  onNavigate,
+}: {
+  mobile?: boolean;
+  /** Cierra el menú móvil al ir a Registro / planes (no al enfocar el correo). */
+  onNavigate?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -77,11 +84,15 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
   }, [open, mobile]);
 
   const authMethods = (
-    <div className="space-y-2" onMouseDown={(e) => e.stopPropagation()}>
+    <div className={mobile ? "space-y-2" : "space-y-2"}>
       <GoogleSignInButton
         callbackUrl={ONBOARDING_CONTINUE_PATH}
         label="Continuar con Google"
-        className="w-full flex items-center justify-center gap-2 rounded-lg bg-white text-slate-800 hover:bg-slate-50 py-2.5 px-3 text-[11px] font-bold transition disabled:opacity-50 shadow-sm"
+        className={
+          mobile
+            ? "w-full flex items-center justify-center gap-2 rounded-lg bg-white text-slate-800 hover:bg-slate-50 py-2.5 px-3 text-[11px] font-bold transition disabled:opacity-50 shadow-sm"
+            : "w-full flex items-center justify-center gap-2 rounded-lg bg-white text-slate-800 hover:bg-slate-50 py-2.5 px-3 text-[11px] font-bold transition disabled:opacity-50 shadow-sm"
+        }
       >
         <GoogleGlyph />
         Continuar con Google
@@ -94,18 +105,20 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
       <p className="text-center text-[10px] font-light text-slate-400">Enlace de verificación</p>
       <MagicLinkForm
         callbackUrl={ONBOARDING_CONTINUE_PATH}
-        submitLabel="Enviar enlace de acceso"
+        submitLabel={mobile ? "Enviar enlace" : "Enviar enlace de acceso"}
+        compact={mobile}
       />
     </div>
   );
 
   if (mobile) {
     return (
-      <div className="mt-2 pt-2 border-t border-[#314385]/60 space-y-2">
+      <div className="mt-1.5 pt-2 border-t border-[#314385]/60 space-y-2">
         {authMethods}
         <Link
           href="/planes"
-          className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white text-center hover:bg-[#27366D] hover:text-amber-400 transition"
+          onClick={() => onNavigate?.()}
+          className="block py-2.5 px-3 rounded-lg text-xs uppercase tracking-wider font-bold text-white text-center hover:bg-[#27366D] hover:text-amber-400 transition"
         >
           Registrarte
         </Link>
@@ -114,7 +127,12 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div
+      ref={ref}
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -126,11 +144,7 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-50 w-[18rem] pt-1"
-          onMouseDown={(e) => e.stopPropagation()}
-        >
+        <div role="menu" className="absolute right-0 top-full pt-2 z-50 w-[18rem]">
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl p-3 space-y-2">
             {authMethods}
             <Link

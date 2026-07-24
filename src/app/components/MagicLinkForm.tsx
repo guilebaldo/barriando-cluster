@@ -9,11 +9,14 @@ type MagicLinkFormProps = {
   callbackUrl: string;
   /** Texto del botón principal */
   submitLabel?: string;
+  /** Espaciado más compacto (menú móvil). */
+  compact?: boolean;
 };
 
 export function MagicLinkForm({
   callbackUrl,
   submitLabel = "Enviar enlace de acceso",
+  compact = false,
 }: MagicLinkFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -57,7 +60,7 @@ export function MagicLinkForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className={compact ? "space-y-2" : "space-y-3"}>
       <label className="block">
         <span className="sr-only">Correo electrónico</span>
         <div className="relative">
@@ -72,14 +75,18 @@ export function MagicLinkForm({
             onChange={(ev) => setEmail(ev.target.value)}
             placeholder="tu@correo.com"
             disabled={loading}
-            className="w-full rounded-lg border border-slate-200 bg-white py-3.5 pl-10 pr-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-[#27366D] focus:outline-none focus:ring-1 focus:ring-[#27366D] disabled:opacity-50"
+            className={`w-full rounded-lg border border-slate-200 bg-white pl-10 pr-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-[#27366D] focus:outline-none focus:ring-1 focus:ring-[#27366D] disabled:opacity-50 ${
+              compact ? "py-2.5" : "py-3.5"
+            }`}
           />
         </div>
       </label>
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg bg-[#27366D] py-3.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#1e2a55] disabled:opacity-50"
+        className={`w-full rounded-lg bg-[#27366D] text-xs font-bold uppercase tracking-wider text-white transition hover:bg-[#1e2a55] disabled:opacity-50 ${
+          compact ? "py-2.5" : "py-3.5"
+        }`}
       >
         {loading ? "Enviando…" : submitLabel}
       </button>
