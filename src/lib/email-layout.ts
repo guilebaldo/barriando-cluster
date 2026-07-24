@@ -1,4 +1,4 @@
-import { resolveAppOrigin } from "@/lib/email";
+import { BRAND_LOGO_CID, resolveAppOrigin } from "@/lib/email";
 
 const BRAND = "#27366D";
 const ACCENT = "#b45309";
@@ -20,7 +20,7 @@ export type BrandedEmailContent = {
 
 /**
  * Shell HTML compartido (magic link, notificaciones).
- * Sin imágenes: mejor deliverability en clientes que marcan HTML con assets externos.
+ * El favicon va embebido vía CID (no URL remota) para que se vea en el cliente de correo.
  */
 export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
   const siteUrl = resolveAppOrigin();
@@ -72,8 +72,15 @@ export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:520px;background:#ffffff;border:1px solid #e2e8f0;">
           <tr>
-            <td style="background:${BRAND};padding:22px 28px;text-align:center;">
-              <a href="${siteUrl}" style="text-decoration:none;color:#ffffff;">
+            <td style="background:${BRAND};padding:24px 28px;text-align:center;">
+              <a href="${siteUrl}" style="text-decoration:none;color:#ffffff;display:inline-block;">
+                <img
+                  src="cid:${BRAND_LOGO_CID}"
+                  width="64"
+                  height="64"
+                  alt="Barriando"
+                  style="display:block;margin:0 auto 12px;border:0;outline:none;width:64px;height:64px;border-radius:12px;"
+                />
                 <span style="display:block;font-size:14px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:#ffffff;">
                   Barriando
                 </span>

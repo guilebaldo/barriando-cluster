@@ -1,4 +1,9 @@
+import { BRAND_FAVICON_PNG_BASE64 } from "@/lib/brand-favicon-base64";
+
 /** Envío de correos vía Resend (API HTTP). */
+
+/** Content-ID del favicon embebido (inline). Debe coincidir con cid: en el HTML. */
+export const BRAND_LOGO_CID = "barriando-logo";
 
 function readEnv(...keys: string[]): string | undefined {
   for (const key of keys) {
@@ -29,6 +34,8 @@ export type SendEmailParams = {
   text: string;
   /** Idempotency / debugging tag in logs */
   tags?: string[];
+  /** Embebe favicon como CID (default true). */
+  includeBrandLogo?: boolean;
 };
 
 export type SendEmailResult =
@@ -38,6 +45,9 @@ export type SendEmailResult =
 /**
  * Envía un correo con Resend. No lanza: el caller decide si fallar el flujo.
  * Si falta RESEND_API_KEY, retorna skipped (útil en local / preview).
+ *
+ * El favicon viaja embebido (CID + base64): no depende de cargar
+ * https://barriando.org/logos/... (que a veces responde 403 a bots/proxies).
  */
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResult> {
   const apiKey = getResendApiKey();
@@ -49,6 +59,23 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
   const to = params.to.trim().toLowerCase();
   if (!to || !to.includes("@")) {
     return { ok: false, error: "Invalid recipient" };
+  }
+
+  const includeBrandLogo = params.includeBrandLogo !== false;
+  const attachments: Array<{
+    filename: string;
+    content: string;
+    content_type: string;
+    content_id: string;
+  }> = [];
+
+  if (includeBrandLogo && BRAND_FAVICON_PNG_BASE64) {
+    attachments.push({
+      filename: "barriando-favicon.png",
+      content: BRAND_FAVICON_PNG_BASE64,
+      content_type: "image/png",
+      content_id: BRAND_LOGO_CID,
+    });
   }
 
   try {
@@ -64,6 +91,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
         subject: params.subject,
         html: params.html,
         text: params.text,
+        ...(attachments.length ? { attachments } : {}),
         ...(params.tags?.length
           ? { tags: params.tags.map((name) => ({ name, value: "true" })) }
           : {}),
@@ -83,6 +111,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
       subject: params.subject,
       id: body.id,
       tags: params.tags,
+      logoInline: attachments.length > 0,
     });
     return { ok: true, id: body.id };
   } catch (error) {
