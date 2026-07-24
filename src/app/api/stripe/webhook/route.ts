@@ -7,6 +7,7 @@ import {
   parsePaidPlan,
 } from "@/lib/activate-manual-month";
 import { isStripeLocalPaymentMethod } from "@/lib/stripe-local-payment";
+import { notifyPaymentCredited } from "@/lib/notify-payment-credited";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import type Stripe from "stripe";
 
@@ -42,9 +43,12 @@ async function fulfillSubscriptionCheckout(session: Stripe.Checkout.Session) {
 
   const existing = await prisma.subscription.findUnique({
     where: { userId },
-    select: { stripeSubscriptionId: true },
+    select: { stripeSubscriptionId: true, status: true },
   });
   const previousSubId = existing?.stripeSubscriptionId;
+  const alreadyActiveOnThisSub =
+    previousSubId === sub.id && (existing?.status === "active" || existing?.status === "trialing");
+
   if (previousSubId && previousSubId !== sub.id) {
     try {
       await stripe.subscriptions.cancel(previousSubId);
@@ -75,9 +79,22 @@ async function fulfillSubscriptionCheckout(session: Stripe.Checkout.Session) {
   });
 
   await publishBusinessPresenceOnPayment(userId, plan, { reinstateRoster: true });
+
+  if (!alreadyActiveOnThisSub && status === "active") {
+    await sendPaymentCreditedSafe({
+      userId,
+      plan,
+      paymentMethod: "stripe",
+      amountCents: session.amount_total,
+      periodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+    });
+  }
 }
 
-async function fulfillOneTimeManualCheckout(session: Stripe.Checkout.Session) {
+async function fulfillOneTimeManualCheckout(
+  session: Stripe.Checkout.Session,
+  options: { sendReceipt: boolean }
+) {
   if (session.payment_status !== "paid") return;
 
   const userId = session.metadata?.userId;
@@ -97,6 +114,51 @@ async function fulfillOneTimeManualCheckout(session: Stripe.Checkout.Session) {
     paymentMethod: methodRaw,
     stripeCustomerId: customerId,
   });
+
+  if (!options.sendReceipt) return;
+
+  const after = await prisma.subscription.findUnique({
+    where: { userId },
+    select: { currentPeriodEnd: true },
+  });
+
+  await sendPaymentCreditedSafe({
+    userId,
+    plan,
+    paymentMethod: methodRaw,
+    amountCents: session.amount_total,
+    periodEnd: after?.currentPeriodEnd ?? null,
+  });
+}
+
+async function sendPaymentCreditedSafe(params: {
+  userId: string;
+  plan: MembershipPlan;
+  paymentMethod: string;
+  amountCents?: number | null;
+  periodEnd?: Date | null;
+}) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: params.userId },
+      select: { email: true, nombre: true },
+    });
+    if (!user?.email) {
+      console.warn("[stripe] payment email skipped: user sin email", params.userId);
+      return;
+    }
+    await notifyPaymentCredited({
+      to: user.email,
+      nombre: user.nombre,
+      plan: params.plan,
+      paymentMethod: params.paymentMethod,
+      amountCents: params.amountCents,
+      periodEnd: params.periodEnd,
+    });
+  } catch (error) {
+    // No tumbar el webhook si Resend falla: el pago ya quedó acreditado.
+    console.error("[stripe] payment credited email failed:", error);
+  }
 }
 
 function isOneTimeManualSession(session: Stripe.Checkout.Session): boolean {
@@ -125,8 +187,9 @@ export async function POST(request: NextRequest) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       if (isOneTimeManualSession(session) && session.metadata?.billingKind === "one_time_manual") {
-        // OXXO/SPEI: completed suele llegar unpaid; solo activar si ya está paid.
-        await fulfillOneTimeManualCheckout(session);
+        // OXXO: completed suele llegar unpaid; si ya viene paid, activa sin correo
+        // (el recibo se manda en async_payment_succeeded).
+        await fulfillOneTimeManualCheckout(session, { sendReceipt: false });
       } else if (session.mode === "subscription") {
         await fulfillSubscriptionCheckout(session);
       }
@@ -135,7 +198,7 @@ export async function POST(request: NextRequest) {
     if (event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.metadata?.billingKind === "one_time_manual") {
-        await fulfillOneTimeManualCheckout(session);
+        await fulfillOneTimeManualCheckout(session, { sendReceipt: true });
       }
     }
 

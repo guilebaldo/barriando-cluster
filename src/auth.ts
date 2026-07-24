@@ -7,6 +7,7 @@ import { barriandoPrismaAdapter } from "@/lib/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { magicLinkEmailHtml, magicLinkEmailText } from "@/lib/magic-link-email";
+import { getEmailFrom, getResendApiKey, sendEmail } from "@/lib/email";
 import type { Provider } from "next-auth/providers";
 import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
@@ -28,9 +29,8 @@ const authUrl = readEnv("AUTH_URL", "NEXTAUTH_URL", "NEXT_PUBLIC_APP_URL")?.repl
 
 const googleClientId = readEnv("GOOGLE_CLIENT_ID", "AUTH_GOOGLE_ID");
 const googleClientSecret = readEnv("GOOGLE_CLIENT_SECRET", "AUTH_GOOGLE_SECRET");
-const resendApiKey = readEnv("RESEND_API_KEY", "AUTH_RESEND_KEY");
-const emailFrom =
-  readEnv("EMAIL_FROM", "AUTH_EMAIL_FROM") || "Barriando <noreply@barriando.org>";
+const resendApiKey = getResendApiKey();
+const emailFrom = getEmailFrom();
 
 function logAuthBoot() {
   console.info("[auth] boot:", {
@@ -95,25 +95,16 @@ function buildProviders(): Provider[] {
         apiKey: resendApiKey,
         from: emailFrom,
         maxAge: 24 * 60 * 60,
-        sendVerificationRequest: async ({ identifier: to, url, provider }) => {
+        sendVerificationRequest: async ({ identifier: to, url }) => {
           const { host } = new URL(url);
-          const res = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${provider.apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              from: provider.from,
-              to,
-              subject: "Tu enlace para entrar a Barriando",
-              html: magicLinkEmailHtml({ url, host }),
-              text: magicLinkEmailText({ url, host }),
-            }),
+          const result = await sendEmail({
+            to,
+            subject: "Tu enlace para entrar a Barriando",
+            html: magicLinkEmailHtml({ url, host }),
+            text: magicLinkEmailText({ url, host }),
+            tags: ["magic-link"],
           });
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            console.error("[auth] Resend send failed:", body);
+          if (!result.ok) {
             throw new Error("No se pudo enviar el correo de acceso.");
           }
         },
