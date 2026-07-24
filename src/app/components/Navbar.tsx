@@ -10,6 +10,7 @@ import { isAdminUser } from "@/lib/admin";
 import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
+import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 
 function GoogleGlyph() {
   return (
@@ -75,21 +76,33 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open, mobile]);
 
-  const googleButton = (
-    <GoogleSignInButton
-      callbackUrl={ONBOARDING_CONTINUE_PATH}
-      label="Iniciar sesión con Google"
-      className="w-full flex items-center justify-center gap-2 rounded-lg bg-white text-slate-800 hover:bg-slate-50 py-2.5 px-3 text-[11px] font-bold transition disabled:opacity-50 shadow-sm"
-    >
-      <GoogleGlyph />
-      Iniciar sesión con Google
-    </GoogleSignInButton>
+  const authMethods = (
+    <div className="space-y-2">
+      <GoogleSignInButton
+        callbackUrl={ONBOARDING_CONTINUE_PATH}
+        label="Continuar con Google"
+        className="w-full flex items-center justify-center gap-2 rounded-lg bg-white text-slate-800 hover:bg-slate-50 py-2.5 px-3 text-[11px] font-bold transition disabled:opacity-50 shadow-sm"
+      >
+        <GoogleGlyph />
+        Continuar con Google
+      </GoogleSignInButton>
+      <div className="relative flex items-center gap-2" aria-hidden="true">
+        <div className="h-px flex-1 bg-[#314385]" />
+        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">o</span>
+        <div className="h-px flex-1 bg-[#314385]" />
+      </div>
+      <p className="text-center text-[10px] font-light text-slate-400">Enlace mágico al correo</p>
+      <MagicLinkForm
+        callbackUrl={ONBOARDING_CONTINUE_PATH}
+        submitLabel="Enviar enlace"
+      />
+    </div>
   );
 
   if (mobile) {
     return (
       <div className="mt-2 pt-2 border-t border-[#314385]/60 space-y-2">
-        {googleButton}
+        {authMethods}
         <Link
           href="/planes"
           className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white text-center hover:bg-[#27366D] hover:text-amber-400 transition"
@@ -118,9 +131,9 @@ function EntrarMenu({ mobile = false }: { mobile?: boolean }) {
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-full pt-2 z-50 w-[17rem]">
+        <div role="menu" className="absolute right-0 top-full pt-2 z-50 w-[18rem]">
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl p-3 space-y-2">
-            <div role="menuitem">{googleButton}</div>
+            <div role="menuitem">{authMethods}</div>
             <Link
               href="/planes"
               role="menuitem"
