@@ -15,13 +15,21 @@ import {
 import { expireMembershipsAfterGraceIfNeeded } from "@/lib/subscription-lifecycle";
 import { reconcilePaidBusinessesIntoRoster } from "@/lib/publish-business";
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ focus?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
   if (!isAdminUser(session)) redirect("/panel");
 
   await expireMembershipsAfterGraceIfNeeded();
   await reconcilePaidBusinessesIntoRoster();
+
+  const params = await searchParams;
+  const focus =
+    params.focus === "payments" || params.focus === "linkages" ? params.focus : undefined;
 
   const [users, testimonials, homePromos, catalogRows, membershipRows] = await Promise.all([
     listAdminUsers(),
@@ -41,6 +49,7 @@ export default async function AdminPage() {
           homePromos={homePromos}
           catalogRows={catalogRows}
           membershipRows={membershipRows}
+          initialFocus={focus}
         />
       </main>
       <div className="hidden md:block">

@@ -31,6 +31,7 @@ import {
 } from "@/lib/panel-display";
 import { getLinkageStatusLabel, isLinkageApproved, isLinkagePending, isLinkageRejected } from "@/lib/linkage";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
+import { AdminNavLink } from "@/app/components/AdminNavBadge";
 import {
   hasSeenPanelNotice,
   markPanelNoticeSeen,
@@ -485,13 +486,10 @@ export default function PanelDashboard({
           </p>
         </div>
         {isAdmin && (
-          <Link
-            href="/admin"
-            className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition shrink-0"
-          >
+          <AdminNavLink className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition shrink-0">
             <Shield className="w-4 h-4" />
             Panel Admin
-          </Link>
+          </AdminNavLink>
         )}
       </div>
 

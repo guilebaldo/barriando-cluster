@@ -34,9 +34,11 @@ import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 import AdminPagination from "./AdminPagination";
 import AdminWhatsAppButton from "./AdminWhatsAppButton";
+import AdminNotificationBadge from "@/app/components/AdminNotificationBadge";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
+import { computeAdminOpsStats } from "@/lib/admin-ops";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
@@ -196,15 +198,18 @@ export default function AdminDashboard({
   homePromos,
   catalogRows,
   membershipRows,
+  initialFocus,
 }: {
   users: AdminUserRow[];
   testimonials: TestimonialRow[];
   homePromos: HomePromoRow[];
   catalogRows: CatalogSocioRow[];
   membershipRows: CatalogMembershipRow[];
+  initialFocus?: "payments" | "linkages";
 }) {
   const router = useRouter();
   useAdminCuelume();
+  const initialOpsFilter = initialFocus ?? "all";
   const [tab, setTab] = useState<AdminTab>("operations");
   const [query, setQuery] = useState("");
   const [msg, setMsg] = useState("");
@@ -215,6 +220,12 @@ export default function AdminDashboard({
   const [paymentResolved, setPaymentResolved] = useState<Record<string, ResolvedAction>>({});
   const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
   const [accountsPage, setAccountsPage] = useState(1);
+
+  const opsStats = useMemo(
+    () => computeAdminOpsStats(membershipRows, users),
+    [membershipRows, users]
+  );
+  const pendingOpsTotal = opsStats.pendingPayments + opsStats.pendingLinkages;
 
   const visibleUsers = useMemo(() => {
     if (tab !== "accounts") return [];
@@ -404,11 +415,31 @@ export default function AdminDashboard({
           type="button"
           onClick={() => setTab("operations")}
           data-cuelume-toggle=""
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
             tab === "operations" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
           Operaciones ({membershipRows.length})
+          <AdminNotificationBadge
+            count={pendingOpsTotal}
+            ring={false}
+            title={
+              [
+                opsStats.pendingPayments > 0
+                  ? opsStats.pendingPayments === 1
+                    ? "1 pago por validar"
+                    : `${opsStats.pendingPayments} pagos por validar`
+                  : null,
+                opsStats.pendingLinkages > 0
+                  ? opsStats.pendingLinkages === 1
+                    ? "1 vinculación pendiente"
+                    : `${opsStats.pendingLinkages} vinculaciones pendientes`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || undefined
+            }
+          />
         </button>
         <button
           type="button"
@@ -442,6 +473,7 @@ export default function AdminDashboard({
           membershipRows={membershipRows}
           catalogRows={catalogRows}
           users={users}
+          initialFilter={initialOpsFilter}
         />
       ) : (
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-hidden md:overflow-x-auto overscroll-y-contain">

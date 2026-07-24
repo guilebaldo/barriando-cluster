@@ -17,6 +17,7 @@ import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminEditDrawer from "./AdminEditDrawer";
 import AdminPagination from "./AdminPagination";
 import AdminWhatsAppButton from "./AdminWhatsAppButton";
+import AdminNotificationBadge from "@/app/components/AdminNotificationBadge";
 import { playCuelume } from "./useAdminCuelume";
 import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 
@@ -92,14 +93,16 @@ export default function AdminOperations({
   membershipRows,
   catalogRows,
   users,
+  initialFilter = "all",
 }: {
   membershipRows: CatalogMembershipRow[];
   catalogRows: CatalogSocioRow[];
   users: AdminUserRow[];
+  initialFilter?: OpsFilter;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<OpsFilter>("all");
+  const [filter, setFilter] = useState<OpsFilter>(initialFilter);
   const [savingId, setSavingId] = useState<number | string | null>(null);
   const [editingRow, setEditingRow] = useState<CatalogMembershipRow | null>(null);
   const [msg, setMsg] = useState("");
@@ -214,18 +217,26 @@ export default function AdminOperations({
     if (page !== safePage) setPage(safePage);
   }, [page, safePage]);
 
-  const kpiCards: { key: OpsFilter; label: string; value: string | number; hint: string }[] = [
+  const kpiCards: {
+    key: OpsFilter;
+    label: string;
+    value: string | number;
+    hint: string;
+    badge?: number;
+  }[] = [
     {
       key: "payments",
       label: "Pagos por validar",
       value: stats.pendingPayments,
       hint: "Depósitos / transferencias",
+      badge: stats.pendingPayments,
     },
     {
       key: "linkages",
       label: "Vinculaciones",
       value: stats.pendingLinkages,
       hint: "Cuentas por aprobar",
+      badge: stats.pendingLinkages,
     },
     {
       key: "active",
@@ -319,12 +330,20 @@ export default function AdminOperations({
               type="button"
               onClick={() => setFilter(card.key)}
               data-cuelume-toggle=""
-              className={`text-left rounded-xl border px-3 py-3 transition ${
+              className={`relative text-left rounded-xl border px-3 py-3 transition ${
                 active
                   ? "border-[#27366D] bg-[#27366D] text-white shadow-sm"
                   : "border-slate-200 bg-white hover:border-slate-300 text-slate-800"
               }`}
             >
+              {(card.badge ?? 0) > 0 ? (
+                <AdminNotificationBadge
+                  count={card.badge!}
+                  ring={false}
+                  className="absolute -top-1.5 -right-1.5"
+                  title={`${card.badge} pendientes`}
+                />
+              ) : null}
               <p
                 className={`text-[10px] font-bold uppercase tracking-wider ${
                   active ? "text-white/70" : "text-slate-400"

@@ -11,6 +11,7 @@ import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
 import { MagicLinkForm } from "@/app/components/MagicLinkForm";
+import { AdminNavLink } from "@/app/components/AdminNavBadge";
 
 function GoogleGlyph() {
   return (
@@ -215,12 +216,7 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
           {displayName}
         </Link>
         {isAdmin && (
-          <Link
-            href="/admin"
-            className="block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-          >
-            ADMIN
-          </Link>
+          <AdminNavLink className="inline-flex items-center py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition" />
         )}
         {logoutButton}
       </div>
@@ -256,14 +252,11 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
         {open && (
           <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
             <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
-              <Link
-                href="/admin"
+              <AdminNavLink
                 role="menuitem"
-                className="block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+                className="inline-flex items-center px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
                 onClick={() => setOpen(false)}
-              >
-                ADMIN
-              </Link>
+              />
               {logoutButton}
             </div>
           </div>
