@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
+import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 import { ONBOARDING_CONTINUE_PATH, planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
@@ -22,7 +23,6 @@ function OAuthButtonsInner({ plan }: { plan?: MembershipPlan | null }) {
   const redirectAfterLogin = useMemo(() => {
     const raw = searchParams.get("callbackUrl");
     if (raw && raw.startsWith("/") && !raw.startsWith("//")) {
-      // Si el callback ya es continue, asegura el plan en la query.
       if (raw.startsWith(ONBOARDING_CONTINUE_PATH) && plan) {
         const url = new URL(raw, "http://local");
         if (!url.searchParams.get("plan")) {
@@ -47,20 +47,25 @@ function OAuthButtonsInner({ plan }: { plan?: MembershipPlan | null }) {
     if (authError === "OAuthAccountNotLinked") {
       void signOut({ redirect: false }).then(() => {
         setError(
-          "Tu cuenta de Google no estaba vinculada. Sesión anterior limpiada; intenta de nuevo."
+          "Tu cuenta no estaba vinculada. Sesión anterior limpiada; intenta de nuevo con el mismo método."
         );
       });
       return;
     }
 
-    setError("No se pudo iniciar sesión con Google. Intenta de nuevo.");
+    if (authError === "Verification") {
+      setError("El enlace ya se usó o caducó. Solicita uno nuevo.");
+      return;
+    }
+
+    setError("No se pudo iniciar sesión. Intenta de nuevo.");
   }, [searchParams]);
 
   return (
-    <div>
+    <div className="space-y-5">
       <GoogleSignInButton
         callbackUrl={redirectAfterLogin}
-        label="Iniciar sesión con Google"
+        label="Continuar con Google"
         className="w-full flex items-center justify-center gap-2 border border-slate-200 rounded-lg py-3.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 shadow-sm"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -69,9 +74,23 @@ function OAuthButtonsInner({ plan }: { plan?: MembershipPlan | null }) {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         </svg>
-        Iniciar sesión con Google
+        Continuar con Google
       </GoogleSignInButton>
-      {error && <p className="text-xs text-red-600 text-center mt-3">{error}</p>}
+
+      <div className="relative flex items-center gap-3" aria-hidden="true">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">o</span>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <div>
+        <p className="mb-3 text-center text-[11px] font-light text-slate-500">
+          Te enviamos un enlace a tu correo. Sin contraseña.
+        </p>
+        <MagicLinkForm callbackUrl={redirectAfterLogin} />
+      </div>
+
+      {error ? <p className="text-center text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }

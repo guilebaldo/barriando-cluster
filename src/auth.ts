@@ -2,9 +2,11 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
+import Resend from "next-auth/providers/resend";
 import { barriandoPrismaAdapter } from "@/lib/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
+import { magicLinkEmailHtml, magicLinkEmailText } from "@/lib/magic-link-email";
 import type { Provider } from "next-auth/providers";
 import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
@@ -26,12 +28,16 @@ const authUrl = readEnv("AUTH_URL", "NEXTAUTH_URL", "NEXT_PUBLIC_APP_URL")?.repl
 
 const googleClientId = readEnv("GOOGLE_CLIENT_ID", "AUTH_GOOGLE_ID");
 const googleClientSecret = readEnv("GOOGLE_CLIENT_SECRET", "AUTH_GOOGLE_SECRET");
+const resendApiKey = readEnv("RESEND_API_KEY", "AUTH_RESEND_KEY");
+const emailFrom =
+  readEnv("EMAIL_FROM", "AUTH_EMAIL_FROM") || "Barriando <noreply@barriando.org>";
 
 function logAuthBoot() {
   console.info("[auth] boot:", {
     trustHost: TRUST_HOST,
     secretConfigured: Boolean(authSecret),
     googleOAuth: Boolean(googleClientId && googleClientSecret),
+    resendMagicLink: Boolean(resendApiKey),
     authUrl: authUrl ?? "(request host)",
     vercel: Boolean(process.env.VERCEL),
     nodeEnv: process.env.NODE_ENV,
@@ -41,6 +47,9 @@ function logAuthBoot() {
   }
   if (isProduction && (!googleClientId || !googleClientSecret)) {
     console.warn("[auth] Faltan GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET en producción.");
+  }
+  if (isProduction && !resendApiKey) {
+    console.warn("[auth] Falta RESEND_API_KEY: magic link por correo deshabilitado.");
   }
 }
 
@@ -76,6 +85,38 @@ function buildProviders(): Provider[] {
         clientId: appleId,
         clientSecret: appleSecret,
         allowDangerousEmailAccountLinking: true,
+      })
+    );
+  }
+
+  if (resendApiKey) {
+    providers.push(
+      Resend({
+        apiKey: resendApiKey,
+        from: emailFrom,
+        maxAge: 24 * 60 * 60,
+        sendVerificationRequest: async ({ identifier: to, url, provider }) => {
+          const { host } = new URL(url);
+          const res = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${provider.apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: provider.from,
+              to,
+              subject: "Tu enlace para entrar a Barriando",
+              html: magicLinkEmailHtml({ url, host }),
+              text: magicLinkEmailText({ url, host }),
+            }),
+          });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            console.error("[auth] Resend send failed:", body);
+            throw new Error("No se pudo enviar el correo de acceso.");
+          }
+        },
       })
     );
   }
@@ -120,6 +161,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login",
     error: "/login",
+    verifyRequest: "/login/verificar-email",
   },
   providers: buildProviders(),
   logger: {
@@ -155,6 +197,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email,
             userId: user.id,
           });
+        }
+        if (account?.provider === "resend" || account?.provider === "email") {
+          console.info("[auth] Magic link sign-in:", { email, userId: user.id });
         }
         return true;
       } catch (error) {
