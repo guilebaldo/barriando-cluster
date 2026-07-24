@@ -651,7 +651,7 @@ function PasaporteInner({
         )}
         {isPreview && pendingStamp && (
           <p className="text-center text-sm text-[#5c3d1e]/90 mb-5 sm:mb-6 font-medium">
-            Vista previa del Pasaporte — al continuar con Google se registrará el sello en{" "}
+            Vista previa del Pasaporte — al continuar (Google o correo) se registrará el sello en{" "}
             <span className="font-bold">{pendingStamp.name}</span>.
           </p>
         )}
