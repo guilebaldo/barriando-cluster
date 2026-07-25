@@ -103,7 +103,7 @@ export default function Footer() {
                 rel="noreferrer"
                 className="text-amber-400 hover:text-amber-300 font-semibold transition"
               >
-                Guilebaldo
+                GURU Software Studio
               </a>
             </p>
           </div>
