@@ -23,9 +23,9 @@ export function MapBusinessSignupLink({
       return (
         <span
           className={messageClassName}
-          title="Tu plan Gran Empresa ya incluye presencia en el MAP"
+          title="Tu plan Gran Empresa ya incluye presencia en el MAPA"
         >
-          Ya formas parte del MAP con tu plan Gran Empresa.
+          Ya formas parte del MAPA con tu plan Gran Empresa.
         </span>
       );
     }
@@ -33,7 +33,7 @@ export function MapBusinessSignupLink({
 
   return (
     <Link href={MAP_SIGNUP_HREF} className={className}>
-      ¿Quieres estar en el MAP? Regístrate aquí.
+      ¿Quieres estar en el MAPA? Regístrate aquí.
     </Link>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Navbar from "../components/Navbar";
-import MapImmersiveShell from "../map/MapImmersiveShell";
+import MapImmersiveShell from "../mapa/MapImmersiveShell";
 import SociosImmersiveView from "./SociosImmersiveView";
 import type { Socio } from "../data/socios";
 

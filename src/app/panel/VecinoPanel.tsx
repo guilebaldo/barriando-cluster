@@ -200,7 +200,7 @@ export default function VecinoPanel({
               </h3>
             </div>
             <p className="text-[11px] text-slate-500 font-light mb-3 leading-relaxed">
-              Al subir a un plan comercial podrás vincular tu negocio al directorio y al MAP desde este
+              Al subir a un plan comercial podrás vincular tu negocio al directorio y al MAPA desde este
               mismo panel.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -258,7 +258,7 @@ export default function VecinoPanel({
           pago.
         </p>
         <Link
-          href="/socios?cupones=1"
+          href="/cuponera?cupones=1"
           className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition"
         >
           Consultar cupones

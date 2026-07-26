@@ -12,7 +12,7 @@ export function MapPageIntro({ route }: { route: MapRouteResult }) {
         Ruta peatonal
       </span>
       <h1 className="text-2xl md:text-3xl font-black font-serif-cluster mt-4 uppercase tracking-wide text-[#27366D]">
-        Museo Abierto de Puebla
+        Museo Abierto de Puebla y Alrededores
       </h1>
       <p className="text-sm text-slate-600 max-w-2xl mx-auto font-light leading-relaxed mt-3">
         {route.milestoneCount} hitos patrimoniales
@@ -42,7 +42,7 @@ export function MapPageGuides() {
             la ruta desde el hito más cercano.
           </li>
           <li>
-            <strong className="text-slate-800">Camina el MAP:</strong> sigue el trazo punteado entre paradas
+            <strong className="text-slate-800">Camina el MAPA:</strong> sigue el trazo punteado entre paradas
             en el mapa y avanza con las flechas de la ficha inferior.
           </li>
           <li>
@@ -62,7 +62,7 @@ export function MapPageGuides() {
           <h2 className="text-sm font-bold text-amber-400 uppercase tracking-widest">Pasaporte Digital</h2>
         </div>
         <p className="text-sm text-slate-200 leading-relaxed font-light">
-          Cada QR escaneado en el MAP guarda un sello en tu Pasaporte. Colecciona visitas, sube de nivel en
+          Cada QR escaneado en el MAPA guarda un sello en tu Pasaporte. Colecciona visitas, sube de nivel en
           el ecosistema y completa la temporada gastronómica para la insignia{" "}
           <strong className="text-amber-400">Poblano</strong>.
         </p>

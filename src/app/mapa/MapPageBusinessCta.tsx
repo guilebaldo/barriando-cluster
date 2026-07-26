@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { Store } from "lucide-react";
 import { hasCommercialAccess } from "@/lib/membresia";
 
-/** Bloque CTA de inscripción al MAP (respeta Gran Empresa ya activa). */
+/** Bloque CTA de inscripción al MAPA (respeta Gran Empresa ya activa). */
 export default function MapPageBusinessCta() {
   const { data: session, status } = useSession();
   const plan = session?.user?.plan;
@@ -26,19 +26,19 @@ export default function MapPageBusinessCta() {
       {alreadyOnMap ? (
         <>
           <p className="text-sm text-slate-600 max-w-2xl mx-auto font-light leading-relaxed mt-3">
-            Tu plan Gran Empresa ya incluye presencia en la ruta peatonal oficial del MAP.
+            Tu plan Gran Empresa ya incluye presencia en la ruta peatonal oficial del MAPA.
           </p>
           <p
             className="mt-6 text-xs font-bold text-[#27366D]"
-            title="Tu plan Gran Empresa ya incluye presencia en el MAP"
+            title="Tu plan Gran Empresa ya incluye presencia en el MAPA"
           >
-            Ya formas parte del MAP con tu plan Gran Empresa.
+            Ya formas parte del MAPA con tu plan Gran Empresa.
           </p>
         </>
       ) : (
         <>
           <p className="text-sm text-slate-600 max-w-2xl mx-auto font-light leading-relaxed mt-3">
-            Inscríbete al MAP con el plan Gran Empresa y aparece en la ruta peatonal oficial. Los
+            Inscríbete al MAPA con el plan Gran Empresa y aparece en la ruta peatonal oficial. Los
             visitantes te encontrarán caminando el circuito, podrán escanear tu QR y sumar sellos en
             su Pasaporte Digital.
           </p>
@@ -46,7 +46,7 @@ export default function MapPageBusinessCta() {
             href="/planes?tipo=comerciales#gran_empresa"
             className="inline-flex items-center gap-2 mt-6 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg transition-all"
           >
-            Inscribir mi negocio al MAP
+            Inscribir mi negocio al MAPA
           </Link>
         </>
       )}

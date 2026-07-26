@@ -4,8 +4,8 @@ import MapImmersiveShell from "./MapImmersiveShell";
 import MapRouteView from "./MapRouteView";
 
 export const metadata = {
-  title: "MAP | Barriando",
-  description: "Recorre el Museo Abierto de Puebla con mapa interactivo y ruta peatonal.",
+  title: "MAPA | Barriando",
+  description: "Recorre el Museo Abierto de Puebla y Alrededores con mapa interactivo y ruta peatonal.",
 };
 
 export const dynamic = "force-dynamic";

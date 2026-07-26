@@ -224,7 +224,7 @@ export default function SocioBenefitForm({
                     Escaneando el QR de BarrID
                   </span>
                   <span className="block text-xs text-slate-500 font-light mt-0.5">
-                    En el popup de /socios se muestra el QR del socio; el negocio lo escanea para
+                    En el popup de /cuponera se muestra el QR del socio; el negocio lo escanea para
                     validar.
                   </span>
                 </span>
@@ -328,7 +328,7 @@ export default function SocioBenefitForm({
       </div>
       <p className="text-xs text-slate-500 mb-4 font-light leading-relaxed">
         Ofrece un cupón especial a Vecinos y otros socios con membresía activa. Ellos lo verán en
-        /socios y lo canjearán con su credencial.
+        /cuponera y lo canjearán con su credencial.
       </p>
       {formBody}
     </section>

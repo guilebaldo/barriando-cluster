@@ -11,7 +11,7 @@ const STEPS = [
   {
     icon: QrCode,
     title: "Escanea el QR",
-    body: "En el negocio o hito del MAP: el enlace abre Barriando al instante.",
+    body: "En el negocio o hito del MAPA: el enlace abre Barriando al instante.",
   },
   {
     icon: UserRound,

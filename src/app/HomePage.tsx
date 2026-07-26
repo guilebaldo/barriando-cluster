@@ -76,14 +76,14 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
         <div className="relative z-10 max-w-5xl mx-auto text-center px-6 py-24 md:py-28 w-full">
           <Reveal>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-wide uppercase font-serif-cluster text-amber-50 leading-[1.05]">
-              Entra al MAP;
+              Entra al MAPA;
               <br />
               abierto siempre.
             </h1>
           </Reveal>
           <Reveal delay={100}>
             <p className="mt-8 text-sm md:text-lg text-slate-200 max-w-3xl mx-auto font-light leading-relaxed text-center">
-              El MAP es una forma viva de conocer Puebla caminando. Recorre un circuito patrimonial protegido por
+              El MAPA es una forma viva de conocer Puebla caminando. Recorre un circuito patrimonial protegido por
               la UNESCO, entra a sus calles más emblemáticas y descubre hitos, sabores y rincones auténticos del
               Centro Histórico:
             </p>
@@ -108,10 +108,10 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
           </Reveal>
           <Reveal delay={620}>
             <Link
-              href="/map"
+              href="/mapa"
               className="inline-block mt-10 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-widest px-8 py-4 rounded-lg transition shadow-lg"
             >
-              Entrar al MAP
+              Entrar al MAPA
             </Link>
           </Reveal>
         </div>
@@ -144,7 +144,7 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
                 },
                 {
                   icon: "qrCode",
-                  text: "Sella tu identidad: Valida tus visitas mediante geolocalización GPS y escaneo de códigos QR en los negocios y monumentos certificados de la red MAP.",
+                  text: "Sella tu identidad: Valida tus visitas mediante geolocalización GPS y escaneo de códigos QR en los negocios y monumentos certificados de la red MAPA.",
                 },
                 {
                   icon: "award",
@@ -229,7 +229,7 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
             <p className="mt-6 text-sm md:text-base text-slate-300 max-w-3xl mx-auto font-light leading-relaxed">
               Permite que los visitantes coleccionen tu estampa al escanear tus códigos QR con validación GPS. Si
               buscas el máximo nivel de exposición, la membresía Gran Empresa te posiciona de forma premium en el
-              mapa interactivo y en las rutas oficiales del MAP, vinculándote directamente al flujo turístico de
+              mapa interactivo y en las rutas oficiales del MAPA, vinculándote directamente al flujo turístico de
               los Barrios Fundacionales.
             </p>
             <Link
@@ -258,10 +258,10 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
                 los Barrios Fundacionales.
               </p>
               <Link
-                href="/socios"
+                href="/cuponera"
                 className="inline-flex items-center gap-1 mt-6 text-xs font-bold text-[#27366D] hover:text-amber-500 transition uppercase tracking-wider"
               >
-                Ver directorio <ArrowUpRight className="w-3.5 h-3.5" />
+                Ver Cuponera <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </Reveal>
           </div>
@@ -282,7 +282,7 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
             {[
               {
                 value: String(liveStats.mapMilestones),
-                label: "Hitos patrimoniales MAP",
+                label: "Hitos patrimoniales MAPA",
               },
               {
                 value: String(liveStats.totalSocios),

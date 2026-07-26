@@ -3,12 +3,12 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 /**
  * Entitlements (negocio / paid directory):
  * - Vecino: BarrID, canjear cupones, escanear sellos de pasaporte (no ofrece sello).
- * - Pequeña (NEGOCIO_FAMILIAR, $600+): directorio /socios + sello en Pasaporte Digital.
- * - Mediana: lo anterior + carrusel landing + orden preferente en /socios.
- * - Gran: lo anterior + pin de negocio en itinerario MAP.
+ * - Pequeña (NEGOCIO_FAMILIAR, $600+): directorio /cuponera + sello en Pasaporte Digital.
+ * - Mediana: lo anterior + carrusel landing + orden preferente en /cuponera.
+ * - Gran: lo anterior + pin de negocio en itinerario MAPA.
  *
  * Todo plan de negocio ($600+) ofrece QR de sello de pasaporte.
- * Solo Gran Empresa aparece en el MAP.
+ * Solo Gran Empresa aparece en el MAPA.
  */
 const DIRECTORY_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 const CAROUSEL_PLANS: MembershipPlan[] = ["MEDIANA_EMPRESA", "GRAN_EMPRESA"];
@@ -19,7 +19,7 @@ const PASSPORT_STAMP_PLANS: MembershipPlan[] = [
   "GRAN_EMPRESA",
 ];
 
-/** Visible en el directorio /socios. */
+/** Visible en el directorio /cuponera. */
 export function isVisibleInSociosDirectory(plan: MembershipPlan): boolean {
   return DIRECTORY_PLANS.includes(plan);
 }
@@ -34,18 +34,18 @@ export function isMedianaCarouselPlan(plan: MembershipPlan): boolean {
   return plan === "MEDIANA_EMPRESA";
 }
 
-/** Aparece como negocio premium en la ruta MAP interactiva (solo Gran Empresa). */
+/** Aparece como negocio premium en la ruta MAPA interactiva (solo Gran Empresa). */
 export function isVisibleOnMap(plan: MembershipPlan): boolean {
   return MAP_PLANS.includes(plan);
 }
 
 /**
  * Texto de beneficio de visibilidad pública según el plan
- * (evita mencionar MAP en Pequeña/Mediana).
+ * (evita mencionar MAPA en Pequeña/Mediana).
  */
 export function describeBusinessPresenceGoal(plan: MembershipPlan): string {
   if (isVisibleOnMap(plan)) {
-    return "aparecer en el directorio de socios y en el itinerario MAP";
+    return "aparecer en el directorio de socios y en el itinerario MAPA";
   }
   if (isVisibleInCarousel(plan)) {
     return "aparecer en el directorio de socios y en el carrusel de la página principal";

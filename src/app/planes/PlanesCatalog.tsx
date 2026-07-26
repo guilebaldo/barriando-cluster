@@ -37,7 +37,7 @@ function planCta(planId: MembershipPlan, opts: { isAuthenticated: boolean; isCur
     case "MEDIANA_EMPRESA":
       return "Destacar mi negocio";
     default:
-      return "Aparecer en el MAP";
+      return "Aparecer en el MAPA";
   }
 }
 

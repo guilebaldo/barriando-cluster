@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { createBenefitCredential } from "@/app/panel/actions";
 
-/** QR compacto de credencial BarrID para el popup de cupones en /socios. */
+/** QR compacto de credencial BarrID para el popup de cupones en /cuponera. */
 export default function BenefitRedeemQr() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

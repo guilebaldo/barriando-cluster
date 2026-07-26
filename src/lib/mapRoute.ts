@@ -216,7 +216,7 @@ async function loadActiveMilestones(): Promise<RawPoint[]> {
   }
 }
 
-/** Socios Gran Empresa del catálogo + aliados destacados en el corredor MAP (p. ej. Cosme Tortas). */
+/** Socios Gran Empresa del catálogo + aliados destacados en el corredor MAPA (p. ej. Cosme Tortas). */
 const FEATURED_ROUTE_SOCIO_IDS = new Set([54]); // Cosme Tortas
 
 /** Solo socios con membresía activa en el roster (GRAN o featured). */
@@ -262,7 +262,7 @@ async function loadCatalogRouteBusinesses(): Promise<RawPoint[]> {
 
 /**
  * Restaurantes con sello de Pasaporte que además son Gran Empresa.
- * Solo Gran Empresa aparece como pin de negocio en el MAP; aporta el logo del sello.
+ * Solo Gran Empresa aparece como pin de negocio en el MAPA; aporta el logo del sello.
  */
 async function loadStampRestaurantPoints(): Promise<RawPoint[]> {
   const points: RawPoint[] = [];
@@ -399,7 +399,7 @@ export async function buildMapRoute(): Promise<MapRouteResult> {
   const premium = [...premiumByName.values()];
 
   // Si un Gran Empresa coincide con un hito (Mural, Mezcalli, Mendrugo…),
-  // gana el pin de negocio: el socio pagó por aparecer como tal en el MAP.
+  // gana el pin de negocio: el socio pagó por aparecer como tal en el MAPA.
   const premiumNames = new Set(premium.map((p) => normalizeName(p.name)));
   const pool = [
     ...milestones.filter((m) => !premiumNames.has(normalizeName(m.name))),

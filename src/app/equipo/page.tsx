@@ -97,7 +97,7 @@ export default function EquipoPage() {
                 Barriando es la plataforma tecnológica y el eje ejecutor del Clúster Turístico de Puebla. Operamos
                 bajo un modelo dinámico de Tetra Hélice, donde la iniciativa privada lidera una alianza estratégica
                 en colaboración abierta con el gobierno, la academia y la sociedad civil. Juntos, diseñamos,
-                gestionamos y promovemos proyectos de alto impacto —como el circuito del Museo Abierto de Puebla (MAP)
+                gestionamos y promovemos proyectos de alto impacto —como el circuito del Museo Abierto de Puebla y Alrededores (MAPA)
                 y el Pasaporte Digital— que impulsan el desarrollo turístico, económico, cultural y social de la traza
                 histórica y los Barrios Fundacionales.
               </p>

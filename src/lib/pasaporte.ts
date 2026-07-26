@@ -23,7 +23,7 @@ export function getParticipatingRestaurants(): Socio[] {
 /**
  * Negocios que ofrecen sello en el Pasaporte Digital:
  * todo plan de negocio activo ($600+: Familiar, Mediana, Gran).
- * Solo Gran Empresa aparece además en el MAP (ver plan-visibility).
+ * Solo Gran Empresa aparece además en el MAPA (ver plan-visibility).
  */
 export async function getParticipatingRestaurantsAsync(): Promise<Socio[]> {
   // Dynamic import keeps Prisma/DATABASE_URL off the client bundle (/map, BarrID, etc.).
@@ -128,9 +128,9 @@ export function buildSellarPath(restaurantSlugValue: string): string {
   return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugValue)}`;
 }
 
-/** Ficha del socio en el directorio (sellos del pasaporte no siempre están en el MAP). */
+/** Ficha del socio en el directorio (sellos del pasaporte no siempre están en el MAPA). */
 export function getSociosHrefForRestaurant(socioId: number): string {
-  return `/socios?socio=${socioId}`;
+  return `/cuponera?socio=${socioId}`;
 }
 
 /** @deprecated Usa getSociosHrefForRestaurant — no todos los sellos aparecen en /map. */

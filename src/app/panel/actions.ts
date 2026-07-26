@@ -413,7 +413,7 @@ export async function updateSocioProfile(
 
     revalidatePath("/panel");
     revalidatePath("/admin");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -560,7 +560,7 @@ export async function updateSocioBenefit(input: {
     }
 
     revalidatePath("/panel");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

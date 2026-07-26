@@ -43,7 +43,7 @@ export async function approveManualCertification(userId: string): Promise<Action
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -300,8 +300,8 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/socios");
-    revalidatePath("/map");
+    revalidatePath("/cuponera");
+    revalidatePath("/mapa");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -356,9 +356,9 @@ export async function deleteSocioUser(userId: string): Promise<ActionResult> {
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     revalidatePath("/pasaporte");
-    revalidatePath("/map");
+    revalidatePath("/mapa");
     revalidatePath("/");
     return { ok: true };
   } catch (error) {
@@ -454,7 +454,7 @@ export async function approveLinkage(userId: string): Promise<ActionResult> {
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -1248,9 +1248,9 @@ export async function renewCatalogMembership(socioId: number): Promise<ActionRes
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     revalidatePath("/pasaporte");
-    revalidatePath("/map");
+    revalidatePath("/mapa");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -1303,9 +1303,9 @@ export async function updateCatalogMembershipOps(
     });
 
     revalidatePath("/admin");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     revalidatePath("/pasaporte");
-    revalidatePath("/map");
+    revalidatePath("/mapa");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -1416,7 +1416,7 @@ export async function updateCatalogMembershipBenefit(input: {
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     revalidatePath("/");
     return { ok: true };
   } catch (error) {
@@ -1455,9 +1455,9 @@ export async function setCatalogMembershipStatus(
     });
 
     revalidatePath("/admin");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     revalidatePath("/pasaporte");
-    revalidatePath("/map");
+    revalidatePath("/mapa");
     revalidatePath("/");
     return { ok: true };
   } catch (error) {
@@ -1500,9 +1500,9 @@ export async function deleteCatalogMembership(socioId: number): Promise<ActionRe
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/socios");
+    revalidatePath("/cuponera");
     revalidatePath("/pasaporte");
-    revalidatePath("/map");
+    revalidatePath("/mapa");
     revalidatePath("/");
     return { ok: true };
   } catch (error) {
@@ -1557,8 +1557,8 @@ export async function updateCatalogSocioWebsite(input: {
     }
 
     revalidatePath("/admin");
-    revalidatePath("/socios");
-    revalidatePath("/map");
+    revalidatePath("/cuponera");
+    revalidatePath("/mapa");
     revalidatePath("/");
     return { ok: true };
   } catch (error) {
@@ -1677,7 +1677,7 @@ export async function adminUpdateBusinessProfile(
 
     if (!linked) {
       revalidatePath("/admin");
-      revalidatePath("/socios");
+      revalidatePath("/cuponera");
       return {
         ok: true,
         warning:
@@ -1751,8 +1751,8 @@ export async function adminUpdateBusinessProfile(
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/socios");
-    revalidatePath("/map");
+    revalidatePath("/cuponera");
+    revalidatePath("/mapa");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

@@ -57,6 +57,46 @@ const SOCIAL_LINKS = [
   },
 ] as const;
 
+const FOOTER_COLUMNS = [
+  {
+    title: "Producto",
+    links: [
+      { href: "/mapa", label: "MAPA" },
+      { href: "/cuponera", label: "Cuponera" },
+      { href: "/pasaporte", label: "Pasaporte" },
+      { href: "/barrid", label: "BarrID" },
+      { href: "/planes", label: "Planes" },
+      { href: "/pipopetl", label: "PIPOPETL" },
+    ],
+  },
+  {
+    title: "Clúster",
+    links: [
+      { href: "/landing", label: "Inicio" },
+      { href: "/equipo", label: "Equipo" },
+      { href: "/blog", label: "Blog" },
+      { href: "/documenta", label: "Documenta" },
+      { href: "/FAQ", label: "FAQ" },
+    ],
+  },
+  {
+    title: "Cuenta",
+    links: [
+      { href: "/entrar", label: "Entrar" },
+      { href: "/registro", label: "Registro" },
+      { href: "/panel", label: "Panel" },
+      { href: "/login", label: "Login" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { href: "/privacidad", label: "Privacidad" },
+      { href: "/terminos", label: "Términos" },
+    ],
+  },
+] as const;
+
 export default function Footer() {
   return (
     <div className="mt-auto w-full">
@@ -89,38 +129,63 @@ export default function Footer() {
         </div>
       </section>
 
-      <footer className="bg-[#27366D] text-slate-300 text-[11px] py-10 px-6 border-t border-[#1e2b58] safe-area-bottom">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-center md:text-left">
-            <p className="font-bold text-white text-xs mb-0.5">Barriando</p>
-            <p className="text-slate-400 text-[10px]">Clúster Turístico y Asociación de Empresarios del Centro Histórico · A.C.</p>
-            <p className="mt-1">© 2026 Barriando Puebla. Todos los derechos reservados.</p>
-            <p className="mt-2 text-slate-400 text-[10px]">
-              Página hecha con ❤️ por{" "}
-              <a
-                href="https://guilebaldo.com"
-                target="_blank"
-                rel="noreferrer"
-                className="text-amber-400 hover:text-amber-300 font-semibold transition"
-              >
-                GURU Software Studio
-              </a>
-            </p>
+      <footer className="bg-[#27366D] text-slate-300 text-[11px] py-12 px-6 border-t border-[#1e2b58] safe-area-bottom">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 md:gap-10">
+            {FOOTER_COLUMNS.map((col) => (
+              <div key={col.title}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white mb-4">
+                  {col.title}
+                </p>
+                <ul className="space-y-2.5">
+                  {col.links.map((link) => (
+                    <li key={link.href + link.label}>
+                      <Link
+                        href={link.href}
+                        className="text-slate-400 hover:text-white transition text-[11px] uppercase tracking-wider font-semibold"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <div className="flex flex-wrap justify-center gap-4 text-slate-400">
-            <Link href="/FAQ" className="hover:text-white transition">
-              FAQ
-            </Link>
-            <Link href="/privacidad" className="hover:text-white transition flex items-center gap-1">
+
+          <div className="mt-12 pt-8 border-t border-[#1e2b58]/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <p className="font-bold text-white text-xs mb-0.5">Barriando</p>
+              <p className="text-slate-400 text-[10px]">
+                Clúster Turístico y Asociación de Empresarios del Centro Histórico · A.C.
+              </p>
+              <p className="mt-1">© 2026 Barriando Puebla. Todos los derechos reservados.</p>
+              <p className="mt-2 text-slate-400 text-[10px]">
+                Página hecha con ❤️ por{" "}
+                <a
+                  href="https://guilebaldo.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-amber-400 hover:text-amber-300 font-semibold transition"
+                >
+                  GURU Software Studio
+                </a>
+              </p>
+            </div>
+            <Link
+              href="/privacidad"
+              className="inline-flex items-center gap-1 text-slate-400 hover:text-white transition"
+            >
               <Shield className="w-3 h-3" /> Aviso de Privacidad
             </Link>
-            <Link href="/terminos" className="hover:text-white transition">
-              Términos de Servicio
-            </Link>
           </div>
-        </div>
-        <div className="max-w-5xl mx-auto mt-6 pt-6 border-t border-[#1e2b58]/50 text-slate-400/80 text-center md:text-left leading-relaxed">
-          *De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares de México, Barriando (Clúster Turístico y Asociación de Empresarios del Centro Histórico, A.C.) garantiza que los datos recabados se utilizarán exclusivamente para fines informativos y de vinculación empresarial.*
+
+          <div className="mt-6 pt-6 border-t border-[#1e2b58]/50 text-slate-400/80 text-center md:text-left leading-relaxed">
+            *De conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los
+            Particulares de México, Barriando (Clúster Turístico y Asociación de Empresarios del Centro
+            Histórico, A.C.) garantiza que los datos recabados se utilizarán exclusivamente para fines
+            informativos y de vinculación empresarial.*
+          </div>
         </div>
       </footer>
     </div>

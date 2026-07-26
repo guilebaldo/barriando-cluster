@@ -447,10 +447,10 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
                 <div className="space-y-2 px-1">
                   <div className="text-center">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-                      Bienvenido al MAP
+                      Bienvenido al MAPA
                     </p>
                     <p className="text-sm font-semibold text-[#27366D] truncate leading-tight mt-0.5">
-                      Museo Abierto de Puebla
+                      Museo Abierto de Puebla y Alrededores
                     </p>
                   </div>
                   <button

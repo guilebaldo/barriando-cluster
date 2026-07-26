@@ -15,11 +15,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: "/landing-socios",
-        destination: "/pipope",
-        permanent: true,
-      },
+      { source: "/map", destination: "/mapa", permanent: true },
+      { source: "/map/:path*", destination: "/mapa/:path*", permanent: true },
+      { source: "/muaap", destination: "/mapa", permanent: true },
+      { source: "/socios", destination: "/cuponera", permanent: true },
+      { source: "/socios/:path*", destination: "/cuponera/:path*", permanent: true },
+      { source: "/pipope", destination: "/pipopetl", permanent: true },
+      { source: "/landing-socios", destination: "/pipopetl", permanent: true },
     ];
   },
   images: {

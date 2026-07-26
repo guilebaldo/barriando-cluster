@@ -4,8 +4,9 @@ import { getSession } from "@/lib/auth-utils";
 import { isPaidMember } from "@/lib/membresia";
 
 export const metadata = {
-  title: "Socios | Barriando",
-  description: "Mapa de negocios certificados del Centro Histórico de Puebla.",
+  title: "Cuponera | Barriando",
+  description:
+    "Cuponera del Centro Histórico: negocios certificados, cupones y canjes con BarrID.",
 };
 
 export const dynamic = "force-dynamic";

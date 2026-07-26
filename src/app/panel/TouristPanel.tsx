@@ -48,7 +48,7 @@ export default function TouristPanel({ user, milestonesVisited, totalMilestones 
 
       <section className="grid sm:grid-cols-2 gap-4">
         <Link
-          href="/map"
+          href="/mapa"
           prefetch={false}
           className="group flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:border-[#27366D]/30 hover:shadow-md transition"
         >
@@ -57,7 +57,7 @@ export default function TouristPanel({ user, milestonesVisited, totalMilestones 
           </div>
           <div>
             <p className="text-sm font-bold text-slate-900 group-hover:text-[#27366D] transition">
-              MAP
+              MAPA
             </p>
             <p className="text-[11px] text-slate-500">Ruta peatonal del Museo Abierto</p>
           </div>

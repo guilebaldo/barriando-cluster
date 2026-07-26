@@ -179,8 +179,8 @@ export default function AdminBusinessesSection({
     playCuelume("success");
     setMsg(
       next === "active"
-        ? `${row.businessName} activado en /socios y MAP.`
-        : `${row.businessName} desactivado (ya no aparece en /socios ni MAP).`
+        ? `${row.businessName} activado en /cuponera y MAPA.`
+        : `${row.businessName} desactivado (ya no aparece en /cuponera ni MAPA).`
     );
     router.refresh();
   }
@@ -430,7 +430,7 @@ export default function AdminBusinessesSection({
                             <div className="grid lg:grid-cols-2 gap-6 max-w-4xl">
                               <div className="space-y-3">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
-                                  Sitio web (/socios)
+                                  Sitio web (/cuponera)
                                 </p>
                                 <input
                                   type="url"
@@ -511,7 +511,7 @@ export default function AdminBusinessesSection({
 
                               <div className="space-y-3">
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
-                                  Cupón en /socios
+                                  Cupón en /cuponera
                                 </p>
                                 <label className="inline-flex items-center gap-2 text-xs text-slate-700">
                                   <input

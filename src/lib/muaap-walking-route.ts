@@ -58,7 +58,7 @@ function mergeSegments(segments: WalkLatLng[][]): WalkLatLng[] {
  * Calcula una polilínea que sigue calles transitables (modo peatonal OSRM).
  * Intenta una sola petición con todos los waypoints; si falla, segmenta por pares.
  *
- * DEPRECATED: el circuito MAP ahora usa coordenadas fijas del Centro Histórico
+ * DEPRECATED: el circuito MAPA ahora usa coordenadas fijas del Centro Histórico
  * (`buildCircuitWalkPath` en `map-circuit.ts` / `buildMapRoute` en `mapRoute.ts`).
  * Se conserva fuera del flujo activo por si se necesita una segunda ruta dinámica.
  */

@@ -7,7 +7,7 @@ import type { Socio } from "@/app/data/socios";
  * Vecino — BarrID + canjear cupones de negocios + escanear sellos.
  * Pequeña — lo de Vecino + aparece en directorio de socios.
  * Mediana — lo de Pequeña + carrusel landing + posición preferente en directorio.
- * Gran — lo de Mediana + pin en el MAP. Todo negocio $600+ ofrece sello en Pasaporte.
+ * Gran — lo de Mediana + pin en el MAPA. Todo negocio $600+ ofrece sello en Pasaporte.
  */
 export type PaidMembershipPlan = Exclude<MembershipPlan, "TURISTA">;
 
@@ -30,7 +30,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
     isPaid: false,
     benefits: [
       "Pasaporte Digital y sellos de temporada",
-      "Circuito peatonal del MAP",
+      "Circuito peatonal del MAPA",
       "Novedades y convocatorias del Clúster",
     ],
   },
@@ -45,7 +45,7 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
       "BarrID: tu credencial digital de vecino",
       "Canjea cupones exclusivos en negocios socios",
       "Prioridad en eventos y activaciones del Clúster",
-      "Incluye Pasaporte Digital y MAP",
+      "Incluye Pasaporte Digital y MAPA",
     ],
   },
   NEGOCIO_FAMILIAR: {
@@ -79,12 +79,12 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanDefinition> = {
   GRAN_EMPRESA: {
     id: "GRAN_EMPRESA",
     label: "Gran Empresa",
-    tagline: "Domina el circuito del MAP",
+    tagline: "Domina el circuito del MAPA",
     description: "Máxima exposición: los visitantes te encuentran caminando la ruta oficial del Centro.",
     isPaid: true,
-    highlight: "Para hoteles y restaurantes que quieren el flujo del MAP",
+    highlight: "Para hoteles y restaurantes que quieren el flujo del MAPA",
     benefits: [
-      "Pin propio en el MAP y rutas oficiales",
+      "Pin propio en el MAPA y rutas oficiales",
       "Sello en Pasaporte Digital con QR",
       "Máxima prioridad en carrusel y directorio",
       "Incluye todo lo de Mediana Empresa",
@@ -116,7 +116,7 @@ export function formatPlanPriceMxn(plan: PaidMembershipPlan): string {
 export const COMMERCIAL_BENEFITS = [
   "Ficha certificada en el directorio de socios",
   "Logo en el carrusel de la página principal (Mediana y Gran Empresa)",
-  "Pin en el MAP y rutas oficiales (Gran Empresa)",
+  "Pin en el MAPA y rutas oficiales (Gran Empresa)",
   "Publicar cupones y entradas en el blog del Clúster",
 ];
 
@@ -199,7 +199,7 @@ export function needsCertificationPayment(plan: MembershipPlan, status: string):
 /**
  * Alta / edición de ficha de negocio: plan comercial aunque el pago aún no esté confirmado
  * (inactive, manual_pending) o ya activo. Al confirmar el pago, publishBusinessPresenceOnPayment
- * publica en /socios, /map (Gran Empresa) y /admin.
+ * publica en /cuponera, /mapa (Gran Empresa) y /admin.
  */
 export function canRegisterBusinessProfile(plan: MembershipPlan, status: string): boolean {
   if (!isBusinessPlan(plan)) return false;

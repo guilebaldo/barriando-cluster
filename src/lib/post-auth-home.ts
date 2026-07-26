@@ -41,10 +41,10 @@ export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
   }
 
   if (isTuristaPlan(plan) || !plan) {
-    return "/map";
+    return "/mapa";
   }
 
-  return "/map";
+  return "/mapa";
 }
 
 /** Same as home, with optional pago=exitoso for paid plan success hops. */

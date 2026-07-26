@@ -6,9 +6,9 @@ import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import LandingSociosView, { liveStatsToLandingProps } from "./LandingSociosView";
 
 export const metadata = {
-  title: "PIPOPE — Socio empresa | Barriando",
+  title: "PIPOPETL — Socio empresa | Barriando",
   description:
-    "PIPOPE: plataforma inteligente poblana de operaciones y planificación estratégica para empresas turísticas del Centro Histórico. Entra a la red, cosecha network effects y opera con panel digital.",
+    "PIPOPETL: Plataforma Inteligente Poblana de Operaciones y Planeación Estratégica Turística Libre. Entra a la red, cosecha network effects y opera con panel digital.",
 };
 
 /** Landing de conversión para membresías empresa (panel socio + CTA Google/correo). */

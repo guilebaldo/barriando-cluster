@@ -45,7 +45,7 @@ export default async function EntrarPage() {
             <h2 className="mt-3 text-lg font-bold text-slate-900">Iniciar sesión</h2>
             <p className="mt-2 text-sm text-slate-600 font-light leading-relaxed">
               Si ya tienes cuenta, entra con Google o con un enlace a tu correo. Te llevamos a tu
-              espacio: MAP (turista), BarrID (vecino o admin), panel (negocio).
+              espacio: MAPA (turista), BarrID (vecino o admin), panel (negocio).
             </p>
             <Link
               href={`/login?callbackUrl=${encodeURIComponent(ONBOARDING_CONTINUE_PATH)}`}

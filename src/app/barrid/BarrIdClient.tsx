@@ -405,7 +405,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 </dl>
 
                 <Link
-                  href="/socios?cupones=1"
+                  href="/cuponera?cupones=1"
                   className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-4 py-4 rounded-2xl transition shadow-sm"
                 >
                   <Gift className="w-5 h-5" />
@@ -421,11 +421,11 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                     Pasaporte
                   </Link>
                   <Link
-                    href="/map"
+                    href="/mapa"
                     className="inline-flex items-center justify-center gap-2 border border-white/30 bg-white/10 text-white font-bold text-xs uppercase tracking-wider px-3 py-4 rounded-2xl hover:bg-white/15 transition"
                   >
                     <MapIcon className="w-5 h-5" />
-                    MAP
+                    MAPA
                   </Link>
                 </div>
               </div>
@@ -457,7 +457,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           <div className="space-y-5">
             <StatusCard {...props} />
             <Link
-              href="/socios?cupones=1"
+              href="/cuponera?cupones=1"
               className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
             >
               <Gift className="w-5 h-5" />
@@ -472,11 +472,11 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 Pasaporte
               </Link>
               <Link
-                href="/map"
+                href="/mapa"
                 className="inline-flex items-center justify-center gap-2 border border-[#27366D]/20 text-[#27366D] font-bold text-xs uppercase tracking-wider px-4 py-3.5 rounded-xl hover:bg-slate-50 transition"
               >
                 <MapIcon className="w-4 h-4" />
-                MAP
+                MAPA
               </Link>
             </div>
           </div>

@@ -9,7 +9,7 @@ export const metadata = {
     "Barriando articula empresas del Centro Histórico de Puebla para desarrollar productos y servicios turísticos, festivales y derrama económica local.",
 };
 
-/** Presentación pública de Barriando (video, MAP, pasaporte, socios). */
+/** Presentación pública de Barriando (video, MAPA, pasaporte, socios). */
 export default async function LandingPage() {
   const [liveStats, homePromo, carouselSocios] = await Promise.all([
     getLiveStats(),

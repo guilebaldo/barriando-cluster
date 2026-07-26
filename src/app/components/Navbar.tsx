@@ -9,9 +9,11 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { isAdminUser } from "@/lib/admin";
 import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
+import { isPaidMember } from "@/lib/membresia";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
 import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 import { AdminNavLink } from "@/app/components/AdminNavBadge";
+import type { MembershipPlan } from "@/generated/prisma/client";
 
 function GoogleGlyph() {
   return (
@@ -34,20 +36,38 @@ function getPasaporteHref() {
   return "/pasaporte";
 }
 
-function getNavLinks(_isAuthenticated: boolean): NavLink[] {
+const PASAPORTE_LINK: NavLink = {
+  href: getPasaporteHref(),
+  label: "Pasaporte",
+  isActive: (pathname) =>
+    pathname === "/pasaporte-info" ||
+    pathname === "/pasaporte" ||
+    pathname.startsWith("/pasaporte/"),
+};
+
+/** Visitante: Inicio → Equipo → MAPA → Cuponera → Pasaporte. Logueado: app útil. */
+function getNavLinks(opts: {
+  isAuthenticated: boolean;
+  showBarrId: boolean;
+}): NavLink[] {
+  if (opts.isAuthenticated) {
+    const links: NavLink[] = [
+      { href: "/mapa", label: "MAPA" },
+      { href: "/cuponera", label: "Cuponera" },
+      PASAPORTE_LINK,
+    ];
+    if (opts.showBarrId) {
+      links.push({ href: "/barrid", label: "BarrID" });
+    }
+    return links;
+  }
+
   return [
     { href: "/landing", label: "Inicio" },
-    { href: "/socios", label: "Socios" },
     { href: "/equipo", label: "Equipo" },
-    { href: "/map", label: "MAP" },
-    {
-      href: getPasaporteHref(),
-      label: "Pasaporte",
-      isActive: (pathname) =>
-        pathname === "/pasaporte-info" ||
-        pathname === "/pasaporte" ||
-        pathname.startsWith("/pasaporte/"),
-    },
+    { href: "/mapa", label: "MAPA" },
+    { href: "/cuponera", label: "Cuponera" },
+    PASAPORTE_LINK,
   ];
 }
 
@@ -169,18 +189,23 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   const displayName = session?.user?.name?.trim() || "Mi cuenta";
-  const plan = session?.user?.plan;
+  const plan = (session?.user?.plan ?? "TURISTA") as MembershipPlan;
   const subscriptionStatus = session?.user?.subscriptionStatus ?? "inactive";
   const isAdmin = isAdminUser({
     email: session?.user?.email,
     role: session?.user?.role,
   });
-  const profileHref = resolvePostAuthHomePath({
-    email: session?.user?.email,
-    role: session?.user?.role,
-    plan: plan ?? "TURISTA",
-    subscriptionStatus,
-  });
+  const showBarrId = isPaidMember(plan, subscriptionStatus) || isAdmin;
+  const accountLabel = showBarrId ? "BarrID" : displayName;
+  const accountHref = showBarrId
+    ? "/barrid"
+    : resolvePostAuthHomePath({
+        email: session?.user?.email,
+        role: session?.user?.role,
+        plan,
+        subscriptionStatus,
+      });
+  const panelHref = "/panel";
 
   useEffect(() => {
     if (!open) return;
@@ -206,61 +231,35 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     </button>
   );
 
+  const panelLink = (
+    <Link
+      href={panelHref}
+      role="menuitem"
+      className={
+        mobile
+          ? "block py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+          : "block px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+      }
+      onClick={() => setOpen(false)}
+    >
+      Panel
+    </Link>
+  );
+
   if (mobile) {
     return (
       <div className="mt-2 pt-2 border-t border-[#314385]/60">
         <Link
-          href={profileHref}
-          className="block px-3 py-2 text-sm font-bold text-amber-400 hover:text-amber-300 transition"
+          href={accountHref}
+          className="block px-3 py-2 text-sm font-bold text-amber-400 hover:text-amber-300 transition uppercase tracking-wider"
         >
-          {displayName}
+          {accountLabel}
         </Link>
+        {panelLink}
         {isAdmin && (
           <AdminNavLink className="inline-flex items-center py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition" />
         )}
         {logoutButton}
-      </div>
-    );
-  }
-
-  if (isAdmin) {
-    return (
-      <div
-        ref={ref}
-        className="relative"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-      >
-        <div className="inline-flex items-center gap-1">
-          <Link
-            href={profileHref}
-            className="text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
-          >
-            {displayName}
-          </Link>
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="text-amber-400 hover:text-amber-300 transition-colors"
-            aria-expanded={open}
-            aria-haspopup="menu"
-            aria-label="Abrir menú de cuenta"
-          >
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-          </button>
-        </div>
-        {open && (
-          <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
-            <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
-              <AdminNavLink
-                role="menuitem"
-                className="inline-flex items-center px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
-                onClick={() => setOpen(false)}
-              />
-              {logoutButton}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -274,10 +273,10 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     >
       <div className="inline-flex items-center gap-1">
         <Link
-          href={profileHref}
+          href={accountHref}
           className="text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
         >
-          {displayName}
+          {accountLabel}
         </Link>
         <button
           type="button"
@@ -293,6 +292,14 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
       {open && (
         <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
           <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
+            {panelLink}
+            {isAdmin && (
+              <AdminNavLink
+                role="menuitem"
+                className="inline-flex items-center px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+                onClick={() => setOpen(false)}
+              />
+            )}
             {logoutButton}
           </div>
         </div>
@@ -306,6 +313,15 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const isAuthenticated = status === "authenticated" && session?.user;
+  const plan = (session?.user?.plan ?? "TURISTA") as MembershipPlan;
+  const subscriptionStatus = session?.user?.subscriptionStatus ?? "inactive";
+  const isAdmin = isAdminUser({
+    email: session?.user?.email,
+    role: session?.user?.role,
+  });
+  const showBarrId =
+    Boolean(isAuthenticated) &&
+    (isPaidMember(plan, subscriptionStatus) || isAdmin);
 
   // Logo → role home when signed in; guests go to the public presentation.
   const logoHref = isAuthenticated
@@ -321,7 +337,7 @@ export default function Navbar() {
     setOpen(false);
   }, [pathname]);
 
-  const isMapPage = pathname === "/map";
+  const isMapPage = pathname === "/mapa" || pathname.startsWith("/mapa/");
 
   useEffect(() => {
     if (isMapPage) return;
@@ -345,7 +361,10 @@ export default function Navbar() {
     return <EntrarMenu mobile={mobile} onNavigate={onNavigate} />;
   }
 
-  const navLinks = getNavLinks(Boolean(isAuthenticated));
+  const navLinks = getNavLinks({
+    isAuthenticated: Boolean(isAuthenticated),
+    showBarrId,
+  });
 
   return (
     <nav

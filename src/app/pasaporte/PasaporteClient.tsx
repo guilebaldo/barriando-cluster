@@ -849,7 +849,7 @@ function PasaporteInner({
                     Visita los socios del directorio y reúne sellos en tu pasaporte.
                   </p>
                   <Link
-                    href="/socios"
+                    href="/cuponera"
                     className="mt-6 sm:mt-7 inline-flex items-center justify-center bg-amber-500/90 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-[0.18em] px-10 sm:px-12 py-3.5 sm:py-4 rounded-lg transition shadow-md active:scale-[0.98]"
                   >
                     Ver socios

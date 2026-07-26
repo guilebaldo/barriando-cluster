@@ -36,7 +36,7 @@ export default function RegistroClient({ plan }: RegistroClientProps) {
               </h1>
               <p className="text-xs text-slate-500 font-light leading-relaxed">
                 {isTurista
-                  ? "Acceso gratuito al Pasaporte MAP, rutas peatonales y novedades del Centro Histórico."
+                  ? "Acceso gratuito al Pasaporte MAPA, rutas peatonales y novedades del Centro Histórico."
                   : "Tras iniciar sesión (Google o enlace de verificación) continuarás a la selección de método de pago para activar tu plan."}
               </p>
             </div>

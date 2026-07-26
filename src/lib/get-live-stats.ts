@@ -8,9 +8,9 @@ const ACTIVE_STATUSES = ["active", "manual_active"] as const;
 
 export type LiveStats = {
   mapMilestones: number;
-  /** Negocios en /socios + vecinos con membresía activa. */
+  /** Negocios en /cuponera + vecinos con membresía activa. */
   totalSocios: number;
-  /** Negocios que aparecen en /socios. */
+  /** Negocios que aparecen en /cuponera. */
   certifiedBusinesses: number;
   /** Cuentas con plan Turista. */
   registeredTourists: number;

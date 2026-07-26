@@ -11,9 +11,9 @@ export default function MapWelcomeFicha({
   return (
     <div className="space-y-2.5">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Bienvenido al MAP</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Bienvenido al MAPA</p>
         <h2 className="text-lg font-black font-serif-cluster text-[#27366D] leading-tight mt-0.5">
-          Museo Abierto de Puebla
+          Museo Abierto de Puebla y Alrededores
         </h2>
         <p className="text-sm text-slate-600 font-light leading-snug mt-1.5">
           Recorre el Centro Histórico a pie. Tu ruta se personaliza con GPS desde el punto más cercano.

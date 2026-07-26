@@ -118,7 +118,7 @@ export async function resolvePlanSelectionPath(plan: MembershipPlan): Promise<st
 
   if (isTuristaPlan(plan)) {
     await ensureTuristaSubscription(session.user.id);
-    return "/map";
+    return "/mapa";
   }
 
   if (isPaidMembershipPlan(plan)) {
@@ -177,12 +177,12 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
 
   if (pending && isTuristaPlan(pending)) {
     await ensureTuristaSubscription(session.user.id);
-    redirect("/map");
+    redirect("/mapa");
   }
 
   if (!sub || isTuristaPlan(sub.plan)) {
     await ensureTuristaSubscription(session.user.id);
-    redirect("/map");
+    redirect("/mapa");
   }
 
   if (sub && isPaidMembershipPlan(sub.plan) && !hasCommercialAccess(sub.plan, sub.status)) {

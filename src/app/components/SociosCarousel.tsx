@@ -101,7 +101,7 @@ export default function SociosCarousel({ socios }: SociosCarouselProps) {
         >
           {items.map((socio, index) => (
             <a
-              href={`/socios?socio=${socio.id}`}
+              href={`/cuponera?socio=${socio.id}`}
               key={`${socio.id}-${index}`}
               onClick={onCardClick}
               className="flex flex-col shrink-0 items-center group/card w-64"

@@ -7,7 +7,7 @@ const ZONE_INTROS: Record<number, string> = {
 
 const HITO_INTROS: Record<string, string> = {
   "Teatro Principal":
-    "Inaugurado en el siglo XIX, es uno de los teatros más antiguos de México y un hito emblemático del circuito MAP.",
+    "Inaugurado en el siglo XIX, es uno de los teatros más antiguos de México y un hito emblemático del circuito MAPA.",
   "Catedral":
     "Joyas barrocas y torres que dominan el perfil del Zócalo; símbolo máximo del patrimonio religioso poblano.",
   "Biblioteca Palafoxiana":
@@ -36,8 +36,8 @@ export function getHitoIntro(name: string, zone?: number): string {
   }
 
   if (zone && ZONE_INTROS[zone]) {
-    return `${name} forma parte de la zona ${zone} del MAP. ${ZONE_INTROS[zone]}`;
+    return `${name} forma parte de la zona ${zone} del MAPA. ${ZONE_INTROS[zone]}`;
   }
 
-  return `${name} es un hito patrimonial del Museo Abierto de Puebla (MAP), integrado al circuito peatonal del Centro Histórico.`;
+  return `${name} es un hito patrimonial del Museo Abierto de Puebla y Alrededores (MAPA), integrado al circuito peatonal del Centro Histórico.`;
 }

@@ -1,6 +1,6 @@
 import { listaSocios } from "@/app/data/socios";
 
-/** Categorías del directorio /socios (única fuente de verdad). */
+/** Categorías del directorio /cuponera (única fuente de verdad). */
 function buildSociosCategoryOptions(): readonly [string, ...string[]] {
   const unique = [...new Set(listaSocios.map((s) => s.categoria))].sort();
   if (unique.length === 0) return ["Servicios"];

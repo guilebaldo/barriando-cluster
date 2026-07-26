@@ -109,14 +109,14 @@ function PipopeBrand({
   return (
     <div className={alignCls}>
       <p className={`font-serif-cluster font-black text-amber-400 uppercase leading-none ${nameCls}`}>
-        PIPOPE
+        PIPOPETL
       </p>
       <p
         className={`mt-3 font-bold uppercase text-amber-200/90 leading-relaxed ${tagCls} ${
           align === "center" ? "mx-auto" : ""
         }`}
       >
-        Plataforma inteligente poblana de operaciones y planificación estratégica
+        Plataforma inteligente poblana de operaciones y planeación estratégica turística libre
       </p>
     </div>
   );
@@ -159,7 +159,7 @@ export default function LandingSociosView({
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-5 text-sm sm:text-base text-slate-200 font-light leading-relaxed max-w-xl">
-              Cada socio suma demanda al Pasaporte, al MAP y al directorio; cada visitante alimenta al
+              Cada socio suma demanda al Pasaporte, al MAPA y al directorio; cada visitante alimenta al
               siguiente negocio. Tú cosechas esos network effects — desde{" "}
               {formatPlanPriceMxn("NEGOCIO_FAMILIAR")}.
             </p>
@@ -195,7 +195,7 @@ export default function LandingSociosView({
               Más socios, más visitas, más valor para todos.
             </h2>
             <p className="mt-5 text-sm md:text-base text-slate-600 font-light leading-relaxed">
-              PIPOPE concentra la operación turística del barrio en un solo producto digital: el
+              PIPOPETL concentra la operación turística del barrio en un solo producto digital: el
               visitante sella, el vecino canjea, tu negocio aparece donde la demanda ya camina. No
               compites solo por atención suelta — operas dentro de una red que crece con cada alta.
             </p>
@@ -269,7 +269,7 @@ export default function LandingSociosView({
               Demanda que ya camina el barrio.
             </h2>
             <p className="mt-4 text-sm md:text-base text-slate-200 font-light leading-relaxed max-w-lg">
-              Directorio, Pasaporte y MAP concentran tráfico peatonal real. Tu ficha y tus sellos
+              Directorio, Pasaporte y MAPA concentran tráfico peatonal real. Tu ficha y tus sellos
               capturan una fracción de esa red.
             </p>
           </Reveal>
@@ -309,7 +309,7 @@ export default function LandingSociosView({
         <div className="max-w-5xl mx-auto">
           <Reveal>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600">
-              Próximamente en PIPOPE
+              Próximamente en PIPOPETL
             </p>
             <h2 className="mt-3 text-2xl md:text-4xl font-black font-serif-cluster uppercase tracking-wide text-[#27366D] max-w-2xl leading-tight">
               La plataforma sigue expandiendo módulos.
@@ -354,7 +354,7 @@ export default function LandingSociosView({
               Suma tu empresa a la red.
             </h2>
             <p className="mt-4 text-sm text-slate-300 font-light leading-relaxed">
-              Google o correo: en minutos activas tu nodo y empiezas a operar en PIPOPE.
+              Google o correo: en minutos activas tu nodo y empiezas a operar en PIPOPETL.
             </p>
           </Reveal>
           <Reveal delay={100}>

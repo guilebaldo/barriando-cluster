@@ -141,7 +141,7 @@ async function loadCatalogWebsiteOverrides(): Promise<Map<number, string>> {
 
 /**
  * Negocios con membresía comercial activa.
- * El pago (plan + status) valida la aparición en /socios; no se exige vinculación aprobada a mano.
+ * El pago (plan + status) valida la aparición en /cuponera; no se exige vinculación aprobada a mano.
  */
 async function loadPublishedBusinessUsers(): Promise<PublishedUserRow[]> {
   try {
@@ -346,7 +346,7 @@ function dedupeByName(socios: Socio[]): Socio[] {
   return best;
 }
 
-/** Socios visibles en /socios: solo membresía de negocio activa (roster o usuario). */
+/** Socios visibles en /cuponera: solo membresía de negocio activa (roster o usuario). */
 export async function getPublicSociosList(): Promise<Socio[]> {
   const [publishedUsers, websiteOverrides, memberships] = await Promise.all([
     loadPublishedBusinessUsers(),
@@ -389,7 +389,7 @@ export async function getMedianaCarouselSocios(): Promise<Socio[]> {
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
-/** Active catalog socioIds with GRAN_EMPRESA (for MAP). */
+/** Active catalog socioIds with GRAN_EMPRESA (for MAPA). */
 export async function getActiveGranEmpresaCatalogIds(): Promise<Set<number>> {
   const memberships = await loadActiveCatalogMemberships();
   const ids = new Set<number>();

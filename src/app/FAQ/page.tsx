@@ -8,7 +8,7 @@ import SiteShell from "../components/SiteShell";
 export const metadata = {
   title: "FAQ | Barriando",
   description:
-    "Preguntas frecuentes sobre Barriando: planes, MAP, Pasaporte, BarrID, cupones, pagos y cuenta.",
+    "Preguntas frecuentes sobre Barriando: planes, MAPA, Pasaporte, BarrID, cupones, pagos y cuenta.",
 };
 
 type FaqItem = { q: string; a: ReactNode };
@@ -23,7 +23,7 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
           <>
             Barriando es la plataforma digital del Clúster Turístico y Asociación de Empresarios del
             Centro Histórico de Puebla, A.C. Conecta visitantes, vecinos y negocios socios: directorio,
-            mapa peatonal (MAP), Pasaporte Digital, credencial BarrID y cupones en comercios
+            mapa peatonal (MAPA), Pasaporte Digital, credencial BarrID y cupones en comercios
             participantes.
           </>
         ),
@@ -90,7 +90,7 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
           <>
             <ul className="mt-2 list-disc pl-5 space-y-1.5">
               <li>
-                <strong>Turista</strong> (gratis): Pasaporte Digital, MAP y novedades del Clúster.
+                <strong>Turista</strong> (gratis): Pasaporte Digital, MAPA y novedades del Clúster.
               </li>
               <li>
                 <strong>Vecino</strong>: BarrID, canje de cupones en negocios socios y lo del Turista.
@@ -98,7 +98,7 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
               <li>
                 <strong>Pequeña / Mediana / Gran Empresa</strong>: directorio de socios, sellos en
                 Pasaporte, publicación de cupones y, según el plan, carrusel en inicio y/o pin en el
-                MAP.
+                MAPA.
               </li>
             </ul>
             Detalle y precios en <Link href="/planes">Planes</Link>.
@@ -120,7 +120,7 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
         q: "¿Dónde veo mi plan y mi panel?",
         a: (
           <>
-            Tras iniciar sesión, el sistema te lleva a tu espacio: MAP o Pasaporte (turista),{" "}
+            Tras iniciar sesión, el sistema te lleva a tu espacio: MAPA o Pasaporte (turista),{" "}
             <Link href="/barrid">BarrID</Link> (vecino) o <Link href="/panel">panel</Link> (negocio).
             También puedes abrir el menú de tu cuenta en la barra superior.
           </>
@@ -129,13 +129,13 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
     ],
   },
   {
-    title: "MAP, Pasaporte y BarrID",
+    title: "MAPA, Pasaporte y BarrID",
     items: [
       {
-        q: "¿Qué es el MAP?",
+        q: "¿Qué es el MAPA?",
         a: (
           <>
-            El <Link href="/map">MAP</Link> es el circuito peatonal del Centro Histórico: puntos de
+            El <Link href="/mapa">MAPA</Link> es el circuito peatonal del Centro Histórico: puntos de
             interés, rutas y (en planes altos) pins de negocios. Es la base para caminar el barrio con
             criterio turístico.
           </>
@@ -173,15 +173,15 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
     ],
   },
   {
-    title: "Cupones y socios",
+    title: "Cupones y Cuponera",
     items: [
       {
         q: "¿Qué son los cupones?",
         a: (
           <>
             Son ofertas que publican los negocios con membresía activa para Vecinos y otros socios de
-            pago. Las encuentras en el directorio{" "}
-            <Link href="/socios?cupones=1">Socios · cupones</Link>.
+            pago. Las encuentras en la{" "}
+            <Link href="/cuponera?cupones=1">Cuponera</Link>.
           </>
         ),
       },
@@ -201,17 +201,17 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
           <>
             Con plan de negocio activo y negocio vinculado/aprobado, entra a tu{" "}
             <Link href="/panel">panel</Link> y publica el cupón (título, descripción y cómo se hace
-            válido). Aparecerá en /socios para quienes tengan membresía de pago.
+            válido). Aparecerá en /cuponera para quienes tengan membresía de pago.
           </>
         ),
       },
       {
-        q: "¿Cómo aparezco en el directorio de socios?",
+        q: "¿Cómo aparezco en la Cuponera?",
         a: (
           <>
             Con un plan de Pequeña, Mediana o Gran Empresa activo y tu ficha vinculada. El orden y la
-            visibilidad (carrusel, MAP) dependen del plan. Consulta{" "}
-            <Link href="/socios">/socios</Link> y <Link href="/planes">/planes</Link>.
+            visibilidad (carrusel, MAPA) dependen del plan. Consulta{" "}
+            <Link href="/cuponera">/cuponera</Link> y <Link href="/planes">/planes</Link>.
           </>
         ),
       },
@@ -300,7 +300,7 @@ export default function FaqPage() {
             Preguntas frecuentes
           </h1>
           <p className="text-slate-300 text-sm mt-2 font-light">
-            Cómo funciona Barriando: cuenta, planes, MAP, Pasaporte, BarrID, cupones y pagos.
+            Cómo funciona Barriando: cuenta, planes, MAPA, Pasaporte, BarrID, cupones y pagos.
           </p>
         </div>
       </header>
