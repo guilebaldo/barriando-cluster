@@ -9,7 +9,6 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { isAdminUser } from "@/lib/admin";
 import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
-import { isPaidMember } from "@/lib/membresia";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
 import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 import { AdminNavLink } from "@/app/components/AdminNavBadge";
@@ -45,21 +44,14 @@ const PASAPORTE_LINK: NavLink = {
     pathname.startsWith("/pasaporte/"),
 };
 
-/** Visitante: Inicio → Equipo → MAPA → Cuponera → Pasaporte. Logueado: app útil. */
-function getNavLinks(opts: {
-  isAuthenticated: boolean;
-  showBarrId: boolean;
-}): NavLink[] {
-  if (opts.isAuthenticated) {
-    const links: NavLink[] = [
+/** Visitante: Inicio → Equipo → Socios → Pasaporte → MAPA. Logueado: app útil. */
+function getNavLinks(isAuthenticated: boolean): NavLink[] {
+  if (isAuthenticated) {
+    return [
       { href: "/mapa", label: "MAPA" },
-      { href: "/cuponera", label: "Cuponera" },
+      { href: "/cuponera?cupones=1", label: "Cuponera" },
       PASAPORTE_LINK,
     ];
-    if (opts.showBarrId) {
-      links.push({ href: "/barrid", label: "BarrID" });
-    }
-    return links;
   }
 
   return [
@@ -74,7 +66,8 @@ function getNavLinks(opts: {
 function isNavActive(pathname: string, link: NavLink) {
   if (link.isActive) return link.isActive(pathname);
   if (link.href === "/landing") return pathname === "/landing" || pathname === "/";
-  return pathname === link.href || pathname.startsWith(`${link.href}/`);
+  const pathOnly = link.href.split("?")[0] ?? link.href;
+  return pathname === pathOnly || pathname.startsWith(`${pathOnly}/`);
 }
 
 function navLinkClass(pathname: string, link: NavLink) {
@@ -195,16 +188,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     email: session?.user?.email,
     role: session?.user?.role,
   });
-  const showBarrId = isPaidMember(plan, subscriptionStatus) || isAdmin;
-  const accountLabel = showBarrId ? "BarrID" : displayName;
-  const accountHref = showBarrId
-    ? "/barrid"
-    : resolvePostAuthHomePath({
-        email: session?.user?.email,
-        role: session?.user?.role,
-        plan,
-        subscriptionStatus,
-      });
+  const profileHref = resolvePostAuthHomePath({
+    email: session?.user?.email,
+    role: session?.user?.role,
+    plan,
+    subscriptionStatus,
+  });
   const panelHref = "/panel";
 
   useEffect(() => {
@@ -250,10 +239,10 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     return (
       <div className="mt-2 pt-2 border-t border-[#314385]/60">
         <Link
-          href={accountHref}
-          className="block px-3 py-2 text-sm font-bold text-amber-400 hover:text-amber-300 transition uppercase tracking-wider"
+          href={profileHref}
+          className="block px-3 py-2 text-sm font-bold text-amber-400 hover:text-amber-300 transition"
         >
-          {accountLabel}
+          {displayName}
         </Link>
         {panelLink}
         {isAdmin && (
@@ -273,10 +262,10 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     >
       <div className="inline-flex items-center gap-1">
         <Link
-          href={accountHref}
+          href={profileHref}
           className="text-amber-400 hover:text-amber-300 text-xs uppercase tracking-wider font-bold transition-colors duration-200"
         >
-          {accountLabel}
+          {displayName}
         </Link>
         <button
           type="button"
@@ -313,15 +302,6 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const isAuthenticated = status === "authenticated" && session?.user;
-  const plan = (session?.user?.plan ?? "TURISTA") as MembershipPlan;
-  const subscriptionStatus = session?.user?.subscriptionStatus ?? "inactive";
-  const isAdmin = isAdminUser({
-    email: session?.user?.email,
-    role: session?.user?.role,
-  });
-  const showBarrId =
-    Boolean(isAuthenticated) &&
-    (isPaidMember(plan, subscriptionStatus) || isAdmin);
 
   // Logo → role home when signed in; guests go to the public presentation.
   const logoHref = isAuthenticated
@@ -361,10 +341,7 @@ export default function Navbar() {
     return <EntrarMenu mobile={mobile} onNavigate={onNavigate} />;
   }
 
-  const navLinks = getNavLinks({
-    isAuthenticated: Boolean(isAuthenticated),
-    showBarrId,
-  });
+  const navLinks = getNavLinks(Boolean(isAuthenticated));
 
   return (
     <nav
