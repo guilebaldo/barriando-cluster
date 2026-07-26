@@ -65,9 +65,9 @@ function getNavLinks(opts: {
   return [
     { href: "/landing", label: "Inicio" },
     { href: "/equipo", label: "Equipo" },
-    { href: "/mapa", label: "MAPA" },
-    { href: "/cuponera", label: "Cuponera" },
+    { href: "/cuponera", label: "Socios" },
     PASAPORTE_LINK,
+    { href: "/mapa", label: "MAPA" },
   ];
 }
 
