@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import QRCode from "qrcode";
-import { BookOpen, Gift, Map as MapIcon, Settings } from "lucide-react";
+import { BookOpen, ChevronRight, Gift, Map as MapIcon, Settings } from "lucide-react";
 import { createBenefitCredential } from "../panel/actions";
 import AddToHomeScreenModal from "./AddToHomeScreenModal";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
@@ -35,6 +35,35 @@ function formatCountdown(totalSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+/** Entrada a Panel / cuenta — al pie de la ficha, no como gear flotante. */
+function MiCuentaLink({ compact = false }: { compact?: boolean }) {
+  return (
+    <Link
+      href="/panel"
+      className={`mt-5 flex w-full items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 active:scale-[0.99] ${
+        compact ? "px-4 py-3.5" : "px-4 py-3"
+      }`}
+    >
+      <span className="inline-flex items-center gap-2.5 min-w-0">
+        <Settings className={compact ? "w-5 h-5 shrink-0" : "w-4 h-4 shrink-0"} />
+        <span className="min-w-0">
+          <span
+            className={`block font-bold uppercase tracking-wider ${
+              compact ? "text-sm" : "text-xs"
+            }`}
+          >
+            Mi cuenta
+          </span>
+          <span className={`block text-slate-300 font-light ${compact ? "text-xs mt-0.5" : "text-[11px] mt-0.5"}`}>
+            Membresía, ficha y sesión
+          </span>
+        </span>
+      </span>
+      <ChevronRight className={compact ? "w-5 h-5 shrink-0 opacity-80" : "w-4 h-4 shrink-0 opacity-80"} />
+    </Link>
+  );
+}
+
 function StatusCard({
   user,
   planLabel,
@@ -48,16 +77,7 @@ function StatusCard({
 }: BarrIdClientProps) {
   return (
     <section className="bg-[#27366D] text-white rounded-2xl border border-[#1e2b58] relative px-6 sm:px-8 py-6 sm:py-8">
-      <a
-        href="/panel"
-        className="absolute top-4 right-4 z-10 inline-flex items-center justify-center w-10 h-10 rounded-full border border-white/25 bg-white/10 text-white hover:bg-white/20 transition"
-        aria-label="Configuración / Mi Panel"
-        title="Mi Panel"
-      >
-        <Settings className="w-5 h-5" />
-      </a>
-
-      <div className="flex items-center gap-4 pr-12">
+      <div className="flex items-center gap-4">
         <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 shrink-0 border-2 border-amber-400/40">
           {user.image ? (
             <Image
@@ -117,6 +137,8 @@ function StatusCard({
           <dd className="font-semibold text-white text-right">{renewalLabel}</dd>
         </div>
       </dl>
+
+      <MiCuentaLink />
     </section>
   );
 }
@@ -341,15 +363,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
               }`}
               aria-hidden={!sheetExpanded}
             >
-                <div className="relative flex items-center gap-4 pr-14">
-                  <a
-                    href="/panel"
-                    className="absolute top-0 right-0 inline-flex items-center justify-center w-11 h-11 rounded-full border border-white/30 bg-white/10 text-white"
-                    aria-label="Configuración / Mi Panel"
-                    title="Mi Panel"
-                  >
-                    <Settings className="w-5 h-5" />
-                  </a>
+                <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-200 shrink-0 border-[3px] border-amber-400/70">
                     {props.user.image ? (
                       <Image
@@ -414,6 +428,8 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                     <dd className="font-bold text-white text-right">{props.renewalLabel}</dd>
                   </div>
                 </dl>
+
+                <MiCuentaLink compact />
               </div>
           </div>
         </div>

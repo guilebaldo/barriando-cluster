@@ -364,6 +364,23 @@ export default function PanelDashboard({
 
   return (
     <div className="space-y-6">
+      {/* Mobile: cuenta + salir visibles sin scroll */}
+      <div className="md:hidden flex items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3.5 shadow-sm">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mi cuenta</p>
+          <p className="text-sm font-bold text-slate-900 truncate">{user.nombre}</p>
+          <p className="text-xs text-slate-500 truncate">{user.email}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="shrink-0 inline-flex items-center justify-center gap-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 active:bg-slate-100 font-bold text-[11px] uppercase tracking-wider px-3.5 py-2.5 rounded-lg transition touch-manipulation"
+        >
+          <LogOut className="w-4 h-4" />
+          Salir
+        </button>
+      </div>
+
       {activePaymentNotice && !suppressTopPaymentNotice && (
         <div className="relative bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 pr-10 text-xs">
           <button
@@ -899,7 +916,7 @@ export default function PanelDashboard({
         onCancel={() => setShowCancelDialog(false)}
       />
 
-      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm max-md:hidden">
         <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest mb-2">
           Cuenta
         </h2>
