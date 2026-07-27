@@ -8,7 +8,7 @@ import { isAdminUser } from "@/lib/admin";
 import { listaSocios } from "@/app/data/socios";
 import { getPlanLabel, isBusinessPlan } from "@/lib/membresia";
 import { advanceBillingAnniversary } from "@/lib/subscription-lifecycle";
-import { publishBusinessPresenceOnPayment } from "@/lib/publish-business";
+import { publishBusinessPresenceOnPayment, allocateNextSocioId } from "@/lib/publish-business";
 import { toSocioProfileDbFields } from "@/lib/business-profile-payload";
 import { emptyBusinessProfile } from "@/lib/business-address";
 import type { SocioProfileFormInitial } from "@/app/panel/business-profile-types";
@@ -1760,5 +1760,382 @@ export async function adminUpdateBusinessProfile(
     }
     console.error("[admin] adminUpdateBusinessProfile failed:", error);
     return { ok: false, error: "No se pudo guardar el perfil del negocio." };
+  }
+}
+
+const BUSINESS_ROSTER_PLANS = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"] as const;
+
+const manualCatalogSocioSchema = z.object({
+  businessName: z.string().trim().min(2, "Nombre requerido.").max(200),
+  category: z.string().trim().min(1, "Categoría requerida.").max(120),
+  plan: z.enum(BUSINESS_ROSTER_PLANS),
+  paymentMethod: z.string().trim().min(1).max(40),
+  currentPeriodEnd: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (AAAA-MM-DD)."),
+  website: z.string().trim().max(500).optional().or(z.literal("")),
+  mapsUrl: z.string().trim().max(1000).optional().or(z.literal("")),
+  latitude: z.number().finite().min(-90).max(90).optional().nullable(),
+  longitude: z.number().finite().min(-180).max(180).optional().nullable(),
+});
+
+/**
+ * Alta manual en roster (CatalogMembership) sin crear User/login.
+ * Opcional: website override y Business (coords / maps) para MAP.
+ */
+export async function createManualCatalogSocio(
+  input: z.infer<typeof manualCatalogSocioSchema>
+): Promise<ActionResult & { socioId?: number }> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = manualCatalogSocioSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const data = parsed.data;
+    const website = data.website?.trim() || null;
+    const mapsUrl = data.mapsUrl?.trim() || null;
+    if (website && !/^https?:\/\//i.test(website)) {
+      return { ok: false, error: "El website debe ser una URL http(s)." };
+    }
+    if (mapsUrl && !/^https?:\/\//i.test(mapsUrl)) {
+      return { ok: false, error: "Google Maps debe ser una URL http(s)." };
+    }
+
+    const endDate = new Date(`${data.currentPeriodEnd}T23:59:59.999Z`);
+    if (!Number.isFinite(endDate.getTime())) {
+      return { ok: false, error: "Fecha de vencimiento inválida." };
+    }
+
+    const socioId = await allocateNextSocioId();
+
+    await prisma.$transaction(async (tx) => {
+      await tx.catalogMembership.create({
+        data: {
+          socioId,
+          plan: data.plan,
+          paymentMethod: data.paymentMethod,
+          status: "active",
+          businessName: data.businessName,
+          category: data.category,
+          currentPeriodEnd: endDate,
+          monthsPastDue: 0,
+        },
+      });
+
+      if (website) {
+        await tx.catalogSocioOverride.upsert({
+          where: { socioId },
+          create: { socioId, website },
+          update: { website },
+        });
+      }
+
+      const hasCoords = data.latitude != null && data.longitude != null;
+      if (hasCoords || mapsUrl) {
+        await tx.business.upsert({
+          where: { id: socioId },
+          create: {
+            id: socioId,
+            name: data.businessName,
+            category: data.category,
+            website: website,
+            mapsUrl: mapsUrl,
+            latitude: data.latitude ?? null,
+            longitude: data.longitude ?? null,
+          },
+          update: {
+            name: data.businessName,
+            category: data.category,
+            ...(website ? { website } : {}),
+            ...(mapsUrl ? { mapsUrl } : {}),
+            ...(hasCoords
+              ? { latitude: data.latitude, longitude: data.longitude }
+              : {}),
+          },
+        });
+      }
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/cuponera");
+    revalidatePath("/socios");
+    revalidatePath("/mapa");
+    revalidatePath("/");
+    return { ok: true, socioId };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] createManualCatalogSocio failed:", error);
+    return { ok: false, error: "No se pudo crear el socio en el roster." };
+  }
+}
+
+// ======================
+// MAP HITOS
+// ======================
+
+export type MapMilestoneRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  latitude: number;
+  longitude: number;
+  mapsUrl: string;
+  active: boolean;
+  zone: number | null;
+  businessId: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const mapMilestoneSchema = z.object({
+  name: z.string().trim().min(2, "Nombre requerido.").max(200),
+  description: z.string().trim().max(2000).optional().or(z.literal("")),
+  mapsUrl: z
+    .string()
+    .trim()
+    .url("URL de Maps inválida.")
+    .refine((u) => /^https?:\/\//i.test(u), "La URL debe ser http(s)."),
+  latitude: z.number().finite("Latitud inválida.").min(-90).max(90),
+  longitude: z.number().finite("Longitud inválida.").min(-180).max(180),
+  zone: z.number().int().min(1).max(20).optional().nullable(),
+  businessId: z.number().int().positive().optional().nullable(),
+  active: z.boolean().optional(),
+});
+
+export async function listMapMilestones(): Promise<MapMilestoneRow[]> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return [];
+
+    const rows = await prisma.mapMilestone.findMany({
+      orderBy: [{ zone: "asc" }, { name: "asc" }],
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      latitude: r.latitude,
+      longitude: r.longitude,
+      mapsUrl: r.mapsUrl,
+      active: r.active,
+      zone: r.zone,
+      businessId: r.businessId,
+      createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
+    }));
+  } catch (error) {
+    console.error("[admin] listMapMilestones failed:", error);
+    return [];
+  }
+}
+
+export async function createMapMilestone(
+  input: z.infer<typeof mapMilestoneSchema>
+): Promise<ActionResult & { id?: string }> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = mapMilestoneSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const data = parsed.data;
+    const description = data.description?.trim() || null;
+
+    try {
+      const row = await prisma.mapMilestone.create({
+        data: {
+          name: data.name,
+          description,
+          mapsUrl: data.mapsUrl,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          zone: data.zone ?? null,
+          businessId: data.businessId ?? null,
+          active: data.active ?? true,
+        },
+      });
+      revalidatePath("/admin");
+      revalidatePath("/mapa");
+      return { ok: true, id: row.id };
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2002"
+      ) {
+        return { ok: false, error: "Ya existe un hito con ese nombre." };
+      }
+      throw error;
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] createMapMilestone failed:", error);
+    return { ok: false, error: "No se pudo crear el hito." };
+  }
+}
+
+export async function updateMapMilestone(
+  id: string,
+  input: z.infer<typeof mapMilestoneSchema>
+): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+    if (!id.trim()) return { ok: false, error: "ID inválido." };
+
+    const parsed = mapMilestoneSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+    }
+
+    const data = parsed.data;
+    try {
+      await prisma.mapMilestone.update({
+        where: { id },
+        data: {
+          name: data.name,
+          description: data.description?.trim() || null,
+          mapsUrl: data.mapsUrl,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          zone: data.zone ?? null,
+          businessId: data.businessId ?? null,
+          ...(typeof data.active === "boolean" ? { active: data.active } : {}),
+        },
+      });
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2002"
+      ) {
+        return { ok: false, error: "Ya existe un hito con ese nombre." };
+      }
+      throw error;
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/mapa");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] updateMapMilestone failed:", error);
+    return { ok: false, error: "No se pudo actualizar el hito." };
+  }
+}
+
+export async function deleteMapMilestone(id: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+    if (!id.trim()) return { ok: false, error: "ID inválido." };
+
+    await prisma.mapMilestone.delete({ where: { id } });
+    revalidatePath("/admin");
+    revalidatePath("/mapa");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] deleteMapMilestone failed:", error);
+    return { ok: false, error: "No se pudo eliminar el hito." };
+  }
+}
+
+export async function toggleMapMilestoneActive(id: string): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const existing = await prisma.mapMilestone.findUnique({ where: { id } });
+    if (!existing) return { ok: false, error: "Hito no encontrado." };
+
+    await prisma.mapMilestone.update({
+      where: { id },
+      data: { active: !existing.active },
+    });
+    revalidatePath("/admin");
+    revalidatePath("/mapa");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo cambiar el estado del hito." };
+  }
+}
+
+/**
+ * Importa hitos desde data/barriando-muaap-hitos.csv + zonas de listaHitos + intros.
+ * Upsert por nombre: no borra hitos existentes con otros nombres.
+ */
+export async function importMapMilestonesFromCsv(): Promise<
+  ActionResult & { imported?: number; skipped?: number }
+> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const { loadCsvMilestoneSeedRows } = await import("@/lib/mapRoute");
+    const { getHitoIntro } = await import("@/lib/map-hito-intro");
+
+    const seeds = loadCsvMilestoneSeedRows();
+    if (seeds.length === 0) {
+      return { ok: false, error: "No se pudieron leer hitos del CSV." };
+    }
+
+    let imported = 0;
+    for (const row of seeds) {
+      const description = getHitoIntro(row.name, row.zone);
+      await prisma.mapMilestone.upsert({
+        where: { name: row.name },
+        create: {
+          name: row.name,
+          description,
+          latitude: row.latitude,
+          longitude: row.longitude,
+          mapsUrl: row.mapsUrl,
+          active: true,
+          zone: row.zone ?? null,
+          businessId: row.socioId ?? null,
+        },
+        update: {
+          description,
+          latitude: row.latitude,
+          longitude: row.longitude,
+          mapsUrl: row.mapsUrl,
+          zone: row.zone ?? null,
+          businessId: row.socioId ?? null,
+        },
+      });
+      imported += 1;
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/mapa");
+    return { ok: true, imported, skipped: 0 };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] importMapMilestonesFromCsv failed:", error);
+    return { ok: false, error: "No se pudo importar el CSV de hitos." };
   }
 }

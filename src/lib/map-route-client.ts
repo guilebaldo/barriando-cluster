@@ -14,6 +14,8 @@ export type MapRoutePoint = {
   hasSeasonalStamp?: boolean;
   /** Logo para popup de sello (negocios de BD o catálogo). */
   stampLogoSrc?: string;
+  /** Texto editable del hito (admin); si falta, UI usa getHitoIntro. */
+  description?: string;
 };
 
 export type MapRouteResult = {

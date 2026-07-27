@@ -182,6 +182,7 @@ function loadCsvMilestones(): RawPoint[] {
           kind: "milestone" as const,
           category: socio ? "Hito + Socio certificado" : "Hito patrimonial",
           zone: findHitoZone(row.name),
+          socioId: socio?.id,
         };
       })
       .filter(Boolean) as RawPoint[];
@@ -190,30 +191,52 @@ function loadCsvMilestones(): RawPoint[] {
   }
 }
 
-async function loadActiveMilestones(): Promise<RawPoint[]> {
-  const fromCsv = loadCsvMilestones();
-  if (fromCsv.length > 0) return fromCsv;
+/** Filas del CSV + coords resueltas — para seed/import admin (no runtime MAP). */
+export function loadCsvMilestoneSeedRows(): Array<{
+  name: string;
+  latitude: number;
+  longitude: number;
+  mapsUrl: string;
+  zone?: number;
+  socioId?: number;
+}> {
+  return loadCsvMilestones().map((p) => ({
+    name: p.name,
+    latitude: p.latitude,
+    longitude: p.longitude,
+    mapsUrl: p.mapsUrl,
+    zone: p.zone,
+    socioId: p.socioId,
+  }));
+}
 
+async function loadActiveMilestones(): Promise<RawPoint[]> {
   try {
     const rows = await prisma.mapMilestone.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
     });
 
-    return rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      latitude: row.latitude,
-      longitude: row.longitude,
-      mapsUrl: row.mapsUrl,
-      kind: "milestone" as const,
-      category: row.businessId ? "Hito + Socio certificado" : "Hito patrimonial",
-      zone: row.zone ?? findHitoZone(row.name),
-    }));
+    if (rows.length > 0) {
+      return rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        mapsUrl: row.mapsUrl,
+        kind: "milestone" as const,
+        category: row.businessId ? "Hito + Socio certificado" : "Hito patrimonial",
+        zone: row.zone ?? findHitoZone(row.name),
+        socioId: row.businessId ?? undefined,
+        description: row.description ?? undefined,
+      }));
+    }
   } catch (error) {
-    console.error("[map] loadActiveMilestones failed:", error);
-    return [];
+    console.error("[map] loadActiveMilestones DB failed:", error);
   }
+
+  // Fallback: CSV solo si la tabla está vacía / inaccesible
+  return loadCsvMilestones();
 }
 
 /** Socios Gran Empresa del catálogo + aliados destacados en el corredor MAPA (p. ej. Cosme Tortas). */

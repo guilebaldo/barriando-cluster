@@ -236,17 +236,18 @@ model Business {
 }
 
 model MapMilestone {
-  id         String    @id @default(cuid())
-  name       String    @unique
-  latitude   Float
-  longitude  Float
-  mapsUrl    String
-  active     Boolean   @default(true)
-  zone       Int?
-  businessId Int?
-  business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  latitude    Float
+  longitude   Float
+  mapsUrl     String
+  active      Boolean   @default(true)
+  zone        Int?
+  businessId  Int?
+  business    Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([active])
   @@map("MapMilestone")

@@ -48,6 +48,7 @@ async function fetchLiveStats(): Promise<LiveStats> {
       sealedPassportGroups,
       stampsLast30Days,
       subscriptions,
+      mapMilestones,
     ] = await Promise.all([
       getPublicSociosList(),
       prisma.user.count({
@@ -73,10 +74,12 @@ async function fetchLiveStats(): Promise<LiveStats> {
         where: { status: { in: [...ACTIVE_STATUSES] } },
         _count: { plan: true },
       }),
+      prisma.mapMilestone.count({ where: { active: true } }),
     ]);
 
     const certifiedBusinesses = publicSocios.length;
-    const mapMilestones = listaHitos.length;
+    const milestoneCount =
+      mapMilestones > 0 ? mapMilestones : listaHitos.length;
     const totalSocios = certifiedBusinesses + activeVecinos;
     const sealedPassports = sealedPassportGroups.length;
 
@@ -86,7 +89,7 @@ async function fetchLiveStats(): Promise<LiveStats> {
     }
 
     return {
-      mapMilestones,
+      mapMilestones: milestoneCount,
       totalSocios,
       certifiedBusinesses,
       registeredTourists,
@@ -101,6 +104,6 @@ async function fetchLiveStats(): Promise<LiveStats> {
   }
 }
 
-export const getLiveStats = unstable_cache(fetchLiveStats, ["live-stats-v3"], {
+export const getLiveStats = unstable_cache(fetchLiveStats, ["live-stats-v4"], {
   revalidate: 300,
 });

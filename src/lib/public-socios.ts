@@ -237,13 +237,15 @@ function rosterBenefit(membership: CatalogMembershipRow): SocioBenefitInfo | nul
 function catalogSocioFromRoster(
   socioId: number,
   membership: CatalogMembershipRow,
-  websiteOverrides: Map<number, string>
+  websiteOverrides: Map<number, string>,
+  businesses: Map<number, { website: string | null; mapsUrl: string | null; latitude: number | null; longitude: number | null }>
 ): Socio | null {
   const catalog = listaSocios.find((s) => s.id === socioId);
   const name = membership.businessName?.trim() || catalog?.name;
   if (!name) return null;
 
   const overrideUrl = websiteOverrides.get(socioId);
+  const biz = businesses.get(socioId);
   const foto = catalog?.foto || slugFromName(name);
 
   return {
@@ -252,12 +254,12 @@ function catalogSocioFromRoster(
     categoria:
       membership.category?.trim() || catalog?.categoria || "Negocio certificado",
     foto,
-    url: overrideUrl || catalog?.url || "#",
-    direccion: mapsLinkFrom(catalog?.direccion),
+    url: overrideUrl || biz?.website?.trim() || catalog?.url || "#",
+    direccion: mapsLinkFrom(biz?.mapsUrl, catalog?.direccion),
     membershipPlan: membership.plan as Socio["membershipPlan"],
     benefit: rosterBenefit(membership),
-    latitude: catalog?.latitude ?? null,
-    longitude: catalog?.longitude ?? null,
+    latitude: biz?.latitude ?? catalog?.latitude ?? null,
+    longitude: biz?.longitude ?? catalog?.longitude ?? null,
     logoUrl: catalog?.logoUrl ?? null,
   };
 }
@@ -354,9 +356,35 @@ export async function getPublicSociosList(): Promise<Socio[]> {
     loadActiveCatalogMemberships(),
   ]);
 
+  const socioIds = [...memberships.keys()];
+  const businessRows =
+    socioIds.length > 0
+      ? await prisma.business.findMany({
+          where: { id: { in: socioIds } },
+          select: {
+            id: true,
+            website: true,
+            mapsUrl: true,
+            latitude: true,
+            longitude: true,
+          },
+        })
+      : [];
+  const businesses = new Map(
+    businessRows.map((b) => [
+      b.id,
+      {
+        website: b.website,
+        mapsUrl: b.mapsUrl,
+        latitude: b.latitude,
+        longitude: b.longitude,
+      },
+    ])
+  );
+
   const fromRoster: Socio[] = [];
   for (const [socioId, membership] of memberships) {
-    const entry = catalogSocioFromRoster(socioId, membership, websiteOverrides);
+    const entry = catalogSocioFromRoster(socioId, membership, websiteOverrides, businesses);
     if (entry) fromRoster.push(entry);
   }
 

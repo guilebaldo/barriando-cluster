@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Gift, Pencil, Search, X } from "lucide-react";
+import { CheckCircle2, Gift, Pencil, Plus, Search, X } from "lucide-react";
 import {
   approveLinkage,
   approveManualCertification,
+  createManualCatalogSocio,
   setCatalogMembershipStatus,
   type AdminUserRow,
   type CatalogMembershipRow,
@@ -13,6 +14,7 @@ import {
 } from "./actions";
 import { isLinkagePending } from "@/lib/linkage";
 import { computeAdminOpsStats, formatExpiryShort } from "@/lib/admin-ops";
+import { PLAN_ADMIN_LABELS, PAYMENT_METHOD_OPTIONS } from "@/lib/admin-labels";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminEditDrawer from "./AdminEditDrawer";
 import AdminPagination from "./AdminPagination";
@@ -32,6 +34,26 @@ type OpsFilter =
   | "expiring";
 
 const PAGE_SIZE = 10;
+
+const BUSINESS_PLAN_OPTIONS = [
+  "NEGOCIO_FAMILIAR",
+  "MEDIANA_EMPRESA",
+  "GRAN_EMPRESA",
+] as const;
+
+type BusinessRosterPlan = (typeof BUSINESS_PLAN_OPTIONS)[number];
+
+const emptyManualForm = {
+  businessName: "",
+  category: "",
+  plan: "NEGOCIO_FAMILIAR" as BusinessRosterPlan,
+  paymentMethod: "transfer",
+  currentPeriodEnd: "",
+  website: "",
+  mapsUrl: "",
+  latitude: "",
+  longitude: "",
+};
 
 function normalizeName(value: string): string {
   return value
@@ -107,6 +129,9 @@ export default function AdminOperations({
   const [editingRow, setEditingRow] = useState<CatalogMembershipRow | null>(null);
   const [msg, setMsg] = useState("");
   const [page, setPage] = useState(1);
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualBusy, setManualBusy] = useState(false);
+  const [manualForm, setManualForm] = useState(emptyManualForm);
 
   const stats = useMemo(
     () => computeAdminOpsStats(membershipRows, users),
@@ -314,6 +339,54 @@ export default function AdminOperations({
     router.refresh();
   }
 
+  async function handleCreateManualSocio() {
+    setMsg("");
+    setManualBusy(true);
+    const latRaw = manualForm.latitude.trim();
+    const lngRaw = manualForm.longitude.trim();
+    const lat = latRaw ? Number(latRaw) : null;
+    const lng = lngRaw ? Number(lngRaw) : null;
+    if ((latRaw && !Number.isFinite(lat)) || (lngRaw && !Number.isFinite(lng))) {
+      setManualBusy(false);
+      playCuelume("error");
+      setMsg("Lat/lng inválidos.");
+      return;
+    }
+    if ((lat != null) !== (lng != null)) {
+      setManualBusy(false);
+      playCuelume("error");
+      setMsg("Indica latitud y longitud juntas, o ninguna.");
+      return;
+    }
+
+    const result = await createManualCatalogSocio({
+      businessName: manualForm.businessName,
+      category: manualForm.category,
+      plan: manualForm.plan,
+      paymentMethod: manualForm.paymentMethod,
+      currentPeriodEnd: manualForm.currentPeriodEnd,
+      website: manualForm.website,
+      mapsUrl: manualForm.mapsUrl,
+      latitude: lat,
+      longitude: lng,
+    });
+    setManualBusy(false);
+    if (!result.ok) {
+      playCuelume("error");
+      setMsg(result.error ?? "Error");
+      return;
+    }
+    playCuelume("success");
+    setMsg(
+      result.socioId
+        ? `Socio creado en roster (#${result.socioId}) — sin cuenta de plataforma.`
+        : "Socio creado en roster."
+    );
+    setManualForm(emptyManualForm);
+    setShowManualForm(false);
+    router.refresh();
+  }
+
   const editingLinked =
     editingRow != null ? usersBySocioId.get(editingRow.socioId) ?? null : null;
   const editingCatalog =
@@ -432,6 +505,114 @@ export default function AdminOperations({
         <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
           {msg}
         </p>
+      ) : null}
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowManualForm((v) => !v)}
+          className="inline-flex items-center gap-1.5 bg-[#27366D] hover:bg-[#1e2b58] text-white text-[11px] font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          {showManualForm ? "Cerrar formulario" : "Nuevo socio"}
+        </button>
+      </div>
+
+      {showManualForm ? (
+        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-sm">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Alta manual (sin cuenta)
+            </p>
+            <p className="text-xs text-slate-500 mt-1 font-light">
+              Crea solo la entrada de roster. El negocio aparece en directorio/pasaporte; no se crea login.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3 text-xs">
+            <input
+              className="border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
+              placeholder="Nombre del negocio *"
+              value={manualForm.businessName}
+              onChange={(e) => setManualForm((f) => ({ ...f, businessName: e.target.value }))}
+            />
+            <input
+              className="border border-slate-200 rounded-lg p-2.5"
+              placeholder="Categoría / giro *"
+              value={manualForm.category}
+              onChange={(e) => setManualForm((f) => ({ ...f, category: e.target.value }))}
+            />
+            <select
+              className="border border-slate-200 rounded-lg p-2.5 bg-white"
+              value={manualForm.plan}
+              onChange={(e) =>
+                setManualForm((f) => ({
+                  ...f,
+                  plan: e.target.value as BusinessRosterPlan,
+                }))
+              }
+            >
+              {BUSINESS_PLAN_OPTIONS.map((plan) => (
+                <option key={plan} value={plan}>
+                  {PLAN_ADMIN_LABELS[plan]}
+                </option>
+              ))}
+            </select>
+            <select
+              className="border border-slate-200 rounded-lg p-2.5 bg-white"
+              value={manualForm.paymentMethod}
+              onChange={(e) => setManualForm((f) => ({ ...f, paymentMethod: e.target.value }))}
+            >
+              {PAYMENT_METHOD_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <input
+              type="date"
+              className="border border-slate-200 rounded-lg p-2.5"
+              value={manualForm.currentPeriodEnd}
+              onChange={(e) => setManualForm((f) => ({ ...f, currentPeriodEnd: e.target.value }))}
+              aria-label="Fecha de vencimiento"
+            />
+            <input
+              className="border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
+              placeholder="Website (opcional, https://…)"
+              value={manualForm.website}
+              onChange={(e) => setManualForm((f) => ({ ...f, website: e.target.value }))}
+            />
+            <input
+              className="border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
+              placeholder="URL Google Maps (opcional)"
+              value={manualForm.mapsUrl}
+              onChange={(e) => setManualForm((f) => ({ ...f, mapsUrl: e.target.value }))}
+            />
+            <input
+              className="border border-slate-200 rounded-lg p-2.5"
+              placeholder="Latitud (opcional)"
+              type="number"
+              step="any"
+              value={manualForm.latitude}
+              onChange={(e) => setManualForm((f) => ({ ...f, latitude: e.target.value }))}
+            />
+            <input
+              className="border border-slate-200 rounded-lg p-2.5"
+              placeholder="Longitud (opcional)"
+              type="number"
+              step="any"
+              value={manualForm.longitude}
+              onChange={(e) => setManualForm((f) => ({ ...f, longitude: e.target.value }))}
+            />
+          </div>
+          <button
+            type="button"
+            disabled={manualBusy}
+            onClick={() => void handleCreateManualSocio()}
+            className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg disabled:opacity-40"
+          >
+            {manualBusy ? "Creando…" : "Crear socio en roster"}
+          </button>
+        </div>
       ) : null}
 
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">

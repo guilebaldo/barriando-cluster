@@ -11,6 +11,7 @@ import {
   listHomePromos,
   listCatalogSocioRows,
   listCatalogMemberships,
+  listMapMilestones,
 } from "./actions";
 import { expireMembershipsAfterGraceIfNeeded } from "@/lib/subscription-lifecycle";
 import { reconcilePaidBusinessesIntoRoster } from "@/lib/publish-business";
@@ -31,13 +32,15 @@ export default async function AdminPage({
   const focus =
     params.focus === "payments" || params.focus === "linkages" ? params.focus : undefined;
 
-  const [users, testimonials, homePromos, catalogRows, membershipRows] = await Promise.all([
-    listAdminUsers(),
-    listTestimonials(),
-    listHomePromos(),
-    listCatalogSocioRows(),
-    listCatalogMemberships(),
-  ]);
+  const [users, testimonials, homePromos, catalogRows, membershipRows, milestones] =
+    await Promise.all([
+      listAdminUsers(),
+      listTestimonials(),
+      listHomePromos(),
+      listCatalogSocioRows(),
+      listCatalogMemberships(),
+      listMapMilestones(),
+    ]);
 
   return (
     <SiteShell>
@@ -49,6 +52,7 @@ export default async function AdminPage({
           homePromos={homePromos}
           catalogRows={catalogRows}
           membershipRows={membershipRows}
+          milestones={milestones}
           initialFocus={focus}
         />
       </main>
