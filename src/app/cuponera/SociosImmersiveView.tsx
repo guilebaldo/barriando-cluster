@@ -15,6 +15,7 @@ import {
 import SocioLogo from "../components/SocioLogo";
 import type { Socio, SocioBenefitInfo } from "../data/socios";
 import BenefitRedeemQr from "./BenefitRedeemQr";
+import { useAppMobileShell } from "@/app/components/AppBottomNav";
 
 const SociosMap = dynamic(() => import("../components/SociosMapLeaflet"), {
   ssr: false,
@@ -52,6 +53,7 @@ export default function SociosImmersiveView({
   const sheetRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
   const didApplyInitialSocio = useRef(false);
+  const appShell = useAppMobileShell();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
@@ -148,12 +150,12 @@ export default function SociosImmersiveView({
     const endY = event.changedTouches[0]?.clientY;
     if (endY == null) return;
     const delta = touchStartY.current - endY;
-    if (delta > 48) {
+    if (delta > 28) {
       setSheetMode((m) => {
         if (selectedId != null) return m === "peek" ? "half" : "half";
         return stepSheet(m, 1);
       });
-    } else if (delta < -48) {
+    } else if (delta < -28) {
       setSheetMode((m) => stepSheet(m, -1));
     }
     touchStartY.current = null;
@@ -503,15 +505,23 @@ export default function SociosImmersiveView({
       />
 
       <div
-        className={`absolute inset-x-0 z-20 pointer-events-none transition-[top] duration-300 ease-out ${
-          sheetMode === "full" ? "top-3 bottom-0" : "bottom-0 top-auto"
+        className={`absolute inset-x-0 z-20 pointer-events-none transition-[top,bottom] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+          sheetMode === "full"
+            ? `top-[max(0.75rem,env(safe-area-inset-top,0px))] ${
+                appShell
+                  ? "bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))]"
+                  : "bottom-0"
+              }`
+            : appShell
+              ? "bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] top-auto"
+              : "bottom-0 top-auto"
         }`}
         onTouchStart={onSheetTouchStart}
         onTouchEnd={onSheetTouchEnd}
       >
         <div
           ref={sheetRef}
-          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius] duration-300 ease-out ${
+          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius,transform] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-[max-height,transform] ${
             sheetMode === "full"
               ? "h-full rounded-t-3xl"
               : sheetMode === "half"

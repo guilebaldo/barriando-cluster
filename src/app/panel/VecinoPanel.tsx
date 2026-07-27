@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ArrowUpCircle, CreditCard, Gift } from "lucide-react";
+import { ArrowUpCircle, CreditCard } from "lucide-react";
 import {
   formatNextChargeDate,
   formatRenewalDisplay,
@@ -244,25 +244,6 @@ export default function VecinoPanel({
 
         {payMsg && <p className="text-xs mt-3 text-slate-600">{payMsg}</p>}
         {cancelMsg && <p className="text-xs mt-3 text-slate-600">{cancelMsg}</p>}
-      </section>
-
-      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <Gift className="w-4 h-4 text-[#27366D]" />
-          <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-            Cupones y convenios
-          </h2>
-        </div>
-        <p className="text-sm text-slate-600 font-light mb-4">
-          Consulta los negocios que ofrecen descuentos, cortesías o acceso preferente a socios de
-          pago.
-        </p>
-        <Link
-          href="/cuponera?cupones=1"
-          className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition"
-        >
-          Consultar cupones
-        </Link>
       </section>
 
       {showCredential && (

@@ -1,12 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { BookOpen, Gift, IdCard, Map as MapIcon } from "lucide-react";
+import { BookOpen, Camera, Gift, IdCard, Map as MapIcon } from "lucide-react";
 import { isAdminUser } from "@/lib/admin";
 import { isPaidMember } from "@/lib/membresia";
 import type { MembershipPlan } from "@/generated/prisma/client";
+
+export const APP_TAB_BOTTOM =
+  "calc(3.5rem + env(safe-area-inset-bottom, 0px))" as const;
 
 export function useAppMobileShell(): boolean {
   const { data: session, status } = useSession();
@@ -21,7 +25,12 @@ export function useAppMobileShell(): boolean {
 }
 
 const TABS = [
-  { href: "/mapa", label: "MAPA", icon: MapIcon, match: (p: string) => p === "/mapa" || p.startsWith("/mapa/") },
+  {
+    href: "/mapa",
+    label: "MAPA",
+    icon: MapIcon,
+    match: (p: string) => p === "/mapa" || p.startsWith("/mapa/"),
+  },
   {
     href: "/cuponera?cupones=1",
     label: "Cuponera",
@@ -29,11 +38,17 @@ const TABS = [
     match: (p: string) => p === "/cuponera" || p.startsWith("/cuponera/"),
   },
   {
+    href: "/pasaporte?escanear=1",
+    label: "Escanear",
+    icon: Camera,
+    match: () => false,
+    primary: true as const,
+  },
+  {
     href: "/barrid",
     label: "BarrID",
     icon: IdCard,
     match: (p: string) => p === "/barrid" || p.startsWith("/barrid/"),
-    primary: true,
   },
   {
     href: "/pasaporte",
@@ -48,14 +63,25 @@ const TABS = [
 export default function AppBottomNav() {
   const pathname = usePathname();
   const enabled = useAppMobileShell();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!enabled) {
+      root.classList.remove("app-mobile-shell");
+      return;
+    }
+    root.classList.add("app-mobile-shell");
+    return () => root.classList.remove("app-mobile-shell");
+  }, [enabled]);
+
   if (!enabled) return null;
 
   return (
     <nav
-      className="md:hidden fixed inset-x-0 bottom-0 z-[70] border-t border-[#1e2b58] bg-[#27366D]/98 backdrop-blur-md pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed inset-x-0 bottom-0 z-[70] bg-[#27366D] pb-[env(safe-area-inset-bottom,0px)]"
       aria-label="Navegación de app"
     >
-      <ul className="grid grid-cols-4 h-14 max-w-lg mx-auto">
+      <ul className="grid grid-cols-5 h-14 max-w-lg mx-auto border-t border-[#1e2b58]">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const active = tab.match(pathname);
@@ -64,23 +90,21 @@ export default function AppBottomNav() {
             <li key={tab.label} className="min-w-0">
               <Link
                 href={tab.href}
-                className={`flex h-full flex-col items-center justify-center gap-0.5 px-1 transition ${
-                  active ? "text-amber-400" : "text-slate-300 hover:text-white"
+                className={`flex h-full flex-col items-center justify-center gap-0.5 px-0.5 transition ${
+                  active ? "text-amber-400" : "text-slate-300 active:text-white"
                 }`}
                 aria-current={active ? "page" : undefined}
               >
                 <span
                   className={`inline-flex items-center justify-center rounded-full ${
                     primary
-                      ? active
-                        ? "bg-amber-500 text-slate-950 w-9 h-9 -mt-1"
-                        : "bg-white/15 text-white w-9 h-9 -mt-1"
+                      ? "bg-amber-500 text-slate-950 w-10 h-10 -mt-2 shadow-md shadow-black/25"
                       : ""
                   }`}
                 >
-                  <Icon className={primary ? "w-5 h-5" : "w-4.5 h-4.5 w-[1.125rem] h-[1.125rem]"} />
+                  <Icon className={primary ? "w-5 h-5" : "w-[1.125rem] h-[1.125rem]"} />
                 </span>
-                <span className="text-[9px] font-bold uppercase tracking-wider truncate max-w-full">
+                <span className="text-[8px] font-bold uppercase tracking-wider truncate max-w-full">
                   {tab.label}
                 </span>
               </Link>

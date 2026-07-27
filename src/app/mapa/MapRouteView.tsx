@@ -21,6 +21,20 @@ import MapGeoModal from "./MapGeoModal";
 import { MapBusinessSignupLink } from "./MapBusinessSignupLink";
 import type { UserMapLocation } from "./user-map-location";
 import QrScanModal from "../components/QrScanModal";
+import { useAppMobileShell } from "@/app/components/AppBottomNav";
+
+function describeGeoError(err: GeolocationPositionError): string {
+  switch (err.code) {
+    case err.PERMISSION_DENIED:
+      return "Bloqueaste el permiso de ubicación. Actívalo en Ajustes del navegador o de la app e intenta de nuevo.";
+    case err.POSITION_UNAVAILABLE:
+      return "No se pudo obtener tu posición. Revisa que el GPS / Ubicación del celular esté encendido en Ajustes.";
+    case err.TIMEOUT:
+      return "Se agotó el tiempo esperando el GPS. Enciende la ubicación en Ajustes y vuelve a intentar.";
+    default:
+      return "No se pudo usar tu ubicación. Revisa que el GPS esté activo e intenta de nuevo.";
+  }
+}
 
 const MapRouteMap = dynamic(() => import("./MapRouteMap"), {
   ssr: false,
@@ -73,7 +87,9 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const [route, setRoute] = useState(initialRoute);
   const [selectedId, setSelectedId] = useState<string | null>(initialRoute.points[0]?.id ?? null);
   const [cardIndex, setCardIndex] = useState(0);
+  const appShell = useAppMobileShell();
   const [geoModalOpen, setGeoModalOpen] = useState(false);
+  const [geoDetail, setGeoDetail] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<UserMapLocation | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [sheetExpanded, setSheetExpanded] = useState(true);
@@ -155,12 +171,15 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
   const requestGeolocation = useCallback(() => {
     if (!navigator.geolocation) {
+      setGeoDetail("Este dispositivo no soporta geolocalización.");
       setGeoModalOpen(true);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        setGeoDetail(null);
+        setGeoModalOpen(false);
         applyInitialRouteFromLocation({
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
@@ -171,18 +190,23 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
               : null,
         });
       },
-      () => setGeoModalOpen(true),
+      (err) => {
+        setGeoDetail(describeGeoError(err));
+        setGeoModalOpen(true);
+      },
       { enableHighAccuracy: true, timeout: 12_000, maximumAge: 30_000 }
     );
   }, [applyInitialRouteFromLocation]);
 
   useEffect(() => {
     if (!navigator.geolocation) {
+      setGeoDetail("Este dispositivo no soporta geolocalización.");
       setGeoModalOpen(true);
       return;
     }
 
     const onSuccess = (pos: GeolocationPosition) => {
+      setGeoDetail(null);
       const heading =
         typeof pos.coords.heading === "number" && Number.isFinite(pos.coords.heading)
           ? pos.coords.heading
@@ -201,7 +225,10 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       }
     };
 
-    const onError = () => setGeoModalOpen(true);
+    const onError = (err: GeolocationPositionError) => {
+      setGeoDetail(describeGeoError(err));
+      setGeoModalOpen(true);
+    };
 
     navigator.geolocation.getCurrentPosition(onSuccess, onError, {
       enableHighAccuracy: true,
@@ -306,8 +333,8 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     const endY = event.changedTouches[0]?.clientY;
     if (endY == null) return;
     const delta = touchStartY.current - endY;
-    if (delta > 48) setSheetExpanded(true);
-    else if (delta < -48) setSheetExpanded(false);
+    if (delta > 28) setSheetExpanded(true);
+    else if (delta < -28) setSheetExpanded(false);
     touchStartY.current = null;
   };
 
@@ -390,10 +417,16 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         />
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-20 px-2 sm:px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div
+        className={`absolute left-0 right-0 z-20 px-2 sm:px-4 ${
+          appShell
+            ? "bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] pb-2"
+            : "bottom-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        }`}
+      >
         <div
           ref={sheetRef}
-          className={`max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl overflow-hidden transition-[max-height] duration-300 ease-out overscroll-contain ${
+          className={`max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl overflow-hidden transition-[max-height,transform] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overscroll-contain will-change-[max-height] ${
             sheetExpanded
               ? welcomeOpen
                 ? "max-h-[min(62vh,480px)]"
@@ -492,6 +525,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         open={geoModalOpen}
         onClose={() => setGeoModalOpen(false)}
         onRetry={requestGeolocation}
+        detail={geoDetail}
       />
 
       <QrScanModal

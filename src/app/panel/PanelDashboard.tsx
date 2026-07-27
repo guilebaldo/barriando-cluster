@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import {
   MEMBERSHIP_PLANS,
   formatPlanPriceMxn,
@@ -57,6 +57,7 @@ import {
   ArrowUpCircle,
   ArrowLeft,
   X,
+  LogOut,
 } from "lucide-react";
 
 interface SocioOption {
@@ -897,6 +898,23 @@ export default function PanelDashboard({
         onConfirm={handleCancelMembership}
         onCancel={() => setShowCancelDialog(false)}
       />
+
+      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest mb-2">
+          Cuenta
+        </h2>
+        <p className="text-sm text-slate-600 font-light mb-4">
+          Cierra tu sesión en este dispositivo. Podrás volver a entrar con Google o correo.
+        </p>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/" })}
+          className="inline-flex items-center justify-center gap-2 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
+        >
+          <LogOut className="w-4 h-4" />
+          Cerrar sesión
+        </button>
+      </section>
     </div>
   );
 }

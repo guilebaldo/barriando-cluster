@@ -561,6 +561,15 @@ function PasaporteInner({
     : animatedStats;
 
   useEffect(() => {
+    if (searchParams.get("escanear") !== "1") return;
+    setScannerOpen(true);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("escanear");
+    const qs = params.toString();
+    router.replace(qs ? `/pasaporte?${qs}` : "/pasaporte", { scroll: false });
+  }, [searchParams, router]);
+
+  useEffect(() => {
     if (isPoblanoComplete) {
       setShowPoblanoCelebration(true);
       const t = setTimeout(() => setShowPoblanoCelebration(false), 4000);
@@ -638,7 +647,11 @@ function PasaporteInner({
 
   const pageContent = (
     <>
-      <div className={`py-2 sm:py-4 px-2 sm:px-4 ${isAuthenticated ? "pb-6" : "pb-6"}`}>
+      <div
+        className={`py-2 sm:py-4 px-2 sm:px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] sm:pt-4 ${
+          isAuthenticated ? "pb-6" : "pb-6"
+        }`}
+      >
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         {!isAuthenticated && (
           <PasaporteInfoCard className="mb-5 sm:mb-6" pendingStamp={pendingStamp} />

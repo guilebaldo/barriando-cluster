@@ -26,8 +26,13 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Shell app móvil (BarrID): deja espacio al tab bar inferior */
+  /* Shell app móvil (BarrID): navy bajo el home indicator + espacio al tab bar */
   @media (max-width: 767px) {
+    html.app-mobile-shell,
+    html.app-mobile-shell body {
+      background-color: #27366d;
+    }
+
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell {
       padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));

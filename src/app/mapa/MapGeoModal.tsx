@@ -6,16 +6,19 @@ export default function MapGeoModal({
   open,
   onClose,
   onRetry,
+  detail,
 }: {
   open: boolean;
   onClose: () => void;
   onRetry: () => void;
+  /** Mensaje concreto (p. ej. GPS apagado en Ajustes). */
+  detail?: string | null;
 }) {
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4 bg-black/45 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/45 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="map-geo-title"
@@ -41,6 +44,14 @@ export default function MapGeoModal({
           Permite el acceso a tu ubicación para ver tu posición en el mapa y ordenar la ruta desde el hito más
           cercano a ti.
         </p>
+        {detail ? (
+          <p
+            className="mt-3 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200/80 rounded-xl px-3 py-2.5 leading-snug"
+            role="status"
+          >
+            {detail}
+          </p>
+        ) : null}
 
         <div className="flex flex-col gap-2 mt-6">
           <button
@@ -48,7 +59,7 @@ export default function MapGeoModal({
             onClick={onRetry}
             className="w-full bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl transition active:scale-[0.98]"
           >
-            Permitir ubicación
+            Reintentar ubicación
           </button>
           <button
             type="button"

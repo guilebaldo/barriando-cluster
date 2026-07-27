@@ -262,8 +262,8 @@ export default function BarrIdClient(props: BarrIdClientProps) {
     const end = e.changedTouches[0]?.clientY;
     if (end == null) return;
     const delta = start - end;
-    if (delta > 40) setSheetExpanded(true);
-    if (delta < -40) setSheetExpanded(false);
+    if (delta > 28) setSheetExpanded(true);
+    if (delta < -28) setSheetExpanded(false);
   }
 
   const countdown =
@@ -282,8 +282,10 @@ export default function BarrIdClient(props: BarrIdClientProps) {
       {/* —— Móvil: QR fijo + ficha azul casi fullscreen —— */}
       <div className="md:hidden relative h-full w-full overflow-hidden overscroll-none">
         <div
-          className={`absolute inset-0 flex flex-col items-center justify-center px-4 pt-2 pointer-events-none ${
-            appShell ? "pb-36" : "pb-28"
+          className={`absolute inset-0 flex flex-col items-center justify-center px-4 pointer-events-none ${
+            appShell
+              ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-36"
+              : "pt-2 pb-28"
           }`}
         >
           <QrPanel
@@ -298,13 +300,15 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         </div>
 
         <div
-          className={`absolute inset-x-0 z-20 transition-[top] duration-300 ease-out ${sheetBottom} ${
-            sheetExpanded ? "top-3" : "top-auto"
+          className={`absolute inset-x-0 z-20 transition-[top] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${sheetBottom} ${
+            sheetExpanded
+              ? "top-[max(0.75rem,env(safe-area-inset-top,0px))]"
+              : "top-auto"
           }`}
         >
           <div
             ref={sheetRef}
-            className={`mx-auto w-full h-full bg-[#27366D] text-white overflow-hidden flex flex-col transition-[max-height,border-radius] duration-300 ease-out overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] ${
+            className={`mx-auto w-full h-full bg-[#27366D] text-white overflow-hidden flex flex-col transition-[max-height,border-radius,transform] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] will-change-[max-height,transform] ${
               sheetExpanded ? "rounded-t-3xl" : "max-h-[7.25rem] rounded-t-3xl"
             }`}
             onTouchStart={onSheetTouchStart}
@@ -412,31 +416,6 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                     <dd className="font-bold text-white text-right">{props.renewalLabel}</dd>
                   </div>
                 </dl>
-
-                <Link
-                  href="/cuponera?cupones=1"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-4 py-4 rounded-2xl transition shadow-sm"
-                >
-                  <Gift className="w-5 h-5" />
-                  Mis Cupones
-                </Link>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Link
-                    href="/pasaporte"
-                    className="inline-flex items-center justify-center gap-2 border border-white/30 bg-white/10 text-white font-bold text-xs uppercase tracking-wider px-3 py-4 rounded-2xl hover:bg-white/15 transition"
-                  >
-                    <BookOpen className="w-5 h-5" />
-                    Pasaporte
-                  </Link>
-                  <Link
-                    href="/mapa"
-                    className="inline-flex items-center justify-center gap-2 border border-white/30 bg-white/10 text-white font-bold text-xs uppercase tracking-wider px-3 py-4 rounded-2xl hover:bg-white/15 transition"
-                  >
-                    <MapIcon className="w-5 h-5" />
-                    MAPA
-                  </Link>
-                </div>
               </div>
             )}
           </div>
