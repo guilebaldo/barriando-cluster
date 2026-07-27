@@ -36,13 +36,19 @@
     }
 
     html.app-mobile-shell .map-immersive-shell,
-    html.app-mobile-shell .barrid-shell {
+    html.app-mobile-shell .barrid-shell,
+    html.app-mobile-shell .panel-mobile-shell {
       padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
 
-    /* Páginas con scroll (panel, etc.): el contenido no queda bajo el hub */
+    /* Páginas con scroll genéricas (no panel-mobile-shell): hueco bajo el hub */
     html.app-mobile-shell body {
       padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Panel immersive: el padding va en .panel-mobile-shell, no duplicar en body */
+    html.app-mobile-shell:has(.panel-mobile-shell) body {
+      padding-bottom: 0;
     }
   }
 

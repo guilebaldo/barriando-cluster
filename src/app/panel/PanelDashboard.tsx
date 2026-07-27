@@ -58,7 +58,15 @@ import {
   ArrowLeft,
   X,
   LogOut,
+  Link2,
+  Gift,
+  QrCode,
+  IdCard,
+  MapPin,
+  BookOpen,
+  Stamp,
 } from "lucide-react";
+import PanelMobile, { type PanelMobileRow } from "./PanelMobile";
 
 interface SocioOption {
   id: number;
@@ -362,24 +370,427 @@ export default function PanelDashboard({
   const suppressTopPaymentNotice =
     dismissedNotice || showLinkageCtaBanner || hasBusinessEstablished;
 
-  return (
-    <div className="space-y-6">
-      {/* Mobile: cuenta + salir visibles sin scroll */}
-      <div className="md:hidden flex items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3.5 shadow-sm">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Mi cuenta</p>
-          <p className="text-sm font-bold text-slate-900 truncate">{user.nombre}</p>
-          <p className="text-xs text-slate-500 truncate">{user.email}</p>
+  const mobileNotices = (
+    <>
+      {activePaymentNotice && !suppressTopPaymentNotice && (
+        <div className="relative bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 pr-10 text-xs">
+          <button
+            type="button"
+            onClick={dismissPaymentNotice}
+            className="absolute top-3 right-3 text-emerald-700 hover:text-emerald-900 transition"
+            aria-label="Cerrar aviso"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          {activePaymentNotice}
         </div>
-        <button
-          type="button"
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="shrink-0 inline-flex items-center justify-center gap-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 active:bg-slate-100 font-bold text-[11px] uppercase tracking-wider px-3.5 py-2.5 rounded-lg transition touch-manipulation"
-        >
-          <LogOut className="w-4 h-4" />
-          Salir
-        </button>
+      )}
+      {showTransferPendingBanner && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-sm">
+          <p className="font-bold text-[#27366D] mb-1">Pago pendiente de revisión</p>
+          <p className="text-xs font-light leading-relaxed">
+            Tu pago por transferencia está siendo revisado por el administrador. Una vez confirmado, se
+            habilitarán las herramientas para dar de alta o vincular tu negocio.
+          </p>
+        </div>
+      )}
+      {paymentRejected && !paymentRejectedDismissed && (
+        <div className="relative bg-red-50 border border-red-200 text-red-900 rounded-xl p-4 text-xs leading-relaxed">
+          <button
+            type="button"
+            onClick={() => {
+              markPanelNoticeSeen(user.id, "payment_rejected");
+              setPaymentRejectedDismissed(true);
+            }}
+            className="absolute top-3 right-3 text-red-700 hover:text-red-900"
+            aria-label="Cerrar aviso"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <p className="font-bold mb-1 pr-6">Tu pago fue rechazado</p>
+          <p>
+            Intenta de nuevo con otro método de pago o reenvía la foto de tu comprobante a{" "}
+            <a href="mailto:guilebaldoruiz@gmail.com" className="underline font-semibold">
+              guilebaldoruiz@gmail.com
+            </a>
+            .
+          </p>
+        </div>
+      )}
+      {linkageRejected && !linkageRejectedDismissed && (
+        <div className="relative bg-red-50 border border-red-200 text-red-900 rounded-xl p-4 text-xs leading-relaxed">
+          <button
+            type="button"
+            onClick={() => {
+              markPanelNoticeSeen(user.id, "linkage_rejected");
+              setLinkageRejectedDismissed(true);
+            }}
+            className="absolute top-3 right-3 text-red-700 hover:text-red-900"
+            aria-label="Cerrar aviso"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <p className="font-bold mb-1 pr-6">Tu vinculación o alta fue rechazada</p>
+          <p>
+            Revisa los datos y vuelve a enviar la solicitud con la información correcta.
+          </p>
+        </div>
+      )}
+      {showWelcome && (
+        <div className="bg-gradient-to-r from-[#27366D] to-[#1e2b58] text-white rounded-xl p-5 border border-amber-400/30">
+          <p className="text-lg font-black font-serif-cluster uppercase tracking-wide text-amber-400">
+            ¡Ya eres Barrio!
+          </p>
+          <p className="text-sm text-slate-200 mt-2 font-light">
+            Bienvenido/a, <strong className="text-white">{user.nombre}</strong> ·{" "}
+            {getPlanLabel(plan)}
+          </p>
+        </div>
+      )}
+      {showLinkageCtaBanner && commercial && (
+        <div className="relative bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-900">
+          <button
+            type="button"
+            onClick={() => {
+              markPanelNoticeSeen(user.id, "linkage_cta");
+              markPanelNoticeSeen(user.id, "payment_confirmed");
+              setLinkageCtaSeen(true);
+              setDismissedNotice(true);
+            }}
+            className="absolute top-3 right-3 text-emerald-700"
+            aria-label="Cerrar aviso"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <p className="font-bold mb-1 pr-6">¡Pago confirmado! Vincula tu negocio</p>
+          <p className="text-xs font-light leading-relaxed">
+            Completa la vinculación para {describeBusinessPresenceGoal(plan)}.
+          </p>
+        </div>
+      )}
+      {linkagePending && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-xs">
+          Tu vinculación está <strong>pendiente de aprobación</strong>.
+        </div>
+      )}
+    </>
+  );
+
+  const mobileRows: PanelMobileRow[] = [
+    {
+      id: "admin",
+      title: "Panel Admin",
+      subtitle: "Operaciones y cuentas",
+      icon: Shield,
+      href: "/admin",
+      show: isAdmin,
+    },
+    {
+      id: "mapa",
+      title: "MAPA",
+      subtitle: "Ruta peatonal del Museo Abierto",
+      icon: MapPin,
+      href: "/mapa",
+      show: isTurista,
+    },
+    {
+      id: "pasaporte",
+      title: "Pasaporte Digital",
+      subtitle: "Colecciona sellos de temporada",
+      icon: BookOpen,
+      href: "/pasaporte",
+      show: isTurista,
+    },
+    {
+      id: "turista",
+      title: "Mi comunidad",
+      subtitle: "Progreso y beneficios",
+      icon: Stamp,
+      show: isTurista,
+      detail: (
+        <TouristPanel
+          user={{ nombre: user.nombre, email: user.email, image: user.image }}
+          milestonesVisited={milestonesVisited}
+          totalMilestones={totalMilestones}
+        />
+      ),
+    },
+    {
+      id: "vecino",
+      title: "Membresía Vecino",
+      subtitle: getPlanLabel(plan),
+      icon: CreditCard,
+      badge: getSubscriptionStatusLabel(status),
+      badgeTone: commercial ? "ok" : pendingValidation ? "warn" : "neutral",
+      show: isVecino,
+      detail: (
+        <VecinoPanel
+          user={{ nombre: user.nombre, email: user.email, image: user.image }}
+          subscription={subscription}
+          showCredential={showCredential}
+          stripeConfigured={stripeConfigured}
+        />
+      ),
+    },
+    {
+      id: "link",
+      title: "Vincular negocio",
+      subtitle: showLinkageFirst
+        ? "Elige tu negocio del catálogo o regístralo"
+        : "Completa o actualiza tu vínculo",
+      icon: Link2,
+      badge: linkagePending ? "Pendiente" : undefined,
+      badgeTone: "warn",
+      show: !isTurista && !isVecino && (showLinkageFirst || showLinkSection),
+      detail: (
+        <div className="space-y-4">
+          {(transferPending || !commercial) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-950">
+              <p className="font-bold mb-1">
+                {transferPending
+                  ? "Pago en revisión — puedes completar tu ficha ahora"
+                  : "Completa tu ficha mientras gestiones el pago"}
+              </p>
+              <p className="font-light leading-relaxed">
+                Cuando confirmemos el pago, tu negocio podrá {describeBusinessPresenceGoal(plan)}.{" "}
+                {!commercial && !transferPending ? (
+                  <Link href="/certificacion/pago" className="font-semibold underline">
+                    Ir a pagar
+                  </Link>
+                ) : null}
+              </p>
+            </div>
+          )}
+          <LinkSocioSection
+            socios={socios ?? []}
+            takenSocioIds={takenSocioIds ?? []}
+            accountEmail={user.email}
+            onLinked={refreshSession}
+          />
+        </div>
+      ),
+    },
+    {
+      id: "negocio",
+      title: "Ficha del negocio",
+      subtitle: displayName || "Perfil y datos públicos",
+      icon: Building2,
+      badge: linkageApproved ? "Verificado" : undefined,
+      badgeTone: "ok",
+      show: !isTurista && !isVecino && hasBusinessEstablished,
+      detail: (
+        <section className="bg-white border border-emerald-200 rounded-xl p-5 shadow-sm space-y-5">
+          <div className="flex items-start gap-4">
+            <div className="h-20 w-28 shrink-0 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
+              {displayLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={displayLogo}
+                  alt={displayName ?? "Logo"}
+                  className="max-h-full max-w-full object-contain p-2"
+                />
+              ) : (
+                <Building2 className="w-8 h-8 text-slate-300" aria-hidden />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-slate-950">{displayName}</p>
+              <p className="text-[10px] text-amber-700 font-bold mt-1">Plan: {getPlanLabel(plan)}</p>
+              <p className="text-[10px] text-green-700 font-bold">Estado: Verificado</p>
+            </div>
+          </div>
+          <p className="text-xs text-slate-600 font-light leading-relaxed">
+            Envía tu logotipo PNG transparente (ideal 512×512) a{" "}
+            <a href="mailto:clusterturistico.pue@gmail.com" className="font-semibold text-[#27366D] underline">
+              clusterturistico.pue@gmail.com
+            </a>{" "}
+            o WhatsApp{" "}
+            <a
+              href="https://wa.me/522214296540"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-[#27366D] underline"
+            >
+              22 14 29 65 40
+            </a>
+            .
+          </p>
+          <SocioProfileForm
+            initial={profileDefaults}
+            email={user.email}
+            disabled={!linkageApproved}
+            hideBusinessName={plan === "VECINO"}
+            embedded
+          />
+        </section>
+      ),
+    },
+    {
+      id: "cupon",
+      title: "Cupón para socios",
+      subtitle: "Beneficio que ofreces a la comunidad",
+      icon: Gift,
+      show: !isTurista && !isVecino && hasBusinessEstablished && isBusiness && commercial && Boolean(socioProfile),
+      detail: socioProfile ? (
+        <SocioBenefitForm
+          initial={{
+            offersBenefit: socioProfile.offersBenefit,
+            benefitTitle: socioProfile.benefitTitle,
+            benefitDescription: socioProfile.benefitDescription,
+            benefitHowToRedeem: socioProfile.benefitHowToRedeem,
+            benefitRedeemViaQr: socioProfile.benefitRedeemViaQr,
+            benefitValidFrom: socioProfile.benefitValidFrom,
+            benefitValidUntil: socioProfile.benefitValidUntil,
+          }}
+          onSaved={refreshSession}
+        />
+      ) : null,
+    },
+    {
+      id: "qr",
+      title: "QR del establecimiento",
+      subtitle: "Sello del Pasaporte Digital",
+      icon: QrCode,
+      show: !isTurista && !isVecino && hasBusinessEstablished && isBusiness && commercial && Boolean(socioProfile),
+      detail: (
+        <EstablishmentQrDownload
+          socioId={user.socioId}
+          businessName={displayName ?? socioProfile?.businessName ?? ""}
+        />
+      ),
+    },
+    {
+      id: "credencial",
+      title: "Credencial para canjear",
+      subtitle: "QR temporal de beneficio",
+      icon: IdCard,
+      show: showCredential && commercial && !isTurista,
+      detail: (
+        <BenefitCredentialCard userName={user.nombre} plan={plan} expiryLabel={expiryLabel} />
+      ),
+    },
+    {
+      id: "membresia",
+      title: "Membresía",
+      subtitle: `${safePlanPriceLabel(plan)} · ${getPlanLabel(plan)}`,
+      icon: CreditCard,
+      badge: getSubscriptionStatusLabel(status),
+      badgeTone: commercial ? "ok" : pendingValidation ? "warn" : "neutral",
+      show: !isTurista && !isVecino,
+      detail: (
+        <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm text-slate-700">
+                Estado:{" "}
+                <strong
+                  className={
+                    commercial ? "text-green-700" : pendingValidation ? "text-amber-600" : "text-slate-500"
+                  }
+                >
+                  {getSubscriptionStatusLabel(status)}
+                </strong>
+              </p>
+              <p className="text-sm font-semibold text-[#27366D] mt-1">
+                {safePlanPriceLabel(plan)} · {getPlanLabel(plan)}
+              </p>
+              <p className="text-sm text-slate-700 mt-2">
+                Vencimiento: <strong>{expiryLabel}</strong>
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Renovación: <strong className="text-[#27366D]">{renewalLabel}</strong>
+              </p>
+            </div>
+            {commercial && (
+              <button
+                type="button"
+                disabled={cancelLoading}
+                onClick={() => setShowCancelDialog(true)}
+                className="text-[10px] text-slate-400 hover:text-red-600 underline underline-offset-2 shrink-0"
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
+          {autoRenewal && nextChargeDate && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-xs text-emerald-900">
+              Renovación automática activa. Próximo cargo: <strong>{nextChargeDate}</strong>.
+            </div>
+          )}
+          <div className="flex flex-col gap-3">
+            {stripeConfigured && !autoRenewal && (
+              <button
+                type="button"
+                onClick={() => handleStripePay(plan)}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full"
+              >
+                {stripeButtonLabel}
+              </button>
+            )}
+            {stripeConfigured && !autoRenewal && plan !== "TURISTA" && (
+              <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
+            )}
+            {!commercial && plan !== "TURISTA" && (
+              <TransferPaymentSection
+                plan={plan}
+                onConfirm={handleManualPayment}
+                disabled={pendingValidation}
+                clabe={paymentDetails.clabe}
+                bankLabel={paymentDetails.bankLabel}
+                paymentEmail={paymentDetails.paymentEmail}
+              />
+            )}
+          </div>
+          {upgradePlans.length > 0 && (
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="flex items-center gap-2">
+                <ArrowUpCircle className="w-4 h-4 text-amber-600" />
+                <h3 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+                  Upgrade
+                </h3>
+              </div>
+              {upgradePlans.map((planId) => (
+                <div key={planId} className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                  <p className="font-bold text-slate-900 text-sm">{MEMBERSHIP_PLANS[planId].label}</p>
+                  <p className="text-xs text-[#27366D] font-semibold mt-1">
+                    {formatPlanPriceMxn(planId)}
+                  </p>
+                  {stripeConfigured && (
+                    <button
+                      type="button"
+                      onClick={() => handleStripePay(planId)}
+                      className="mt-3 text-[10px] font-bold uppercase tracking-wider bg-[#27366D] text-white px-3 py-2 rounded-lg"
+                    >
+                      Upgrade
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {payMsg && <p className="text-xs text-slate-600">{payMsg}</p>}
+          {manualMsg && <p className="text-xs text-slate-600">{manualMsg}</p>}
+          {cancelMsg && <p className="text-xs text-slate-600">{cancelMsg}</p>}
+        </section>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <div className="md:hidden">
+        <PanelMobile
+          user={{ nombre: user.nombre, email: user.email, image: user.image }}
+          planLabel={getPlanLabel(plan)}
+          statusLabel={isTurista ? undefined : getSubscriptionStatusLabel(status)}
+          showBackToBarrId={!isTurista}
+          notices={mobileNotices}
+          rows={mobileRows}
+        />
       </div>
+
+      <div className="hidden md:block space-y-6">
+      {/* Desktop: cuenta + salir al pie; mobile usa PanelMobile */}
 
       {activePaymentNotice && !suppressTopPaymentNotice && (
         <div className="relative bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 pr-10 text-xs">
@@ -905,18 +1316,7 @@ export default function PanelDashboard({
           </div>
         </div>
       )}
-      <ConfirmDialog
-        open={showCancelDialog}
-        title="Cancelar membresía"
-        message="¿Cancelar tu membresía? Seguirás con acceso hasta el fin del periodo facturado."
-        confirmLabel="Sí, cancelar"
-        cancelLabel="Volver"
-        loading={cancelLoading}
-        onConfirm={handleCancelMembership}
-        onCancel={() => setShowCancelDialog(false)}
-      />
-
-      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm max-md:hidden">
+      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
         <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest mb-2">
           Cuenta
         </h2>
@@ -932,6 +1332,18 @@ export default function PanelDashboard({
           Cerrar sesión
         </button>
       </section>
-    </div>
+      </div>
+
+      <ConfirmDialog
+        open={showCancelDialog}
+        title="Cancelar membresía"
+        message="¿Cancelar tu membresía? Seguirás con acceso hasta el fin del periodo facturado."
+        confirmLabel="Sí, cancelar"
+        cancelLabel="Volver"
+        loading={cancelLoading}
+        onConfirm={handleCancelMembership}
+        onCancel={() => setShowCancelDialog(false)}
+      />
+    </>
   );
 }

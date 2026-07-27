@@ -135,48 +135,50 @@ export default async function PanelPage({
       milestonesVisited = summaries.length;
     }
 
-    return (
-      <SiteShell>
-        <RefreshSessionAfterPayment />
-        <Navbar />
-        <main className="flex-1 max-w-5xl mx-auto py-12 px-6 w-full">
-          <PanelDashboard
-            user={{
-              id: panelUser.id,
-              nombre: panelUser.nombre?.trim() || session.nombre || "Turista",
-              email: panelUser.email ?? session.email ?? "",
-              image: panelUser.image ?? null,
-              socioId: panelUser.socioId ?? null,
-            }}
-            isAdmin={isAdminUser({ email: panelUser.email ?? session.email, role: panelUser.role })}
-            subscription={refreshedSub}
-            socioProfile={profile}
-            catalogSocio={
-              catalogSocio
-                ? {
-                    name: catalogSocio.name ?? "",
-                    categoria: catalogSocio.categoria ?? "",
-                    foto: catalogSocio.foto ?? "",
-                    url: catalogSocio.url ?? "",
-                    direccion: catalogSocio.direccion,
-                  }
-                : null
-            }
-            stripeConfigured={isStripeConfigured()}
-            showWelcome={showWelcome}
-            hasPaidAccess={hasPaidAccess}
-            paymentNotice={paymentNotice}
-            socios={sociosList}
-            takenSocioIds={takenSocioIds}
-            paymentDetails={paymentDetails}
-            totalMilestones={listaHitos.length}
-            milestonesVisited={milestonesVisited}
-            showCredential={params.credencial === "1"}
-          />
-        </main>
+  return (
+    <SiteShell>
+      <RefreshSessionAfterPayment />
+      <Navbar />
+      <main className="flex-1 w-full max-md:max-w-none max-md:px-0 max-md:py-0 max-w-5xl mx-auto md:py-12 md:px-6">
+        <PanelDashboard
+          user={{
+            id: panelUser.id,
+            nombre: panelUser.nombre?.trim() || session.nombre || "Turista",
+            email: panelUser.email ?? session.email ?? "",
+            image: panelUser.image ?? null,
+            socioId: panelUser.socioId ?? null,
+          }}
+          isAdmin={isAdminUser({ email: panelUser.email ?? session.email, role: panelUser.role })}
+          subscription={refreshedSub}
+          socioProfile={profile}
+          catalogSocio={
+            catalogSocio
+              ? {
+                  name: catalogSocio.name ?? "",
+                  categoria: catalogSocio.categoria ?? "",
+                  foto: catalogSocio.foto ?? "",
+                  url: catalogSocio.url ?? "",
+                  direccion: catalogSocio.direccion,
+                }
+              : null
+          }
+          stripeConfigured={isStripeConfigured()}
+          showWelcome={showWelcome}
+          hasPaidAccess={hasPaidAccess}
+          paymentNotice={paymentNotice}
+          socios={sociosList}
+          takenSocioIds={takenSocioIds}
+          paymentDetails={paymentDetails}
+          totalMilestones={listaHitos.length}
+          milestonesVisited={milestonesVisited}
+          showCredential={params.credencial === "1"}
+        />
+      </main>
+      <div className="hidden md:block">
         <Footer />
-      </SiteShell>
-    );
+      </div>
+    </SiteShell>
+  );
   } catch (error) {
     if (isRedirectError(error)) throw error;
     console.error("[panel] render failed:", error);
