@@ -188,9 +188,9 @@ const GUILLOCHE_W = 390;
 const GUILLOCHE_H = 800;
 
 /**
- * Onda horizontal con envolvente de amplitud: la amplitud misma varía a lo
- * largo de x, que es lo que da el efecto "trenzado" de los billetes en vez
- * de una sinusoide plana.
+ * Onda horizontal con envolvente de amplitud y un segundo armónico: la
+ * amplitud varía a lo largo de x y el armónico rompe la sinusoide simple,
+ * que es lo que da el trazo "labrado" de los billetes.
  */
 function wavePath({
   baseY,
@@ -199,6 +199,7 @@ function wavePath({
   phase,
   ampMod = 0,
   ampModWavelength = 200,
+  harmonic = 0,
 }: {
   baseY: number;
   amp: number;
@@ -206,12 +207,15 @@ function wavePath({
   phase: number;
   ampMod?: number;
   ampModWavelength?: number;
+  /** Peso del 2º armónico (0-0.5): añade el detalle fino del guilloché */
+  harmonic?: number;
 }): string {
   const pts: string[] = [];
-  for (let x = 0; x <= GUILLOCHE_W; x += 5) {
+  for (let x = 0; x <= GUILLOCHE_W; x += 2.5) {
     const envelope = 1 + ampMod * Math.sin((2 * Math.PI * x) / ampModWavelength);
-    const y = baseY + amp * envelope * Math.sin((2 * Math.PI * x) / wavelength + phase);
-    pts.push(`${x},${y.toFixed(1)}`);
+    const theta = (2 * Math.PI * x) / wavelength + phase;
+    const y = baseY + amp * envelope * (Math.sin(theta) + harmonic * Math.sin(3 * theta + phase));
+    pts.push(`${x},${y.toFixed(2)}`);
   }
   return `M${pts.join(" L")}`;
 }
@@ -238,36 +242,35 @@ function rosettePath(
 function PageBackdrop() {
   const { bands, drift, rosette } = useMemo(() => {
     // Bandas trenzadas: pares de ondas en contrafase que se cruzan formando
-    // la "cadena" que recorre la hoja de lado a lado.
+    // la "cadena" que recorre la hoja. Interlineado corto = trama cerrada.
     const bands: string[] = [];
-    for (let y = 24; y < GUILLOCHE_H; y += 34) {
-      const rowPhase = (y / 34) * 0.7;
-      bands.push(
-        wavePath({ baseY: y, amp: 8.5, wavelength: 56, phase: rowPhase, ampMod: 0.45, ampModWavelength: 195 })
-      );
-      bands.push(
-        wavePath({ baseY: y, amp: 8.5, wavelength: 56, phase: rowPhase + Math.PI, ampMod: 0.45, ampModWavelength: 195 })
-      );
+    for (let y = 8; y < GUILLOCHE_H; y += 13) {
+      const rowPhase = (y / 13) * 0.55;
+      const common = { amp: 4.2, wavelength: 26, ampMod: 0.5, ampModWavelength: 118, harmonic: 0.3 };
+      bands.push(wavePath({ ...common, baseY: y, phase: rowPhase }));
+      bands.push(wavePath({ ...common, baseY: y, phase: rowPhase + Math.PI }));
     }
 
-    // Capa de deriva: ondas más amplias y largas, rotadas unos grados,
+    // Capa de deriva: ondas más largas y suaves, rotadas unos grados,
     // en segundo tono para el moiré sutil.
     const drift: string[] = [];
-    for (let y = -60; y < GUILLOCHE_H + 60; y += 46) {
-      drift.push(wavePath({ baseY: y, amp: 15, wavelength: 138, phase: (y / 46) * 0.9 }));
+    for (let y = -40; y < GUILLOCHE_H + 40; y += 19) {
+      drift.push(
+        wavePath({ baseY: y, amp: 6.5, wavelength: 74, phase: (y / 19) * 0.8, harmonic: 0.18 })
+      );
     }
 
     // Roseta central: anillos concéntricos lobulados alternando fase.
     const rosette: string[] = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 16; i++) {
       rosette.push(
         rosettePath(
           GUILLOCHE_W / 2,
           GUILLOCHE_H / 2,
-          40 + i * 10,
-          5.5 + (i % 2) * 3,
-          12,
-          i % 2 ? Math.PI / 12 : 0
+          34 + i * 5.5,
+          3 + (i % 2) * 1.8,
+          18,
+          i % 2 ? Math.PI / 18 : 0
         )
       );
     }
@@ -283,7 +286,7 @@ function PageBackdrop() {
         preserveAspectRatio="xMidYMid slice"
         aria-hidden="true"
       >
-        <g fill="none" stroke="#6b5d45" strokeOpacity={0.16} strokeWidth={0.7}>
+        <g fill="none" stroke="#6b5d45" strokeOpacity={0.075} strokeWidth={0.35}>
           {bands.map((d, i) => (
             <path key={`b-${i}`} d={d} />
           ))}
@@ -291,15 +294,15 @@ function PageBackdrop() {
         <g
           fill="none"
           stroke="#4e6f63"
-          strokeOpacity={0.13}
-          strokeWidth={0.7}
+          strokeOpacity={0.055}
+          strokeWidth={0.35}
           transform={`rotate(-7 ${GUILLOCHE_W / 2} ${GUILLOCHE_H / 2})`}
         >
           {drift.map((d, i) => (
             <path key={`d-${i}`} d={d} />
           ))}
         </g>
-        <g fill="none" stroke="#6b5d45" strokeOpacity={0.12} strokeWidth={0.7}>
+        <g fill="none" stroke="#6b5d45" strokeOpacity={0.07} strokeWidth={0.35}>
           {rosette.map((d, i) => (
             <path key={`r-${i}`} d={d} />
           ))}
@@ -308,7 +311,7 @@ function PageBackdrop() {
       {/* Viñeta suave en los bordes para dar profundidad de papel */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
-        style={{ boxShadow: "inset 0 0 64px rgba(120,90,40,0.09)" }}
+        style={{ boxShadow: "inset 0 0 64px rgba(120,90,40,0.07)" }}
       />
     </>
   );
@@ -344,12 +347,10 @@ export default function PasaporteBookMobile({
   /** Últimas dos muestras del drag para estimar velocidad al soltar */
   const lastMove = useRef<{ y: number; t: number } | null>(null);
   const prevMove = useRef<{ y: number; t: number } | null>(null);
-  const flippingRef = useRef(false);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
-  /** Grados de rotateX durante drag / animación de volteo */
-  const [flipDeg, setFlipDeg] = useState(0);
-  /** Transición CSS activa ("none" durante drag y swaps instantáneos) */
-  const [flipTransition, setFlipTransition] = useState("none");
+  const [animating, setAnimating] = useState(false);
 
   const coverStamps = useMemo(
     () => restaurants.slice(0, COVER_STAMP_COUNT),
@@ -361,54 +362,32 @@ export default function PasaporteBookMobile({
   );
   const pageCount = 1 + (restaurants.length > COVER_STAMP_COUNT ? restPages.length : 0);
 
-  const finishFlipTo = useCallback(
-    (next: number, direction: 1 | -1) => {
-      if (flippingRef.current) return;
-      const clamped = Math.max(0, Math.min(pageCount - 1, next));
-      if (clamped === pageIndex) {
-        setFlipTransition("transform 380ms cubic-bezier(0.22, 1, 0.36, 1)");
-        setFlipDeg(0);
-        window.setTimeout(() => setFlipTransition("none"), 390);
-        return;
-      }
+  /**
+   * El arrastre se aplica directo al DOM para no re-renderizar la pila de
+   * hojas en cada frame; React sólo toma el control al asentar la página.
+   */
+  const dragTo = useCallback((offset: number, fromPage: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    el.style.transition = "none";
+    el.style.transform = `translate3d(0, calc(${-fromPage * 100}% + ${offset}px), 0)`;
+  }, []);
 
-      flippingRef.current = true;
-      // Fase 1 — la hoja sale acelerando, como al soltar una página real
-      setFlipTransition("transform 230ms cubic-bezier(0.5, 0, 0.85, 0.55)");
-      setFlipDeg(direction > 0 ? 94 : -94);
-
-      window.setTimeout(() => {
-        setPageIndex(clamped);
-        setFlipTransition("none");
-        setFlipDeg(direction > 0 ? -90 : 90);
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            // Fase 2 — la nueva hoja cae desacelerando y asienta con un
-            // mínimo rebote (overshoot del bezier)
-            setFlipTransition("transform 480ms cubic-bezier(0.18, 0.9, 0.24, 1.04)");
-            setFlipDeg(0);
-            window.setTimeout(() => {
-              setFlipTransition("none");
-              flippingRef.current = false;
-            }, 490);
-          });
-        });
-      }, 235);
-    },
-    [pageCount, pageIndex]
-  );
+  const settle = useCallback((next: number) => {
+    setPageIndex(next);
+    setAnimating(true);
+    window.setTimeout(() => setAnimating(false), 460);
+  }, []);
 
   const onTouchStart = (e: React.TouchEvent) => {
-    if (flippingRef.current) return;
     touchStartY.current = e.touches[0]?.clientY ?? null;
     touchStartX.current = e.touches[0]?.clientX ?? null;
     lastMove.current = null;
     prevMove.current = null;
-    setFlipTransition("none");
+    setAnimating(false);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
-    if (flippingRef.current) return;
     const startY = touchStartY.current;
     const startX = touchStartX.current;
     const y = e.touches[0]?.clientY;
@@ -421,31 +400,20 @@ export default function PasaporteBookMobile({
     prevMove.current = lastMove.current;
     lastMove.current = { y, t: performance.now() };
 
-    // dy < 0 (dedo arriba) → rotateX positivo; el commit usa el mismo signo.
-    let deg = -dy / 4.2;
-    deg = Math.max(-78, Math.min(78, deg));
-
-    if ((pageIndex === 0 && deg < 0) || (pageIndex >= pageCount - 1 && deg > 0)) {
-      setFlipDeg(deg * 0.28);
-      return;
-    }
-    setFlipDeg(deg);
+    const height = viewportRef.current?.clientHeight ?? 700;
+    const atStart = pageIndex === 0 && dy > 0;
+    const atEnd = pageIndex >= pageCount - 1 && dy < 0;
+    // En los extremos el recorrido se frena (rubber band)
+    const offset = atStart || atEnd ? dy * 0.25 : dy;
+    dragTo(Math.max(-height, Math.min(height, offset)), pageIndex);
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (flippingRef.current) return;
     const startY = touchStartY.current;
     touchStartY.current = null;
     touchStartX.current = null;
     const endY = e.changedTouches[0]?.clientY;
-    if (startY == null || endY == null) {
-      setFlipTransition("transform 380ms cubic-bezier(0.22, 1, 0.36, 1)");
-      setFlipDeg(0);
-      window.setTimeout(() => setFlipTransition("none"), 390);
-      return;
-    }
 
-    // Velocidad del gesto (px/ms): un flick corto pero rápido también voltea.
     let velocity = 0;
     if (lastMove.current && prevMove.current) {
       const dt = lastMove.current.t - prevMove.current.t;
@@ -454,214 +422,215 @@ export default function PasaporteBookMobile({
     lastMove.current = null;
     prevMove.current = null;
 
-    const dy = startY - endY; // + = swipe up = next
-    const fastUp = velocity > 0.55 && dy > 12;
-    const fastDown = velocity < -0.55 && dy < -12;
+    if (startY == null || endY == null) {
+      settle(pageIndex);
+      return;
+    }
 
-    if (dy > SWIPE_THRESHOLD_PX || fastUp) finishFlipTo(pageIndex + 1, 1);
-    else if (dy < -SWIPE_THRESHOLD_PX || fastDown) finishFlipTo(pageIndex - 1, -1);
-    else {
-      setFlipTransition("transform 380ms cubic-bezier(0.22, 1, 0.36, 1)");
-      setFlipDeg(0);
-      window.setTimeout(() => setFlipTransition("none"), 390);
+    const dy = startY - endY; // + = swipe up = página siguiente
+    // Un flick corto pero rápido también cambia de hoja
+    const fastUp = velocity > 0.5 && dy > 12;
+    const fastDown = velocity < -0.5 && dy < -12;
+
+    if ((dy > SWIPE_THRESHOLD_PX || fastUp) && pageIndex < pageCount - 1) {
+      settle(pageIndex + 1);
+    } else if ((dy < -SWIPE_THRESHOLD_PX || fastDown) && pageIndex > 0) {
+      settle(pageIndex - 1);
+    } else {
+      settle(pageIndex);
     }
   };
 
-  const stampPage =
-    pageIndex === 0
-      ? null
-      : restPages[pageIndex - 1] ?? [];
+  /* —— Portada: 50% identidad / 50% 4 sellos —— */
+  const renderCover = () => (
+    <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
+      <PageBackdrop />
+      <div className="relative z-10 h-1/2 min-h-0 flex flex-col border-b border-[#d9cdb3]/80 pb-2">
+        <div className="flex items-start justify-between gap-3 shrink-0">
+          <div>
+            <p className="text-[9px] font-passport-mrz tracking-[0.35em] text-stone-500 uppercase">
+              Clúster Turístico de Puebla
+            </p>
+            <h1 className="text-lg font-black font-serif-cluster uppercase tracking-[0.12em] text-[#3d2914] leading-tight mt-0.5">
+              Pasaporte Digital
+            </h1>
+          </div>
+          <p className="passport-value text-[10px] leading-snug text-right shrink-0 max-w-[7rem]">
+            Puebla de Los Ángeles
+          </p>
+        </div>
+
+        <div className="mt-3 flex gap-3 min-h-0 flex-1">
+          <div className="shrink-0 w-[5.25rem] h-[6.6rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner self-start">
+            {userImage ? (
+              <Image
+                src={userImage}
+                alt={userName}
+                width={96}
+                height={120}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-stone-500 bg-gradient-to-b from-[#f0ebe3] to-[#e4ddd0]">
+                <span className="text-2xl font-serif-cluster text-[#5c3d1e]/70">
+                  {getInitials(userName) || "?"}
+                </span>
+                <span className="text-[8px] font-passport-mrz tracking-widest mt-1 uppercase">
+                  Foto
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_5rem] gap-x-2.5 gap-y-1.5 content-start pt-0.5">
+            <div className="space-y-1.5">
+              <div>
+                <p className="passport-label">Nombre</p>
+                <p className="passport-value text-[13px] leading-snug mt-0.5 break-words">
+                  {userName}
+                </p>
+              </div>
+              <div>
+                <p className="passport-label">Temporada</p>
+                <p className="passport-value text-[11px] mt-0.5">Chiles en Nogada</p>
+              </div>
+              <div>
+                <p className="passport-label">Rango</p>
+                <p
+                  className={`passport-value text-[11px] mt-0.5 flex items-center gap-1 ${
+                    tierId === "poblano" ? "text-amber-900" : ""
+                  }`}
+                >
+                  {tierId === "poblano" && <span aria-hidden>★</span>}
+                  {tierLabel.toUpperCase()}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-1.5 pl-2 border-l border-[#d9cdb3]/70">
+              <div>
+                <p className="passport-label">Sellos</p>
+                <p className="passport-value text-[11px] mt-0.5">{totalStamps}</p>
+              </div>
+              <div>
+                <p className="passport-label">Visitados</p>
+                <p className="passport-value text-[11px] mt-0.5">
+                  {uniqueStamped}/{totalRestaurants}
+                </p>
+              </div>
+              <div>
+                <p className="passport-label">Progreso</p>
+                <p className="passport-value text-[11px] mt-0.5">{progress}%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="shrink-0 mt-auto pt-1">
+          <PassportProgressTrack animatedProgress={progress} tierId={tierId} />
+        </div>
+      </div>
+
+      <div className="relative z-10 h-1/2 min-h-0 flex flex-col pt-2">
+        <p className="text-[9px] text-center text-stone-400/80 font-light tracking-wide mb-1.5 shrink-0">
+          Desliza hacia arriba para pasar la hoja
+        </p>
+        <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-2 place-items-center overflow-hidden">
+          {coverStamps.map((restaurant, index) => {
+            const stamp = stampMap[restaurant.id];
+            return (
+              <StampCell
+                key={restaurant.id}
+                restaurant={restaurant}
+                index={index}
+                hasStamp={Boolean(stamp?.count)}
+                count={stamp?.count}
+                isFlashing={stampFlashId === restaurant.id}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+
+  /* —— Páginas de sellos —— */
+  const renderStampPage = (pageNum: number) => {
+    const page = restPages[pageNum - 1] ?? [];
+    return (
+      <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
+        <PageBackdrop />
+        <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Sellos</p>
+          <p className="text-[10px] font-passport-mrz text-stone-400 tabular-nums">
+            {pageNum + 1} / {pageCount}
+          </p>
+        </div>
+        <div className="relative z-10 flex-1 min-h-0 grid grid-cols-2 grid-rows-4 gap-2 place-items-center overflow-hidden">
+          {page.map((restaurant, index) => {
+            const globalIndex = COVER_STAMP_COUNT + (pageNum - 1) * PAGE_STAMP_COUNT + index;
+            const stamp = stampMap[restaurant.id];
+            return (
+              <StampCell
+                key={restaurant.id}
+                restaurant={restaurant}
+                index={globalIndex}
+                hasStamp={Boolean(stamp?.count)}
+                count={stamp?.count}
+                isFlashing={stampFlashId === restaurant.id}
+                size="sm"
+              />
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
 
   return (
     <div className="relative flex-1 min-h-0 w-full bg-[#faf6ef] text-slate-900 overflow-hidden overscroll-none select-none">
       <div
-        className="relative z-10 h-full w-full"
-        style={{ perspective: "1400px", perspectiveOrigin: "50% 45%" }}
+        ref={viewportRef}
+        className="relative z-10 h-full w-full overflow-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         <div
+          ref={trackRef}
           className="relative h-full w-full will-change-transform"
           style={{
-            transform: `rotateX(${flipDeg}deg)`,
-            transformOrigin: "50% 50%",
-            transformStyle: "preserve-3d",
-            transition: flipTransition,
-            boxShadow:
-              Math.abs(flipDeg) > 2
-                ? `0 ${8 + Math.abs(flipDeg) * 0.18}px ${22 + Math.abs(flipDeg) * 0.3}px rgba(45,35,20,${0.09 + Math.abs(flipDeg) * 0.0022})`
-                : "none",
+            transform: `translate3d(0, ${-pageIndex * 100}%, 0)`,
+            transition: animating ? "transform 460ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
           }}
         >
-          {pageIndex === 0 ? (
-            /* —— Portada: 50% identidad / 50% 4 sellos —— */
-            <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
-              <PageBackdrop />
-              <div className="relative z-10 h-1/2 min-h-0 flex flex-col border-b border-[#d9cdb3]/80 pb-2">
-                <div className="flex items-start justify-between gap-3 shrink-0">
-                  <div>
-                    <p className="text-[9px] font-passport-mrz tracking-[0.35em] text-stone-500 uppercase">
-                      Clúster Turístico de Puebla
-                    </p>
-                    <h1 className="text-lg font-black font-serif-cluster uppercase tracking-[0.12em] text-[#3d2914] leading-tight mt-0.5">
-                      Pasaporte Digital
-                    </h1>
-                  </div>
-                  <p className="passport-value text-[10px] leading-snug text-right shrink-0 max-w-[7rem]">
-                    Puebla de Los Ángeles
-                  </p>
-                </div>
-
-                <div className="mt-3 flex gap-3 min-h-0 flex-1">
-                  <div className="shrink-0 w-[5.25rem] h-[6.6rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner self-start">
-                    {userImage ? (
-                      <Image
-                        src={userImage}
-                        alt={userName}
-                        width={96}
-                        height={120}
-                        className="w-full h-full object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-stone-500 bg-gradient-to-b from-[#f0ebe3] to-[#e4ddd0]">
-                        <span className="text-2xl font-serif-cluster text-[#5c3d1e]/70">
-                          {getInitials(userName) || "?"}
-                        </span>
-                        <span className="text-[8px] font-passport-mrz tracking-widest mt-1 uppercase">
-                          Foto
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_5rem] gap-x-2.5 gap-y-1.5 content-start pt-0.5">
-                    <div className="space-y-1.5">
-                      <div>
-                        <p className="passport-label">Nombre</p>
-                        <p className="passport-value text-[13px] leading-snug mt-0.5 break-words">
-                          {userName}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="passport-label">Temporada</p>
-                        <p className="passport-value text-[11px] mt-0.5">Chiles en Nogada</p>
-                      </div>
-                      <div>
-                        <p className="passport-label">Rango</p>
-                        <p
-                          className={`passport-value text-[11px] mt-0.5 flex items-center gap-1 ${
-                            tierId === "poblano" ? "text-amber-900" : ""
-                          }`}
-                        >
-                          {tierId === "poblano" && <span aria-hidden>★</span>}
-                          {tierLabel.toUpperCase()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-1.5 pl-2 border-l border-[#d9cdb3]/70">
-                      <div>
-                        <p className="passport-label">Sellos</p>
-                        <p className="passport-value text-[11px] mt-0.5">{totalStamps}</p>
-                      </div>
-                      <div>
-                        <p className="passport-label">Visitados</p>
-                        <p className="passport-value text-[11px] mt-0.5">
-                          {uniqueStamped}/{totalRestaurants}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="passport-label">Progreso</p>
-                        <p className="passport-value text-[11px] mt-0.5">{progress}%</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="shrink-0 mt-auto pt-1">
-                  <PassportProgressTrack animatedProgress={progress} tierId={tierId} />
-                </div>
-              </div>
-
-              <div className="relative z-10 h-1/2 min-h-0 flex flex-col pt-2">
-                <p className="text-[9px] text-center text-stone-400/80 font-light tracking-wide mb-1.5 shrink-0">
-                  Desliza hacia arriba para pasar la hoja
-                </p>
-                <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-2 place-items-center overflow-hidden">
-                  {coverStamps.map((restaurant, index) => {
-                    const stamp = stampMap[restaurant.id];
-                    return (
-                      <StampCell
-                        key={restaurant.id}
-                        restaurant={restaurant}
-                        index={index}
-                        hasStamp={Boolean(stamp?.count)}
-                        count={stamp?.count}
-                        isFlashing={stampFlashId === restaurant.id}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
-          ) : (
-            /* —— Páginas de sellos —— */
-            <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
-              <PageBackdrop />
-              <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
-                  Sellos
-                </p>
-                <p className="text-[10px] font-passport-mrz text-stone-400 tabular-nums">
-                  {pageIndex + 1} / {pageCount}
-                </p>
-              </div>
-              <div className="relative z-10 flex-1 min-h-0 grid grid-cols-2 grid-rows-4 gap-2 place-items-center overflow-hidden">
-                {(stampPage ?? []).map((restaurant, index) => {
-                  const globalIndex =
-                    COVER_STAMP_COUNT + (pageIndex - 1) * PAGE_STAMP_COUNT + index;
-                  const stamp = stampMap[restaurant.id];
-                  return (
-                    <StampCell
-                      key={restaurant.id}
-                      restaurant={restaurant}
-                      index={globalIndex}
-                      hasStamp={Boolean(stamp?.count)}
-                      count={stamp?.count}
-                      isFlashing={stampFlashId === restaurant.id}
-                      size="sm"
-                    />
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* Sombreado dinámico: la mitad que se aleja de la luz se oscurece
-              proporcionalmente al ángulo, vendiendo el 3D del volteo */}
-          {Math.abs(flipDeg) > 2 && (
+          {Array.from({ length: pageCount }).map((_, i) => (
             <div
-              className="absolute inset-0 z-30 pointer-events-none"
+              key={i}
+              className="absolute inset-x-0 h-full"
               style={{
-                background: `linear-gradient(${flipDeg > 0 ? "to top" : "to bottom"}, rgba(250,246,239,${Math.min(0.22, (Math.abs(flipDeg) / 90) * 0.22)}) 0%, transparent 42%, rgba(48,36,18,${Math.min(0.3, (Math.abs(flipDeg) / 90) * 0.3)}) 100%)`,
-                transition: flipTransition !== "none" ? "opacity 200ms linear" : "none",
+                top: `${i * 100}%`,
+                // Sombra en el canto superior: se lee como hoja sobre hoja al deslizar
+                boxShadow: i > 0 ? "0 -10px 22px rgba(45,35,20,0.07)" : "none",
               }}
-            />
-          )}
+              aria-hidden={i !== pageIndex}
+            >
+              {i === 0 ? renderCover() : renderStampPage(i)}
+            </div>
+          ))}
         </div>
       </div>
 
       {pageCount > 1 && (
         <div
-          className="absolute inset-x-0 bottom-[max(0.35rem,env(safe-area-inset-bottom,0px))] z-20 flex justify-center gap-1.5 pb-1 pointer-events-none"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-1.5 pointer-events-none"
           aria-hidden
         >
           {Array.from({ length: pageCount }).map((_, i) => (
             <span
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === pageIndex ? "w-4 bg-[#27366D]" : "w-1.5 bg-stone-300"
+              className={`w-1.5 rounded-full transition-all duration-300 ${
+                i === pageIndex ? "h-4 bg-[#27366D]" : "h-1.5 bg-stone-300"
               }`}
             />
           ))}
