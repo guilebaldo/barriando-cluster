@@ -11,6 +11,7 @@ import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
 import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
+import PasaporteBookMobile from "./PasaporteBookMobile";
 
 type RestaurantCard = {
   id: number;
@@ -645,7 +646,7 @@ function PasaporteInner({
     return () => window.clearTimeout(t);
   }, [isAuthenticated, isFirstLoginUser, userId, noticePopup]);
 
-  const pageContent = (
+  const passportBody = (
     <>
       <div
         className={`py-2 sm:py-4 px-2 sm:px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] sm:pt-4 ${
@@ -893,7 +894,11 @@ function PasaporteInner({
         </p>
       </div>
       </div>
+    </>
+  );
 
+  const sharedOverlays = (
+    <>
       <QrScanModal
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}
@@ -943,15 +948,51 @@ function PasaporteInner({
   );
 
   if (usePageScroll) {
-    return <div className="bg-[#e8e0d0]">{pageContent}</div>;
+    return (
+      <div className="bg-[#e8e0d0]">
+        {passportBody}
+        {sharedOverlays}
+      </div>
+    );
+  }
+
+  // Logueado: libro fullscreen en mobile; hoja clásica en desktop.
+  if (isAuthenticated) {
+    return (
+      <>
+        <div className="md:hidden flex-1 min-h-0 flex flex-col">
+          <PasaporteBookMobile
+            userName={userName}
+            userImage={userImage}
+            restaurants={restaurants}
+            stampMap={stampMap}
+            totalStamps={totalStamps}
+            uniqueStamped={uniqueStamped}
+            totalRestaurants={totalRestaurants}
+            tierLabel={tierLabel}
+            tierId={tierId}
+            progress={progress}
+            stampFlashId={stampFlashId}
+          />
+        </div>
+        <div
+          ref={scrollContainerRef}
+          className="hidden md:block flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#faf6ef]"
+        >
+          {passportBody}
+        </div>
+        {sharedOverlays}
+      </>
+    );
   }
 
   return (
     <div
       ref={scrollContainerRef}
-      className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#e8e0d0]"
+      className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#faf6ef]"
     >
-      {pageContent}
+      {passportBody}
+      {sharedOverlays}
     </div>
   );
 }
