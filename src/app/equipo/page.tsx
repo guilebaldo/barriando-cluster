@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import MediaSlot from "../components/MediaSlot";
@@ -11,14 +12,16 @@ import {
 import { definicionInstitucional, civicTechIntro, proyectosFuturosCivicTech } from "../data/institucion";
 import {
   Users,
-  Mail,
   Building2,
   Landmark,
   GraduationCap,
   HeartHandshake,
   Sparkles,
+  Store,
 } from "lucide-react";
 import EquipoLocationCard from "./EquipoLocationCard";
+import { registroUrl } from "@/lib/plan-routing";
+import { formatPlanPriceMxn } from "@/lib/membresia";
 
 const GRUPOS: EquipoGrupo[] = ["consejo", "operacion", "comunicacion"];
 
@@ -275,18 +278,24 @@ export default function EquipoPage() {
           <Reveal delay={100}>
             <section className="bg-[#27366D] text-white rounded-xl p-6 sm:p-8">
               <div className="flex flex-col items-center text-center max-w-lg mx-auto">
-                <Mail className="w-6 h-6 text-amber-400 mb-3 shrink-0 animate-float-y" />
-                <h3 className="font-bold text-sm mb-2">¿Quieres colaborar con Barriando?</h3>
-                <p className="text-xs text-slate-300 mb-5 font-light leading-relaxed">
-                  Escríbenos para proponer alianzas, proyectos conjuntos o participar en festivales y comisiones de
-                  trabajo.
+                <Store className="w-6 h-6 text-amber-400 mb-3 shrink-0 animate-float-y" />
+                <h3 className="font-bold text-sm sm:text-base mb-2">
+                  ¿Quieres afiliarte a Barriando?
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 mb-5 font-light leading-relaxed">
+                  Empieza hoy desde{" "}
+                  <strong className="text-amber-300 font-semibold">
+                    {formatPlanPriceMxn("NEGOCIO_FAMILIAR")}
+                  </strong>
+                  . Crea tu cuenta con Google o con un enlace de verificación a tu correo y únete a la
+                  red certificada del Centro Histórico.
                 </p>
-                <a
-                  href="mailto:clusterturistico.pue@gmail.com"
-                  className="inline-flex items-center justify-center w-full sm:w-auto max-w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] sm:text-xs uppercase tracking-wider px-4 sm:px-6 py-3 rounded-lg transition break-all sm:break-normal text-center"
+                <Link
+                  href={registroUrl("NEGOCIO_FAMILIAR")}
+                  className="inline-flex items-center justify-center w-full sm:w-auto max-w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] sm:text-xs uppercase tracking-wider px-4 sm:px-6 py-3 rounded-lg transition text-center"
                 >
-                  clusterturistico.pue@gmail.com
-                </a>
+                  Afiliarme desde $600 / mes
+                </Link>
               </div>
             </section>
           </Reveal>
