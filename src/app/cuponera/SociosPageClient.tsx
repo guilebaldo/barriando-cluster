@@ -17,7 +17,7 @@ export default function SociosPageClient({
   initialSocioId?: number | null;
 }) {
   return (
-    <MapImmersiveShell>
+    <MapImmersiveShell title="Cuponera">
       <Navbar />
       <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <SociosImmersiveView

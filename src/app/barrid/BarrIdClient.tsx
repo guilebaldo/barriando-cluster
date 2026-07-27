@@ -303,8 +303,8 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         <div
           className={`absolute inset-0 flex flex-col items-center justify-center px-4 pointer-events-none ${
             appShell
-              ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
-              : "pt-2 pb-28"
+              ? "pt-2 pb-[8.5rem]"
+              : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
           }`}
         >
           {/* Un poco más abajo en el hueco visible sobre la ficha */}
@@ -321,8 +321,11 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           </div>
         </div>
 
-        <div className="absolute inset-x-0 z-20 bottom-0 top-[max(0.75rem,env(safe-area-inset-top,0px))] overflow-hidden">
-          <div
+        <div
+          className={`absolute inset-x-0 z-20 bottom-0 overflow-hidden ${
+            appShell ? "top-2" : "top-[max(0.75rem,env(safe-area-inset-top,0px))]"
+          }`}
+        >          <div
             ref={sheetRef}
             className={`mx-auto w-full h-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               sheetExpanded ? "translate-y-0" : "translate-y-[calc(100%-7.25rem)]"

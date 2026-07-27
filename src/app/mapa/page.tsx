@@ -14,7 +14,7 @@ export default async function MapPage() {
   const route = await buildMapRoute();
 
   return (
-    <MapImmersiveShell>
+    <MapImmersiveShell title="MAPA">
       <Navbar />
       <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <MapRouteView route={route} />

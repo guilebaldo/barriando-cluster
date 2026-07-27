@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
+import AppHubShell from "@/app/components/AppHubShell";
 
-export default function MapImmersiveShell({ children }: { children: React.ReactNode }) {
+export default function MapImmersiveShell({
+  children,
+  title = "MAPA",
+}: {
+  children: React.ReactNode;
+  title?: string;
+}) {
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
@@ -51,8 +58,8 @@ export default function MapImmersiveShell({ children }: { children: React.ReactN
   }, []);
 
   return (
-    <div className="map-immersive-shell fixed inset-0 z-0 flex flex-col bg-white text-slate-900 font-sans antialiased overflow-hidden overscroll-none">
+    <AppHubShell title={title} shellClassName="map-immersive-shell" contentClassName="bg-white">
       {children}
-    </div>
+    </AppHubShell>
   );
 }

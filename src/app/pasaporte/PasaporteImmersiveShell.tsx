@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import AppHubShell from "@/app/components/AppHubShell";
 
 export default function PasaporteImmersiveShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -51,8 +52,12 @@ export default function PasaporteImmersiveShell({ children }: { children: React.
   }, []);
 
   return (
-    <div className="map-immersive-shell fixed inset-0 z-0 flex flex-col bg-[#faf6ef] text-slate-900 font-sans antialiased overflow-hidden overscroll-none">
+    <AppHubShell
+      title="Pasaporte"
+      shellClassName="map-immersive-shell"
+      contentClassName="bg-[#faf6ef]"
+    >
       {children}
-    </div>
+    </AppHubShell>
   );
 }
