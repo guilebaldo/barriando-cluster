@@ -511,9 +511,7 @@ export default function SociosImmersiveView({
       <div
         className={`absolute inset-x-0 z-20 pointer-events-none transition-[top,bottom] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           sheetMode === "full"
-            ? appShell
-              ? "top-2 bottom-0"
-              : "top-[max(0.75rem,env(safe-area-inset-top,0px))] bottom-0"
+            ? "top-[max(0.75rem,env(safe-area-inset-top,0px))] bottom-0"
             : "bottom-0 top-auto"
         }`}
         onTouchStart={onSheetTouchStart}

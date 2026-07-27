@@ -4,7 +4,6 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
-import { useAppMobileShell } from "@/app/components/AppBottomNav";
 
 type RestaurantCard = {
   id: number;
@@ -352,10 +351,6 @@ export default function PasaporteBookMobile({
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const appShell = useAppMobileShell();
-  const pageTopPad = appShell
-    ? "pt-2"
-    : "pt-[max(0.5rem,env(safe-area-inset-top,0px))]";
 
   const coverStamps = useMemo(
     () => restaurants.slice(0, COVER_STAMP_COUNT),
@@ -448,7 +443,7 @@ export default function PasaporteBookMobile({
 
   /* —— Portada: 50% identidad / 50% 4 sellos —— */
   const renderCover = () => (
-    <section className={`relative h-full w-full flex flex-col bg-[#faf6ef] px-4 ${pageTopPad} pb-12 overflow-hidden`}>
+    <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
       <PageBackdrop />
       <div className="relative z-10 h-1/2 min-h-0 flex flex-col border-b border-[#d9cdb3]/80 pb-2">
         <div className="flex items-start justify-between gap-3 shrink-0">
@@ -563,7 +558,7 @@ export default function PasaporteBookMobile({
   const renderStampPage = (pageNum: number) => {
     const page = restPages[pageNum - 1] ?? [];
     return (
-      <section className={`relative h-full w-full flex flex-col bg-[#faf6ef] px-4 ${pageTopPad} pb-12 overflow-hidden`}>
+      <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
         <PageBackdrop />
         <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Sellos</p>

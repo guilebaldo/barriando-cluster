@@ -46,10 +46,8 @@
       padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
 
-    /* Shells immersive: el padding va en el shell (franja navy), no duplicar en body */
-    html.app-mobile-shell:has(.panel-mobile-shell) body,
-    html.app-mobile-shell:has(.map-immersive-shell) body,
-    html.app-mobile-shell:has(.barrid-shell) body {
+    /* Panel immersive: el padding va en .panel-mobile-shell, no duplicar en body */
+    html.app-mobile-shell:has(.panel-mobile-shell) body {
       padding-bottom: 0;
     }
   }

@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import AppHubShell from "@/app/components/AppHubShell";
 
 /**
- * Móvil: chrome navy del hub + contenido.
+ * Móvil: fullscreen inmersivo (ficha + QR fijo).
  * Escritorio: flujo normal con scroll y footer.
  */
 export default function BarrIdShell({ children }: { children: React.ReactNode }) {
@@ -54,13 +53,8 @@ export default function BarrIdShell({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <AppHubShell
-      title="BarrID"
-      shellClassName="barrid-shell"
-      contentClassName="bg-slate-50"
-      desktopStatic
-    >
+    <div className="barrid-shell fixed inset-0 z-0 flex flex-col overflow-hidden overscroll-none bg-slate-50 text-slate-900 font-sans antialiased md:static md:inset-auto md:min-h-screen md:h-auto md:overflow-visible md:overscroll-auto">
       {children}
-    </AppHubShell>
+    </div>
   );
 }
