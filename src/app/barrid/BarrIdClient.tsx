@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import { BookOpen, Gift, Map as MapIcon, Settings } from "lucide-react";
 import { createBenefitCredential } from "../panel/actions";
 import AddToHomeScreenModal from "./AddToHomeScreenModal";
+import { useAppMobileShell } from "@/app/components/AppBottomNav";
 
 type BarrIdClientProps = {
   user: {
@@ -178,6 +179,10 @@ function QrPanel({
 export default function BarrIdClient(props: BarrIdClientProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
+  const appShell = useAppMobileShell();
+  const sheetBottom = appShell
+    ? "bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))]"
+    : "bottom-0";
 
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -276,7 +281,11 @@ export default function BarrIdClient(props: BarrIdClientProps) {
 
       {/* —— Móvil: QR fijo + ficha azul casi fullscreen —— */}
       <div className="md:hidden relative h-full w-full overflow-hidden overscroll-none">
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-4 pb-28 pt-2 pointer-events-none">
+        <div
+          className={`absolute inset-0 flex flex-col items-center justify-center px-4 pt-2 pointer-events-none ${
+            appShell ? "pb-36" : "pb-28"
+          }`}
+        >
           <QrPanel
             sizeClass="w-[min(72vw,20rem)] h-[min(72vw,20rem)]"
             textSize="text-xs"
@@ -289,8 +298,8 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         </div>
 
         <div
-          className={`absolute inset-x-0 z-20 transition-[top] duration-300 ease-out ${
-            sheetExpanded ? "top-3 bottom-0" : "bottom-0 top-auto"
+          className={`absolute inset-x-0 z-20 transition-[top] duration-300 ease-out ${sheetBottom} ${
+            sheetExpanded ? "top-3" : "top-auto"
           }`}
         >
           <div
@@ -329,7 +338,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
             )}
 
             {sheetExpanded && (
-              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-5">
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5">
                 <div className="relative flex items-center gap-4 pr-14">
                   <a
                     href="/panel"

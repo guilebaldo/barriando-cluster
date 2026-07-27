@@ -12,6 +12,8 @@ import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
 import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 import { AdminNavLink } from "@/app/components/AdminNavBadge";
+import AppBottomNav, { useAppMobileShell } from "@/app/components/AppBottomNav";
+import CloseToBarrId from "@/app/components/CloseToBarrId";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 function GoogleGlyph() {
@@ -302,6 +304,7 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const isAuthenticated = status === "authenticated" && session?.user;
+  const appMobileShell = useAppMobileShell();
 
   // Logo → role home when signed in; guests go to the public presentation.
   const logoHref = isAuthenticated
@@ -344,106 +347,110 @@ export default function Navbar() {
   const navLinks = getNavLinks(Boolean(isAuthenticated));
 
   return (
-    <nav
-      className={`bg-[#27366D] border-b border-[#1e2b58] z-[50] safe-area-top ${
-        isMapPage ? "shrink-0 relative" : "sticky top-0"
-      }`}
-    >
-      <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-        <Link
-          href={logoHref}
-          onClick={() => window.scrollTo(0, 0)}
-          aria-label={isAuthenticated ? "Ir a mi inicio" : "Ir al inicio"}
-          className="flex items-center gap-2 sm:gap-3 min-w-0 group active:opacity-80"
-        >
-          <Image
-            src="/logobarriando.png"
-            alt="Barriando"
-            width={140}
-            height={32}
-            className="h-7 sm:h-8 w-auto object-contain object-left"
-            priority
-            unoptimized
-          />
-          <span className="text-slate-300 text-[10px] font-semibold hidden sm:block normal-case tracking-normal leading-tight">
-            Clúster Turístico · Puebla
-          </span>
-        </Link>
+    <>
+      <nav
+        className={`bg-[#27366D] border-b border-[#1e2b58] z-[50] safe-area-top ${
+          isMapPage ? "shrink-0 relative" : "sticky top-0"
+        } ${appMobileShell ? "hidden md:block" : ""}`}
+      >
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <Link
+            href={logoHref}
+            onClick={() => window.scrollTo(0, 0)}
+            aria-label={isAuthenticated ? "Ir a mi inicio" : "Ir al inicio"}
+            className="flex items-center gap-2 sm:gap-3 min-w-0 group active:opacity-80"
+          >
+            <Image
+              src="/logobarriando.png"
+              alt="Barriando"
+              width={140}
+              height={32}
+              className="h-7 sm:h-8 w-auto object-contain object-left"
+              priority
+              unoptimized
+            />
+            <span className="text-slate-300 text-[10px] font-semibold hidden sm:block normal-case tracking-normal leading-tight">
+              Clúster Turístico · Puebla
+            </span>
+          </Link>
 
-        <div className="hidden md:flex flex-wrap justify-end items-center gap-5 text-xs uppercase tracking-wider font-bold">
-          {navLinks.map((link) => (
-            <Link key={link.label} href={link.href} className={navLinkClass(pathname, link)}>
-              {link.label}
-            </Link>
-          ))}
-          <AuthActions />
-        </div>
+          <div className="hidden md:flex flex-wrap justify-end items-center gap-5 text-xs uppercase tracking-wider font-bold">
+            {navLinks.map((link) => (
+              <Link key={link.label} href={link.href} className={navLinkClass(pathname, link)}>
+                {link.label}
+              </Link>
+            ))}
+            <AuthActions />
+          </div>
 
-        <button
-          type="button"
-          className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[#314385] text-white hover:bg-[#1e2b58] transition"
-          aria-expanded={open}
-          aria-label={open ? "Cerrar menú" : "Abrir menú"}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
-
-      {open && (
-        <div
-          className="md:hidden fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-[2px]"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="mobile-nav-title"
-        >
           <button
             type="button"
-            className="absolute inset-0 cursor-default"
-            aria-label="Cerrar menú"
-            onClick={() => setOpen(false)}
-          />
-          <div
-            className="relative z-10 w-full max-w-sm rounded-2xl border border-[#314385] bg-[#1e2b58] shadow-2xl animate-popup-in overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
+            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[#314385] text-white hover:bg-[#1e2b58] transition"
+            aria-expanded={open}
+            aria-label={open ? "Cerrar menú" : "Abrir menú"}
+            onClick={() => setOpen((v) => !v)}
           >
-            <div className="flex items-center justify-between px-4 pt-4 pb-2.5 border-b border-[#314385]/70">
-              <p id="mobile-nav-title" className="text-xs font-bold uppercase tracking-widest text-amber-400">
-                Menú
-              </p>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-300 hover:text-white hover:bg-[#27366D] transition"
-                aria-label="Cerrar menú"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="px-3 py-2.5 flex flex-col gap-0.5">
-              {navLinks.map((link) => {
-                const active = isNavActive(pathname, link);
-                return (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className={`py-2.5 px-3 rounded-xl text-sm uppercase tracking-wider font-bold transition ${
-                      active
-                        ? "bg-[#27366D] text-amber-400"
-                        : "text-white hover:bg-[#27366D] hover:text-amber-400"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              })}
-              <AuthActions mobile onNavigate={() => setOpen(false)} />
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+        {open && (
+          <div
+            className="md:hidden fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-[2px]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-nav-title"
+          >
+            <button
+              type="button"
+              className="absolute inset-0 cursor-default"
+              aria-label="Cerrar menú"
+              onClick={() => setOpen(false)}
+            />
+            <div
+              className="relative z-10 w-full max-w-sm rounded-2xl border border-[#314385] bg-[#1e2b58] shadow-2xl animate-popup-in overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-4 pt-4 pb-2.5 border-b border-[#314385]/70">
+                <p id="mobile-nav-title" className="text-xs font-bold uppercase tracking-widest text-amber-400">
+                  Menú
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-300 hover:text-white hover:bg-[#27366D] transition"
+                  aria-label="Cerrar menú"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="px-3 py-2.5 flex flex-col gap-0.5">
+                {navLinks.map((link) => {
+                  const active = isNavActive(pathname, link);
+                  return (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className={`py-2.5 px-3 rounded-xl text-sm uppercase tracking-wider font-bold transition ${
+                        active
+                          ? "bg-[#27366D] text-amber-400"
+                          : "text-white hover:bg-[#27366D] hover:text-amber-400"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+                <AuthActions mobile onNavigate={() => setOpen(false)} />
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </nav>
+        )}
+      </nav>
+      <CloseToBarrId />
+      <AppBottomNav />
+    </>
   );
 }
