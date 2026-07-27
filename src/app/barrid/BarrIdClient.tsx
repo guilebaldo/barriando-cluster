@@ -281,32 +281,29 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         <div
           className={`absolute inset-0 flex flex-col items-center justify-center px-4 pointer-events-none ${
             appShell
-              ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-36"
+              ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
               : "pt-2 pb-28"
           }`}
         >
-          <QrPanel
-            sizeClass="w-[min(72vw,20rem)] h-[min(72vw,20rem)]"
-            textSize="text-xs"
-            qrDataUrl={qrDataUrl}
-            loadingCred={loadingCred}
-            credError={credError}
-            countdown={countdown}
-            showHint
-          />
+          {/* Un poco más abajo en el hueco visible sobre la ficha */}
+          <div className="translate-y-5 sm:translate-y-6">
+            <QrPanel
+              sizeClass="w-[min(72vw,20rem)] h-[min(72vw,20rem)]"
+              textSize="text-xs"
+              qrDataUrl={qrDataUrl}
+              loadingCred={loadingCred}
+              credError={credError}
+              countdown={countdown}
+              showHint
+            />
+          </div>
         </div>
 
-        <div
-          className={`absolute inset-x-0 bottom-0 z-20 transition-[top] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-            sheetExpanded
-              ? "top-[max(0.75rem,env(safe-area-inset-top,0px))]"
-              : "top-auto"
-          }`}
-        >
+        <div className="absolute inset-x-0 z-20 bottom-0 top-[max(0.75rem,env(safe-area-inset-top,0px))] overflow-hidden">
           <div
             ref={sheetRef}
-            className={`mx-auto w-full h-full bg-[#27366D] text-white overflow-hidden flex flex-col transition-[max-height,border-radius,transform] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] will-change-[max-height,transform] ${
-              sheetExpanded ? "rounded-t-3xl" : "max-h-[7.25rem] rounded-t-3xl"
+            className={`mx-auto w-full h-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              sheetExpanded ? "translate-y-0" : "translate-y-[calc(100%-7.25rem)]"
             }`}
             onTouchStart={onSheetTouchStart}
             onTouchEnd={onSheetTouchEnd}
@@ -327,7 +324,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
               <button
                 type="button"
                 onClick={() => setSheetExpanded(true)}
-                className="w-full px-5 pb-4 text-center touch-manipulation"
+                className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
               >
                 <p className="text-[11px] font-bold uppercase tracking-widest text-amber-300">
                   Mi membresía
@@ -338,8 +335,12 @@ export default function BarrIdClient(props: BarrIdClientProps) {
               </button>
             )}
 
-            {sheetExpanded && (
-              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5">
+            <div
+              className={`flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5 transition-opacity duration-500 ease-out ${
+                sheetExpanded ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+              aria-hidden={!sheetExpanded}
+            >
                 <div className="relative flex items-center gap-4 pr-14">
                   <a
                     href="/panel"
@@ -414,7 +415,6 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                   </div>
                 </dl>
               </div>
-            )}
           </div>
         </div>
       </div>

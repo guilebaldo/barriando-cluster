@@ -261,7 +261,7 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
                 href="/cuponera"
                 className="inline-flex items-center gap-1 mt-6 text-xs font-bold text-[#27366D] hover:text-amber-500 transition uppercase tracking-wider"
               >
-                Ver Cuponera <ArrowUpRight className="w-3.5 h-3.5" />
+                Ver todos <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </Reveal>
           </div>

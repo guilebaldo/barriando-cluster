@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { Camera, X } from "lucide-react";
+import { X } from "lucide-react";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
@@ -873,19 +873,6 @@ function PasaporteInner({
           </div>
           </div>
         </div>
-
-        {!isPreview && (
-          <div className="mt-4 mb-1 max-w-sm mx-auto px-2">
-            <button
-              type="button"
-              onClick={() => setScannerOpen(true)}
-              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition shadow-sm active:scale-[0.98]"
-            >
-              <Camera className="w-4 h-4" strokeWidth={2.25} />
-              Escanear QR
-            </button>
-          </div>
-        )}
 
         <p className="mt-5 mb-1 text-center max-w-sm mx-auto px-2">
           {alreadyOnPassportRoster ? (

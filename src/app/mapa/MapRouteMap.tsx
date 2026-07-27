@@ -9,6 +9,7 @@ import { circuitViaWalkPath } from "@/lib/map-circuit";
 import type { UserMapLocation } from "./user-map-location";
 import MapMarkerPopup from "./MapMarkerPopup";
 import { pointHasScannableStamp } from "@/lib/map-point-stamp";
+import { quantizeHeading } from "./map-heading";
 
 function makeUserLocationIcon(heading: number | null | undefined): L.DivIcon {
   const hasHeading = typeof heading === "number" && Number.isFinite(heading);
@@ -87,6 +88,48 @@ function FocusHighlightedPoint({
       window.setTimeout(() => map.panBy([0, offsetY], { animate: true }), 560);
     }
   }, [map, points, highlightedId, bottomSheetHeight]);
+
+  return null;
+}
+
+/** Keep the blue user dot in the visible map band above the ficha (same idea as Cuponera). */
+function FollowUserLocation({
+  userLocation,
+  bottomSheetHeight,
+  paused,
+}: {
+  userLocation: UserMapLocation | null;
+  bottomSheetHeight: number;
+  /** When focusing a hito, don't fight that camera. */
+  paused: boolean;
+}) {
+  const map = useMap();
+  const lastFocusRef = useRef<{ lat: number; lng: number; sheet: number } | null>(null);
+
+  useEffect(() => {
+    if (paused || !userLocation) return;
+
+    const { latitude: lat, longitude: lng } = userLocation;
+    const prev = lastFocusRef.current;
+    const movedFar =
+      !prev ||
+      Math.hypot(lat - prev.lat, lng - prev.lng) > 0.00028; // ~30 m
+    const sheetChanged = !prev || Math.abs(prev.sheet - bottomSheetHeight) > 24;
+    if (!movedFar && !sheetChanged) return;
+
+    lastFocusRef.current = { lat, lng, sheet: bottomSheetHeight };
+
+    // Same base as Cuponera (0.55× sheet) + a little extra so the cone sits higher above the ficha.
+    const offsetY =
+      bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55 + 28) : 0;
+
+    const zoom = Math.max(map.getZoom(), 16);
+    map.flyTo([lat, lng], zoom, { duration: prev ? 0.4 : 0.55 });
+    if (offsetY > 0) {
+      const delay = prev ? 420 : 560;
+      window.setTimeout(() => map.panBy([0, offsetY], { animate: true }), delay);
+    }
+  }, [map, userLocation, bottomSheetHeight, paused]);
 
   return null;
 }
@@ -223,9 +266,10 @@ export default function MapRouteMap({
     return [first.latitude, first.longitude];
   }, [points]);
 
+  const displayHeading = quantizeHeading(userLocation?.heading, 5);
   const userIcon = useMemo(
-    () => makeUserLocationIcon(userLocation?.heading ?? null),
-    [userLocation?.heading]
+    () => makeUserLocationIcon(displayHeading),
+    [displayHeading]
   );
 
   if (points.length === 0) {
@@ -260,6 +304,11 @@ export default function MapRouteMap({
           points={points}
           highlightedId={showStampPopups ? highlightedId : null}
           bottomSheetHeight={bottomSheetHeight}
+        />
+        <FollowUserLocation
+          userLocation={userLocation ?? null}
+          bottomSheetHeight={bottomSheetHeight}
+          paused={Boolean(showStampPopups && highlightedId)}
         />
         <Polyline
           positions={polyline}
