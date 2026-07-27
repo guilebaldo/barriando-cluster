@@ -23,8 +23,8 @@ const STAMP_OUTLINE_COLORS = [
 
 /** Primera página (mitad inferior): 2×2 */
 const COVER_STAMP_COUNT = 4;
-/** Páginas siguientes: 2×3 */
-const PAGE_STAMP_COUNT = 6;
+/** Páginas siguientes: 2×4 (= 4 arriba + 4 abajo) */
+const PAGE_STAMP_COUNT = 8;
 const SWIPE_THRESHOLD_PX = 52;
 const MRZ_SLOTS = 20;
 
@@ -126,14 +126,22 @@ function StampCell({
   hasStamp,
   count,
   isFlashing,
+  size = "md",
 }: {
   restaurant: RestaurantCard;
   index: number;
   hasStamp: boolean;
   count?: number;
   isFlashing?: boolean;
+  size?: "md" | "sm";
 }) {
   const colorClass = STAMP_OUTLINE_COLORS[index % STAMP_OUTLINE_COLORS.length];
+  const stampSize = size === "sm" ? "w-[5.05rem] h-[5.05rem]" : "w-[5.5rem] h-[5.5rem]";
+  const imgSize = size === "sm" ? 64 : 72;
+  const nameClass =
+    size === "sm"
+      ? "text-[10px] max-w-[7rem]"
+      : "text-[11px] max-w-[7.5rem]";
 
   return (
     <Link
@@ -145,7 +153,7 @@ function StampCell({
     >
       <div className="relative">
         <div
-          className={`w-[5.5rem] h-[5.5rem] rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-500 ${
+          className={`${stampSize} rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-500 ${
             hasStamp
               ? `${colorClass} border-solid scale-100 ${stampTiltClass(restaurant.id)}`
               : "border-dashed border-stone-300 scale-95"
@@ -155,8 +163,8 @@ function StampCell({
             <Image
               src={restaurant.logoUrl?.trim() || `/logos/${restaurant.foto}.png`}
               alt={restaurant.name}
-              width={72}
-              height={72}
+              width={imgSize}
+              height={imgSize}
               className="w-full h-full object-contain"
               unoptimized
             />
@@ -168,7 +176,7 @@ function StampCell({
           </span>
         )}
       </div>
-      <p className="text-[11px] font-medium text-stone-700 leading-tight line-clamp-2 px-1 max-w-[7.5rem]">
+      <p className={`font-medium text-stone-700 leading-tight line-clamp-2 px-1 ${nameClass}`}>
         {restaurant.name}
       </p>
     </Link>
@@ -178,9 +186,14 @@ function StampCell({
 function PageBackdrop() {
   return (
     <>
-      <SecurityPatternBackground opacity={0.12} density={1.05} className="text-stone-500" />
+      {/* density default del componente es ~24; valores ~1 dejan las ondas microscópicas */}
+      <SecurityPatternBackground
+        opacity={0.14}
+        density={22}
+        className="z-0 text-stone-600"
+      />
       <div
-        className="absolute inset-0 opacity-[0.22] pointer-events-none"
+        className="absolute inset-0 z-0 opacity-[0.2] pointer-events-none"
         style={{
           backgroundImage:
             "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(160,120,60,0.06) 24px, rgba(160,120,60,0.06) 25px)",
@@ -246,14 +259,13 @@ export default function PasaporteBookMobile({
 
       flippingRef.current = true;
       setFlipAnimating(true);
-      // Sale la hoja actual
-      setFlipDeg(direction > 0 ? -92 : 92);
+      // Sale la hoja: swipe up (next) → rotateX positivo (misma dirección que el drag)
+      setFlipDeg(direction > 0 ? 92 : -92);
 
       window.setTimeout(() => {
         setPageIndex(clamped);
-        // Entra la nueva desde el otro lado (sin transición)
         setFlipAnimating(false);
-        setFlipDeg(direction > 0 ? 88 : -88);
+        setFlipDeg(direction > 0 ? -88 : 88);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             setFlipAnimating(true);
@@ -287,12 +299,11 @@ export default function PasaporteBookMobile({
     const dx = x - startX;
     if (Math.abs(dx) > Math.abs(dy) * 1.1) return;
 
-    // dy > 0 = dedo abajo = voltear hacia atrás (página anterior)
-    // dy < 0 = dedo arriba = voltear hacia adelante
-    let deg = (-dy / 4.2);
+    // dy < 0 (dedo arriba) → rotateX positivo; el commit usa el mismo signo.
+    let deg = -dy / 4.2;
     deg = Math.max(-78, Math.min(78, deg));
 
-    if ((pageIndex === 0 && deg > 0) || (pageIndex >= pageCount - 1 && deg < 0)) {
+    if ((pageIndex === 0 && deg < 0) || (pageIndex >= pageCount - 1 && deg > 0)) {
       setFlipDeg(deg * 0.28);
       return;
     }
@@ -464,7 +475,7 @@ export default function PasaporteBookMobile({
             /* —— Páginas de sellos —— */
             <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
               <PageBackdrop />
-              <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-3">
+              <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-2">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
                   Sellos
                 </p>
@@ -472,7 +483,7 @@ export default function PasaporteBookMobile({
                   {pageIndex + 1} / {pageCount}
                 </p>
               </div>
-              <div className="relative z-10 flex-1 min-h-0 grid grid-cols-2 grid-rows-3 gap-3 place-items-center overflow-hidden">
+              <div className="relative z-10 flex-1 min-h-0 grid grid-cols-2 grid-rows-4 gap-2 place-items-center overflow-hidden">
                 {(stampPage ?? []).map((restaurant, index) => {
                   const globalIndex =
                     COVER_STAMP_COUNT + (pageIndex - 1) * PAGE_STAMP_COUNT + index;
@@ -485,6 +496,7 @@ export default function PasaporteBookMobile({
                       hasStamp={Boolean(stamp?.count)}
                       count={stamp?.count}
                       isFlashing={stampFlashId === restaurant.id}
+                      size="sm"
                     />
                   );
                 })}
