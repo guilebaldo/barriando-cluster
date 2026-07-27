@@ -4,7 +4,6 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
-import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 
 type RestaurantCard = {
   id: number;
@@ -183,21 +182,133 @@ function StampCell({
   );
 }
 
+/* —— Guilloché de página completa (estilo hoja interior de pasaporte) —— */
+
+const GUILLOCHE_W = 390;
+const GUILLOCHE_H = 800;
+
+/**
+ * Onda horizontal con envolvente de amplitud: la amplitud misma varía a lo
+ * largo de x, que es lo que da el efecto "trenzado" de los billetes en vez
+ * de una sinusoide plana.
+ */
+function wavePath({
+  baseY,
+  amp,
+  wavelength,
+  phase,
+  ampMod = 0,
+  ampModWavelength = 200,
+}: {
+  baseY: number;
+  amp: number;
+  wavelength: number;
+  phase: number;
+  ampMod?: number;
+  ampModWavelength?: number;
+}): string {
+  const pts: string[] = [];
+  for (let x = 0; x <= GUILLOCHE_W; x += 5) {
+    const envelope = 1 + ampMod * Math.sin((2 * Math.PI * x) / ampModWavelength);
+    const y = baseY + amp * envelope * Math.sin((2 * Math.PI * x) / wavelength + phase);
+    pts.push(`${x},${y.toFixed(1)}`);
+  }
+  return `M${pts.join(" L")}`;
+}
+
+/** Anillo de roseta: círculo con radio modulado (lóbulos), clásico de pasaportes. */
+function rosettePath(
+  cx: number,
+  cy: number,
+  radius: number,
+  lobeAmp: number,
+  lobes: number,
+  phase: number
+): string {
+  const pts: string[] = [];
+  const steps = 140;
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * Math.PI * 2;
+    const r = radius + lobeAmp * Math.sin(lobes * t + phase);
+    pts.push(`${(cx + r * Math.cos(t)).toFixed(1)},${(cy + r * Math.sin(t)).toFixed(1)}`);
+  }
+  return `M${pts.join(" L")}Z`;
+}
+
 function PageBackdrop() {
+  const { bands, drift, rosette } = useMemo(() => {
+    // Bandas trenzadas: pares de ondas en contrafase que se cruzan formando
+    // la "cadena" que recorre la hoja de lado a lado.
+    const bands: string[] = [];
+    for (let y = 24; y < GUILLOCHE_H; y += 34) {
+      const rowPhase = (y / 34) * 0.7;
+      bands.push(
+        wavePath({ baseY: y, amp: 8.5, wavelength: 56, phase: rowPhase, ampMod: 0.45, ampModWavelength: 195 })
+      );
+      bands.push(
+        wavePath({ baseY: y, amp: 8.5, wavelength: 56, phase: rowPhase + Math.PI, ampMod: 0.45, ampModWavelength: 195 })
+      );
+    }
+
+    // Capa de deriva: ondas más amplias y largas, rotadas unos grados,
+    // en segundo tono para el moiré sutil.
+    const drift: string[] = [];
+    for (let y = -60; y < GUILLOCHE_H + 60; y += 46) {
+      drift.push(wavePath({ baseY: y, amp: 15, wavelength: 138, phase: (y / 46) * 0.9 }));
+    }
+
+    // Roseta central: anillos concéntricos lobulados alternando fase.
+    const rosette: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      rosette.push(
+        rosettePath(
+          GUILLOCHE_W / 2,
+          GUILLOCHE_H / 2,
+          40 + i * 10,
+          5.5 + (i % 2) * 3,
+          12,
+          i % 2 ? Math.PI / 12 : 0
+        )
+      );
+    }
+
+    return { bands, drift, rosette };
+  }, []);
+
   return (
     <>
-      {/* density default del componente es ~24; valores ~1 dejan las ondas microscópicas */}
-      <SecurityPatternBackground
-        opacity={0.14}
-        density={22}
-        className="z-0 text-stone-600"
-      />
+      <svg
+        className="absolute inset-0 z-0 h-full w-full pointer-events-none select-none"
+        viewBox={`0 0 ${GUILLOCHE_W} ${GUILLOCHE_H}`}
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        <g fill="none" stroke="#6b5d45" strokeOpacity={0.16} strokeWidth={0.7}>
+          {bands.map((d, i) => (
+            <path key={`b-${i}`} d={d} />
+          ))}
+        </g>
+        <g
+          fill="none"
+          stroke="#4e6f63"
+          strokeOpacity={0.13}
+          strokeWidth={0.7}
+          transform={`rotate(-7 ${GUILLOCHE_W / 2} ${GUILLOCHE_H / 2})`}
+        >
+          {drift.map((d, i) => (
+            <path key={`d-${i}`} d={d} />
+          ))}
+        </g>
+        <g fill="none" stroke="#6b5d45" strokeOpacity={0.12} strokeWidth={0.7}>
+          {rosette.map((d, i) => (
+            <path key={`r-${i}`} d={d} />
+          ))}
+        </g>
+      </svg>
+      {/* Viñeta suave en los bordes para dar profundidad de papel */}
       <div
-        className="absolute inset-0 z-0 opacity-[0.2] pointer-events-none"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(160,120,60,0.06) 24px, rgba(160,120,60,0.06) 25px)",
-        }}
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{ boxShadow: "inset 0 0 64px rgba(120,90,40,0.09)" }}
       />
     </>
   );
@@ -230,11 +341,15 @@ export default function PasaporteBookMobile({
 }) {
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
+  /** Últimas dos muestras del drag para estimar velocidad al soltar */
+  const lastMove = useRef<{ y: number; t: number } | null>(null);
+  const prevMove = useRef<{ y: number; t: number } | null>(null);
   const flippingRef = useRef(false);
   const [pageIndex, setPageIndex] = useState(0);
   /** Grados de rotateX durante drag / animación de volteo */
   const [flipDeg, setFlipDeg] = useState(0);
-  const [flipAnimating, setFlipAnimating] = useState(false);
+  /** Transición CSS activa ("none" durante drag y swaps instantáneos) */
+  const [flipTransition, setFlipTransition] = useState("none");
 
   const coverStamps = useMemo(
     () => restaurants.slice(0, COVER_STAMP_COUNT),
@@ -251,32 +366,34 @@ export default function PasaporteBookMobile({
       if (flippingRef.current) return;
       const clamped = Math.max(0, Math.min(pageCount - 1, next));
       if (clamped === pageIndex) {
+        setFlipTransition("transform 380ms cubic-bezier(0.22, 1, 0.36, 1)");
         setFlipDeg(0);
-        setFlipAnimating(true);
-        window.setTimeout(() => setFlipAnimating(false), 420);
+        window.setTimeout(() => setFlipTransition("none"), 390);
         return;
       }
 
       flippingRef.current = true;
-      setFlipAnimating(true);
-      // Sale la hoja: swipe up (next) → rotateX positivo (misma dirección que el drag)
-      setFlipDeg(direction > 0 ? 92 : -92);
+      // Fase 1 — la hoja sale acelerando, como al soltar una página real
+      setFlipTransition("transform 230ms cubic-bezier(0.5, 0, 0.85, 0.55)");
+      setFlipDeg(direction > 0 ? 94 : -94);
 
       window.setTimeout(() => {
         setPageIndex(clamped);
-        setFlipAnimating(false);
-        setFlipDeg(direction > 0 ? -88 : 88);
+        setFlipTransition("none");
+        setFlipDeg(direction > 0 ? -90 : 90);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            setFlipAnimating(true);
+            // Fase 2 — la nueva hoja cae desacelerando y asienta con un
+            // mínimo rebote (overshoot del bezier)
+            setFlipTransition("transform 480ms cubic-bezier(0.18, 0.9, 0.24, 1.04)");
             setFlipDeg(0);
             window.setTimeout(() => {
-              setFlipAnimating(false);
+              setFlipTransition("none");
               flippingRef.current = false;
-            }, 520);
+            }, 490);
           });
         });
-      }, 280);
+      }, 235);
     },
     [pageCount, pageIndex]
   );
@@ -285,7 +402,9 @@ export default function PasaporteBookMobile({
     if (flippingRef.current) return;
     touchStartY.current = e.touches[0]?.clientY ?? null;
     touchStartX.current = e.touches[0]?.clientX ?? null;
-    setFlipAnimating(false);
+    lastMove.current = null;
+    prevMove.current = null;
+    setFlipTransition("none");
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
@@ -298,6 +417,9 @@ export default function PasaporteBookMobile({
     const dy = y - startY;
     const dx = x - startX;
     if (Math.abs(dx) > Math.abs(dy) * 1.1) return;
+
+    prevMove.current = lastMove.current;
+    lastMove.current = { y, t: performance.now() };
 
     // dy < 0 (dedo arriba) → rotateX positivo; el commit usa el mismo signo.
     let deg = -dy / 4.2;
@@ -317,17 +439,31 @@ export default function PasaporteBookMobile({
     touchStartX.current = null;
     const endY = e.changedTouches[0]?.clientY;
     if (startY == null || endY == null) {
+      setFlipTransition("transform 380ms cubic-bezier(0.22, 1, 0.36, 1)");
       setFlipDeg(0);
-      setFlipAnimating(true);
+      window.setTimeout(() => setFlipTransition("none"), 390);
       return;
     }
+
+    // Velocidad del gesto (px/ms): un flick corto pero rápido también voltea.
+    let velocity = 0;
+    if (lastMove.current && prevMove.current) {
+      const dt = lastMove.current.t - prevMove.current.t;
+      if (dt > 0) velocity = (prevMove.current.y - lastMove.current.y) / dt; // + = hacia arriba
+    }
+    lastMove.current = null;
+    prevMove.current = null;
+
     const dy = startY - endY; // + = swipe up = next
-    if (dy > SWIPE_THRESHOLD_PX) finishFlipTo(pageIndex + 1, 1);
-    else if (dy < -SWIPE_THRESHOLD_PX) finishFlipTo(pageIndex - 1, -1);
+    const fastUp = velocity > 0.55 && dy > 12;
+    const fastDown = velocity < -0.55 && dy < -12;
+
+    if (dy > SWIPE_THRESHOLD_PX || fastUp) finishFlipTo(pageIndex + 1, 1);
+    else if (dy < -SWIPE_THRESHOLD_PX || fastDown) finishFlipTo(pageIndex - 1, -1);
     else {
-      setFlipAnimating(true);
+      setFlipTransition("transform 380ms cubic-bezier(0.22, 1, 0.36, 1)");
       setFlipDeg(0);
-      window.setTimeout(() => setFlipAnimating(false), 420);
+      window.setTimeout(() => setFlipTransition("none"), 390);
     }
   };
 
@@ -351,12 +487,10 @@ export default function PasaporteBookMobile({
             transform: `rotateX(${flipDeg}deg)`,
             transformOrigin: "50% 50%",
             transformStyle: "preserve-3d",
-            transition: flipAnimating
-              ? "transform 480ms cubic-bezier(0.16, 1, 0.3, 1)"
-              : "none",
+            transition: flipTransition,
             boxShadow:
               Math.abs(flipDeg) > 2
-                ? `0 ${8 + Math.abs(flipDeg) * 0.15}px ${20 + Math.abs(flipDeg) * 0.25}px rgba(45,35,20,${0.08 + Math.abs(flipDeg) * 0.002})`
+                ? `0 ${8 + Math.abs(flipDeg) * 0.18}px ${22 + Math.abs(flipDeg) * 0.3}px rgba(45,35,20,${0.09 + Math.abs(flipDeg) * 0.0022})`
                 : "none",
           }}
         >
@@ -502,6 +636,18 @@ export default function PasaporteBookMobile({
                 })}
               </div>
             </section>
+          )}
+
+          {/* Sombreado dinámico: la mitad que se aleja de la luz se oscurece
+              proporcionalmente al ángulo, vendiendo el 3D del volteo */}
+          {Math.abs(flipDeg) > 2 && (
+            <div
+              className="absolute inset-0 z-30 pointer-events-none"
+              style={{
+                background: `linear-gradient(${flipDeg > 0 ? "to top" : "to bottom"}, rgba(250,246,239,${Math.min(0.22, (Math.abs(flipDeg) / 90) * 0.22)}) 0%, transparent 42%, rgba(48,36,18,${Math.min(0.3, (Math.abs(flipDeg) / 90) * 0.3)}) 100%)`,
+                transition: flipTransition !== "none" ? "opacity 200ms linear" : "none",
+              }}
+            />
           )}
         </div>
       </div>
