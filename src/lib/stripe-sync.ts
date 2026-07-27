@@ -73,44 +73,75 @@ export async function syncStripeSubscriptionForUser(userId: string): Promise<boo
             typeof completed.subscription === "string"
               ? completed.subscription
               : completed.subscription.id;
-          const stripeSub = await stripe.subscriptions.retrieve(stripeSubId);
-          const periodEnd = (stripeSub as { current_period_end?: number }).current_period_end;
-          const status = normalizeStripeStatus(stripeSub.status);
+          try {
+            const stripeSub = await stripe.subscriptions.retrieve(stripeSubId);
+            const periodEnd = (stripeSub as { current_period_end?: number }).current_period_end;
+            const status = normalizeStripeStatus(stripeSub.status);
 
-          await cancelPreviousStripeSubscription(stripe, sub.stripeSubscriptionId, stripeSub.id);
+            await cancelPreviousStripeSubscription(stripe, sub.stripeSubscriptionId, stripeSub.id);
 
-          await prisma.subscription.update({
-            where: { userId },
-            data: {
-              plan,
-              status,
-              paymentMethod: "stripe",
-              stripeSubscriptionId: stripeSub.id,
-              stripeCustomerId: stripeSub.customer as string,
-              currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-            },
-          });
-          await publishBusinessPresenceOnPayment(userId, plan, { reinstateRoster: true });
-          return hasCommercialAccess(plan, status);
+            await prisma.subscription.update({
+              where: { userId },
+              data: {
+                plan,
+                status,
+                paymentMethod: "stripe",
+                stripeSubscriptionId: stripeSub.id,
+                stripeCustomerId: stripeSub.customer as string,
+                currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+              },
+            });
+            await publishBusinessPresenceOnPayment(userId, plan, { reinstateRoster: true });
+            return hasCommercialAccess(plan, status);
+          } catch (retrieveError) {
+            // Checkout apunta a una sub borrada / de otra cuenta — seguir con el ID local.
+            console.warn(
+              "[stripe] checkout subscription missing, falling back:",
+              stripeSubId,
+              retrieveError
+            );
+          }
         }
       }
     }
 
     if (sub.stripeSubscriptionId) {
-      const stripeSub = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
-      const periodEnd = (stripeSub as { current_period_end?: number }).current_period_end;
-      const status = normalizeStripeStatus(stripeSub.status);
+      try {
+        const stripeSub = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
+        const periodEnd = (stripeSub as { current_period_end?: number }).current_period_end;
+        const status = normalizeStripeStatus(stripeSub.status);
 
-      await prisma.subscription.update({
-        where: { userId },
-        data: {
-          status,
-          stripeCustomerId: stripeSub.customer as string,
-          currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-        },
-      });
-      await publishBusinessPresenceOnPayment(userId, sub.plan);
-      return hasCommercialAccess(sub.plan, status);
+        await prisma.subscription.update({
+          where: { userId },
+          data: {
+            status,
+            stripeCustomerId: stripeSub.customer as string,
+            currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+          },
+        });
+        await publishBusinessPresenceOnPayment(userId, sub.plan);
+        return hasCommercialAccess(sub.plan, status);
+      } catch (retrieveError) {
+        const code =
+          retrieveError &&
+          typeof retrieveError === "object" &&
+          "code" in retrieveError
+            ? String((retrieveError as { code?: string }).code)
+            : "";
+        // Sub fantasma en DB: limpiar para no bloquear login / onboarding.
+        if (code === "resource_missing") {
+          console.warn(
+            "[stripe] clearing missing subscription id:",
+            sub.stripeSubscriptionId
+          );
+          await prisma.subscription.update({
+            where: { userId },
+            data: { stripeSubscriptionId: null },
+          });
+          return false;
+        }
+        throw retrieveError;
+      }
     }
   } catch (error) {
     console.error("[stripe] syncStripeSubscriptionForUser failed:", error);

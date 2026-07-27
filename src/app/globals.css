@@ -26,9 +26,9 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Shell app móvil: deja hueco al tab bar en pantallas inmersivas.
-     Las fichas usan bottom-0 dentro de ese área (sin segundo offset).
-     Fondo navy en el home indicator / borde inferior del viewport. */
+  /* Shell app móvil: hueco al tab bar + fondo navy del home indicator.
+     No usar env(..., fallback) dentro de background-size: la coma rompe el parseo
+     y el gradient navy puede tapar toda la pantalla. */
   @media (max-width: 767px) {
     html.app-mobile-shell,
     html.app-mobile-shell body {
@@ -38,11 +38,6 @@
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell {
       padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
-      /* Solo la franja del hub: navy (el resto sigue el bg del shell) */
-      background-image: linear-gradient(#27366d, #27366d);
-      background-size: 100% calc(3.5rem + env(safe-area-inset-bottom, 0px));
-      background-position: bottom;
-      background-repeat: no-repeat;
     }
 
     /* Páginas con scroll (panel, etc.): el contenido no queda bajo el hub */
