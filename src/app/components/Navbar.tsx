@@ -13,7 +13,6 @@ import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
 import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 import { AdminNavLink } from "@/app/components/AdminNavBadge";
 import AppBottomNav, { useAppMobileShell } from "@/app/components/AppBottomNav";
-import CloseToBarrId from "@/app/components/CloseToBarrId";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 function GoogleGlyph() {
@@ -449,7 +448,6 @@ export default function Navbar() {
           </div>
         )}
       </nav>
-      <CloseToBarrId />
       <AppBottomNav />
     </>
   );

@@ -26,15 +26,16 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Shell app móvil (BarrID): navy bajo el home indicator + espacio al tab bar */
+  /* Shell app móvil: deja hueco al tab bar en pantallas inmersivas.
+     Las fichas usan bottom-0 dentro de ese área (sin segundo offset). */
   @media (max-width: 767px) {
-    html.app-mobile-shell,
-    html.app-mobile-shell body {
-      background-color: #27366d;
-    }
-
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell {
+      padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Páginas con scroll (panel, etc.): el contenido no queda bajo el hub */
+    html.app-mobile-shell body {
       padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
   }

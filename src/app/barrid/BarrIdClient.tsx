@@ -180,9 +180,6 @@ export default function BarrIdClient(props: BarrIdClientProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
   const appShell = useAppMobileShell();
-  const sheetBottom = appShell
-    ? "bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))]"
-    : "bottom-0";
 
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -300,7 +297,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         </div>
 
         <div
-          className={`absolute inset-x-0 z-20 transition-[top] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${sheetBottom} ${
+          className={`absolute inset-x-0 bottom-0 z-20 transition-[top] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
             sheetExpanded
               ? "top-[max(0.75rem,env(safe-area-inset-top,0px))]"
               : "top-auto"

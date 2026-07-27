@@ -418,15 +418,17 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       </div>
 
       <div
-        className={`absolute left-0 right-0 z-20 px-2 sm:px-4 ${
-          appShell
-            ? "bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] pb-2"
-            : "bottom-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        className={`absolute left-0 right-0 bottom-0 z-20 ${
+          appShell ? "px-0" : "px-2 sm:px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
         }`}
       >
         <div
           ref={sheetRef}
-          className={`max-w-lg mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-2xl overflow-hidden transition-[max-height,transform] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overscroll-contain will-change-[max-height] ${
+          className={`mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl overflow-hidden transition-[max-height,transform] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] overscroll-contain will-change-[max-height] ${
+            appShell
+              ? "w-full max-w-none rounded-t-2xl border-b-0"
+              : "max-w-lg rounded-2xl"
+          } ${
             sheetExpanded
               ? welcomeOpen
                 ? "max-h-[min(62vh,480px)]"

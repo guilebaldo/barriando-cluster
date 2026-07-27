@@ -477,7 +477,11 @@ export default function SociosImmersiveView({
       )}
 
       {!canRedeemBenefits && (
-        <div className="px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-100 shrink-0 bg-white">
+        <div
+          className={`px-3 pt-2 border-t border-slate-100 shrink-0 bg-white ${
+            appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          }`}
+        >
           <p className="text-center px-1 py-1.5">
             <Link
               href="/planes?tipo=personales"
@@ -489,7 +493,7 @@ export default function SociosImmersiveView({
         </div>
       )}
       {canRedeemBenefits && sheetMode !== "peek" && (
-        <div className="pb-[max(0.5rem,env(safe-area-inset-bottom))] shrink-0" />
+        <div className={`shrink-0 ${appShell ? "pb-2" : "pb-[max(0.5rem,env(safe-area-inset-bottom))]"}`} />
       )}
     </>
   );
@@ -507,14 +511,8 @@ export default function SociosImmersiveView({
       <div
         className={`absolute inset-x-0 z-20 pointer-events-none transition-[top,bottom] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           sheetMode === "full"
-            ? `top-[max(0.75rem,env(safe-area-inset-top,0px))] ${
-                appShell
-                  ? "bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))]"
-                  : "bottom-0"
-              }`
-            : appShell
-              ? "bottom-[calc(3.5rem+env(safe-area-inset-bottom,0px))] top-auto"
-              : "bottom-0 top-auto"
+            ? "top-[max(0.75rem,env(safe-area-inset-top,0px))] bottom-0"
+            : "bottom-0 top-auto"
         }`}
         onTouchStart={onSheetTouchStart}
         onTouchEnd={onSheetTouchEnd}
