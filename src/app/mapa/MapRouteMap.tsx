@@ -10,6 +10,7 @@ import type { UserMapLocation } from "./user-map-location";
 import MapMarkerPopup from "./MapMarkerPopup";
 import { pointHasScannableStamp } from "@/lib/map-point-stamp";
 import { quantizeHeading } from "./map-heading";
+import { getMapFocusPanOffsetPx, readCssPxVar } from "@/lib/map-focus-pan";
 
 function makeUserLocationIcon(heading: number | null | undefined): L.DivIcon {
   const hasHeading = typeof heading === "number" && Number.isFinite(heading);
@@ -57,7 +58,12 @@ function FitRouteBounds({
   useEffect(() => {
     if (highlightedId || points.length === 0) return;
     const bounds = L.latLngBounds(points.map((p) => [p.latitude, p.longitude] as [number, number]));
-    map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 });
+    const safeTop = Math.max(48, Math.round(readCssPxVar("--safe-area-inset-top") + 24));
+    map.fitBounds(bounds, {
+      paddingTopLeft: [48, safeTop],
+      paddingBottomRight: [48, 48],
+      maxZoom: 16,
+    });
   }, [map, points, highlightedId]);
 
   return null;
@@ -79,10 +85,7 @@ function FocusHighlightedPoint({
     const point = points.find((p) => p.id === highlightedId);
     if (!point) return;
     const hasStampPopup = pointHasScannableStamp(point);
-    // Marker sits lower (closer to the sheet) so Leaflet popups opening above stay fully visible.
-    const sheetOffset = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55) : 0;
-    const popupOffset = hasStampPopup ? 88 : 0;
-    const offsetY = sheetOffset + popupOffset;
+    const offsetY = getMapFocusPanOffsetPx(bottomSheetHeight, hasStampPopup);
     map.flyTo([point.latitude, point.longitude], 17, { duration: 0.55 });
     if (offsetY > 0) {
       window.setTimeout(() => map.panBy([0, offsetY], { animate: true }), 560);

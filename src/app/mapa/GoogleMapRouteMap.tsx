@@ -6,6 +6,7 @@ import { loadGoogleMapsApi } from "@/lib/google-maps-loader";
 import { circuitViaWalkPath } from "@/lib/map-circuit";
 import { buildMapMarkerPopupContent, pointHasScannableStamp } from "@/lib/map-point-stamp";
 import type { MapRoutePoint } from "@/lib/map-route-client";
+import { getMapFocusPanOffsetPx } from "@/lib/map-focus-pan";
 
 const LeafletMapFallback = dynamic(() => import("./MapRouteMap"), {
   ssr: false,
@@ -20,11 +21,9 @@ export type UserMapLocation = {
   accuracy?: number;
 };
 
-/** Centra el marcador en el espacio visible entre el borde superior del mapa y la ficha inferior. */
+/** Centra el marcador en el espacio visible entre el notch y la ficha inferior. */
 function getFocusPanOffsetPx(bottomSheetHeight: number, stampPopup: boolean): number {
-  const sheetOffset = bottomSheetHeight > 0 ? bottomSheetHeight / 2 : 0;
-  const popupOffset = stampPopup ? 64 : 0;
-  return Math.round(sheetOffset + popupOffset);
+  return getMapFocusPanOffsetPx(bottomSheetHeight, stampPopup);
 }
 
 export default function GoogleMapRouteMap({

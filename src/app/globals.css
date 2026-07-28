@@ -9,6 +9,9 @@
     --font-serif-monumental: 'Cinzel', serif;
     --font-sans-premium: 'Plus Jakarta Sans', sans-serif;
     --font-passport-mrz: 'Share Tech Mono', 'Courier New', monospace;
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --app-hub-offset: 0px;
   }
 
   body {
@@ -30,24 +33,40 @@
      No usar env(..., fallback) dentro de background-size: la coma rompe el parseo
      y el gradient navy puede tapar toda la pantalla. */
   @media (max-width: 767px) {
+    html.app-mobile-shell {
+      --app-hub-offset: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
     html.app-mobile-shell,
     html.app-mobile-shell body {
       background-color: #27366d;
     }
 
+    /*
+      Shells fixed inset-0: anclar bottom encima del hub (no padding).
+      Así absolute/fixed internos no quedan bajo el tab bar.
+    */
     html.app-mobile-shell .map-immersive-shell,
-    html.app-mobile-shell .barrid-shell,
+    html.app-mobile-shell .barrid-shell {
+      bottom: var(--app-hub-offset);
+      height: auto;
+      max-height: none;
+      padding-bottom: 0;
+    }
+
+    /* Panel scrollea: padding inferior deja ver navy bajo el contenido */
     html.app-mobile-shell .panel-mobile-shell {
-      padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+      padding-bottom: var(--app-hub-offset);
     }
 
-    /* Páginas con scroll genéricas (no panel-mobile-shell): hueco bajo el hub */
+    /* Páginas con scroll genéricas (no shells immersive): hueco bajo el hub */
     html.app-mobile-shell body {
-      padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+      padding-bottom: var(--app-hub-offset);
     }
 
-    /* Panel immersive: el padding va en .panel-mobile-shell, no duplicar en body */
-    html.app-mobile-shell:has(.panel-mobile-shell) body {
+    html.app-mobile-shell:has(.panel-mobile-shell) body,
+    html.app-mobile-shell:has(.map-immersive-shell) body,
+    html.app-mobile-shell:has(.barrid-shell) body {
       padding-bottom: 0;
     }
   }
