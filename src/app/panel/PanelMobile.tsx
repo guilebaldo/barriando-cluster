@@ -65,7 +65,7 @@ export default function PanelMobile({
 
   if (active?.detail) {
     return (
-      <div className="panel-mobile-shell flex flex-col min-h-[100dvh] bg-slate-50 text-slate-900">
+      <div className="panel-mobile-shell flex flex-col min-h-[100dvh] bg-[#27366D] text-slate-900">
         <header className="sticky top-0 z-30 bg-[#27366D] text-white safe-area-top border-b border-[#1e2b58]">
           <div className="flex items-center gap-2 px-3 py-3">
             <button
@@ -84,7 +84,7 @@ export default function PanelMobile({
             </div>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-8 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4 pb-8 space-y-4">
           {active.detail}
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function PanelMobile({
   }
 
   return (
-    <div className="panel-mobile-shell flex flex-col min-h-[100dvh] bg-slate-50 text-slate-900">
+    <div className="panel-mobile-shell flex flex-col min-h-[100dvh] bg-[#27366D] text-slate-900">
       <header className="sticky top-0 z-30 bg-[#27366D] text-white safe-area-top border-b border-[#1e2b58]">
         <div className="flex items-center gap-2 px-3 py-3">
           {showBackToBarrId ? (
@@ -123,7 +123,7 @@ export default function PanelMobile({
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-10 space-y-5">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4 pb-10 space-y-5">
         <section className="flex items-center gap-3.5 rounded-2xl bg-white border border-slate-200 px-4 py-4 shadow-sm">
           <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-200 shrink-0 border-2 border-amber-400/50">
             {user.image ? (

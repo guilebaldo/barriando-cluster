@@ -16,7 +16,7 @@ import {
 } from "@/lib/membresia";
 import { reportManualPayment } from "@/app/panel/actions";
 import type { MembershipPlan } from "@/generated/prisma/client";
-import { CreditCard, ShieldCheck } from "lucide-react";
+import { Clock, CreditCard, ShieldCheck } from "lucide-react";
 
 interface CertificacionPagoClientProps {
   plan: MembershipPlan;
@@ -27,6 +27,8 @@ interface CertificacionPagoClientProps {
     paymentEmail: string;
   };
   cancelNotice?: string | null;
+  /** Ya generó ficha OXXO; Stripe aún no acredita. */
+  awaitingOxxo?: boolean;
 }
 
 export default function CertificacionPagoClient({
@@ -34,14 +36,20 @@ export default function CertificacionPagoClient({
   stripeConfigured,
   paymentDetails,
   cancelNotice,
+  awaitingOxxo = false,
 }: CertificacionPagoClientProps) {
   const router = useRouter();
   const [payMsg, setPayMsg] = useState("");
   const [manualMsg, setManualMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showOtherMethods, setShowOtherMethods] = useState(!awaitingOxxo);
 
   const paidPlan = plan as PaidMembershipPlan;
   const planDef = MEMBERSHIP_PLANS[plan];
+
+  useEffect(() => {
+    setShowOtherMethods(!awaitingOxxo);
+  }, [awaitingOxxo]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -94,16 +102,23 @@ export default function CertificacionPagoClient({
   return (
     <SiteShell>
       <Navbar />
-      <main className="flex-1 max-w-lg mx-auto py-12 px-6 w-full">
+      <main className="flex-1 max-w-lg mx-auto py-12 px-6 w-full pb-[calc(3.5rem+env(safe-area-inset-bottom,0px)+2rem)] md:pb-12">
         <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm space-y-6">
           <div className="text-center">
-            <ShieldCheck className="w-8 h-8 text-[#27366D] mx-auto mb-3" />
+            {awaitingOxxo && !showOtherMethods ? (
+              <Clock className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+            ) : (
+              <ShieldCheck className="w-8 h-8 text-[#27366D] mx-auto mb-3" />
+            )}
             <h1 className="text-xl font-bold font-serif-cluster uppercase tracking-wide text-slate-950">
-              Selección de Método de Pago para Certificación
+              {awaitingOxxo && !showOtherMethods
+                ? "Estamos esperando tu pago"
+                : "Selección de Método de Pago para Certificación"}
             </h1>
             <p className="text-xs text-slate-500 mt-2 font-light leading-relaxed">
-              Completa el pago para activar tu membresía de socio certificado. Hasta entonces, el panel
-              comercial permanecerá bloqueado.
+              {awaitingOxxo && !showOtherMethods
+                ? "Ya tienes tu ficha OXXO. Cuando Stripe confirme el depósito, tu membresía se activa sola."
+                : "Completa el pago para activar tu membresía de socio certificado. Hasta entonces, el panel comercial permanecerá bloqueado."}
             </p>
           </div>
 
@@ -116,70 +131,108 @@ export default function CertificacionPagoClient({
             <p className="text-xs text-slate-600 mt-2 font-light">{planDef.description}</p>
           </div>
 
-          {cancelNotice && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-3 text-xs">
-              {cancelNotice}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            {stripeConfigured ? (
+          {awaitingOxxo && !showOtherMethods ? (
+            <div className="space-y-4">
+              <div className="bg-amber-50 border border-amber-200 text-amber-950 rounded-xl p-4 text-xs leading-relaxed">
+                <p className="font-bold text-[#27366D] mb-1">Pago OXXO en proceso</p>
+                <p className="font-light">
+                  Paga en cualquier OXXO con tu ficha y conserva el comprobante. La acreditación suele
+                  llegar al día siguiente hábil; no requiere validación de un administrador (a diferencia
+                  de la transferencia CLABE).
+                </p>
+              </div>
+              <Link
+                href="/panel"
+                className="w-full inline-flex items-center justify-center bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition"
+              >
+                Ir a Mi cuenta
+              </Link>
               <button
                 type="button"
-                disabled={loading}
-                onClick={handleStripePay}
-                className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition disabled:opacity-50"
+                onClick={() => setShowOtherMethods(true)}
+                className="w-full text-center text-xs text-[#27366D] hover:underline font-semibold"
               >
-                <CreditCard className="w-4 h-4" />
-                {loading ? "Redirigiendo..." : "Pagar con tarjeta (domiciliación mensual)"}
+                Elegir otro método de pago
               </button>
-            ) : (
-              <p className="text-xs text-amber-700 text-center">
-                El pago con tarjeta no está disponible en este momento.
-              </p>
-            )}
+            </div>
+          ) : (
+            <>
+              {cancelNotice && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-3 text-xs">
+                  {cancelNotice}
+                </div>
+              )}
 
-            {stripeConfigured ? (
-              <>
+              <div className="space-y-4">
+                {stripeConfigured ? (
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={handleStripePay}
+                    className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition disabled:opacity-50"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    {loading ? "Redirigiendo..." : "Pagar con tarjeta (domiciliación mensual)"}
+                  </button>
+                ) : (
+                  <p className="text-xs text-amber-700 text-center">
+                    El pago con tarjeta no está disponible en este momento.
+                  </p>
+                )}
+
+                {stripeConfigured ? (
+                  <>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-200" />
+                      </div>
+                      <div className="relative flex justify-center text-[10px] uppercase">
+                        <span className="bg-white px-2 text-slate-400">pago de un mes</span>
+                      </div>
+                    </div>
+                    <StripeLocalPaymentButtons plan={plan} disabled={loading} />
+                  </>
+                ) : null}
+
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-slate-200" />
                   </div>
                   <div className="relative flex justify-center text-[10px] uppercase">
-                    <span className="bg-white px-2 text-slate-400">pago de un mes</span>
+                    <span className="bg-white px-2 text-slate-400">o CLABE manual</span>
                   </div>
                 </div>
-                <StripeLocalPaymentButtons plan={plan} disabled={loading} />
-              </>
-            ) : null}
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
+                <TransferPaymentSection
+                  plan={plan}
+                  onConfirm={handleManualPayment}
+                  disabled={loading}
+                  clabe={paymentDetails.clabe}
+                  bankLabel={paymentDetails.bankLabel}
+                  paymentEmail={paymentDetails.paymentEmail}
+                />
               </div>
-              <div className="relative flex justify-center text-[10px] uppercase">
-                <span className="bg-white px-2 text-slate-400">o CLABE manual</span>
-              </div>
-            </div>
 
-            <TransferPaymentSection
-              plan={plan}
-              onConfirm={handleManualPayment}
-              disabled={loading}
-              clabe={paymentDetails.clabe}
-              bankLabel={paymentDetails.bankLabel}
-              paymentEmail={paymentDetails.paymentEmail}
-            />
-          </div>
+              {(payMsg || manualMsg) && (
+                <p className="text-xs text-slate-600 text-center">{payMsg || manualMsg}</p>
+              )}
 
-          {(payMsg || manualMsg) && (
-            <p className="text-xs text-slate-600 text-center">{payMsg || manualMsg}</p>
+              <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+                Tarjeta: domiciliación automática. OXXO: pago único; al confirmar Stripe se activa tu mes
+                (sin cargo recurrente). CLABE: un administrador valida tu comprobante.
+              </p>
+
+              {awaitingOxxo ? (
+                <button
+                  type="button"
+                  onClick={() => setShowOtherMethods(false)}
+                  className="block w-full text-center text-xs text-slate-500 hover:underline"
+                >
+                  Volver al aviso de espera OXXO
+                </button>
+              ) : null}
+            </>
           )}
-
-          <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-            Tarjeta: domiciliación automática. OXXO: pago único; al confirmar Stripe se activa tu mes
-            (sin cargo recurrente). CLABE: un administrador valida tu comprobante.
-          </p>
 
           <Link
             href="/planes?cambio=1"

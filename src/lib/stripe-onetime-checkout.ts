@@ -53,8 +53,21 @@ export async function createStripeLocalPaymentCheckoutUrl(
           plan: user.subscription?.plan ?? "TURISTA",
           status: user.subscription?.status ?? "inactive",
           stripeCustomerId: customerId,
+          paymentMethod: "oxxo",
         },
-        update: { stripeCustomerId: customerId },
+        update: { stripeCustomerId: customerId, paymentMethod: "oxxo" },
+      });
+    } else {
+      await prisma.subscription.upsert({
+        where: { userId },
+        create: {
+          userId,
+          plan: user.subscription?.plan ?? plan,
+          status: user.subscription?.status ?? "inactive",
+          stripeCustomerId: customerId,
+          paymentMethod: "oxxo",
+        },
+        update: { paymentMethod: "oxxo" },
       });
     }
 

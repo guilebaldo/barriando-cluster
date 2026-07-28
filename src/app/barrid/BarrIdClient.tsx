@@ -368,7 +368,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           className={`absolute inset-0 flex flex-col items-center justify-center px-4 pointer-events-none ${
             appShell
               ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
-              : "pt-2 pb-28"
+              : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
           }`}
         >
           {/* Un poco más abajo en el hueco visible sobre la ficha */}

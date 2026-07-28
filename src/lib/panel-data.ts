@@ -8,6 +8,7 @@ export type SafePanelSubscription = {
   currentPeriodEnd: string | null;
   stripeSubscriptionId: string | null;
   stripeCustomerId: string | null;
+  paymentMethod: string | null;
   createdAt: string | null;
 };
 
@@ -73,6 +74,7 @@ export const DEFAULT_PANEL_SUBSCRIPTION: SafePanelSubscription = {
   currentPeriodEnd: null,
   stripeSubscriptionId: null,
   stripeCustomerId: null,
+  paymentMethod: null,
   createdAt: null,
 };
 
@@ -87,6 +89,7 @@ export function normalizePanelSubscription(
     currentPeriodEnd?: Date | string | null;
     stripeSubscriptionId?: string | null;
     stripeCustomerId?: string | null;
+    paymentMethod?: string | null;
     createdAt?: Date | string | null;
   } | null
 ): SafePanelSubscription {
@@ -113,6 +116,10 @@ export function normalizePanelSubscription(
     currentPeriodEnd,
     stripeSubscriptionId: sub.stripeSubscriptionId ?? null,
     stripeCustomerId: sub.stripeCustomerId ?? null,
+    paymentMethod:
+      typeof sub.paymentMethod === "string" && sub.paymentMethod.trim()
+        ? sub.paymentMethod
+        : null,
     createdAt,
   };
 }

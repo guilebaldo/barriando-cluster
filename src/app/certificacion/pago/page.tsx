@@ -6,6 +6,7 @@ import { isStripeConfiguredForPlan } from "@/lib/stripe";
 import { getBarriandoPaymentDetails } from "@/lib/payment";
 import {
   hasCommercialAccess,
+  isOxxoPaymentAwaiting,
   isTuristaPlan,
   needsCertificationPayment,
 } from "@/lib/membresia";
@@ -40,13 +41,16 @@ export default async function CertificacionPagoPage({
         role: session.role,
         plan: sub.plan,
         subscriptionStatus: sub.status,
+        paymentMethod: sub.paymentMethod,
       })
     );
   }
 
-  if (!needsCertificationPayment(sub.plan, sub.status) && sub.status === "manual_pending") {
+  if (!needsCertificationPayment(sub.plan, sub.status, sub.paymentMethod) && sub.status === "manual_pending") {
     redirect("/panel");
   }
+
+  const awaitingOxxo = isOxxoPaymentAwaiting(sub.plan, sub.status, sub.paymentMethod);
 
   let cancelNotice: string | null = null;
   if (params.pago === "cancelado") {
@@ -62,6 +66,7 @@ export default async function CertificacionPagoPage({
       stripeConfigured={isStripeConfiguredForPlan(sub.plan)}
       paymentDetails={getBarriandoPaymentDetails()}
       cancelNotice={cancelNotice}
+      awaitingOxxo={awaitingOxxo}
     />
   );
 }

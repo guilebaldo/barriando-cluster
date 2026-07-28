@@ -18,6 +18,7 @@ import {
   canRegisterBusinessProfile,
   isSubscriptionStatusPending,
   isTransferPaymentPending,
+  isOxxoPaymentAwaiting,
   type PaidMembershipPlan,
 } from "@/lib/membresia";
 import { toBusinessProfileFormInitial } from "@/lib/business-address";
@@ -88,6 +89,7 @@ interface PanelProps {
     status: string;
     currentPeriodEnd: string | null;
     stripeSubscriptionId: string | null;
+    paymentMethod?: string | null;
     createdAt: string | null;
   };
   socioProfile: SafeSocioProfile | null;
@@ -163,6 +165,7 @@ export default function PanelDashboard({
   const canLink = canLinkSocioAccount(status);
   const pendingValidation = isSubscriptionStatusPending(status);
   const transferPending = isTransferPaymentPending(status);
+  const oxxoAwaiting = isOxxoPaymentAwaiting(plan, status, subscription?.paymentMethod);
   const paymentRejected = status === "manual_rejected";
   const expiryLabel = resolveMembershipExpiryLabel({
     status,
@@ -366,6 +369,7 @@ export default function PanelDashboard({
 
   const activePaymentNotice = localPaymentNotice ?? paymentNotice;
   const showTransferPendingBanner = transferPending && !linkageApproved;
+  const showOxxoAwaitingBanner = oxxoAwaiting && !hasPaidAccess;
   const showLinkageCtaBanner = showLinkageFirst && !linkageCtaSeen;
   const suppressTopPaymentNotice =
     dismissedNotice || showLinkageCtaBanner || hasBusinessEstablished;
@@ -391,6 +395,15 @@ export default function PanelDashboard({
           <p className="text-xs font-light leading-relaxed">
             Tu pago por transferencia está siendo revisado por el administrador. Una vez confirmado, se
             habilitarán las herramientas para dar de alta o vincular tu negocio.
+          </p>
+        </div>
+      )}
+      {showOxxoAwaitingBanner && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-sm">
+          <p className="font-bold text-[#27366D] mb-1">Estamos esperando tu pago en OXXO</p>
+          <p className="text-xs font-light leading-relaxed">
+            Cuando Stripe confirme el depósito —a menudo al día siguiente hábil— tu membresía de un mes
+            se activa sola. No hace falta que un administrador lo valide. Conserva tu comprobante.
           </p>
         </div>
       )}
@@ -812,6 +825,16 @@ export default function PanelDashboard({
           <p className="text-xs font-light leading-relaxed">
             Tu pago por transferencia está siendo revisado por el administrador. Una vez confirmado, se
             habilitarán las herramientas para dar de alta o vincular tu negocio.
+          </p>
+        </div>
+      )}
+
+      {showOxxoAwaitingBanner && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-sm">
+          <p className="font-bold text-[#27366D] mb-1">Estamos esperando tu pago en OXXO</p>
+          <p className="text-xs font-light leading-relaxed">
+            Cuando Stripe confirme el depósito —a menudo al día siguiente hábil— tu membresía de un mes
+            se activa sola. No hace falta que un administrador lo valide. Conserva tu comprobante.
           </p>
         </div>
       )}

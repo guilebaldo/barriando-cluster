@@ -188,11 +188,31 @@ export function isTransferPaymentPending(status: string): boolean {
   return status === "manual_pending";
 }
 
-/** Socio con plan de pago pero sin certificación activa (ni transferencia en revisión). */
-export function needsCertificationPayment(plan: MembershipPlan, status: string): boolean {
+/**
+ * Eligió OXXO y ya tiene ficha/código: Stripe aún no acredita.
+ * Status sigue inactive hasta el webhook.
+ */
+export function isOxxoPaymentAwaiting(
+  plan: MembershipPlan,
+  status: string,
+  paymentMethod?: string | null
+): boolean {
   if (isTuristaPlan(plan)) return false;
   if (hasCommercialAccess(plan, status)) return false;
   if (isTransferPaymentPending(status)) return false;
+  return paymentMethod === "oxxo" && (status === "inactive" || status === "past_due");
+}
+
+/** Socio con plan de pago pero sin método en espera (transferencia/OXXO) ni acceso activo. */
+export function needsCertificationPayment(
+  plan: MembershipPlan,
+  status: string,
+  paymentMethod?: string | null
+): boolean {
+  if (isTuristaPlan(plan)) return false;
+  if (hasCommercialAccess(plan, status)) return false;
+  if (isTransferPaymentPending(status)) return false;
+  if (isOxxoPaymentAwaiting(plan, status, paymentMethod)) return false;
   return true;
 }
 

@@ -186,7 +186,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   }
 
   if (sub && isPaidMembershipPlan(sub.plan) && !hasCommercialAccess(sub.plan, sub.status)) {
-    if (sub.status === "manual_pending") {
+    if (sub.status === "manual_pending" || sub.paymentMethod === "oxxo") {
       redirect("/panel");
     }
     redirect("/certificacion/pago");
@@ -198,6 +198,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
       role,
       plan: sub?.plan ?? "TURISTA",
       subscriptionStatus: sub?.status ?? "inactive",
+      paymentMethod: sub?.paymentMethod,
     })
   );
 }

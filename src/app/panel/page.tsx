@@ -81,16 +81,26 @@ export default async function PanelPage({
     const refreshedSub = normalizePanelSubscription(panelUser?.subscription);
 
     if (!canAccessPanel(refreshedSub.plan, refreshedSub.status)) {
-      if (needsCertificationPayment(refreshedSub.plan, refreshedSub.status)) {
+      if (
+        needsCertificationPayment(
+          refreshedSub.plan,
+          refreshedSub.status,
+          refreshedSub.paymentMethod
+        )
+      ) {
         redirect("/certificacion/pago");
       }
       redirect("/planes?pago=requiere_plan");
     }
 
     // Plan comercial: pueden llenar la ficha aunque el pago aún esté pendiente.
-    // Vecino / otros planes de pago sin acceso → siguen a certificación.
+    // Vecino / otros planes de pago sin acceso → siguen a certificación (salvo OXXO en espera).
     if (
-      needsCertificationPayment(refreshedSub.plan, refreshedSub.status) &&
+      needsCertificationPayment(
+        refreshedSub.plan,
+        refreshedSub.status,
+        refreshedSub.paymentMethod
+      ) &&
       !canRegisterBusinessProfile(refreshedSub.plan, refreshedSub.status)
     ) {
       redirect("/certificacion/pago");
