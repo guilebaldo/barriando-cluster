@@ -655,7 +655,7 @@ function PasaporteInner({
       >
       <div className="max-w-lg sm:max-w-2xl mx-auto">
         {!isAuthenticated && (
-          <PasaporteInfoCard className="mb-5 sm:mb-6" pendingStamp={pendingStamp} />
+          <PasaporteInfoCard className="mb-3 sm:mb-4" pendingStamp={pendingStamp} />
         )}
 
         {isPreview && !pendingStamp && (
