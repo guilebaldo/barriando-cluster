@@ -555,6 +555,25 @@ export default function PasaporteBookMobile({
             );
           })}
         </div>
+        {pageCount === 1 ? (
+          <p className="shrink-0 text-center pt-2 pb-1">
+            {alreadyOnPassportRoster ? (
+              <span
+                className="text-[10px] text-stone-500 cursor-default select-none"
+                title="Tu plan de negocio ya incluye presencia en el Pasaporte Digital"
+              >
+                Ya formas parte del Pasaporte Digital con tu plan de negocio.
+              </span>
+            ) : (
+              <Link
+                href={registroUrl("NEGOCIO_FAMILIAR")}
+                className="text-[10px] text-stone-500 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2 decoration-stone-400"
+              >
+                ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
+              </Link>
+            )}
+          </p>
+        ) : null}
       </div>
     </section>
   );
@@ -562,6 +581,7 @@ export default function PasaporteBookMobile({
   /* —— Páginas de sellos —— */
   const renderStampPage = (pageNum: number) => {
     const page = restPages[pageNum - 1] ?? [];
+    const isLastPage = pageNum === pageCount - 1;
     return (
       <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
         <PageBackdrop />
@@ -588,15 +608,40 @@ export default function PasaporteBookMobile({
             );
           })}
         </div>
+        {isLastPage ? (
+          <p
+            className={`relative z-10 shrink-0 text-center pt-2 ${
+              appShell
+                ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))]"
+                : "pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]"
+            }`}
+          >
+            {alreadyOnPassportRoster ? (
+              <span
+                className="text-[10px] text-stone-500 cursor-default select-none"
+                title="Tu plan de negocio ya incluye presencia en el Pasaporte Digital"
+              >
+                Ya formas parte del Pasaporte Digital con tu plan de negocio.
+              </span>
+            ) : (
+              <Link
+                href={registroUrl("NEGOCIO_FAMILIAR")}
+                className="text-[10px] text-stone-500 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2 decoration-stone-400"
+              >
+                ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
+              </Link>
+            )}
+          </p>
+        ) : null}
       </section>
     );
   };
 
   return (
-    <div className="relative flex-1 min-h-0 w-full bg-[#faf6ef] text-slate-900 overflow-hidden overscroll-none select-none flex flex-col">
+    <div className="relative flex-1 min-h-0 w-full bg-[#faf6ef] text-slate-900 overflow-hidden overscroll-none select-none">
       <div
         ref={viewportRef}
-        className="relative z-10 flex-1 min-h-0 w-full overflow-hidden"
+        className="relative z-10 h-full w-full overflow-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -641,30 +686,6 @@ export default function PasaporteBookMobile({
           ))}
         </div>
       )}
-
-      <p
-        className={`shrink-0 text-center px-3 py-2 ${
-          appShell
-            ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.35rem)]"
-            : "pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]"
-        }`}
-      >
-        {alreadyOnPassportRoster ? (
-          <span
-            className="text-[10px] text-stone-600 cursor-default select-none"
-            title="Tu plan de negocio ya incluye presencia en el Pasaporte Digital"
-          >
-            Ya formas parte del Pasaporte Digital con tu plan de negocio.
-          </span>
-        ) : (
-          <Link
-            href={registroUrl("NEGOCIO_FAMILIAR")}
-            className="text-[10px] text-stone-600 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2 decoration-stone-400"
-          >
-            ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
-          </Link>
-        )}
-      </p>
     </div>
   );
 }

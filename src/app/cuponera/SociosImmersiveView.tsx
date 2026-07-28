@@ -63,11 +63,30 @@ export default function SociosImmersiveView({
   const [viewMode, setViewMode] = useState<ViewMode>("icons");
   const [selectedId, setSelectedId] = useState<number | null>(initialSocioId);
   const [sheetMode, setSheetMode] = useState<SheetMode>(initialSocioId != null ? "half" : "half");
-  const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
+  /** Altura full anclada abajo (misma fórmula que el style del sheet). */
+  const [fullSheetPx, setFullSheetPx] = useState(640);
   const [activeBenefit, setActiveBenefit] = useState<{
     name: string;
     benefit: SocioBenefitInfo;
   } | null>(null);
+
+  useEffect(() => {
+    const measure = () => {
+      const safeTop =
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--safe-area-inset-top")
+        ) || 0;
+      const topGap = Math.max(20, safeTop + 12);
+      const bottomGap = appShell ? 56 : 0;
+      setFullSheetPx(Math.max(360, Math.round(window.innerHeight - topGap - bottomGap)));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [appShell]);
+
+  const mapSheetHeight =
+    sheetMode === "peek" ? 0 : sheetMode === "half" ? 400 : fullSheetPx;
 
   const categorias = useMemo(() => {
     return Array.from(new Set(socios.map((s) => s.categoria))).sort();
@@ -108,16 +127,6 @@ export default function SociosImmersiveView({
     setSelectedId(initialSocioId);
     setSheetMode("half");
   }, [initialSocioId, socios]);
-
-  useEffect(() => {
-    const el = sheetRef.current;
-    if (!el) return;
-    const updateHeight = () => setBottomSheetHeight(el.getBoundingClientRect().height);
-    updateHeight();
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [sheetMode, selectedId, viewMode, canRedeemBenefits]);
 
   const selectSocio = useCallback((id: number) => {
     setSelectedId(id);
@@ -518,30 +527,22 @@ export default function SociosImmersiveView({
         selectedId={selectedId}
         onSelect={selectSocio}
         immersive
-        bottomSheetHeight={sheetMode === "peek" ? 0 : bottomSheetHeight}
+        bottomSheetHeight={mapSheetHeight}
       />
 
       <div
-        className={`absolute inset-x-0 z-20 pointer-events-none ${
-          sheetMode === "full"
-            ? "top-[max(1.25rem,calc(env(safe-area-inset-top,0px)+0.75rem))] bottom-0"
-            : "bottom-0 top-auto"
-        }`}
+        className="absolute inset-x-0 bottom-0 z-20 pointer-events-none"
         onTouchStart={onSheetTouchStart}
         onTouchEnd={onSheetTouchEnd}
       >
         <div
           ref={sheetRef}
-          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[max-height] ${
-            sheetMode === "full" ? "h-full rounded-t-3xl" : "rounded-t-2xl"
+          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[height] ${
+            sheetMode === "full" ? "rounded-t-3xl" : "rounded-t-2xl"
           }`}
-          style={
-            sheetMode === "full"
-              ? { height: "100%", maxHeight: "100%" }
-              : sheetMode === "half"
-                ? { height: 400, maxHeight: 400 }
-                : { height: 92, maxHeight: 92 }
-          }
+          style={{
+            height: sheetMode === "full" ? fullSheetPx : sheetMode === "half" ? 400 : 92,
+          }}
         >
           {sheetChrome}
         </div>
