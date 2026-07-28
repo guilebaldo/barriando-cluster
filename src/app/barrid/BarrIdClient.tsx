@@ -9,6 +9,7 @@ import { createBenefitCredential } from "../panel/actions";
 import AddToHomeScreenModal from "./AddToHomeScreenModal";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
 import { formatPlanPriceMxn } from "@/lib/membresia";
+import { registroUrl } from "@/lib/plan-routing";
 
 type BarrIdClientProps = {
   user: {
@@ -178,7 +179,7 @@ function VecinoUpsellPanel({
           Para tener acceso a los cupones exclusivos de los negocios socios del barrio.
         </p>
         <Link
-          href="/registro?plan=vecino"
+          href={registroUrl("VECINO")}
           className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
         >
           Ser Vecino · {formatPlanPriceMxn("VECINO")}
@@ -371,7 +372,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           }`}
         >
           {/* Un poco más abajo en el hueco visible sobre la ficha */}
-          <div className="translate-y-5 sm:translate-y-6">
+          <div className="translate-y-5 sm:translate-y-6 pointer-events-auto">
             {canRedeem ? (
               <QrPanel
                 sizeClass="w-[min(72vw,20rem)] h-[min(72vw,20rem)]"
@@ -390,10 +391,10 @@ export default function BarrIdClient(props: BarrIdClientProps) {
             )}
           </div>
         </div>
-        <div className="absolute inset-x-0 z-20 bottom-0 top-[max(0.75rem,env(safe-area-inset-top,0px))] overflow-hidden">
+        <div className="absolute inset-x-0 z-20 bottom-0 top-[max(0.75rem,env(safe-area-inset-top,0px))] overflow-hidden pointer-events-none">
           <div
             ref={sheetRef}
-            className={`mx-auto w-full h-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`pointer-events-auto mx-auto w-full h-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               sheetExpanded ? "translate-y-0" : "translate-y-[calc(100%-7.25rem)]"
             }`}
             onTouchStart={onSheetTouchStart}
@@ -507,7 +508,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                         los cupones.
                       </p>
                       <Link
-                        href="/registro?plan=vecino"
+                        href={registroUrl("VECINO")}
                         className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-500 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-950 transition hover:bg-amber-400"
                       >
                         Ser Vecino · {formatPlanPriceMxn("VECINO")}
@@ -558,7 +559,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
               </Link>
             ) : (
               <Link
-                href="/registro?plan=vecino"
+                href={registroUrl("VECINO")}
                 className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
               >
                 <Gift className="w-5 h-5" />

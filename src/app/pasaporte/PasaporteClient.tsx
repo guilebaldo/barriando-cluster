@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { X } from "lucide-react";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
+import { registroUrl } from "@/lib/plan-routing";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
@@ -885,7 +886,7 @@ function PasaporteInner({
             </span>
           ) : (
             <Link
-              href="/planes?tipo=comerciales&plan=negocio_familiar#negocio_familiar"
+              href={registroUrl("NEGOCIO_FAMILIAR")}
               className="text-[10px] text-stone-600 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2 decoration-stone-400"
             >
               ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
@@ -973,6 +974,7 @@ function PasaporteInner({
             tierId={tierId}
             progress={progress}
             stampFlashId={stampFlashId}
+            alreadyOnPassportRoster={alreadyOnPassportRoster}
           />
         </div>
         <div

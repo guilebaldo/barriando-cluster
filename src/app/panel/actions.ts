@@ -594,3 +594,48 @@ export async function createBenefitCredential(): Promise<BenefitCredentialResult
     return { ok: false, error: "No se pudo generar la credencial. Intenta de nuevo." };
   }
 }
+
+/** Autoeliminación solo para perfil Turista (móvil / Mi cuenta). */
+export async function deleteOwnTuristaAccount(): Promise<
+  { ok: true } | { ok: false; error: string }
+> {
+  try {
+    const session = await requireSession();
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+      select: {
+        id: true,
+        role: true,
+        subscription: { select: { plan: true } },
+      },
+    });
+    if (!user) {
+      return { ok: false, error: "Cuenta no encontrada." };
+    }
+    if (user.role === "ADMIN") {
+      return { ok: false, error: "Las cuentas de administración no se eliminan aquí." };
+    }
+    const plan = user.subscription?.plan ?? "TURISTA";
+    if (!isTuristaPlan(plan)) {
+      return {
+        ok: false,
+        error: "Solo el perfil Turista puede eliminar la cuenta desde aquí. Escribe a soporte si necesitas ayuda.",
+      };
+    }
+
+    await prisma.user.delete({ where: { id: user.id } });
+
+    revalidatePath("/panel");
+    revalidatePath("/pasaporte");
+    revalidatePath("/mapa");
+    revalidatePath("/cuponera");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[panel] deleteOwnTuristaAccount failed:", error);
+    return { ok: false, error: "No se pudo eliminar la cuenta. Intenta de nuevo." };
+  }
+}

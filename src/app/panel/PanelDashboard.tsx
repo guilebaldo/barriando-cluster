@@ -65,9 +65,9 @@ import {
   IdCard,
   MapPin,
   BookOpen,
-  Stamp,
 } from "lucide-react";
 import PanelMobile, { type PanelMobileRow } from "./PanelMobile";
+import DeleteTuristaAccountLink from "./DeleteTuristaAccountLink";
 
 interface SocioOption {
   id: number;
@@ -515,20 +515,6 @@ export default function PanelDashboard({
       show: isTurista,
     },
     {
-      id: "turista",
-      title: "Mi comunidad",
-      subtitle: "Progreso y beneficios",
-      icon: Stamp,
-      show: isTurista,
-      detail: (
-        <TouristPanel
-          user={{ nombre: user.nombre, email: user.email, image: user.image }}
-          milestonesVisited={milestonesVisited}
-          totalMilestones={totalMilestones}
-        />
-      ),
-    },
-    {
       id: "vecino",
       title: "Membresía Vecino",
       subtitle: getPlanLabel(plan),
@@ -799,6 +785,7 @@ export default function PanelDashboard({
           showBackToBarrId={!isTurista}
           notices={mobileNotices}
           rows={mobileRows}
+          footer={isTurista ? <DeleteTuristaAccountLink /> : null}
         />
       </div>
 

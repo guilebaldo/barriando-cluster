@@ -38,6 +38,8 @@ type Props = {
   showBackToBarrId: boolean;
   notices?: ReactNode;
   rows: PanelMobileRow[];
+  /** Pie discreto (p. ej. eliminar cuenta Turista) */
+  footer?: ReactNode;
 };
 
 const badgeClass: Record<NonNullable<PanelMobileRow["badgeTone"]>, string> = {
@@ -58,6 +60,7 @@ export default function PanelMobile({
   showBackToBarrId,
   notices,
   rows,
+  footer,
 }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const visibleRows = rows.filter((r) => r.show !== false);
@@ -212,6 +215,8 @@ export default function PanelMobile({
             })
           )}
         </section>
+
+        {footer}
       </div>
     </div>
   );

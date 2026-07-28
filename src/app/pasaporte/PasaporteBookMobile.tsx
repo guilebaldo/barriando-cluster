@@ -4,6 +4,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
+import { registroUrl } from "@/lib/plan-routing";
+import { useAppMobileShell } from "@/app/components/AppBottomNav";
 
 type RestaurantCard = {
   id: number;
@@ -329,6 +331,7 @@ export default function PasaporteBookMobile({
   tierId,
   progress,
   stampFlashId,
+  alreadyOnPassportRoster = false,
 }: {
   userName: string;
   userImage: string | null;
@@ -341,7 +344,9 @@ export default function PasaporteBookMobile({
   tierId: "turista" | "poblano";
   progress: number;
   stampFlashId: number | null;
+  alreadyOnPassportRoster?: boolean;
 }) {
+  const appShell = useAppMobileShell();
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
   /** Últimas dos muestras del drag para estimar velocidad al soltar */
@@ -588,10 +593,10 @@ export default function PasaporteBookMobile({
   };
 
   return (
-    <div className="relative flex-1 min-h-0 w-full bg-[#faf6ef] text-slate-900 overflow-hidden overscroll-none select-none">
+    <div className="relative flex-1 min-h-0 w-full bg-[#faf6ef] text-slate-900 overflow-hidden overscroll-none select-none flex flex-col">
       <div
         ref={viewportRef}
-        className="relative z-10 h-full w-full overflow-hidden"
+        className="relative z-10 flex-1 min-h-0 w-full overflow-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -636,6 +641,30 @@ export default function PasaporteBookMobile({
           ))}
         </div>
       )}
+
+      <p
+        className={`shrink-0 text-center px-3 py-2 ${
+          appShell
+            ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.35rem)]"
+            : "pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]"
+        }`}
+      >
+        {alreadyOnPassportRoster ? (
+          <span
+            className="text-[10px] text-stone-600 cursor-default select-none"
+            title="Tu plan de negocio ya incluye presencia en el Pasaporte Digital"
+          >
+            Ya formas parte del Pasaporte Digital con tu plan de negocio.
+          </span>
+        ) : (
+          <Link
+            href={registroUrl("NEGOCIO_FAMILIAR")}
+            className="text-[10px] text-stone-600 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2 decoration-stone-400"
+          >
+            ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
+          </Link>
+        )}
+      </p>
     </div>
   );
 }

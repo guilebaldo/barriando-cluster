@@ -522,21 +522,22 @@ export default function SociosImmersiveView({
       />
 
       <div
-        className="absolute inset-x-0 bottom-0 z-20 pointer-events-none"
+        className={`absolute inset-x-0 z-20 pointer-events-none ${
+          sheetMode === "full"
+            ? "top-[max(1.25rem,calc(env(safe-area-inset-top,0px)+0.75rem))] bottom-0"
+            : "bottom-0 top-auto"
+        }`}
         onTouchStart={onSheetTouchStart}
         onTouchEnd={onSheetTouchEnd}
       >
         <div
           ref={sheetRef}
           className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[max-height] ${
-            sheetMode === "full" ? "rounded-t-3xl" : "rounded-t-2xl"
+            sheetMode === "full" ? "h-full rounded-t-3xl" : "rounded-t-2xl"
           }`}
           style={
             sheetMode === "full"
-              ? {
-                  height: "calc(100dvh - max(0.75rem, env(safe-area-inset-top, 0px)))",
-                  maxHeight: "calc(100dvh - max(0.75rem, env(safe-area-inset-top, 0px)))",
-                }
+              ? { height: "100%", maxHeight: "100%" }
               : sheetMode === "half"
                 ? { height: 400, maxHeight: 400 }
                 : { height: 92, maxHeight: 92 }
