@@ -166,6 +166,7 @@ export default function SociosImmersiveView({
       if (selectedId != null) {
         return m === "peek" ? "half" : "peek";
       }
+      // Abrir: peek → half → full. Cerrar: full → half (half → peek con swipe).
       return m === "full" ? "half" : stepSheet(m, 1);
     });
   };
@@ -431,7 +432,11 @@ export default function SociosImmersiveView({
         <span className="w-10 h-1 rounded-full bg-slate-300" />
       </button>
 
-      {sheetMode === "peek" && (
+      <div
+        className={`overflow-hidden transition-[max-height,opacity] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          sheetMode === "peek" ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
         <button
           type="button"
           onClick={() => setSheetMode("half")}
@@ -444,57 +449,63 @@ export default function SociosImmersiveView({
             {selectedSocio?.name ?? `${sociosFiltrados.length} socios`}
           </p>
         </button>
-      )}
+      </div>
 
-      {sheetMode !== "peek" && (
-        <>
-          <div
-            className={`px-3 pt-2 min-h-0 ${
-              sheetMode === "full" && !selectedSocio
-                ? "flex-1 overflow-y-auto overscroll-contain touch-pan-y"
-                : "shrink-0"
-            }`}
-            style={
-              sheetMode === "half" && !selectedSocio
-                ? { overflow: "hidden", maxHeight: 220 }
-                : undefined
-            }
-          >
-            {selectedSocio ? detailBody : browseBody}
-            {!selectedSocio && sheetMode === "half" && (
-              <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
-                {sociosFiltrados.length} miembros · desliza arriba para ver todos
-              </p>
-            )}
-            {!selectedSocio && sheetMode === "full" && (
-              <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
-                {sociosFiltrados.length} miembros
-              </p>
-            )}
-          </div>
-          {!selectedSocio && filtersBar}
-        </>
-      )}
-
-      {!canRedeemBenefits && (
+      <div
+        className={`overflow-hidden transition-[max-height,opacity] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          sheetMode === "peek"
+            ? "max-h-0 opacity-0 pointer-events-none"
+            : sheetMode === "full"
+              ? "max-h-[85dvh] opacity-100"
+              : "max-h-[22rem] opacity-100"
+        }`}
+      >
         <div
-          className={`px-3 pt-2 border-t border-slate-100 shrink-0 bg-white ${
-            appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          className={`px-3 pt-2 min-h-0 ${
+            sheetMode === "full" && !selectedSocio
+              ? "overflow-y-auto overscroll-contain touch-pan-y max-h-[min(60dvh,28rem)]"
+              : "shrink-0"
           }`}
+          style={
+            sheetMode === "half" && !selectedSocio
+              ? { overflow: "hidden", maxHeight: 220 }
+              : undefined
+          }
         >
-          <p className="text-center px-1 py-1.5">
-            <Link
-              href="/planes?tipo=personales"
-              className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
-            >
-              ¿Eres vecino? Obtén cupones exclusivos. Regístrate aquí.
-            </Link>
-          </p>
+          {selectedSocio ? detailBody : browseBody}
+          {!selectedSocio && sheetMode === "half" && (
+            <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
+              {sociosFiltrados.length} miembros · desliza arriba para ver todos
+            </p>
+          )}
+          {!selectedSocio && sheetMode === "full" && (
+            <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
+              {sociosFiltrados.length} miembros
+            </p>
+          )}
         </div>
-      )}
-      {canRedeemBenefits && sheetMode !== "peek" && (
-        <div className={`shrink-0 ${appShell ? "pb-2" : "pb-[max(0.5rem,env(safe-area-inset-bottom))]"}`} />
-      )}
+        {!selectedSocio && filtersBar}
+
+        {!canRedeemBenefits && (
+          <div
+            className={`px-3 pt-2 border-t border-slate-100 shrink-0 bg-white ${
+              appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+            }`}
+          >
+            <p className="text-center px-1 py-1.5">
+              <Link
+                href="/registro?plan=vecino"
+                className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
+              >
+                ¿Eres vecino? Obtén cupones exclusivos. Regístrate aquí.
+              </Link>
+            </p>
+          </div>
+        )}
+        {canRedeemBenefits && (
+          <div className={`shrink-0 ${appShell ? "pb-2" : "pb-[max(0.5rem,env(safe-area-inset-bottom))]"}`} />
+        )}
+      </div>
     </>
   );
 
@@ -509,30 +520,23 @@ export default function SociosImmersiveView({
       />
 
       <div
-        className={`absolute inset-x-0 z-20 pointer-events-none transition-[top,bottom] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          sheetMode === "full"
-            ? "top-[max(0.75rem,env(safe-area-inset-top,0px))] bottom-0"
-            : "bottom-0 top-auto"
-        }`}
+        className="absolute inset-x-0 bottom-0 z-20 pointer-events-none"
         onTouchStart={onSheetTouchStart}
         onTouchEnd={onSheetTouchEnd}
       >
         <div
           ref={sheetRef}
           className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[max-height] ${
-            sheetMode === "full"
-              ? "h-full rounded-t-3xl"
-              : sheetMode === "half"
-                ? "rounded-t-2xl max-h-[400px] md:max-h-[min(52vh,520px)]"
-                : "rounded-t-2xl"
+            sheetMode === "full" ? "rounded-t-3xl" : "rounded-t-2xl"
           }`}
-          style={
-            sheetMode === "full"
-              ? undefined
-              : sheetMode === "half"
-                ? undefined
-                : { maxHeight: canRedeemBenefits ? 92 : 110 }
-          }
+          style={{
+            maxHeight:
+              sheetMode === "full"
+                ? "calc(100dvh - max(0.75rem, env(safe-area-inset-top, 0px)))"
+                : sheetMode === "half"
+                  ? 400
+                  : 92,
+          }}
         >
           {sheetChrome}
         </div>
@@ -603,7 +607,7 @@ export default function SociosImmersiveView({
                   ¿Eres vecino? Obtén cupones exclusivos con la membresía Vecino.
                 </p>
                 <Link
-                  href="/planes?tipo=personales"
+                  href="/registro?plan=vecino"
                   className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
                   onClick={() => setActiveBenefit(null)}
                 >

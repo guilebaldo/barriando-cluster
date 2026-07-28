@@ -213,15 +213,17 @@ export default function GoogleMapRouteMap({
     const focusHighlighted = () => {
       if (!hp) return;
       const verticalOffset = immersive ? getFocusPanOffsetPx(bottomSheetHeight, stampPopup) : 0;
-      if (!userLocation) map.setZoom(17);
+      const targetZoom = !userLocation ? 17 : map.getZoom() ?? 17;
       const target =
         verticalOffset > 0
           ? googleLatLngWithBottomBias(
               map,
               { lat: hp.latitude, lng: hp.longitude },
-              verticalOffset
+              verticalOffset,
+              targetZoom
             )
           : { lat: hp.latitude, lng: hp.longitude };
+      if (!userLocation) map.setZoom(targetZoom);
       map.panTo(target);
     };
 

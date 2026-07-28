@@ -1,13 +1,50 @@
 import { prisma } from "@/lib/prisma";
 import { listaSocios, type Socio, type SocioBenefitInfo } from "@/app/data/socios";
+import { sociosCoords } from "@/app/data/socios-coords";
 import { compareSociosByPlan, getPlanForSocio, hasCommercialAccess } from "@/lib/membresia";
 import { isVisibleInCarousel, isMedianaCarouselPlan } from "@/lib/plan-visibility";
 import { isBenefitCurrentlyValid } from "@/lib/benefit-credential";
+import { haversineDistanceKm } from "@/lib/map-route-client";
 import {
   dynamicSocioIdFromUserId,
   isSyntheticSocioId,
 } from "@/lib/publish-business";
 import type { MembershipPlan } from "@/generated/prisma/client";
+
+/** Si Business está a más de esto del pin curado, suele ser viewport de embed (no el pin). */
+const CATALOG_PIN_TRUST_KM = 0.85;
+
+function rosterMapCoord(
+  socioId: number,
+  biz: { latitude: number | null; longitude: number | null } | undefined,
+  catalogFallback: { latitude?: number | null; longitude?: number | null } | undefined
+): { latitude: number | null; longitude: number | null } {
+  const curated = sociosCoords[socioId];
+  const hasBiz =
+    typeof biz?.latitude === "number" &&
+    typeof biz?.longitude === "number" &&
+    Number.isFinite(biz.latitude) &&
+    Number.isFinite(biz.longitude);
+
+  if (curated && hasBiz) {
+    const d = haversineDistanceKm(
+      { latitude: curated.lat, longitude: curated.lng },
+      { latitude: biz.latitude!, longitude: biz.longitude! }
+    );
+    // Ajuste fino de admin cerca del pin → Business. Embed a km → catálogo.
+    if (d <= CATALOG_PIN_TRUST_KM) {
+      return { latitude: biz.latitude!, longitude: biz.longitude! };
+    }
+    return { latitude: curated.lat, longitude: curated.lng };
+  }
+
+  if (curated) return { latitude: curated.lat, longitude: curated.lng };
+  if (hasBiz) return { latitude: biz!.latitude, longitude: biz!.longitude };
+  return {
+    latitude: catalogFallback?.latitude ?? null,
+    longitude: catalogFallback?.longitude ?? null,
+  };
+}
 
 const BUSINESS_PLANS: MembershipPlan[] = ["NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 const ACTIVE_STATUSES = ["active", "manual_active"] as const;
@@ -247,6 +284,7 @@ function catalogSocioFromRoster(
   const overrideUrl = websiteOverrides.get(socioId);
   const biz = businesses.get(socioId);
   const foto = catalog?.foto || slugFromName(name);
+  const coords = rosterMapCoord(socioId, biz, catalog);
 
   return {
     id: socioId,
@@ -258,8 +296,8 @@ function catalogSocioFromRoster(
     direccion: mapsLinkFrom(biz?.mapsUrl, catalog?.direccion),
     membershipPlan: membership.plan as Socio["membershipPlan"],
     benefit: rosterBenefit(membership),
-    latitude: biz?.latitude ?? catalog?.latitude ?? null,
-    longitude: biz?.longitude ?? catalog?.longitude ?? null,
+    latitude: coords.latitude,
+    longitude: coords.longitude,
     logoUrl: catalog?.logoUrl ?? null,
   };
 }

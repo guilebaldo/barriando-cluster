@@ -10,23 +10,22 @@ export function readCssPxVar(varName: string): number {
 }
 
 /**
- * Desplazamiento vertical para dejar el hito en la franja visible
- * entre notch y la ficha inferior (popup del sello abre hacia arriba).
+ * Desplazamiento vertical (misma fórmula que el panBy anterior que ya centraba bien).
+ * offset > 0 → el marcador queda más arriba en pantalla (libre de la ficha).
  */
 export function getMapFocusPanOffsetPx(
   bottomSheetHeight: number,
   stampPopup: boolean
 ): number {
   const safeTop = readCssPxVar("--safe-area-inset-top");
-  const sheetOffset = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.5) : 0;
-  // Más contenido arriba del marcador → centro un poco más al norte (marcador más abajo).
-  const popupOffset = stampPopup ? Math.round(120 + safeTop * 0.6) : Math.round(safeTop * 0.5 + 8);
+  const sheetOffset = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55) : 0;
+  const popupOffset = stampPopup ? Math.round(180 + safeTop) : Math.round(safeTop + 12);
   return sheetOffset + popupOffset;
 }
 
 /**
- * Un solo flyTo: el centro ya incorpora el bias vertical (sin panBy después).
- * offsetY > 0 → el punto queda más abajo en pantalla.
+ * Un solo flyTo a la posición final correcta (equivalente a flyTo + panBy([0, offsetY])).
+ * En Leaflet, y crece al sur: sumar offset al centro deja el punto más arriba en pantalla.
  */
 export function leafletFlyToWithBottomBias(
   map: LeafletMap,
@@ -39,27 +38,46 @@ export function leafletFlyToWithBottomBias(
     map.flyTo(latlng, zoom, { duration, easeLinearity: 0.35 });
     return;
   }
+
   const p = map.project(latlng, zoom);
-  const center = map.unproject([p.x, p.y - offsetY], zoom);
+  const center = map.unproject([p.x, p.y + offsetY], zoom);
   map.flyTo(center, zoom, { duration, easeLinearity: 0.35 });
 }
 
-/** Centro geográfico equivalente a panBy(0, offsetY) tras centrar en latLng (Google Maps). */
+/**
+ * Equivalente Google a panBy(0, offsetY) tras centrar en latLng:
+ * el marcador queda más arriba (libre de la ficha).
+ */
 export function googleLatLngWithBottomBias(
   map: google.maps.Map,
   latLng: google.maps.LatLngLiteral,
-  offsetY: number
+  offsetY: number,
+  zoom = 17
 ): google.maps.LatLngLiteral {
   if (offsetY <= 0) return latLng;
+
   const projection = map.getProjection();
-  if (!projection) return latLng;
-  const zoom = map.getZoom() ?? 17;
+  if (!projection) {
+    // Fallback: medir con panBy real.
+    const prev = map.getCenter();
+    const prevZoom = map.getZoom();
+    if (!prev) return latLng;
+    map.setCenter(latLng);
+    map.setZoom(zoom);
+    map.panBy(0, offsetY);
+    const target = map.getCenter();
+    map.setCenter(prev);
+    if (prevZoom != null) map.setZoom(prevZoom);
+    if (!target) return latLng;
+    return { lat: target.lat(), lng: target.lng() };
+  }
+
   const scale = Math.pow(2, zoom);
   const world = projection.fromLatLngToPoint(new google.maps.LatLng(latLng.lat, latLng.lng));
   if (!world) return latLng;
-  // y crece hacia el sur; restar mueve el centro al norte → marcador más abajo.
+  // y crece al sur; sumar mueve el centro al sur → marcador más arriba en pantalla.
   const pixelToWorld = 1 / (256 * scale);
-  const shifted = new google.maps.Point(world.x, world.y - offsetY * pixelToWorld);
+  const shifted = new google.maps.Point(world.x, world.y + offsetY * pixelToWorld);
   const out = projection.fromPointToLatLng(shifted);
   if (!out) return latLng;
   return { lat: out.lat(), lng: out.lng() };

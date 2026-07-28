@@ -126,7 +126,7 @@ function FollowUserLocation({
     lastFocusRef.current = { lat, lng, sheet: bottomSheetHeight };
 
     const offsetY =
-      bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.5 + 20) : 0;
+      bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55 + 28) : 0;
 
     const zoom = Math.max(map.getZoom(), 16);
     leafletFlyToWithBottomBias(map, [lat, lng], zoom, offsetY, prev ? 0.55 : 0.7);

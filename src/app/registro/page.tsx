@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
-import { parsePlanSlug, planToSlug } from "@/lib/plan-routing";
+import { parsePlanSlug } from "@/lib/plan-routing";
 import RegistroClient from "./RegistroClient";
 
 export default async function RegistroPage({
@@ -10,18 +9,9 @@ export default async function RegistroPage({
 }) {
   const params = await searchParams;
   const plan = parsePlanSlug(params.plan) ?? "TURISTA";
-
   const session = await getSession();
-  if (session) {
-    // Ya logueado: no mutar el plan ni abrir paywall solo por visitar /registro?plan=
-    // (p. ej. CTA “Ser Vecino” desde Cuponera). Catálogo de planes para decidir.
-    if (plan === "TURISTA") {
-      redirect("/mapa");
-    }
-    const tipo =
-      plan === "VECINO" ? "personales" : "comerciales";
-    redirect(`/planes?tipo=${tipo}&plan=${planToSlug(plan)}`);
-  }
 
-  return <RegistroClient plan={plan} />;
+  // Turista logueado puede ver la ficha del plan (p. ej. Vecino) sin que eso
+  // cambie su home ni mute la membresía hasta que pulse Continuar al pago.
+  return <RegistroClient plan={plan} alreadyLoggedIn={Boolean(session)} />;
 }

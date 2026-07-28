@@ -20,6 +20,7 @@ import {
 import { PLAN_ADMIN_LABELS, PAYMENT_METHOD_OPTIONS } from "@/lib/admin-labels";
 import { formatExpiryShort } from "@/lib/admin-ops";
 import { toBusinessProfileFormInitial } from "@/lib/business-address";
+import { sociosCoords } from "@/app/data/socios-coords";
 import { playCuelume } from "./useAdminCuelume";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -86,6 +87,9 @@ export default function AdminEditDrawer({
 
   const profileInitial = useMemo((): SocioProfileFormInitial => {
     const p = linkedUser?.profile;
+    const curated = row?.socioId != null ? sociosCoords[row.socioId] : undefined;
+    const latitude = p?.latitude ?? curated?.lat ?? null;
+    const longitude = p?.longitude ?? curated?.lng ?? null;
     return toBusinessProfileFormInitial(
       {
         businessName: p?.businessName || row?.businessName || catalog?.name || "",
@@ -101,8 +105,8 @@ export default function AdminEditDrawer({
         estado: p?.estado || "",
         pais: p?.pais || "México",
         phone: p?.phone || "",
-        latitude: p?.latitude ?? null,
-        longitude: p?.longitude ?? null,
+        latitude,
+        longitude,
         contactFirstName: p?.contactFirstName || "",
         contactLastNamePaternal: p?.contactLastNamePaternal || "",
         contactLastNameMaternal: p?.contactLastNameMaternal || "",

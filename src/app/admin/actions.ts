@@ -1676,12 +1676,37 @@ export async function adminUpdateBusinessProfile(
     });
 
     if (!linked) {
+      // Sin cuenta vinculada igual persistimos el pin en Business (Cuponera lo lee).
+      const hasCoords = data.latitude != null && data.longitude != null;
+      if (hasCoords) {
+        await prisma.business.upsert({
+          where: { id: data.socioId },
+          create: {
+            id: data.socioId,
+            name: businessName,
+            category: category,
+            website: website || null,
+            latitude: data.latitude,
+            longitude: data.longitude,
+          },
+          update: {
+            name: businessName,
+            category: category,
+            ...(website ? { website } : {}),
+            latitude: data.latitude,
+            longitude: data.longitude,
+          },
+        });
+      }
       revalidatePath("/admin");
       revalidatePath("/cuponera");
+      revalidatePath("/socios");
+      revalidatePath("/mapa");
       return {
         ok: true,
-        warning:
-          "Nombre y sitio web guardados en roster. Ubicación y facturación requieren cuenta vinculada.",
+        warning: hasCoords
+          ? "Ubicación guardada en el roster. Facturación requiere cuenta vinculada."
+          : "Nombre y sitio web guardados en roster. Ubicación y facturación requieren cuenta vinculada.",
       };
     }
 
@@ -1748,6 +1773,28 @@ export async function adminUpdateBusinessProfile(
         ...(privacyAcceptedAt ? { privacyAcceptedAt } : {}),
       },
     });
+
+    const hasCoords = data.latitude != null && data.longitude != null;
+    if (hasCoords) {
+      await prisma.business.upsert({
+        where: { id: data.socioId },
+        create: {
+          id: data.socioId,
+          name: businessName,
+          category: category,
+          website: website || null,
+          latitude: data.latitude,
+          longitude: data.longitude,
+        },
+        update: {
+          name: businessName,
+          category: category,
+          ...(website ? { website } : {}),
+          latitude: data.latitude,
+          longitude: data.longitude,
+        },
+      });
+    }
 
     revalidatePath("/admin");
     revalidatePath("/panel");

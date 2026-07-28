@@ -178,7 +178,7 @@ function VecinoUpsellPanel({
           Para tener acceso a los cupones exclusivos de los negocios socios del barrio.
         </p>
         <Link
-          href="/planes?tipo=personales"
+          href="/registro?plan=vecino"
           className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
         >
           Ser Vecino · {formatPlanPriceMxn("VECINO")}
@@ -507,7 +507,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                         los cupones.
                       </p>
                       <Link
-                        href="/planes?tipo=personales"
+                        href="/registro?plan=vecino"
                         className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-500 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-950 transition hover:bg-amber-400"
                       >
                         Ser Vecino · {formatPlanPriceMxn("VECINO")}
@@ -558,7 +558,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
               </Link>
             ) : (
               <Link
-                href="/planes?tipo=personales"
+                href="/registro?plan=vecino"
                 className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
               >
                 <Gift className="w-5 h-5" />
