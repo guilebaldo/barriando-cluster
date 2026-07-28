@@ -8,6 +8,8 @@ import { BookOpen, ChevronRight, Gift, Map as MapIcon, Settings } from "lucide-r
 import { createBenefitCredential } from "../panel/actions";
 import AddToHomeScreenModal from "./AddToHomeScreenModal";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
+import { registroUrl } from "@/lib/plan-routing";
+import { formatPlanPriceMxn } from "@/lib/membresia";
 
 type BarrIdClientProps = {
   user: {
@@ -24,6 +26,8 @@ type BarrIdClientProps = {
   stampedCount: number;
   totalRestaurants: number;
   progress: number;
+  /** Membresía de pago activa: puede generar QR de canje. */
+  canRedeemCoupons: boolean;
   /** Cuenta recién creada: mostrar prompt de instalar BarriApp en móvil. */
   isFirstLoginUser?: boolean;
 };
@@ -74,6 +78,7 @@ function StatusCard({
   stampedCount,
   totalRestaurants,
   progress,
+  canRedeemCoupons,
 }: BarrIdClientProps) {
   return (
     <section className="bg-[#27366D] text-white rounded-2xl border border-[#1e2b58] relative px-6 sm:px-8 py-6 sm:py-8">
@@ -124,21 +129,70 @@ function StatusCard({
           <dt className="text-slate-300">Estado</dt>
           <dd className="font-semibold text-emerald-300 text-right">{statusLabel}</dd>
         </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-slate-300">Cuota</dt>
-          <dd className="font-semibold text-white text-right">{priceLabel}</dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-slate-300">Vencimiento</dt>
-          <dd className="font-semibold text-white text-right">{expiryLabel}</dd>
-        </div>
-        <div className="flex justify-between gap-3">
-          <dt className="text-slate-300">Tipo de pago</dt>
-          <dd className="font-semibold text-white text-right">{renewalLabel}</dd>
-        </div>
+        {canRedeemCoupons ? (
+          <>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-300">Cuota</dt>
+              <dd className="font-semibold text-white text-right">{priceLabel}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-300">Vencimiento</dt>
+              <dd className="font-semibold text-white text-right">{expiryLabel}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-slate-300">Tipo de pago</dt>
+              <dd className="font-semibold text-white text-right">{renewalLabel}</dd>
+            </div>
+          </>
+        ) : (
+          <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-3.5 py-3">
+            <p className="text-xs text-amber-100 leading-snug">
+              Adquiere la membresía <span className="font-bold text-amber-300">Vecino</span> para
+              tener acceso a los cupones.
+            </p>
+          </div>
+        )}
       </dl>
 
       <MiCuentaLink />
+    </section>
+  );
+}
+
+function VecinoUpsellPanel({
+  sizeClass,
+  textSize,
+}: {
+  sizeClass: string;
+  textSize: string;
+}) {
+  return (
+    <section className="flex flex-col items-center text-center gap-3 pointer-events-auto">
+      <div
+        className={`${sizeClass} bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col items-center justify-center overflow-hidden relative px-5 py-5 gap-3`}
+      >
+        <Gift className="w-10 h-10 text-amber-500 shrink-0" />
+        <p className={`${textSize} font-bold text-[#27366D] leading-snug`}>
+          Adquiere la membresía Vecino
+        </p>
+        <p className="text-sm text-slate-600 font-light leading-snug max-w-[16rem]">
+          Para tener acceso a los cupones exclusivos de los negocios socios del barrio.
+        </p>
+        <Link
+          href={registroUrl("VECINO")}
+          className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
+        >
+          Ser Vecino · {formatPlanPriceMxn("VECINO")}
+        </Link>
+      </div>
+      <div className="space-y-1 max-w-xs">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+          Perfil Turista
+        </p>
+        <p className="text-sm text-slate-600 font-light leading-snug">
+          Ya tienes MAPA y Pasaporte. Con Vecino desbloqueas BarrID de canje y la Cuponera.
+        </p>
+      </div>
     </section>
   );
 }
@@ -202,16 +256,26 @@ export default function BarrIdClient(props: BarrIdClientProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
   const appShell = useAppMobileShell();
+  const canRedeem = props.canRedeemCoupons;
 
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [credError, setCredError] = useState<string | null>(null);
-  const [loadingCred, setLoadingCred] = useState(true);
+  const [loadingCred, setLoadingCred] = useState(canRedeem);
   const [expiresAtMs, setExpiresAtMs] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    if (!canRedeem) {
+      setLoadingCred(false);
+      setQrDataUrl(null);
+      setCredError(null);
+      setExpiresAtMs(null);
+      setSecondsLeft(0);
+      return;
+    }
+
     let cancelled = false;
 
     async function load() {
@@ -252,7 +316,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, canRedeem]);
 
   useEffect(() => {
     if (!expiresAtMs) return;
@@ -309,18 +373,24 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         >
           {/* Un poco más abajo en el hueco visible sobre la ficha */}
           <div className="translate-y-5 sm:translate-y-6">
-            <QrPanel
-              sizeClass="w-[min(72vw,20rem)] h-[min(72vw,20rem)]"
-              textSize="text-xs"
-              qrDataUrl={qrDataUrl}
-              loadingCred={loadingCred}
-              credError={credError}
-              countdown={countdown}
-              showHint
-            />
+            {canRedeem ? (
+              <QrPanel
+                sizeClass="w-[min(72vw,20rem)] h-[min(72vw,20rem)]"
+                textSize="text-xs"
+                qrDataUrl={qrDataUrl}
+                loadingCred={loadingCred}
+                credError={credError}
+                countdown={countdown}
+                showHint
+              />
+            ) : (
+              <VecinoUpsellPanel
+                sizeClass="w-[min(72vw,20rem)] min-h-[min(72vw,20rem)]"
+                textSize="text-sm"
+              />
+            )}
           </div>
         </div>
-
         <div className="absolute inset-x-0 z-20 bottom-0 top-[max(0.75rem,env(safe-area-inset-top,0px))] overflow-hidden">
           <div
             ref={sheetRef}
@@ -415,18 +485,36 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                     <dt className="text-slate-300">Estado</dt>
                     <dd className="font-bold text-emerald-300 text-right">{props.statusLabel}</dd>
                   </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-slate-300">Cuota</dt>
-                    <dd className="font-bold text-white text-right">{props.priceLabel}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-slate-300">Vencimiento</dt>
-                    <dd className="font-bold text-white text-right">{props.expiryLabel}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-slate-300">Tipo de pago</dt>
-                    <dd className="font-bold text-white text-right">{props.renewalLabel}</dd>
-                  </div>
+                  {canRedeem ? (
+                    <>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-slate-300">Cuota</dt>
+                        <dd className="font-bold text-white text-right">{props.priceLabel}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-slate-300">Vencimiento</dt>
+                        <dd className="font-bold text-white text-right">{props.expiryLabel}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-slate-300">Tipo de pago</dt>
+                        <dd className="font-bold text-white text-right">{props.renewalLabel}</dd>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-3">
+                      <p className="text-sm text-amber-100 leading-snug">
+                        Adquiere la membresía{" "}
+                        <span className="font-bold text-amber-300">Vecino</span> para tener acceso a
+                        los cupones.
+                      </p>
+                      <Link
+                        href={registroUrl("VECINO")}
+                        className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-500 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-950 transition hover:bg-amber-400"
+                      >
+                        Ser Vecino · {formatPlanPriceMxn("VECINO")}
+                      </Link>
+                    </div>
+                  )}
                 </dl>
 
                 <MiCuentaLink compact />
@@ -438,32 +526,46 @@ export default function BarrIdClient(props: BarrIdClientProps) {
       {/* —— Escritorio: dos columnas —— */}
       <div className="hidden md:block max-w-5xl mx-auto w-full px-6 lg:px-8 py-10 lg:py-14">
         <div className="grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
-          <QrPanel
-            sizeClass="w-72 h-72 lg:w-80 lg:h-80"
-            textSize="text-sm"
-            qrDataUrl={qrDataUrl}
-            loadingCred={loadingCred}
-            credError={credError}
-            countdown={
-              expiresAtMs && !credError ? (
-                <p className="mt-1 font-semibold tabular-nums text-[#27366D] text-base" aria-live="polite">
-                  Válido por {formatCountdown(secondsLeft)}
-                </p>
-              ) : loadingCred && qrDataUrl ? (
-                <p className="mt-1 font-medium text-slate-500 text-base">Actualizando…</p>
-              ) : null
-            }
-            showHint
-          />
+          {canRedeem ? (
+            <QrPanel
+              sizeClass="w-72 h-72 lg:w-80 lg:h-80"
+              textSize="text-sm"
+              qrDataUrl={qrDataUrl}
+              loadingCred={loadingCred}
+              credError={credError}
+              countdown={
+                expiresAtMs && !credError ? (
+                  <p className="mt-1 font-semibold tabular-nums text-[#27366D] text-base" aria-live="polite">
+                    Válido por {formatCountdown(secondsLeft)}
+                  </p>
+                ) : loadingCred && qrDataUrl ? (
+                  <p className="mt-1 font-medium text-slate-500 text-base">Actualizando…</p>
+                ) : null
+              }
+              showHint
+            />
+          ) : (
+            <VecinoUpsellPanel sizeClass="w-72 min-h-72 lg:w-80 lg:min-h-80" textSize="text-base" />
+          )}
           <div className="space-y-5">
             <StatusCard {...props} />
-            <Link
-              href="/cuponera?cupones=1"
-              className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
-            >
-              <Gift className="w-5 h-5" />
-              Mis Cupones
-            </Link>
+            {canRedeem ? (
+              <Link
+                href="/cuponera?cupones=1"
+                className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
+              >
+                <Gift className="w-5 h-5" />
+                Mis Cupones
+              </Link>
+            ) : (
+              <Link
+                href={registroUrl("VECINO")}
+                className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
+              >
+                <Gift className="w-5 h-5" />
+                Adquirir membresía Vecino
+              </Link>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/pasaporte"

@@ -5,23 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BookOpen, Camera, Gift, IdCard, Map as MapIcon } from "lucide-react";
-import { isAdminUser } from "@/lib/admin";
-import { isPaidMember } from "@/lib/membresia";
-import type { MembershipPlan } from "@/generated/prisma/client";
 
 export const APP_TAB_BOTTOM =
   "calc(3.5rem + env(safe-area-inset-bottom, 0px))" as const;
 
+/** Hub móvil (tab bar + chrome) para cualquier sesión autenticada, incl. Turista. */
 export function useAppMobileShell(): boolean {
   const { data: session, status } = useSession();
-  if (status !== "authenticated" || !session?.user) return false;
-  const plan = (session.user.plan ?? "TURISTA") as MembershipPlan;
-  const subscriptionStatus = session.user.subscriptionStatus ?? "inactive";
-  const isAdmin = isAdminUser({
-    email: session.user.email,
-    role: session.user.role,
-  });
-  return isPaidMember(plan, subscriptionStatus) || isAdmin;
+  return status === "authenticated" && Boolean(session?.user);
 }
 
 const TABS = [
@@ -59,7 +50,7 @@ const TABS = [
   },
 ] as const;
 
-/** Tab bar inferior — solo móvil + membresía de pago / admin. Desktop no lo usa. */
+/** Tab bar inferior — móvil + sesión iniciada (Turista, Vecino, negocio, admin). Desktop no lo usa. */
 export default function AppBottomNav() {
   const pathname = usePathname();
   const enabled = useAppMobileShell();

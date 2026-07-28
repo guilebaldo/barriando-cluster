@@ -61,13 +61,14 @@ export default async function BarrIdPage({
     }
   }
 
-  if (!isPaidMember(subscription.plan, subscription.status) && !isAdmin) {
-    if (paymentReturn) {
-      // Checkout success but membership not visible yet — avoid bouncing to /pasaporte.
-      redirect("/panel?pago=procesando");
-    }
-    redirect("/pasaporte");
+  const canRedeemCoupons =
+    isPaidMember(subscription.plan, subscription.status) || isAdmin;
+
+  if (!canRedeemCoupons && paymentReturn) {
+    // Checkout success but membership not visible yet — avoid bouncing to /pasaporte.
+    redirect("/panel?pago=procesando");
   }
+
   const summaries = await loadUserStampSummaries(session.id);
   const totalRestaurants = (await getParticipatingRestaurantsAsync()).length;
   const stampedCount = summaries.length;
@@ -104,6 +105,7 @@ export default async function BarrIdPage({
           stampedCount={stampedCount}
           totalRestaurants={totalRestaurants}
           progress={progress}
+          canRedeemCoupons={canRedeemCoupons}
           isFirstLoginUser={isFirstLoginAccount(user?.createdAt)}
         />
       </main>
