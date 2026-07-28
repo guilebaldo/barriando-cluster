@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { hasCommercialAccess } from "@/lib/membresia";
+import { registroUrl } from "@/lib/plan-routing";
 
-const MAP_SIGNUP_HREF = "/planes?tipo=comerciales#gran_empresa";
+const MAP_SIGNUP_HREF = registroUrl("GRAN_EMPRESA");
 
 /** CTA de alta al MAP: si ya es Gran Empresa activa, mensaje (como en Pasaporte). */
 export function MapBusinessSignupLink({

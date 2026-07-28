@@ -148,8 +148,15 @@ export default function SociosImmersiveView({
   const onSheetTouchEnd = (event: React.TouchEvent) => {
     if (touchStartY.current === null) return;
     const endY = event.changedTouches[0]?.clientY;
-    if (endY == null) return;
+    if (endY == null) {
+      touchStartY.current = null;
+      return;
+    }
     const delta = touchStartY.current - endY;
+    touchStartY.current = null;
+
+    // Swipe arriba → expandir (half→full aunque no haya más socios que scrollear).
+    // Swipe abajo → reducir. En half el listado no scrollea para no pelear con el gesto.
     if (delta > 28) {
       setSheetMode((m) => {
         if (selectedId != null) return m === "peek" ? "half" : "half";
@@ -158,7 +165,6 @@ export default function SociosImmersiveView({
     } else if (delta < -28) {
       setSheetMode((m) => stepSheet(m, -1));
     }
-    touchStartY.current = null;
   };
 
   const cycleSheetFromHandle = () => {
@@ -176,12 +182,11 @@ export default function SociosImmersiveView({
       <p className="text-center text-sm text-slate-400 py-8">No hay socios con ese criterio.</p>
     ) : viewMode === "icons" ? (
       <div
-        className={`overscroll-contain touch-pan-y scrollbar-none ${
-          sheetMode === "half" ? "h-[11rem] md:h-[15rem] overflow-y-auto" : ""
+        className={`scrollbar-none ${
+          sheetMode === "half"
+            ? "h-[11rem] md:h-[15rem] overflow-hidden"
+            : "overscroll-contain touch-pan-y overflow-y-auto"
         }`}
-        style={
-          sheetMode === "half" ? { WebkitOverflowScrolling: "touch" } : undefined
-        }
       >
         <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-1.5">
           {sociosFiltrados.map((s) => (
@@ -209,15 +214,12 @@ export default function SociosImmersiveView({
       </div>
     ) : (
       <ul
-        className="divide-y divide-slate-100 overscroll-contain touch-pan-y"
+        className={`divide-y divide-slate-100 ${
+          sheetMode === "half" ? "overflow-hidden" : "overscroll-contain touch-pan-y overflow-y-auto"
+        }`}
         style={
           sheetMode === "half"
-            ? {
-                height: 176,
-                maxHeight: 176,
-                overflowY: "auto",
-                WebkitOverflowScrolling: "touch",
-              }
+            ? { height: 176, maxHeight: 176 }
             : undefined
         }
       >
@@ -452,18 +454,18 @@ export default function SociosImmersiveView({
       </div>
 
       <div
-        className={`overflow-hidden transition-[max-height,opacity] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`overflow-hidden transition-[max-height,opacity] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] min-h-0 ${
           sheetMode === "peek"
             ? "max-h-0 opacity-0 pointer-events-none"
             : sheetMode === "full"
-              ? "max-h-[85dvh] opacity-100"
+              ? "flex-1 opacity-100 flex flex-col"
               : "max-h-[22rem] opacity-100"
         }`}
       >
         <div
           className={`px-3 pt-2 min-h-0 ${
             sheetMode === "full" && !selectedSocio
-              ? "overflow-y-auto overscroll-contain touch-pan-y max-h-[min(60dvh,28rem)]"
+              ? "flex-1 overflow-y-auto overscroll-contain touch-pan-y"
               : "shrink-0"
           }`}
           style={
@@ -526,17 +528,19 @@ export default function SociosImmersiveView({
       >
         <div
           ref={sheetRef}
-          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[max-height] ${
+          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[max-height] ${
             sheetMode === "full" ? "rounded-t-3xl" : "rounded-t-2xl"
           }`}
-          style={{
-            maxHeight:
-              sheetMode === "full"
-                ? "calc(100dvh - max(0.75rem, env(safe-area-inset-top, 0px)))"
-                : sheetMode === "half"
-                  ? 400
-                  : 92,
-          }}
+          style={
+            sheetMode === "full"
+              ? {
+                  height: "calc(100dvh - max(0.75rem, env(safe-area-inset-top, 0px)))",
+                  maxHeight: "calc(100dvh - max(0.75rem, env(safe-area-inset-top, 0px)))",
+                }
+              : sheetMode === "half"
+                ? { height: 400, maxHeight: 400 }
+                : { height: 92, maxHeight: 92 }
+          }
         >
           {sheetChrome}
         </div>

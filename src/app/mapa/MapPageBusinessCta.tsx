@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Store } from "lucide-react";
 import { hasCommercialAccess } from "@/lib/membresia";
+import { registroUrl } from "@/lib/plan-routing";
 
 /** Bloque CTA de inscripción al MAPA (respeta Gran Empresa ya activa). */
 export default function MapPageBusinessCta() {
@@ -43,7 +44,7 @@ export default function MapPageBusinessCta() {
             su Pasaporte Digital.
           </p>
           <Link
-            href="/planes?tipo=comerciales#gran_empresa"
+            href={registroUrl("GRAN_EMPRESA")}
             className="inline-flex items-center gap-2 mt-6 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg transition-all"
           >
             Inscribir mi negocio al MAPA
