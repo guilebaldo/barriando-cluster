@@ -16,8 +16,6 @@ import SocioLogo from "../components/SocioLogo";
 import type { Socio, SocioBenefitInfo } from "../data/socios";
 import BenefitRedeemQr from "./BenefitRedeemQr";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
-import { registroUrl } from "@/lib/plan-routing";
-import { formatPlanPriceMxn } from "@/lib/membresia";
 
 const SociosMap = dynamic(() => import("../components/SociosMapLeaflet"), {
   ssr: false,
@@ -480,26 +478,18 @@ export default function SociosImmersiveView({
 
       {!canRedeemBenefits && (
         <div
-          className={`px-3 pt-2 border-t border-amber-100 shrink-0 bg-amber-50 ${
+          className={`px-3 pt-2 border-t border-slate-100 shrink-0 bg-white ${
             appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           }`}
         >
-          <div className="rounded-xl border border-amber-200 bg-white px-3 py-3 text-center space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-              Cupones exclusivos
-            </p>
-            <p className="text-xs text-slate-700 leading-snug">
-              Adquiere la membresía{" "}
-              <span className="font-bold text-[#27366D]">Vecino</span> para tener acceso a los
-              cupones de los socios.
-            </p>
+          <p className="text-center px-1 py-1.5">
             <Link
-              href={registroUrl("VECINO")}
-              className="inline-flex items-center justify-center w-full bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg transition"
+              href="/planes?tipo=personales"
+              className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
             >
-              Ser Vecino · {formatPlanPriceMxn("VECINO")}
+              ¿Eres vecino? Obtén cupones exclusivos. Regístrate aquí.
             </Link>
-          </div>
+          </p>
         </div>
       )}
       {canRedeemBenefits && sheetMode !== "peek" && (
@@ -529,21 +519,19 @@ export default function SociosImmersiveView({
       >
         <div
           ref={sheetRef}
-          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius,transform] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[max-height,transform] ${
+          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[max-height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[max-height] ${
             sheetMode === "full"
               ? "h-full rounded-t-3xl"
               : sheetMode === "half"
                 ? "rounded-t-2xl max-h-[400px] md:max-h-[min(52vh,520px)]"
-                : canRedeemBenefits
-                  ? "rounded-t-2xl"
-                  : "rounded-t-2xl"
+                : "rounded-t-2xl"
           }`}
           style={
             sheetMode === "full"
               ? undefined
               : sheetMode === "half"
                 ? undefined
-                : { maxHeight: canRedeemBenefits ? 92 : 220 }
+                : { maxHeight: canRedeemBenefits ? 92 : 110 }
           }
         >
           {sheetChrome}
@@ -612,17 +600,14 @@ export default function SociosImmersiveView({
             ) : (
               <>
                 <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                  Adquiere la membresía Vecino para tener acceso a los cupones
-                  {activeBenefit.benefit.redeemViaQr
-                    ? " y mostrar tu QR de canje en BarrID."
-                    : " y canjearlos con tu BarrID."}
+                  ¿Eres vecino? Obtén cupones exclusivos con la membresía Vecino.
                 </p>
                 <Link
-                  href={registroUrl("VECINO")}
+                  href="/planes?tipo=personales"
                   className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
                   onClick={() => setActiveBenefit(null)}
                 >
-                  Ser Vecino · {formatPlanPriceMxn("VECINO")}
+                  Ver plan Vecino
                 </Link>
               </>
             )}

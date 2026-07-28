@@ -10,7 +10,7 @@ import type { UserMapLocation } from "./user-map-location";
 import MapMarkerPopup from "./MapMarkerPopup";
 import { pointHasScannableStamp } from "@/lib/map-point-stamp";
 import { quantizeHeading } from "./map-heading";
-import { getMapFocusPanOffsetPx, readCssPxVar } from "@/lib/map-focus-pan";
+import { getMapFocusPanOffsetPx, leafletFlyToWithBottomBias, readCssPxVar } from "@/lib/map-focus-pan";
 
 function makeUserLocationIcon(heading: number | null | undefined): L.DivIcon {
   const hasHeading = typeof heading === "number" && Number.isFinite(heading);
@@ -86,10 +86,13 @@ function FocusHighlightedPoint({
     if (!point) return;
     const hasStampPopup = pointHasScannableStamp(point);
     const offsetY = getMapFocusPanOffsetPx(bottomSheetHeight, hasStampPopup);
-    map.flyTo([point.latitude, point.longitude], 17, { duration: 0.55 });
-    if (offsetY > 0) {
-      window.setTimeout(() => map.panBy([0, offsetY], { animate: true }), 560);
-    }
+    leafletFlyToWithBottomBias(
+      map,
+      [point.latitude, point.longitude],
+      17,
+      offsetY,
+      0.7
+    );
   }, [map, points, highlightedId, bottomSheetHeight]);
 
   return null;
@@ -122,16 +125,11 @@ function FollowUserLocation({
 
     lastFocusRef.current = { lat, lng, sheet: bottomSheetHeight };
 
-    // Same base as Cuponera (0.55× sheet) + a little extra so the cone sits higher above the ficha.
     const offsetY =
-      bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55 + 28) : 0;
+      bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.5 + 20) : 0;
 
     const zoom = Math.max(map.getZoom(), 16);
-    map.flyTo([lat, lng], zoom, { duration: prev ? 0.4 : 0.55 });
-    if (offsetY > 0) {
-      const delay = prev ? 420 : 560;
-      window.setTimeout(() => map.panBy([0, offsetY], { animate: true }), delay);
-    }
+    leafletFlyToWithBottomBias(map, [lat, lng], zoom, offsetY, prev ? 0.55 : 0.7);
   }, [map, userLocation, bottomSheetHeight, paused]);
 
   return null;

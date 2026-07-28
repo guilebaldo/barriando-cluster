@@ -207,12 +207,34 @@ export function isOxxoPaymentAwaiting(
 export function needsCertificationPayment(
   plan: MembershipPlan,
   status: string,
-  paymentMethod?: string | null
+  paymentMethod?: string | null,
+  stripeSubscriptionId?: string | null
 ): boolean {
   if (isTuristaPlan(plan)) return false;
   if (hasCommercialAccess(plan, status)) return false;
   if (isTransferPaymentPending(status)) return false;
   if (isOxxoPaymentAwaiting(plan, status, paymentMethod)) return false;
+  // Solo exploró el paywall / eligió plan en UI sin iniciar OXXO, tarjeta ni transferencia.
+  if (isSoftUnpaidPlanIntent({ plan, status, paymentMethod, stripeSubscriptionId })) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Plan de pago en DB pero sin haber iniciado checkout real.
+ * No debe atrapar al usuario en /certificacion/pago.
+ */
+export function isSoftUnpaidPlanIntent(sub: {
+  plan: MembershipPlan;
+  status: string;
+  paymentMethod?: string | null;
+  stripeSubscriptionId?: string | null;
+}): boolean {
+  if (isTuristaPlan(sub.plan)) return false;
+  if (sub.status !== "inactive" && sub.status !== "past_due") return false;
+  if (sub.paymentMethod) return false;
+  if (sub.stripeSubscriptionId) return false;
   return true;
 }
 

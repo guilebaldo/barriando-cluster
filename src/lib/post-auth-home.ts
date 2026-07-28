@@ -38,7 +38,7 @@ export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
     return "/panel";
   }
 
-  if (needsCertificationPayment(plan, status)) {
+  if (needsCertificationPayment(plan, status, paymentMethod)) {
     return "/certificacion/pago";
   }
 

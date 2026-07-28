@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Socio } from "../data/socios";
+import { getMapFocusPanOffsetPx, leafletFlyToWithBottomBias } from "@/lib/map-focus-pan";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 
 function makeIcon(selected: boolean, hasBenefit: boolean) {
@@ -39,11 +40,8 @@ function FocusSelected({
     if (selectedId == null) return;
     const point = puntos.find((p) => p.socio.id === selectedId);
     if (!point) return;
-    map.flyTo([point.lat, point.lng], 17, { duration: 0.55 });
-    const offsetY = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55) : 0;
-    if (offsetY > 0) {
-      window.setTimeout(() => map.panBy([0, offsetY], { animate: true }), 560);
-    }
+    const offsetY = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.5) : 0;
+    leafletFlyToWithBottomBias(map, [point.lat, point.lng], 17, offsetY, 0.7);
   }, [selectedId, bottomSheetHeight, puntos, map]);
 
   return null;

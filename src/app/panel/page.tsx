@@ -85,7 +85,8 @@ export default async function PanelPage({
         needsCertificationPayment(
           refreshedSub.plan,
           refreshedSub.status,
-          refreshedSub.paymentMethod
+          refreshedSub.paymentMethod,
+          refreshedSub.stripeSubscriptionId
         )
       ) {
         redirect("/certificacion/pago");
@@ -99,7 +100,8 @@ export default async function PanelPage({
       needsCertificationPayment(
         refreshedSub.plan,
         refreshedSub.status,
-        refreshedSub.paymentMethod
+        refreshedSub.paymentMethod,
+        refreshedSub.stripeSubscriptionId
       ) &&
       !canRegisterBusinessProfile(refreshedSub.plan, refreshedSub.status)
     ) {

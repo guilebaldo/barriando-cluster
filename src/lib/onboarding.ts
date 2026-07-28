@@ -15,6 +15,8 @@ import { PENDING_PLAN_COOKIE } from "@/lib/pending-plan-cookie";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import {
   hasCommercialAccess,
+  isOxxoPaymentAwaiting,
+  isSoftUnpaidPlanIntent,
   isTuristaPlan,
   type PaidMembershipPlan,
 } from "@/lib/membresia";
@@ -48,11 +50,42 @@ async function ensureTuristaSubscription(userId: string) {
     console.warn("[onboarding] no degradar a TURISTA: pago manual pendiente", userId);
     return;
   }
+  if (
+    existing &&
+    isOxxoPaymentAwaiting(existing.plan, existing.status, existing.paymentMethod)
+  ) {
+    console.warn("[onboarding] no degradar a TURISTA: OXXO en espera", userId);
+    return;
+  }
   await prisma.subscription.upsert({
     where: { userId },
     create: { userId, plan: "TURISTA", status: "inactive" },
-    update: { plan: "TURISTA", status: "inactive" },
+    update: { plan: "TURISTA", status: "inactive", paymentMethod: null },
   });
+}
+
+/** Si eligió un plan de pago en UI pero nunca inició OXXO/tarjeta/transferencia, vuelve a Turista. */
+export async function revertSoftUnpaidPlanIntentIfNeeded(userId: string) {
+  const existing = await prisma.subscription.findUnique({ where: { userId } });
+  if (!existing) return null;
+  if (
+    !isSoftUnpaidPlanIntent({
+      plan: existing.plan,
+      status: existing.status,
+      paymentMethod: existing.paymentMethod,
+      stripeSubscriptionId: existing.stripeSubscriptionId,
+    })
+  ) {
+    return existing;
+  }
+  return prisma.subscription.update({
+    where: { userId },
+    data: { plan: "TURISTA", status: "inactive", paymentMethod: null },
+  });
+}
+
+async function revertSoftUnpaidPlanIntent(userId: string) {
+  await revertSoftUnpaidPlanIntentIfNeeded(userId);
 }
 
 async function ensurePendingPaidPlan(userId: string, plan: PaidMembershipPlan) {
@@ -179,6 +212,10 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
     await ensureTuristaSubscription(session.user.id);
     redirect("/mapa");
   }
+
+  // Exploró paywall sin iniciar pago → vuelve a Turista (no atrapar en certificación).
+  await revertSoftUnpaidPlanIntent(session.user.id);
+  sub = await loadSubscription(session.user.id);
 
   if (!sub || isTuristaPlan(sub.plan)) {
     await ensureTuristaSubscription(session.user.id);

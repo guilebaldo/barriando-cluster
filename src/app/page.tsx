@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth-utils";
 import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
+import { revertSoftUnpaidPlanIntentIfNeeded } from "@/lib/onboarding";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +13,14 @@ export default async function RootPage() {
   const session = await getSession();
 
   if (session) {
+    const sub = await revertSoftUnpaidPlanIntentIfNeeded(session.id);
     redirect(
       resolvePostAuthHomePath({
         email: session.email,
         role: session.role,
-        plan: session.plan,
-        subscriptionStatus: session.subscriptionStatus,
+        plan: sub?.plan ?? session.plan,
+        subscriptionStatus: sub?.status ?? session.subscriptionStatus,
+        paymentMethod: sub?.paymentMethod ?? null,
       })
     );
   }

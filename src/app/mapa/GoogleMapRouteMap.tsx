@@ -6,7 +6,7 @@ import { loadGoogleMapsApi } from "@/lib/google-maps-loader";
 import { circuitViaWalkPath } from "@/lib/map-circuit";
 import { buildMapMarkerPopupContent, pointHasScannableStamp } from "@/lib/map-point-stamp";
 import type { MapRoutePoint } from "@/lib/map-route-client";
-import { getMapFocusPanOffsetPx } from "@/lib/map-focus-pan";
+import { getMapFocusPanOffsetPx, googleLatLngWithBottomBias } from "@/lib/map-focus-pan";
 
 const LeafletMapFallback = dynamic(() => import("./MapRouteMap"), {
   ssr: false,
@@ -212,16 +212,21 @@ export default function GoogleMapRouteMap({
 
     const focusHighlighted = () => {
       if (!hp) return;
-      map.panTo({ lat: hp.latitude, lng: hp.longitude });
       const verticalOffset = immersive ? getFocusPanOffsetPx(bottomSheetHeight, stampPopup) : 0;
-      if (verticalOffset > 0) {
-        map.panBy(0, verticalOffset);
-      }
+      if (!userLocation) map.setZoom(17);
+      const target =
+        verticalOffset > 0
+          ? googleLatLngWithBottomBias(
+              map,
+              { lat: hp.latitude, lng: hp.longitude },
+              verticalOffset
+            )
+          : { lat: hp.latitude, lng: hp.longitude };
+      map.panTo(target);
     };
 
     if (hp && hi >= 0) {
       focusHighlighted();
-      if (!userLocation) map.setZoom(17);
 
       const marker = markersRef.current[hi];
       if (marker) {

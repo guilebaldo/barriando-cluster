@@ -7,6 +7,7 @@ import SiteShell from "../components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
+import { revertSoftUnpaidPlanIntentIfNeeded } from "@/lib/onboarding";
 
 export const metadata = {
   title: "Entrar | Barriando",
@@ -16,12 +17,14 @@ export const metadata = {
 export default async function EntrarPage() {
   const session = await getSession();
   if (session) {
+    const sub = await revertSoftUnpaidPlanIntentIfNeeded(session.id);
     redirect(
       resolvePostAuthHomePath({
         email: session.email,
         role: session.role,
-        plan: session.plan,
-        subscriptionStatus: session.subscriptionStatus,
+        plan: sub?.plan ?? session.plan,
+        subscriptionStatus: sub?.status ?? session.subscriptionStatus,
+        paymentMethod: sub?.paymentMethod ?? null,
       })
     );
   }

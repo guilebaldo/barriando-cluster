@@ -13,7 +13,14 @@ export default async function RegistroPage({
 
   const session = await getSession();
   if (session) {
-    redirect(`/api/onboarding/continue?plan=${planToSlug(plan)}`);
+    // Ya logueado: no mutar el plan ni abrir paywall solo por visitar /registro?plan=
+    // (p. ej. CTA “Ser Vecino” desde Cuponera). Catálogo de planes para decidir.
+    if (plan === "TURISTA") {
+      redirect("/mapa");
+    }
+    const tipo =
+      plan === "VECINO" ? "personales" : "comerciales";
+    redirect(`/planes?tipo=${tipo}&plan=${planToSlug(plan)}`);
   }
 
   return <RegistroClient plan={plan} />;
