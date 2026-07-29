@@ -8,15 +8,28 @@ import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 import { ONBOARDING_CONTINUE_PATH, planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
-export function OAuthButtons({ plan }: { plan?: MembershipPlan | null }) {
+export function OAuthButtons({
+  plan,
+  compact = false,
+}: {
+  plan?: MembershipPlan | null;
+  /** Espaciado reducido para fichas de /planes. */
+  compact?: boolean;
+}) {
   return (
     <Suspense fallback={null}>
-      <OAuthButtonsInner plan={plan} />
+      <OAuthButtonsInner plan={plan} compact={compact} />
     </Suspense>
   );
 }
 
-function OAuthButtonsInner({ plan }: { plan?: MembershipPlan | null }) {
+function OAuthButtonsInner({
+  plan,
+  compact = false,
+}: {
+  plan?: MembershipPlan | null;
+  compact?: boolean;
+}) {
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
 
@@ -62,11 +75,13 @@ function OAuthButtonsInner({ plan }: { plan?: MembershipPlan | null }) {
   }, [searchParams]);
 
   return (
-    <div className="space-y-5">
+    <div className={compact ? "space-y-3" : "space-y-5"}>
       <GoogleSignInButton
         callbackUrl={redirectAfterLogin}
         label="Continuar con Google"
-        className="w-full flex items-center justify-center gap-2 border border-slate-200 rounded-lg py-3.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 shadow-sm"
+        className={`w-full flex items-center justify-center gap-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-50 shadow-sm ${
+          compact ? "py-2.5" : "py-3.5"
+        }`}
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -84,10 +99,16 @@ function OAuthButtonsInner({ plan }: { plan?: MembershipPlan | null }) {
       </div>
 
       <div>
-        <p className="mb-3 text-center text-[11px] font-light text-slate-500">
-          Te enviamos un enlace de verificación a tu correo.
-        </p>
-        <MagicLinkForm callbackUrl={redirectAfterLogin} />
+        {!compact ? (
+          <p className="mb-3 text-center text-[11px] font-light text-slate-500">
+            Te enviamos un enlace de verificación a tu correo.
+          </p>
+        ) : null}
+        <MagicLinkForm
+          callbackUrl={redirectAfterLogin}
+          compact={compact}
+          submitLabel={compact ? "Continuar con correo" : undefined}
+        />
       </div>
 
       {error ? <p className="text-center text-xs text-red-600">{error}</p> : null}

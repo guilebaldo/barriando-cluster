@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { Check } from "lucide-react";
 import { MEMBERSHIP_PLANS, PAID_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
-import { registroUrl, planToSlug } from "@/lib/plan-routing";
+import { planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { OAuthButtons } from "@/app/components/OAuthButtons";
 import PlanSelectButton from "./PlanSelectButton";
@@ -169,9 +168,8 @@ function PlanCard({
   const useDirectSelect = isAuthenticated && (isPlanChange || plan.isPaid);
   const isEmphasized = featured || highlighted;
   const stopDrag = planDeckStopDragProps();
-  const [authOpen, setAuthOpen] = useState(false);
 
-  const ctaClass = `w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
+  const ctaClass = `block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg transition ${
     plan.isPaid
       ? planId === "GRAN_EMPRESA"
         ? "bg-amber-500 hover:bg-amber-400 text-slate-950"
@@ -182,7 +180,7 @@ function PlanCard({
   return (
     <div
       id={withAnchor ? planToSlug(planId) : undefined}
-      className={`flex flex-col rounded-xl border p-5 md:p-6 bg-white shadow-sm h-full scroll-mt-24 ${
+      className={`flex flex-col rounded-xl border p-5 md:p-6 bg-white shadow-sm h-full min-h-0 overflow-y-auto overscroll-contain scroll-mt-24 ${
         isEmphasized ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-200"
       }`}
     >
@@ -234,35 +232,15 @@ function PlanCard({
           <PlanSelectButton
             planId={planId}
             label={isPlanChange ? "Seleccionar" : cta}
-            className={`block ${ctaClass}`}
+            className={ctaClass}
           />
         </div>
       ) : (
-        <div className="mt-auto space-y-3" {...stopDrag}>
-          {authOpen ? (
-            <>
-              <OAuthButtons plan={planId} />
-              <button
-                type="button"
-                onClick={() => setAuthOpen(false)}
-                className="w-full text-center text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-slate-600 py-1"
-              >
-                Cerrar
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" onClick={() => setAuthOpen(true)} className={ctaClass}>
-                {cta}
-              </button>
-              <Link
-                href={registroUrl(planId)}
-                className="block text-center text-[10px] font-semibold text-slate-400 hover:text-[#27366D] transition"
-              >
-                O continuar en página de registro
-              </Link>
-            </>
-          )}
+        <div className="mt-auto space-y-2" {...stopDrag}>
+          <p className="text-[10px] text-center font-semibold uppercase tracking-wider text-slate-400">
+            {cta} · crea tu cuenta
+          </p>
+          <OAuthButtons plan={planId} compact />
         </div>
       )}
     </div>

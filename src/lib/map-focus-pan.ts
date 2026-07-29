@@ -25,14 +25,13 @@ export function getMapFocusPanOffsetPx(
       ? Math.round(window.visualViewport?.height ?? window.innerHeight)
       : 700;
   const safeTop = Math.max(0, readCssPxVar("--safe-area-inset-top"));
-  // Globo de sello ~160–180px; + margen bajo el notch.
+  // Globo bajo el notch, con menos aire que antes (pin un poco más arriba).
   const topPad = stampPopup
-    ? Math.round(safeTop + 40 + 172)
-    : Math.round(safeTop + 24);
+    ? Math.round(safeTop + 28 + 148)
+    : Math.round(safeTop + 18);
   const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight) : 0;
   const usable = Math.max(140, H - topPad - bottomPad);
-  // Sello: pin un poco debajo del centro de la banda para dar aire al globo.
-  const targetFromTop = topPad + usable * (stampPopup ? 0.62 : 0.48);
+  const targetFromTop = topPad + usable * (stampPopup ? 0.52 : 0.45);
   return Math.round(H / 2 - targetFromTop);
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useState, type PointerEvent, type ReactNode, type TouchEvent } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
@@ -140,10 +140,13 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
   );
 }
 
-/** Stop card drag from stealing CTA presses. */
+/** Stop card drag from stealing CTA / auth presses and inputs. */
 export function planDeckStopDragProps() {
   return {
     onPointerDown: (e: PointerEvent) => {
+      e.stopPropagation();
+    },
+    onTouchStart: (e: TouchEvent) => {
       e.stopPropagation();
     },
   };
