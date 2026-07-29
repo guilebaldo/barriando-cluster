@@ -52,6 +52,14 @@ const TABS = [
   },
 ] as const;
 
+/** Sincroniza alto real del viewport PWA (evita franja navy bajo el hub). */
+function syncStandaloneShellHeight(root: HTMLElement) {
+  const vv = window.visualViewport;
+  const vvH = vv ? Math.ceil(vv.height + vv.offsetTop) : 0;
+  const h = Math.max(window.innerHeight, root.clientHeight, vvH);
+  root.style.setProperty("--app-shell-height", `${h}px`);
+}
+
 /** Tab bar inferior — móvil + sesión iniciada. Desktop no lo usa. */
 export default function AppBottomNav() {
   const pathname = usePathname();
@@ -66,21 +74,37 @@ export default function AppBottomNav() {
     const root = document.documentElement;
     if (!enabled) {
       root.classList.remove("app-mobile-shell", "app-standalone");
+      root.style.removeProperty("--app-shell-height");
       return;
     }
     root.classList.add("app-mobile-shell");
 
     const syncStandalone = () => {
-      root.classList.toggle("app-standalone", isStandaloneDisplay());
+      const standalone = isStandaloneDisplay();
+      root.classList.toggle("app-standalone", standalone);
+      if (standalone) syncStandaloneShellHeight(root);
+      else root.style.removeProperty("--app-shell-height");
     };
     syncStandalone();
 
     const mq = window.matchMedia("(display-mode: standalone)");
     const onMq = () => syncStandalone();
+    const onResize = () => {
+      if (isStandaloneDisplay()) syncStandaloneShellHeight(root);
+    };
+
     mq.addEventListener("change", onMq);
+    window.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("scroll", onResize);
+
     return () => {
       mq.removeEventListener("change", onMq);
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("scroll", onResize);
       root.classList.remove("app-mobile-shell", "app-standalone");
+      root.style.removeProperty("--app-shell-height");
     };
   }, [enabled]);
 
@@ -125,7 +149,6 @@ export default function AppBottomNav() {
     </nav>
   );
 
-  // Portal al body: evita que fixed-dentro-de-fixed (shells immersive) ancle
-  // el hub al alto del shell en iOS standalone y deje franja navy debajo.
+  // Portal al body: hub siempre al viewport real (como en Ajustes).
   return createPortal(nav, document.body);
 }

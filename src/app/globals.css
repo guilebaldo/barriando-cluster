@@ -43,32 +43,47 @@
     }
 
     /*
-      Shells immersive: mismo patrón que Panel — padding inferior = alto del hub.
-      El padding queda del color del shell (blanco/cream) y el hub lo tapa:
-      una sola franja navy, sin “doble azul” por gap del body.
+      Shells immersive (Safari con chrome): 100dvh + padding = hub.
+      El padding queda del color del shell y el hub lo tapa.
     */
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell {
+      top: 0;
+      right: 0;
       bottom: 0;
+      left: 0;
       height: 100dvh;
       max-height: 100dvh;
       padding-bottom: var(--app-hub-offset);
     }
 
     /*
-      PWA standalone: 100dvh a menudo no coincide con el viewport real.
-      Rellenar el caja fixed (inset:0) con height:auto evita la franja navy
-      debajo del tab bar. El hub ya está portaleado al body.
+      PWA standalone — mismo contrato que Ajustes (.panel-mobile-shell):
+      1) Alto = viewport real (--app-shell-height vía visualViewport)
+      2) padding-bottom = --app-hub-offset (contenido no queda bajo el tab)
+      3) Franja navy en la zona del hub (se funde con el tab bar; sin hueco body)
     */
+    html.app-mobile-shell.app-standalone,
+    html.app-mobile-shell.app-standalone body {
+      height: var(--app-shell-height, 100svh);
+      max-height: var(--app-shell-height, 100svh);
+      overflow: hidden;
+    }
+
     html.app-mobile-shell.app-standalone .map-immersive-shell,
     html.app-mobile-shell.app-standalone .barrid-shell {
       top: 0;
       right: 0;
-      bottom: 0;
       left: 0;
-      height: auto;
-      max-height: none;
+      bottom: auto;
+      height: var(--app-shell-height, 100svh);
+      max-height: var(--app-shell-height, 100svh);
       padding-bottom: var(--app-hub-offset);
+      /* Zona del hub en navy, igual que el fondo de Ajustes bajo el tab */
+      background-image: linear-gradient(#27366d, #27366d);
+      background-size: 100% var(--app-hub-offset);
+      background-position: bottom;
+      background-repeat: no-repeat;
     }
 
     html.app-mobile-shell.app-standalone .app-bottom-nav {
@@ -223,8 +238,6 @@
 }
 
 .map-immersive-shell {
-  height: 100dvh;
-  max-height: 100dvh;
   touch-action: manipulation;
 }
 
