@@ -43,19 +43,14 @@
     }
 
     /*
-      Shells immersive: mismo patrón que Panel / fix anti–doble hub (f2507f4):
-      padding inferior = alto del hub. El padding queda del color del shell
-      (blanco/cream) y el hub lo tapa — una sola franja navy, sin gradient extra.
+      Shells immersive + Ajustes: 100dvh, padding del hub, sin scroll de documento.
+      El padding queda del color del shell y el hub lo tapa (sin doble navy).
     */
     html.app-mobile-shell .map-immersive-shell,
-    html.app-mobile-shell .barrid-shell {
+    html.app-mobile-shell .barrid-shell,
+    html.app-mobile-shell .panel-mobile-shell {
       height: 100dvh;
       max-height: 100dvh;
-      padding-bottom: var(--app-hub-offset);
-    }
-
-    /* Ajustes: flujo normal; padding para no tapar filas con el hub */
-    html.app-mobile-shell .panel-mobile-shell {
       padding-bottom: var(--app-hub-offset);
     }
 

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 /**
- * Evita scroll/rubber-band del documento detrás de shells immersive.
+ * Evita scroll/rubber-band del documento detrás de shells immersive y Ajustes.
  * No usa position:fixed ni alto forzado en html/body (rompe el hub en standalone).
  */
 export function useImmersiveScrollLock() {
