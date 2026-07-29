@@ -99,7 +99,7 @@ const FOOTER_COLUMNS = [
 
 export default function Footer() {
   return (
-    <div className="mt-auto w-full">
+    <div className="site-footer mt-auto w-full">
       <section className="py-10 bg-white border-t border-slate-200 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-6">
           <div className="flex flex-col sm:flex-row gap-4 text-center sm:text-left">

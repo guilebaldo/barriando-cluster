@@ -518,6 +518,17 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 </dl>
 
                 <MiCuentaLink compact />
+
+                <p className="pt-1 pb-2 text-center">
+                  <a
+                    href="https://guilebaldo.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[9px] tracking-wide text-white/30 hover:text-white/50 transition"
+                  >
+                    Powered by GURU Software Studio
+                  </a>
+                </p>
               </div>
           </div>
         </div>

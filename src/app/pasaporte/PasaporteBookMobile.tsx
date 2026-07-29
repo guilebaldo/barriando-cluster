@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import { registroUrl } from "@/lib/plan-routing";
-import { useAppMobileShell } from "@/app/components/AppBottomNav";
 
 type RestaurantCard = {
   id: number;
@@ -346,7 +345,6 @@ export default function PasaporteBookMobile({
   stampFlashId: number | null;
   alreadyOnPassportRoster?: boolean;
 }) {
-  const appShell = useAppMobileShell();
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
   /** Últimas dos muestras del drag para estimar velocidad al soltar */
@@ -583,7 +581,11 @@ export default function PasaporteBookMobile({
     const page = restPages[pageNum - 1] ?? [];
     const isLastPage = pageNum === pageCount - 1;
     return (
-      <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
+      <section
+        className={`relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] overflow-hidden ${
+          isLastPage ? "pb-3" : "pb-12"
+        }`}
+      >
         <PageBackdrop />
         <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Sellos</p>
@@ -609,13 +611,7 @@ export default function PasaporteBookMobile({
           })}
         </div>
         {isLastPage ? (
-          <p
-            className={`relative z-10 shrink-0 text-center pt-2 ${
-              appShell
-                ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))]"
-                : "pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]"
-            }`}
-          >
+          <p className="relative z-10 shrink-0 text-center mt-3 pt-2.5 border-t border-[#d9cdb3]/55 pb-1">
             {alreadyOnPassportRoster ? (
               <span
                 className="text-[10px] text-stone-500 cursor-default select-none"

@@ -107,6 +107,11 @@
     html.app-mobile-shell:has(.barrid-shell) body {
       padding-bottom: 0;
     }
+
+    /* Hub activo: sin footer de marketing (PIPOPETL, blog, equipo, etc.) */
+    html.app-mobile-shell .site-footer {
+      display: none !important;
+    }
   }
 
   /* Estilizado de los títulos monumentales de turismo */
