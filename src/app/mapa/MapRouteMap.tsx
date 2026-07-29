@@ -79,20 +79,39 @@ function FocusHighlightedPoint({
   bottomSheetHeight: number;
 }) {
   const map = useMap();
+  const lastIdRef = useRef<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!highlightedId) return;
+    if (!highlightedId) {
+      lastIdRef.current = null;
+      return;
+    }
     const point = points.find((p) => p.id === highlightedId);
     if (!point) return;
-    const hasStampPopup = pointHasScannableStamp(point);
-    const offsetY = getMapFocusPanOffsetPx(bottomSheetHeight, hasStampPopup);
-    leafletFlyToWithBottomBias(
-      map,
-      [point.latitude, point.longitude],
-      17,
-      offsetY,
-      0.7
-    );
+
+    const idChanged = lastIdRef.current !== highlightedId;
+    lastIdRef.current = highlightedId;
+
+    const run = (duration: number) => {
+      const hasStampPopup = pointHasScannableStamp(point);
+      const offsetY = getMapFocusPanOffsetPx(bottomSheetHeight, hasStampPopup);
+      leafletFlyToWithBottomBias(
+        map,
+        [point.latitude, point.longitude],
+        17,
+        offsetY,
+        duration
+      );
+    };
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    // Espera a que la ficha termine de animar; id nuevo = vuelo corto, solo altura = snap.
+    timerRef.current = setTimeout(() => run(idChanged ? 0.4 : 0), idChanged ? 300 : 280);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [map, points, highlightedId, bottomSheetHeight]);
 
   return null;

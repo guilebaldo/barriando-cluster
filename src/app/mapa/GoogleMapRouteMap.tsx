@@ -57,6 +57,8 @@ export default function GoogleMapRouteMap({
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const onSelectRef = useRef(onPointSelect);
   const highlightedIdRef = useRef(highlightedId);
+  const lastFocusIdRef = useRef<string | null>(null);
+  const focusTimerRef = useRef<number | null>(null);
   onSelectRef.current = onPointSelect;
   highlightedIdRef.current = highlightedId;
 
@@ -210,12 +212,29 @@ export default function GoogleMapRouteMap({
     const hi = highlightedId ? points.findIndex((p) => p.id === highlightedId) : -1;
     const stampPopup = Boolean(hp && showStampPopups && pointHasScannableStamp(hp));
 
-    const focusHighlighted = () => {
-      if (!hp) return;
+    if (!hp || hi < 0) {
+      infoWindowRef.current?.close();
+      lastFocusIdRef.current = null;
+
+      if (!userLocation && points.length > 0) {
+        const bounds = new google.maps.LatLngBounds();
+        for (const point of points) {
+          bounds.extend({ lat: point.latitude, lng: point.longitude });
+        }
+        const bottomPad = bottomSheetHeight > 0 ? bottomSheetHeight + 32 : 48;
+        map.fitBounds(bounds, { top: 48, right: 48, bottom: bottomPad, left: 48 });
+      }
+      return;
+    }
+
+    const idChanged = lastFocusIdRef.current !== hp.id;
+    lastFocusIdRef.current = hp.id;
+
+    const focusHighlighted = (animate: boolean) => {
       const verticalOffset = immersive ? getFocusPanOffsetPx(bottomSheetHeight, stampPopup) : 0;
       const targetZoom = !userLocation ? 17 : map.getZoom() ?? 17;
       const target =
-        verticalOffset > 0
+        verticalOffset !== 0
           ? googleLatLngWithBottomBias(
               map,
               { lat: hp.latitude, lng: hp.longitude },
@@ -224,37 +243,28 @@ export default function GoogleMapRouteMap({
             )
           : { lat: hp.latitude, lng: hp.longitude };
       if (!userLocation) map.setZoom(targetZoom);
-      map.panTo(target);
+      if (animate) map.panTo(target);
+      else map.setCenter(target);
     };
 
-    if (hp && hi >= 0) {
-      focusHighlighted();
+    if (focusTimerRef.current) window.clearTimeout(focusTimerRef.current);
+    focusTimerRef.current = window.setTimeout(() => {
+      focusHighlighted(idChanged);
 
       const marker = markersRef.current[hi];
-      if (marker) {
-        if (stampPopup) {
-          window.setTimeout(() => {
-            if (highlightedIdRef.current !== hp.id) return;
-            infoWindowRef.current?.setContent(buildMapMarkerPopupContent(hp));
-            infoWindowRef.current?.open({ map, anchor: marker });
-          }, 120);
-        } else {
-          infoWindowRef.current?.close();
-        }
+      if (!marker) return;
+      if (stampPopup) {
+        if (highlightedIdRef.current !== hp.id) return;
+        infoWindowRef.current?.setContent(buildMapMarkerPopupContent(hp));
+        infoWindowRef.current?.open({ map, anchor: marker });
+      } else {
+        infoWindowRef.current?.close();
       }
-      return;
-    }
+    }, idChanged ? 300 : 280);
 
-    infoWindowRef.current?.close();
-
-    if (!userLocation && points.length > 0) {
-      const bounds = new google.maps.LatLngBounds();
-      for (const point of points) {
-        bounds.extend({ lat: point.latitude, lng: point.longitude });
-      }
-      const bottomPad = bottomSheetHeight > 0 ? bottomSheetHeight + 32 : 48;
-      map.fitBounds(bounds, { top: 48, right: 48, bottom: bottomPad, left: 48 });
-    }
+    return () => {
+      if (focusTimerRef.current) window.clearTimeout(focusTimerRef.current);
+    };
   }, [mapReady, highlightedId, points, immersive, bottomSheetHeight, showStampPopups, userLocation]);
 
   useEffect(() => {

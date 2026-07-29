@@ -10,37 +10,54 @@ export function readCssPxVar(varName: string): number {
 }
 
 /**
- * Desplazamiento vertical (misma fórmula que el panBy anterior que ya centraba bien).
- * offset > 0 → el marcador queda más arriba en pantalla (libre de la ficha).
+ * Desplazamiento vertical para centrar el pin en la banda visible.
+ * offset > 0 → el marcador queda más arriba en pantalla.
+ *
+ * Con sello/globo: reserva notch + altura del popup para que el globo
+ * quede bajo el safe-area (Safari y standalone), no pegado ni tapado.
  */
 export function getMapFocusPanOffsetPx(
   bottomSheetHeight: number,
   stampPopup: boolean
 ): number {
-  const safeTop = readCssPxVar("--safe-area-inset-top");
-  const sheetOffset = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55) : 0;
-  const popupOffset = stampPopup ? Math.round(180 + safeTop) : Math.round(safeTop + 12);
-  return sheetOffset + popupOffset;
+  const H =
+    typeof window !== "undefined"
+      ? Math.round(window.visualViewport?.height ?? window.innerHeight)
+      : 700;
+  const safeTop = Math.max(0, readCssPxVar("--safe-area-inset-top"));
+  // Globo de sello ~160–180px; + margen bajo el notch.
+  const topPad = stampPopup
+    ? Math.round(safeTop + 40 + 172)
+    : Math.round(safeTop + 24);
+  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight) : 0;
+  const usable = Math.max(140, H - topPad - bottomPad);
+  // Sello: pin un poco debajo del centro de la banda para dar aire al globo.
+  const targetFromTop = topPad + usable * (stampPopup ? 0.62 : 0.48);
+  return Math.round(H / 2 - targetFromTop);
 }
 
 /**
- * Un solo flyTo a la posición final correcta (equivalente a flyTo + panBy([0, offsetY])).
- * En Leaflet, y crece al sur: sumar offset al centro deja el punto más arriba en pantalla.
+ * flyTo / setView con bias vertical.
+ * duration <= 0 → setView sin animación (correcciones de ficha sin rubber-band).
  */
 export function leafletFlyToWithBottomBias(
   map: LeafletMap,
   latlng: LatLngExpression,
   zoom: number,
   offsetY: number,
-  duration = 0.7
+  duration = 0.45
 ): void {
-  if (offsetY <= 0) {
-    map.flyTo(latlng, zoom, { duration, easeLinearity: 0.35 });
+  let center: LatLngExpression = latlng;
+  if (offsetY !== 0) {
+    const p = map.project(latlng, zoom);
+    center = map.unproject([p.x, p.y + offsetY], zoom);
+  }
+
+  if (duration <= 0) {
+    map.setView(center, zoom, { animate: false });
     return;
   }
 
-  const p = map.project(latlng, zoom);
-  const center = map.unproject([p.x, p.y + offsetY], zoom);
   map.flyTo(center, zoom, { duration, easeLinearity: 0.35 });
 }
 
@@ -54,11 +71,10 @@ export function googleLatLngWithBottomBias(
   offsetY: number,
   zoom = 17
 ): google.maps.LatLngLiteral {
-  if (offsetY <= 0) return latLng;
+  if (offsetY === 0) return latLng;
 
   const projection = map.getProjection();
   if (!projection) {
-    // Fallback: medir con panBy real.
     const prev = map.getCenter();
     const prevZoom = map.getZoom();
     if (!prev) return latLng;
@@ -75,7 +91,6 @@ export function googleLatLngWithBottomBias(
   const scale = Math.pow(2, zoom);
   const world = projection.fromLatLngToPoint(new google.maps.LatLng(latLng.lat, latLng.lng));
   if (!world) return latLng;
-  // y crece al sur; sumar mueve el centro al sur → marcador más arriba en pantalla.
   const pixelToWorld = 1 / (256 * scale);
   const shifted = new google.maps.Point(world.x, world.y + offsetY * pixelToWorld);
   const out = projection.fromPointToLatLng(shifted);

@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Socio } from "../data/socios";
-import { getMapFocusPanOffsetPx, leafletFlyToWithBottomBias } from "@/lib/map-focus-pan";
+import { leafletFlyToWithBottomBias } from "@/lib/map-focus-pan";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 
 function makeIcon(selected: boolean, hasBenefit: boolean) {
@@ -35,13 +35,29 @@ function FocusSelected({
   bottomSheetHeight: number;
 }) {
   const map = useMap();
+  const lastIdRef = useRef<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (selectedId == null) return;
+    if (selectedId == null) {
+      lastIdRef.current = null;
+      return;
+    }
     const point = puntos.find((p) => p.socio.id === selectedId);
     if (!point) return;
-    const offsetY = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.5) : 0;
-    leafletFlyToWithBottomBias(map, [point.lat, point.lng], 17, offsetY, 0.7);
+
+    const idChanged = lastIdRef.current !== selectedId;
+    lastIdRef.current = selectedId;
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      const offsetY = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.5) : 0;
+      leafletFlyToWithBottomBias(map, [point.lat, point.lng], 17, offsetY, idChanged ? 0.4 : 0);
+    }, idChanged ? 280 : 260);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [selectedId, bottomSheetHeight, puntos, map]);
 
   return null;
