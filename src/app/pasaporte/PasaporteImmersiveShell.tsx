@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { isStandaloneDisplay } from "@/lib/add-to-home-screen";
 
 export default function PasaporteImmersiveShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
     const scrollY = window.scrollY;
+    const standalone = isStandaloneDisplay();
 
     const previous = {
       htmlOverflow: html.style.overflow,
@@ -25,14 +27,17 @@ export default function PasaporteImmersiveShell({ children }: { children: React.
     html.style.height = "100%";
     html.style.overflow = "hidden";
     html.style.overscrollBehavior = "none";
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.left = "0";
-    body.style.right = "0";
-    body.style.width = "100%";
-    body.style.height = "100%";
     body.style.overflow = "hidden";
     body.style.overscrollBehavior = "none";
+    body.style.height = "100%";
+    body.style.width = "100%";
+
+    if (!standalone) {
+      body.style.position = "fixed";
+      body.style.top = `-${scrollY}px`;
+      body.style.left = "0";
+      body.style.right = "0";
+    }
 
     return () => {
       html.style.overflow = previous.htmlOverflow;
@@ -46,7 +51,9 @@ export default function PasaporteImmersiveShell({ children }: { children: React.
       body.style.width = previous.bodyWidth;
       body.style.height = previous.bodyHeight;
       body.style.overscrollBehavior = previous.bodyOverscroll;
-      window.scrollTo(0, scrollY);
+      if (!standalone) {
+        window.scrollTo(0, scrollY);
+      }
     };
   }, []);
 

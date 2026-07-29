@@ -55,6 +55,28 @@
       padding-bottom: var(--app-hub-offset);
     }
 
+    /*
+      PWA standalone: 100dvh a menudo no coincide con el viewport real.
+      Rellenar el caja fixed (inset:0) con height:auto evita la franja navy
+      debajo del tab bar. El hub ya está portaleado al body.
+    */
+    html.app-mobile-shell.app-standalone .map-immersive-shell,
+    html.app-mobile-shell.app-standalone .barrid-shell {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: auto;
+      max-height: none;
+      padding-bottom: var(--app-hub-offset);
+    }
+
+    html.app-mobile-shell.app-standalone .app-bottom-nav {
+      bottom: 0;
+      margin-bottom: 0;
+      transform: none;
+    }
+
     /* Panel: padding inferior; fondo navy del shell se funde con el hub */
     html.app-mobile-shell .panel-mobile-shell {
       padding-bottom: var(--app-hub-offset);

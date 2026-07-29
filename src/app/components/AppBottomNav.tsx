@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BookOpen, Camera, Gift, IdCard, Map as MapIcon } from "lucide-react";
+import { isStandaloneDisplay } from "@/lib/add-to-home-screen";
 
 export const APP_TAB_BOTTOM =
   "calc(3.5rem + env(safe-area-inset-bottom, 0px))" as const;
@@ -50,26 +52,43 @@ const TABS = [
   },
 ] as const;
 
-/** Tab bar inferior — móvil + sesión iniciada (Turista, Vecino, negocio, admin). Desktop no lo usa. */
+/** Tab bar inferior — móvil + sesión iniciada. Desktop no lo usa. */
 export default function AppBottomNav() {
   const pathname = usePathname();
   const enabled = useAppMobileShell();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
     if (!enabled) {
-      root.classList.remove("app-mobile-shell");
+      root.classList.remove("app-mobile-shell", "app-standalone");
       return;
     }
     root.classList.add("app-mobile-shell");
-    return () => root.classList.remove("app-mobile-shell");
+
+    const syncStandalone = () => {
+      root.classList.toggle("app-standalone", isStandaloneDisplay());
+    };
+    syncStandalone();
+
+    const mq = window.matchMedia("(display-mode: standalone)");
+    const onMq = () => syncStandalone();
+    mq.addEventListener("change", onMq);
+    return () => {
+      mq.removeEventListener("change", onMq);
+      root.classList.remove("app-mobile-shell", "app-standalone");
+    };
   }, [enabled]);
 
-  if (!enabled) return null;
+  if (!enabled || !mounted) return null;
 
-  return (
+  const nav = (
     <nav
-      className="md:hidden fixed inset-x-0 bottom-0 z-[70] bg-[#27366D] pb-[env(safe-area-inset-bottom,0px)]"
+      className="app-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-[70] bg-[#27366D] pb-[env(safe-area-inset-bottom,0px)]"
       aria-label="Navegación de app"
     >
       <ul className="grid grid-cols-5 h-14 max-w-lg mx-auto border-t border-[#1e2b58]">
@@ -105,4 +124,8 @@ export default function AppBottomNav() {
       </ul>
     </nav>
   );
+
+  // Portal al body: evita que fixed-dentro-de-fixed (shells immersive) ancle
+  // el hub al alto del shell en iOS standalone y deje franja navy debajo.
+  return createPortal(nav, document.body);
 }
