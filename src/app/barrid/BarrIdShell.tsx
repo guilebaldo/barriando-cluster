@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 
 /**
- * Móvil: fullscreen inmersivo (ficha + QR fijo).
- * Escritorio: flujo normal con scroll y footer.
+ * Móvil: viewport a 100dvh en flujo de documento (como Ajustes), no fixed inset.
+ * Escritorio: layout normal con scroll y footer.
  */
 export default function BarrIdShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function BarrIdShell({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <div className="barrid-shell fixed inset-0 z-0 flex flex-col overflow-hidden overscroll-none bg-slate-50 text-slate-900 font-sans antialiased md:static md:inset-auto md:min-h-screen md:h-auto md:overflow-visible md:overscroll-auto">
+    <div className="barrid-shell relative z-0 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden overscroll-none bg-slate-50 text-slate-900 font-sans antialiased md:h-auto md:max-h-none md:min-h-screen md:overflow-visible md:overscroll-auto">
       {children}
     </div>
   );

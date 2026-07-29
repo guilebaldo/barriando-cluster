@@ -43,44 +43,19 @@
     }
 
     /*
-      Shells immersive (Safari con chrome): 100dvh + padding = hub.
-      El padding queda del color del shell y el hub lo tapa.
+      Shells immersive = mismo contrato que Ajustes:
+      flujo de documento (relative, no fixed), 100dvh, padding del hub.
+      Franja navy en el gutter para fundirse con el tab bar.
     */
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell {
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
       height: 100dvh;
       max-height: 100dvh;
-      padding-bottom: var(--app-hub-offset);
-    }
-
-    /*
-      PWA standalone — solo shells immersive (fixed):
-      alto = viewport visible; padding del hub; franja navy bajo el contenido.
-      Ajustes (.panel-mobile-shell) NO se bloquea: scroll de documento + navy.
-    */
-    html.app-mobile-shell.app-standalone .map-immersive-shell,
-    html.app-mobile-shell.app-standalone .barrid-shell {
-      top: 0;
-      right: 0;
-      left: 0;
-      bottom: auto;
-      height: var(--app-shell-height, 100svh);
-      max-height: var(--app-shell-height, 100svh);
       padding-bottom: var(--app-hub-offset);
       background-image: linear-gradient(#27366d, #27366d);
       background-size: 100% var(--app-hub-offset);
       background-position: bottom;
       background-repeat: no-repeat;
-    }
-
-    html.app-mobile-shell.app-standalone .app-bottom-nav {
-      bottom: 0;
-      margin-bottom: 0;
-      transform: none;
     }
 
     /* Ajustes: flujo normal; padding para no tapar filas con el hub */

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BookOpen, Camera, Gift, IdCard, Map as MapIcon } from "lucide-react";
-import { isStandaloneDisplay } from "@/lib/add-to-home-screen";
 
 export const APP_TAB_BOTTOM =
   "calc(3.5rem + env(safe-area-inset-bottom, 0px))" as const;
@@ -52,15 +51,6 @@ const TABS = [
   },
 ] as const;
 
-/** Alto visible del PWA para shells fixed (no usar clientHeight: puede sobrar y abrir hueco bajo el hub). */
-function syncStandaloneShellHeight(root: HTMLElement) {
-  const vv = window.visualViewport;
-  const h = vv
-    ? Math.round(vv.height + vv.offsetTop)
-    : window.innerHeight;
-  root.style.setProperty("--app-shell-height", `${h}px`);
-}
-
 /** Tab bar inferior — móvil + sesión iniciada. Desktop no lo usa. */
 export default function AppBottomNav() {
   const pathname = usePathname();
@@ -79,31 +69,11 @@ export default function AppBottomNav() {
       return;
     }
     root.classList.add("app-mobile-shell");
-
-    const syncStandalone = () => {
-      const standalone = isStandaloneDisplay();
-      root.classList.toggle("app-standalone", standalone);
-      if (standalone) syncStandaloneShellHeight(root);
-      else root.style.removeProperty("--app-shell-height");
-    };
-    syncStandalone();
-
-    const mq = window.matchMedia("(display-mode: standalone)");
-    const onMq = () => syncStandalone();
-    const onResize = () => {
-      if (isStandaloneDisplay()) syncStandaloneShellHeight(root);
-    };
-
-    mq.addEventListener("change", onMq);
-    window.addEventListener("resize", onResize);
-    window.visualViewport?.addEventListener("resize", onResize);
-    window.visualViewport?.addEventListener("scroll", onResize);
+    // Limpia restos de la medición visualViewport (ya no se usa).
+    root.classList.remove("app-standalone");
+    root.style.removeProperty("--app-shell-height");
 
     return () => {
-      mq.removeEventListener("change", onMq);
-      window.removeEventListener("resize", onResize);
-      window.visualViewport?.removeEventListener("resize", onResize);
-      window.visualViewport?.removeEventListener("scroll", onResize);
       root.classList.remove("app-mobile-shell", "app-standalone");
       root.style.removeProperty("--app-shell-height");
     };
@@ -150,6 +120,5 @@ export default function AppBottomNav() {
     </nav>
   );
 
-  // Portal al body: hub anclado al viewport (Safari y standalone).
   return createPortal(nav, document.body);
 }
