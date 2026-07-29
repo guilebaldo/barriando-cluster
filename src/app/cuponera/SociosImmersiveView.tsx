@@ -190,48 +190,31 @@ export default function SociosImmersiveView({
     sociosFiltrados.length === 0 ? (
       <p className="text-center text-sm text-slate-400 py-8">No hay socios con ese criterio.</p>
     ) : viewMode === "icons" ? (
-      <div
-        className={`scrollbar-none ${
-          sheetMode === "half"
-            ? "h-[11rem] md:h-[15rem] overflow-hidden"
-            : "overscroll-contain touch-pan-y overflow-y-auto"
-        }`}
-      >
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-1.5">
-          {sociosFiltrados.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => selectSocio(s.id)}
-              className={`relative w-full overflow-hidden rounded-xl md:rounded-lg border bg-slate-50 transition ${
-                selectedId === s.id
-                  ? "border-amber-400 ring-2 ring-amber-300"
-                  : "border-slate-200 hover:border-[#27366D]/40"
-              }`}
-              style={{ paddingBottom: "100%", height: 0 }}
-              aria-label={s.name}
-            >
-              <span className="absolute inset-0">
-                <SocioLogo foto={s.foto} name={s.name} compact logoUrl={s.logoUrl} />
-              </span>
-              {s.benefit && (
-                <span className="absolute top-1 right-1 z-[1] w-2 h-2 rounded-full bg-amber-500" />
-              )}
-            </button>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-1.5">
+        {sociosFiltrados.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => selectSocio(s.id)}
+            className={`relative w-full overflow-hidden rounded-xl md:rounded-lg border bg-slate-50 transition ${
+              selectedId === s.id
+                ? "border-amber-400 ring-2 ring-amber-300"
+                : "border-slate-200 hover:border-[#27366D]/40"
+            }`}
+            style={{ paddingBottom: "100%", height: 0 }}
+            aria-label={s.name}
+          >
+            <span className="absolute inset-0">
+              <SocioLogo foto={s.foto} name={s.name} compact logoUrl={s.logoUrl} />
+            </span>
+            {s.benefit && (
+              <span className="absolute top-1 right-1 z-[1] w-2 h-2 rounded-full bg-amber-500" />
+            )}
+          </button>
+        ))}
       </div>
     ) : (
-      <ul
-        className={`divide-y divide-slate-100 ${
-          sheetMode === "half" ? "overflow-hidden" : "overscroll-contain touch-pan-y overflow-y-auto"
-        }`}
-        style={
-          sheetMode === "half"
-            ? { height: 176, maxHeight: 176 }
-            : undefined
-        }
-      >
+      <ul className="divide-y divide-slate-100">
         {sociosFiltrados.map((s) => (
           <li key={s.id}>
             <button
@@ -444,14 +427,14 @@ export default function SociosImmersiveView({
       </button>
 
       <div
-        className={`overflow-hidden transition-[max-height,opacity] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`overflow-hidden transition-[max-height,opacity] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] shrink-0 ${
           sheetMode === "peek" ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
         }`}
       >
         <button
           type="button"
           onClick={() => setSheetMode("half")}
-          className="w-full px-4 pb-2 text-center touch-manipulation shrink-0"
+          className="w-full px-4 pb-2 text-center touch-manipulation"
         >
           <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
             {selectedSocio ? selectedSocio.categoria : "Red empresarial"}
@@ -462,42 +445,31 @@ export default function SociosImmersiveView({
         </button>
       </div>
 
+      {/*
+        Misma estructura half/full: listado scrollea arriba, búsqueda/filtros
+        quedan fijos al pie de la ficha (no saltan al colapsar full→half).
+      */}
       <div
-        className={`overflow-hidden transition-[max-height,opacity] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] min-h-0 ${
+        className={`min-h-0 flex flex-col transition-[opacity] duration-500 ease-out ${
           sheetMode === "peek"
-            ? "max-h-0 opacity-0 pointer-events-none"
-            : sheetMode === "full"
-              ? "flex-1 opacity-100 flex flex-col"
-              : "max-h-[22rem] opacity-100"
+            ? "flex-none max-h-0 opacity-0 pointer-events-none overflow-hidden"
+            : "flex-1 opacity-100"
         }`}
       >
-        <div
-          className={`px-3 pt-2 min-h-0 ${
-            sheetMode === "full" && !selectedSocio
-              ? "flex-1 overflow-y-auto overscroll-contain touch-pan-y"
-              : "shrink-0"
-          }`}
-          style={
-            sheetMode === "half" && !selectedSocio
-              ? { overflow: "hidden", maxHeight: 220 }
-              : undefined
-          }
-        >
+        <div className="px-3 pt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-none">
           {selectedSocio ? detailBody : browseBody}
-          {!selectedSocio && sheetMode === "half" && (
+          {!selectedSocio ? (
             <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
-              {sociosFiltrados.length} miembros · desliza arriba para ver todos
+              {sheetMode === "half"
+                ? `${sociosFiltrados.length} miembros · desliza arriba para ver todos`
+                : `${sociosFiltrados.length} miembros`}
             </p>
-          )}
-          {!selectedSocio && sheetMode === "full" && (
-            <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
-              {sociosFiltrados.length} miembros
-            </p>
-          )}
+          ) : null}
         </div>
-        {!selectedSocio && filtersBar}
 
-        {!canRedeemBenefits && (
+        {!selectedSocio ? filtersBar : null}
+
+        {!canRedeemBenefits ? (
           <div
             className={`px-3 pt-2 border-t border-slate-100 shrink-0 bg-white ${
               appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
@@ -512,9 +484,10 @@ export default function SociosImmersiveView({
               </Link>
             </p>
           </div>
-        )}
-        {canRedeemBenefits && (
-          <div className={`shrink-0 ${appShell ? "pb-2" : "pb-[max(0.5rem,env(safe-area-inset-bottom))]"}`} />
+        ) : (
+          <div
+            className={`shrink-0 ${appShell ? "pb-2" : "pb-[max(0.5rem,env(safe-area-inset-bottom))]"}`}
+          />
         )}
       </div>
     </>
