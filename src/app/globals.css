@@ -58,18 +58,10 @@
     }
 
     /*
-      PWA standalone — mismo contrato que Ajustes (.panel-mobile-shell):
-      1) Alto = viewport real (--app-shell-height vía visualViewport)
-      2) padding-bottom = --app-hub-offset (contenido no queda bajo el tab)
-      3) Franja navy en la zona del hub (se funde con el tab bar; sin hueco body)
+      PWA standalone — solo shells immersive (fixed):
+      alto = viewport visible; padding del hub; franja navy bajo el contenido.
+      Ajustes (.panel-mobile-shell) NO se bloquea: scroll de documento + navy.
     */
-    html.app-mobile-shell.app-standalone,
-    html.app-mobile-shell.app-standalone body {
-      height: var(--app-shell-height, 100svh);
-      max-height: var(--app-shell-height, 100svh);
-      overflow: hidden;
-    }
-
     html.app-mobile-shell.app-standalone .map-immersive-shell,
     html.app-mobile-shell.app-standalone .barrid-shell {
       top: 0;
@@ -79,7 +71,6 @@
       height: var(--app-shell-height, 100svh);
       max-height: var(--app-shell-height, 100svh);
       padding-bottom: var(--app-hub-offset);
-      /* Zona del hub en navy, igual que el fondo de Ajustes bajo el tab */
       background-image: linear-gradient(#27366d, #27366d);
       background-size: 100% var(--app-hub-offset);
       background-position: bottom;
@@ -92,7 +83,7 @@
       transform: none;
     }
 
-    /* Panel: padding inferior; fondo navy del shell se funde con el hub */
+    /* Ajustes: flujo normal; padding para no tapar filas con el hub */
     html.app-mobile-shell .panel-mobile-shell {
       padding-bottom: var(--app-hub-offset);
     }

@@ -52,11 +52,12 @@ const TABS = [
   },
 ] as const;
 
-/** Sincroniza alto real del viewport PWA (evita franja navy bajo el hub). */
+/** Alto visible del PWA para shells fixed (no usar clientHeight: puede sobrar y abrir hueco bajo el hub). */
 function syncStandaloneShellHeight(root: HTMLElement) {
   const vv = window.visualViewport;
-  const vvH = vv ? Math.ceil(vv.height + vv.offsetTop) : 0;
-  const h = Math.max(window.innerHeight, root.clientHeight, vvH);
+  const h = vv
+    ? Math.round(vv.height + vv.offsetTop)
+    : window.innerHeight;
   root.style.setProperty("--app-shell-height", `${h}px`);
 }
 
@@ -149,6 +150,6 @@ export default function AppBottomNav() {
     </nav>
   );
 
-  // Portal al body: hub siempre al viewport real (como en Ajustes).
+  // Portal al body: hub anclado al viewport (Safari y standalone).
   return createPortal(nav, document.body);
 }

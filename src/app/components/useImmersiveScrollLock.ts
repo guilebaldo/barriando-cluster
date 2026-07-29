@@ -4,9 +4,10 @@ import { useEffect } from "react";
 import { isStandaloneDisplay } from "@/lib/add-to-home-screen";
 
 /**
- * Bloqueo de scroll para shells immersive.
- * En Safari (browser) usa position:fixed en body.
- * En standalone solo overflow:hidden — el alto lo marca --app-shell-height (como Ajustes).
+ * Bloqueo de scroll para shells immersive (MAPA / Cuponera / Pasaporte).
+ * Safari: position:fixed en body.
+ * Standalone: solo overflow hidden — no fijar alto de html/body (eso rompe Ajustes).
+ * El alto del shell lo marca CSS con --app-shell-height.
  */
 export function useImmersiveScrollLock() {
   useEffect(() => {
@@ -35,10 +36,7 @@ export function useImmersiveScrollLock() {
     body.style.overscrollBehavior = "none";
     body.style.width = "100%";
 
-    if (standalone) {
-      html.style.height = "var(--app-shell-height, 100%)";
-      body.style.height = "var(--app-shell-height, 100%)";
-    } else {
+    if (!standalone) {
       html.style.height = "100%";
       body.style.height = "100%";
       body.style.position = "fixed";
