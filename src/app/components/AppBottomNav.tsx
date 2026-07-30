@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -54,35 +53,26 @@ const TABS = [
 /**
  * Tab bar inferior — móvil + sesión iniciada.
  * Vive en Providers (no dentro de Navbar) para no desmontarse en cada navegación.
+ * Sin portal: Providers ya es hijo directo de <body>, así que el nav sale en el
+ * HTML del servidor y está pintado desde el primer frame (nada de hueco blanco
+ * bajo el shell mientras hidrata).
  */
 export default function AppBottomNav() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const enabled = status === "authenticated" && Boolean(session?.user);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
     // Mientras carga la sesión, respetar la clase SSR del layout (cold start).
     if (status === "loading") return;
 
-    if (!enabled) {
-      root.classList.remove("app-mobile-shell", "app-standalone");
-      root.style.removeProperty("--app-shell-height");
-      return;
-    }
-    root.classList.add("app-mobile-shell");
-    root.classList.remove("app-standalone");
-    root.style.removeProperty("--app-shell-height");
+    root.classList.toggle("app-mobile-shell", enabled);
   }, [enabled, status]);
 
-  if (!enabled || !mounted) return null;
+  if (!enabled) return null;
 
-  const nav = (
+  return (
     <nav
       className="app-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-[70] bg-[#27366D] pb-[env(safe-area-inset-bottom,0px)]"
       aria-label="Navegación de app"
@@ -120,6 +110,4 @@ export default function AppBottomNav() {
       </ul>
     </nav>
   );
-
-  return createPortal(nav, document.body);
 }

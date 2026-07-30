@@ -29,25 +29,13 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Shell app móvil: hueco al tab bar.
-     Body navy mientras hay sesión (también en cold start SSR): si el tab aún
-     no hidrató, el borde inferior sigue navy y no “blanco hasta abajo”.
-     No volver a pintar gradient en el gutter del shell (eso sí era doble hub). */
+  /* Shell app móvil: hueco al tab bar. */
   @media (max-width: 767px) {
     html.app-mobile-shell {
       --app-hub-offset: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
 
-    html.app-mobile-shell,
-    html.app-mobile-shell body {
-      background-color: #27366d;
-    }
-
-    /*
-      Shells immersive + Ajustes: 100dvh + padding del hub.
-      background-clip: content-box → el padding inferior es transparente y deja
-      ver el body navy (misma franja que el hub), no un rectángulo blanco.
-    */
+    /* Shells immersive + Ajustes: 100dvh + padding del hub. */
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell,
     html.app-mobile-shell .panel-mobile-shell,
@@ -55,32 +43,14 @@
       height: 100dvh;
       max-height: 100dvh;
       padding-bottom: var(--app-hub-offset);
-      background-clip: content-box;
     }
 
-    /* Candado de documento en cuanto el shell está en el DOM (antes del useEffect). */
-    html.app-mobile-shell:has(.map-immersive-shell),
-    html.app-mobile-shell:has(.map-immersive-shell) body,
-    html.app-mobile-shell:has(.barrid-shell),
-    html.app-mobile-shell:has(.barrid-shell) body,
-    html.app-mobile-shell:has(.panel-mobile-shell),
-    html.app-mobile-shell:has(.panel-mobile-shell) body,
-    html.app-mobile-shell:has(.planes-mobile-shell),
-    html.app-mobile-shell:has(.planes-mobile-shell) body {
-      overflow: hidden;
-      overscroll-behavior: none;
-    }
-
-    /* Páginas con scroll genéricas (pago, etc.): hueco bajo el hub */
+    /* Páginas con scroll genéricas (pago, etc.): hueco bajo el hub.
+       Las páginas con shell lo anulan desde useImmersiveScrollLock: no con
+       :has(), que Chrome ignora antes de la 105 y dejaría el documento 90px
+       más alto que la pantalla en Android viejo. */
     html.app-mobile-shell body {
       padding-bottom: var(--app-hub-offset);
-    }
-
-    html.app-mobile-shell:has(.panel-mobile-shell) body,
-    html.app-mobile-shell:has(.map-immersive-shell) body,
-    html.app-mobile-shell:has(.barrid-shell) body,
-    html.app-mobile-shell:has(.planes-mobile-shell) body {
-      padding-bottom: 0;
     }
 
     /* Hub activo: sin footer de marketing (PIPOPETL, blog, equipo, etc.) */
