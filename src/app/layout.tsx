@@ -36,15 +36,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Primera pintura con sesión: aplica app-mobile-shell antes de hidratar
-  // (evita cold start sin padding de hub → doble franja).
+  // Primera pintura con sesión: clase del shell antes de hidratar y sesión ya
+  // resuelta en el cliente (si no, el hub tarda en montar y queda el hueco navy).
   const session = await auth();
   const appShell = Boolean(session?.user?.id);
 
   return (
     <html lang="es" className={appShell ? "app-mobile-shell" : undefined}>
       <body>
-        <Providers>{children}</Providers>
+        <Providers session={session}>{children}</Providers>
       </body>
     </html>
   );
