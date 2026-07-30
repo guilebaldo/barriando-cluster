@@ -7,13 +7,11 @@ import { getBarriandoPaymentDetails } from "@/lib/payment";
 import {
   hasCommercialAccess,
   isOxxoPaymentAwaiting,
-  isSoftUnpaidPlanIntent,
   isTuristaPlan,
   needsCertificationPayment,
 } from "@/lib/membresia";
 import { normalizePanelSubscription } from "@/lib/panel-data";
 import { resolvePostAuthHomePathAfterPayment } from "@/lib/post-auth-home";
-import { revertSoftUnpaidPlanIntentIfNeeded } from "@/lib/onboarding";
 
 export default async function CertificacionPagoPage({
   searchParams,
@@ -32,18 +30,8 @@ export default async function CertificacionPagoPage({
 
   let sub = normalizePanelSubscription(user.subscription);
 
-  if (
-    isSoftUnpaidPlanIntent({
-      plan: sub.plan,
-      status: sub.status,
-      paymentMethod: sub.paymentMethod,
-      stripeSubscriptionId: sub.stripeSubscriptionId,
-    })
-  ) {
-    // Solo exploró el paywall: no mantenerlo aquí; vuelve a Turista + catálogo.
-    await revertSoftUnpaidPlanIntentIfNeeded(session.id);
-    redirect("/planes?tipo=personales");
-  }
+  // Soft unpaid (plan elegido, sin método aún) es el estado normal al llegar aquí
+  // tras /registro → Google. No revertir: esta página es para escoger tarjeta/OXXO/transfer.
 
   if (isTuristaPlan(sub.plan)) {
     redirect("/planes");

@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Check } from "lucide-react";
 import { MEMBERSHIP_PLANS, PAID_PLANS, formatPlanPriceMxn } from "@/lib/membresia";
-import { planToSlug } from "@/lib/plan-routing";
+import { registroUrl, planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
-import { OAuthButtons } from "@/app/components/OAuthButtons";
 import PlanSelectButton from "./PlanSelectButton";
 import PlanSwipeDeck, { planDeckStopDragProps } from "./PlanSwipeDeck";
 
@@ -236,12 +236,9 @@ function PlanCard({
           />
         </div>
       ) : (
-        <div className="mt-auto space-y-2" {...stopDrag}>
-          <p className="text-[10px] text-center font-semibold uppercase tracking-wider text-slate-400">
-            {cta} · crea tu cuenta
-          </p>
-          <OAuthButtons plan={planId} compact />
-        </div>
+        <Link href={registroUrl(planId)} {...stopDrag} className={`mt-auto ${ctaClass}`}>
+          {cta}
+        </Link>
       )}
     </div>
   );

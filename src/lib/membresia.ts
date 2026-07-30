@@ -214,10 +214,8 @@ export function needsCertificationPayment(
   if (hasCommercialAccess(plan, status)) return false;
   if (isTransferPaymentPending(status)) return false;
   if (isOxxoPaymentAwaiting(plan, status, paymentMethod)) return false;
-  // Solo exploró el paywall / eligió plan en UI sin iniciar OXXO, tarjeta ni transferencia.
-  if (isSoftUnpaidPlanIntent({ plan, status, paymentMethod, stripeSubscriptionId })) {
-    return false;
-  }
+  // Plan de pago inactivo / past_due (incl. recién elegido en /registro): sí hay que pagar.
+  void stripeSubscriptionId;
   return true;
 }
 
