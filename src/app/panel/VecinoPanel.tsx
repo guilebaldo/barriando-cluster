@@ -20,13 +20,15 @@ import {
   getSubscriptionStatusLabel,
   getUpgradePlans,
   hasCommercialAccess,
+  isSubscriptionStatusPending,
 } from "@/lib/membresia";
 import { planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import BenefitCredentialCard from "./BenefitCredentialCard";
 import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
-import { cancelMembership } from "./actions";
+import TransferPaymentSection from "./TransferPaymentSection";
+import { cancelMembership, reportManualPayment } from "./actions";
 
 type VecinoPanelProps = {
   user: {
@@ -43,6 +45,11 @@ type VecinoPanelProps = {
   };
   showCredential: boolean;
   stripeConfigured: boolean;
+  paymentDetails: {
+    clabe: string;
+    bankLabel: string;
+    paymentEmail: string;
+  };
 };
 
 export default function VecinoPanel({
@@ -50,15 +57,18 @@ export default function VecinoPanel({
   subscription,
   showCredential,
   stripeConfigured,
+  paymentDetails,
 }: VecinoPanelProps) {
   const router = useRouter();
   const { update } = useSession();
   const [payMsg, setPayMsg] = useState("");
+  const [manualMsg, setManualMsg] = useState("");
   const [cancelMsg, setCancelMsg] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const paidActive = hasCommercialAccess(subscription.plan, subscription.status);
+  const pendingValidation = isSubscriptionStatusPending(subscription.status);
   const upgradePlans = paidActive ? getUpgradePlans(subscription.plan) : [];
   const expiryLabel = resolveMembershipExpiryLabel({
     status: subscription.status,
@@ -94,6 +104,17 @@ export default function VecinoPanel({
     } catch (err) {
       setPayMsg(err instanceof Error ? err.message : "Error al iniciar pago");
     }
+  }
+
+  async function handleManualPayment(plan: MembershipPlan) {
+    setManualMsg("");
+    const result = await reportManualPayment(plan);
+    if (!result.ok) {
+      setManualMsg(result.error);
+      return;
+    }
+    setManualMsg("Solicitud registrada. Tu plan aparece como Pendiente de Validación.");
+    await refreshSession();
   }
 
   async function handleCancelMembership() {
@@ -178,16 +199,33 @@ export default function VecinoPanel({
           </p>
         )}
 
-        {stripeConfigured && !autoRenewal && (
+        {!autoRenewal && (
           <div className="flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => void handleStripePay(subscription.plan)}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
-            >
-              {paidActive ? "Domiciliar membresía" : "Pagar con tarjeta (domiciliación)"}
-            </button>
-            <StripeLocalPaymentButtons plan={subscription.plan} />
+            {stripeConfigured && (
+              <button
+                type="button"
+                onClick={() => void handleStripePay(subscription.plan)}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
+              >
+                {paidActive ? "Domiciliar membresía" : "Pagar con tarjeta (domiciliación)"}
+              </button>
+            )}
+            {stripeConfigured && (
+              <StripeLocalPaymentButtons
+                plan={subscription.plan}
+                disabled={pendingValidation}
+              />
+            )}
+            {!paidActive && (
+              <TransferPaymentSection
+                plan={subscription.plan}
+                onConfirm={handleManualPayment}
+                disabled={pendingValidation}
+                clabe={paymentDetails.clabe}
+                bankLabel={paymentDetails.bankLabel}
+                paymentEmail={paymentDetails.paymentEmail}
+              />
+            )}
           </div>
         )}
 
@@ -242,7 +280,9 @@ export default function VecinoPanel({
           </div>
         )}
 
-        {payMsg && <p className="text-xs mt-3 text-slate-600">{payMsg}</p>}
+        {(payMsg || manualMsg) && (
+          <p className="text-xs mt-3 text-slate-600">{payMsg || manualMsg}</p>
+        )}
         {cancelMsg && <p className="text-xs mt-3 text-slate-600">{cancelMsg}</p>}
       </section>
 

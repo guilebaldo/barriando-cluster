@@ -529,6 +529,7 @@ export default function PanelDashboard({
           subscription={subscription}
           showCredential={showCredential}
           stripeConfigured={stripeConfigured}
+          paymentDetails={paymentDetails}
         />
       ),
     },
@@ -993,6 +994,7 @@ export default function PanelDashboard({
           subscription={subscription}
           showCredential={showCredential}
           stripeConfigured={stripeConfigured}
+          paymentDetails={paymentDetails}
         />
       ) : showPayBeforeLink ? (
         <div className="space-y-6">
