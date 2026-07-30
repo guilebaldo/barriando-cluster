@@ -15,6 +15,7 @@ import {
   canAccessPanel,
   canRegisterBusinessProfile,
   hasCommercialAccess,
+  isSoftUnpaidPlanIntent,
   isTuristaPlan,
   needsCertificationPayment,
 } from "@/lib/membresia";
@@ -80,7 +81,14 @@ export default async function PanelPage({
 
     const refreshedSub = normalizePanelSubscription(panelUser?.subscription);
 
-    if (!canAccessPanel(refreshedSub.plan, refreshedSub.status)) {
+    if (
+      !canAccessPanel(
+        refreshedSub.plan,
+        refreshedSub.status,
+        refreshedSub.paymentMethod,
+        refreshedSub.stripeSubscriptionId
+      )
+    ) {
       if (
         needsCertificationPayment(
           refreshedSub.plan,
@@ -94,8 +102,10 @@ export default async function PanelPage({
       redirect("/planes?pago=requiere_plan");
     }
 
-    // Plan comercial: pueden llenar la ficha aunque el pago aún esté pendiente.
-    // Vecino / otros planes de pago sin acceso → siguen a certificación (salvo OXXO en espera).
+    // Soft unpaid (eligió plan, aún sin método): Mi cuenta / panel siguen disponibles
+    // para cerrar sesión o seguir explorando. El pago se retoma desde CTAs del panel.
+    // Plan comercial: pueden llenar ficha con pago pendiente.
+    // Vecino con pago ya iniciado (no soft) sin acceso → certificación.
     if (
       needsCertificationPayment(
         refreshedSub.plan,
@@ -103,7 +113,8 @@ export default async function PanelPage({
         refreshedSub.paymentMethod,
         refreshedSub.stripeSubscriptionId
       ) &&
-      !canRegisterBusinessProfile(refreshedSub.plan, refreshedSub.status)
+      !canRegisterBusinessProfile(refreshedSub.plan, refreshedSub.status) &&
+      !isSoftUnpaidPlanIntent(refreshedSub)
     ) {
       redirect("/certificacion/pago");
     }

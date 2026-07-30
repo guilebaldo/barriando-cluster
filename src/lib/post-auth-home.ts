@@ -2,6 +2,7 @@ import { isAdminUser } from "@/lib/admin";
 import {
   hasCommercialAccess,
   isOxxoPaymentAwaiting,
+  isSoftUnpaidPlanIntent,
   isTransferPaymentPending,
   isTuristaPlan,
   needsCertificationPayment,
@@ -14,6 +15,7 @@ export type PostAuthHomeUser = {
   plan: MembershipPlan;
   subscriptionStatus: string;
   paymentMethod?: string | null;
+  stripeSubscriptionId?: string | null;
 };
 
 /**
@@ -22,13 +24,16 @@ export type PostAuthHomeUser = {
  *
  * Admin / socio de pago activo → /barrid
  * Transferencia o OXXO en espera → /panel (mensaje de espera)
- * Plan de pago sin método iniciado → /certificacion/pago
+ * Soft unpaid (eligió plan sin checkout) → /panel (no atrapar en pago; CTAs retoman)
+ * Plan de pago con checkout iniciado sin acceso → /certificacion/pago
  * Turista → /mapa
+ *
+ * El flujo explícito a pago vive en select-plan / continueOnboardingAfterAuth.
  */
 export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
   if (isAdminUser(user)) return "/barrid";
 
-  const { plan, subscriptionStatus: status, paymentMethod } = user;
+  const { plan, subscriptionStatus: status, paymentMethod, stripeSubscriptionId } = user;
 
   if (hasCommercialAccess(plan, status)) {
     return "/barrid";
@@ -38,7 +43,18 @@ export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
     return "/panel";
   }
 
-  if (needsCertificationPayment(plan, status, paymentMethod)) {
+  if (
+    isSoftUnpaidPlanIntent({
+      plan,
+      status,
+      paymentMethod,
+      stripeSubscriptionId,
+    })
+  ) {
+    return "/panel";
+  }
+
+  if (needsCertificationPayment(plan, status, paymentMethod, stripeSubscriptionId)) {
     return "/certificacion/pago";
   }
 

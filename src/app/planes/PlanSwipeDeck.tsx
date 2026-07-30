@@ -97,13 +97,7 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
       </div>
 
       {planIds.length > 1 ? (
-        <div
-          className="shrink-0 flex flex-col items-center gap-2 pt-2"
-          style={{
-            // Safari toolbar + home indicator: keep "Desliza…" above the chrome.
-            paddingBottom: "max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))",
-          }}
-        >
+        <div className="planes-deck-chrome shrink-0 flex flex-col items-center gap-2 pt-2">
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center justify-center gap-1.5" role="tablist" aria-label="Planes">
               {planIds.map((id, i) => (
@@ -129,12 +123,7 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
           </p>
         </div>
       ) : (
-        <div
-          className="shrink-0"
-          style={{
-            paddingBottom: "max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem))",
-          }}
-        />
+        <div className="planes-deck-chrome shrink-0" aria-hidden />
       )}
     </div>
   );

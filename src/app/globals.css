@@ -48,7 +48,8 @@
     */
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell,
-    html.app-mobile-shell .panel-mobile-shell {
+    html.app-mobile-shell .panel-mobile-shell,
+    html.app-mobile-shell .planes-mobile-shell {
       height: 100dvh;
       max-height: 100dvh;
       padding-bottom: var(--app-hub-offset);
@@ -61,13 +62,24 @@
 
     html.app-mobile-shell:has(.panel-mobile-shell) body,
     html.app-mobile-shell:has(.map-immersive-shell) body,
-    html.app-mobile-shell:has(.barrid-shell) body {
+    html.app-mobile-shell:has(.barrid-shell) body,
+    html.app-mobile-shell:has(.planes-mobile-shell) body {
       padding-bottom: 0;
     }
 
     /* Hub activo: sin footer de marketing (PIPOPETL, blog, equipo, etc.) */
     html.app-mobile-shell .site-footer {
       display: none !important;
+    }
+
+    /* Indicador del deck de planes: sin hub = aire + home indicator;
+       con hub el shell ya reservó --app-hub-offset. */
+    .planes-deck-chrome {
+      padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem));
+    }
+
+    html.app-mobile-shell .planes-deck-chrome {
+      padding-bottom: 0.75rem;
     }
   }
 

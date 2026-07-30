@@ -1,20 +1,9 @@
-import type { MembershipPlan } from "@/generated/prisma/client";
-import { isTuristaPlan, needsCertificationPayment } from "@/lib/membresia";
-
-/** Enlace al panel de configuración (engrane en Barrid → /panel). */
+/** Enlace al panel de configuración (engrane / Mi cuenta → /panel). */
 export function getAccountNavItem(
-  plan: MembershipPlan | undefined,
-  status: string | undefined,
-  pathname: string
+  _plan?: unknown,
+  _status?: unknown,
+  _pathname?: string
 ): { href: string; label: string } {
-  const onCertificacion = pathname.startsWith("/certificacion");
-  const paidPlan = plan && !isTuristaPlan(plan);
-  const pendingPayment =
-    paidPlan && needsCertificationPayment(plan, status ?? "inactive");
-
-  if (pendingPayment || onCertificacion) {
-    return { href: "/certificacion/pago", label: "Mi Panel" };
-  }
-
+  // Siempre /panel: soft unpaid u onboarding de pago no deben secuestrar Mi cuenta.
   return { href: "/panel", label: "Mi Panel" };
 }

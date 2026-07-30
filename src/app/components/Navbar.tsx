@@ -13,7 +13,6 @@ import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
 import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 import { AdminNavLink } from "@/app/components/AdminNavBadge";
 import AppBottomNav, { useAppMobileShell } from "@/app/components/AppBottomNav";
-import type { MembershipPlan } from "@/generated/prisma/client";
 
 function GoogleGlyph() {
   return (
@@ -183,18 +182,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   const displayName = session?.user?.name?.trim() || "Mi cuenta";
-  const plan = (session?.user?.plan ?? "TURISTA") as MembershipPlan;
-  const subscriptionStatus = session?.user?.subscriptionStatus ?? "inactive";
   const isAdmin = isAdminUser({
     email: session?.user?.email,
     role: session?.user?.role,
   });
-  const profileHref = resolvePostAuthHomePath({
-    email: session?.user?.email,
-    role: session?.user?.role,
-    plan,
-    subscriptionStatus,
-  });
+  // Nombre / “Mi cuenta” y Panel → siempre /panel (no secuestrar a pago).
+  const profileHref = "/panel";
   const panelHref = "/panel";
 
   useEffect(() => {

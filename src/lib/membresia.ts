@@ -251,12 +251,32 @@ export function canRegisterBusinessProfile(plan: MembershipPlan, status: string)
   );
 }
 
-/** Puede entrar al panel: turista, pago activo, transferencia en revisión, o negocio pendiente de pago (para llenar ficha). */
-export function canAccessPanel(plan: MembershipPlan, status: string): boolean {
+/**
+ * Puede entrar al panel: turista, pago activo, transferencia/OXXO en espera,
+ * negocio pendiente de pago (ficha), o soft unpaid (eligió plan sin iniciar checkout).
+ * Soft unpaid no debe atrapar al usuario fuera de /panel (p. ej. sin “cerrar sesión”).
+ */
+export function canAccessPanel(
+  plan: MembershipPlan,
+  status: string,
+  paymentMethod?: string | null,
+  stripeSubscriptionId?: string | null
+): boolean {
   if (isTuristaPlan(plan)) return true;
   if (hasCommercialAccess(plan, status)) return true;
   if (isTransferPaymentPending(status)) return true;
+  if (isOxxoPaymentAwaiting(plan, status, paymentMethod)) return true;
   if (canRegisterBusinessProfile(plan, status)) return true;
+  if (
+    isSoftUnpaidPlanIntent({
+      plan,
+      status,
+      paymentMethod,
+      stripeSubscriptionId,
+    })
+  ) {
+    return true;
+  }
   return false;
 }
 
