@@ -90,7 +90,13 @@ export default function SociosImmersiveView({
   }, [appShell]);
 
   const mapSheetHeight =
-    sheetMode === "peek" ? 0 : sheetMode === "half" ? 400 : fullSheetPx;
+    sheetMode === "peek"
+      ? 0
+      : sheetMode === "full"
+        ? fullSheetPx
+        : selectedId != null
+          ? 280
+          : 400;
 
   const categorias = useMemo(() => {
     return Array.from(new Set(socios.map((s) => s.categoria))).sort();
@@ -261,7 +267,7 @@ export default function SociosImmersiveView({
     );
 
   const detailBody = selectedSocio && (
-    <div className="space-y-3">
+    <div className="space-y-2.5 pb-1">
       <div className="flex items-start gap-3">
         <div className="relative w-16 h-16 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden shrink-0">
           <SocioLogo
@@ -279,7 +285,7 @@ export default function SociosImmersiveView({
             {selectedSocio.name}
           </h2>
           {selectedSocio.benefit ? (
-            <div className="mt-2 space-y-1">
+            <div className="mt-1.5 space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Cupón para socios
               </p>
@@ -475,12 +481,18 @@ export default function SociosImmersiveView({
         className={`min-h-0 flex flex-col transition-[opacity] duration-500 ease-out ${
           sheetMode === "peek"
             ? "flex-none max-h-0 opacity-0 pointer-events-none overflow-hidden"
-            : "flex-1 opacity-100"
+            : selectedSocio && sheetMode === "half"
+              ? "flex-none opacity-100"
+              : "flex-1 opacity-100"
         }`}
       >
         <div
           ref={listScrollRef}
-          className="px-3 pt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-none"
+          className={`px-3 pt-2 min-h-0 overscroll-contain touch-pan-y scrollbar-none ${
+            selectedSocio && sheetMode === "half"
+              ? "overflow-visible"
+              : "flex-1 overflow-y-auto"
+          }`}
         >
           {selectedSocio ? detailBody : browseBody}
           {!selectedSocio ? (
@@ -496,11 +508,11 @@ export default function SociosImmersiveView({
 
         {!canRedeemBenefits ? (
           <div
-            className={`px-3 pt-2 border-t border-slate-100 shrink-0 bg-white ${
-              appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-            }`}
+            className={`px-3 border-t border-slate-100 shrink-0 bg-white ${
+              selectedSocio ? "pt-1.5" : "pt-2"
+            } ${appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
           >
-            <p className="text-center px-1 py-1.5">
+            <p className="text-center px-1 py-1">
               <PlanIntentCta
                 plan="VECINO"
                 className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
@@ -539,7 +551,15 @@ export default function SociosImmersiveView({
             sheetMode === "full" ? "rounded-t-3xl" : "rounded-t-2xl"
           }`}
           style={{
-            height: sheetMode === "full" ? fullSheetPx : sheetMode === "half" ? 400 : 92,
+            height:
+              sheetMode === "full"
+                ? fullSheetPx
+                : sheetMode === "peek"
+                  ? 92
+                  : selectedSocio
+                    ? "auto"
+                    : 400,
+            maxHeight: sheetMode === "half" && selectedSocio ? fullSheetPx : undefined,
           }}
         >
           {sheetChrome}

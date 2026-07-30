@@ -144,14 +144,7 @@ function StatusCard({
               <dd className="font-semibold text-white text-right">{renewalLabel}</dd>
             </div>
           </>
-        ) : (
-          <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-3.5 py-3">
-            <p className="text-xs text-amber-100 leading-snug">
-              Adquiere la membresía <span className="font-bold text-amber-300">Vecino</span> para
-              tener acceso a los cupones.
-            </p>
-          </div>
-        )}
+        ) : null}
       </dl>
 
       <MiCuentaLink />
@@ -173,10 +166,11 @@ function VecinoUpsellPanel({
       >
         <Gift className="w-10 h-10 text-amber-500 shrink-0" />
         <p className={`${textSize} font-bold text-[#27366D] leading-snug`}>
-          Adquiere la membresía Vecino
+          Membresía Vecino
         </p>
-        <p className="text-sm text-slate-600 font-light leading-snug max-w-[16rem]">
-          Para tener acceso a los cupones exclusivos de los negocios socios del barrio.
+        <p className="text-sm text-slate-600 font-light leading-snug max-w-[17rem]">
+          Adquiere la membresía Vecino para desbloquear tu BarrID y activar los cupones exclusivos
+          de los negocios del barrio.
         </p>
         <PlanIntentCta
           plan="VECINO"
@@ -184,14 +178,6 @@ function VecinoUpsellPanel({
         >
           Ser Vecino · {formatPlanPriceMxn("VECINO")}
         </PlanIntentCta>
-      </div>
-      <div className="space-y-1 max-w-xs">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-          Perfil Turista
-        </p>
-        <p className="text-sm text-slate-600 font-light leading-snug">
-          Ya tienes MAPA y Pasaporte. Con Vecino desbloqueas BarrID de canje y la Cuponera.
-        </p>
       </div>
     </section>
   );
@@ -500,21 +486,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                         <dd className="font-bold text-white text-right">{props.renewalLabel}</dd>
                       </div>
                     </>
-                  ) : (
-                    <div className="rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-3">
-                      <p className="text-sm text-amber-100 leading-snug">
-                        Adquiere la membresía{" "}
-                        <span className="font-bold text-amber-300">Vecino</span> para tener acceso a
-                        los cupones.
-                      </p>
-                      <PlanIntentCta
-                        plan="VECINO"
-                        className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-500 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-950 transition hover:bg-amber-400"
-                      >
-                        Ser Vecino · {formatPlanPriceMxn("VECINO")}
-                      </PlanIntentCta>
-                    </div>
-                  )}
+                  ) : null}
                 </dl>
 
                 <MiCuentaLink compact />
@@ -568,15 +540,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 <Gift className="w-5 h-5" />
                 Mis Cupones
               </Link>
-            ) : (
-              <PlanIntentCta
-                plan="VECINO"
-                className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
-              >
-                <Gift className="w-5 h-5" />
-                Adquirir membresía Vecino
-              </PlanIntentCta>
-            )}
+            ) : null}
             <div className="grid grid-cols-2 gap-3">
               <Link
                 href="/pasaporte"

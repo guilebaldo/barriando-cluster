@@ -54,11 +54,11 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
 
   return (
     <div className="md:hidden flex flex-col flex-1 min-h-0 overflow-hidden">
-      <div className="relative mx-auto w-full max-w-[340px] flex-1 flex flex-col justify-end min-h-0 overflow-hidden py-1">
+      <div className="relative mx-auto w-full max-w-[340px] flex-1 flex flex-col justify-center min-h-0 overflow-hidden py-2">
         {planIds.length > 1 ? (
           <div
             aria-hidden
-            className="absolute inset-x-3 top-auto bottom-2 h-[calc(100%-0.5rem)] max-h-full rounded-xl border border-slate-200/80 bg-white shadow-sm scale-[0.97] origin-bottom opacity-45 pointer-events-none"
+            className="absolute inset-x-3 top-1/2 -translate-y-1/2 h-[min(100%,28rem)] rounded-xl border border-slate-200/80 bg-white shadow-sm scale-[0.97] opacity-45 pointer-events-none"
           />
         ) : null}
 
@@ -97,7 +97,7 @@ export default function PlanSwipeDeck({ planIds, initialIndex = 0, renderCard }:
       </div>
 
       {planIds.length > 1 ? (
-        <div className="planes-deck-chrome shrink-0 flex flex-col items-center gap-1.5 pt-1.5 pb-0.5">
+        <div className="planes-deck-chrome shrink-0 flex flex-col items-center gap-1.5 pt-2 pb-1">
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center justify-center gap-1.5" role="tablist" aria-label="Planes">
               {planIds.map((id, i) => (
