@@ -186,7 +186,8 @@ export default async function PanelPage({
           showCredential={params.credencial === "1"}
         />
       </main>
-      <div className="hidden md:block">
+      {/* Desktop: footer del sitio. En móvil el hub lo oculta vía app-mobile-shell. */}
+      <div className="hidden md:block mt-auto">
         <Footer />
       </div>
     </SiteShell>

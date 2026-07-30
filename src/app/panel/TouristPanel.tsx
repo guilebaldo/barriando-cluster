@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Stamp } from "lucide-react";
 import { getPassportProgress } from "@/lib/pasaporte";
-import { registroUrl } from "@/lib/plan-routing";
+import PlanIntentCta from "@/app/components/PlanIntentCta";
 
 interface TouristPanelProps {
   user: {
@@ -99,34 +99,25 @@ export default function TouristPanel({ user, milestonesVisited, totalMilestones 
         <p className="text-[10px] text-slate-400 mt-2">{progress}% completado</p>
       </section>
 
-      <section className="bg-slate-100 border border-slate-200 rounded-xl p-6 opacity-70">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
-          Próximamente
+      <section className="bg-white border border-amber-200/80 rounded-xl p-5 shadow-sm text-center">
+        <p className="text-sm text-slate-600 font-light leading-relaxed">
+          ¿Tienes un negocio en el Centro Histórico? Certifícate y aparece en la guía oficial.
         </p>
-        <p className="text-sm text-slate-500 font-light">
-          Colección de Sellos Dorados de Temporada (Chile en Nogada)
-        </p>
-      </section>
-
-      <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-        <p className="text-[11px] text-slate-500 text-center leading-relaxed">
-          ¿Quieres certificar tu negocio en el Centro Histórico?{" "}
-          <Link href="/planes" className="text-[#27366D]/80 hover:text-[#27366D] hover:underline">
-            Ver planes de membresía
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/planes?tipo=comerciales"
+            className="inline-flex items-center justify-center rounded-lg border border-[#27366D]/20 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:bg-slate-50 transition"
+          >
+            Ver planes
           </Link>
-        </p>
+          <PlanIntentCta
+            plan="NEGOCIO_FAMILIAR"
+            className="inline-flex items-center justify-center rounded-lg bg-amber-500 hover:bg-amber-400 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-950 transition"
+          >
+            Iniciar certificación
+          </PlanIntentCta>
+        </div>
       </section>
-
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur-sm px-4 py-3">
-        <p className="text-[11px] text-slate-600 text-center max-w-3xl mx-auto leading-relaxed">
-          ¿Tienes un negocio tradicional en el Barrio? Súmate como Socio Certificado para aparecer en
-          la guía oficial.{" "}
-          <Link href={registroUrl("NEGOCIO_FAMILIAR")} className="text-[#27366D] font-bold hover:underline">
-            Saber más / Iniciar Certificación
-          </Link>
-        </p>
-      </div>
-      <div className="h-16" aria-hidden />
     </div>
   );
 }

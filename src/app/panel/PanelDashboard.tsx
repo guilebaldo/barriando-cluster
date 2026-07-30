@@ -878,24 +878,6 @@ export default function PanelDashboard({
         </>
       )}
 
-      {showWelcome && (
-        <div className="bg-gradient-to-r from-[#27366D] to-[#1e2b58] text-white rounded-xl p-6 shadow-lg border border-amber-400/30">
-          <div className="flex items-start gap-3">
-            <Sparkles className="w-6 h-6 text-amber-400 shrink-0 mt-1" />
-            <div>
-              <h2 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-amber-400">
-                ¡Ya eres Barrio!
-              </h2>
-              <p className="text-sm text-slate-200 mt-2 font-light">
-                Bienvenido/a, <strong className="text-white">{user.nombre}</strong>. Ya formas parte
-                oficial de la comunidad Barriando como{" "}
-                <strong>{isTurista ? "Turista" : getPlanLabel(plan)}</strong>.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           {!isTurista ? (
@@ -908,12 +890,13 @@ export default function PanelDashboard({
             </Link>
           ) : null}
           <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-            {isTurista ? "Mi comunidad Barriando" : isVecino ? "Panel del vecino" : "Panel del socio"}
+            {isTurista ? "Mi cuenta" : isVecino ? "Panel del vecino" : "Panel del socio"}
           </h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Bienvenido, {user.nombre} · Plan{" "}
-            <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>
-            {!isTurista && (
+          {/* Turista/Vecino ya muestran nombre y plan en su ficha; no repetir aquí. */}
+          {!isTurista && !isVecino ? (
+            <p className="text-sm text-slate-600 mt-1">
+              {user.nombre} · Plan{" "}
+              <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>
               <>
                 {" "}
                 · Estado{" "}
@@ -921,8 +904,14 @@ export default function PanelDashboard({
                   {getSubscriptionStatusLabel(status)}
                 </strong>
               </>
-            )}
-          </p>
+            </p>
+          ) : (
+            <p className="text-sm text-slate-500 mt-1">
+              {isTurista
+                ? "MAPA, Pasaporte y opciones de tu cuenta"
+                : "Membresía, cupones y opciones de tu cuenta"}
+            </p>
+          )}
         </div>
         {isAdmin && (
           <AdminNavLink className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition shrink-0">
@@ -931,6 +920,21 @@ export default function PanelDashboard({
           </AdminNavLink>
         )}
       </div>
+
+      {showWelcome && (
+        <div className="bg-gradient-to-r from-[#27366D] to-[#1e2b58] text-white rounded-xl px-5 py-4 shadow-sm border border-amber-400/30">
+          <div className="flex items-center gap-3">
+            <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
+            <p className="text-sm text-slate-200 font-light leading-relaxed">
+              <strong className="text-amber-400 font-serif-cluster uppercase tracking-wide">
+                ¡Ya eres Barrio!
+              </strong>{" "}
+              Ya formas parte de la comunidad como{" "}
+              <strong className="text-white">{isTurista ? "Turista" : getPlanLabel(plan)}</strong>.
+            </p>
+          </div>
+        </div>
+      )}
 
       {isTurista ? (
         <TouristPanel
@@ -1029,17 +1033,11 @@ export default function PanelDashboard({
 
           {hasBusinessEstablished && (
             <section className="bg-white border border-emerald-200 rounded-xl p-6 shadow-sm md:col-span-2">
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-[#27366D]" />
-                  <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                    Vista de control del negocio
-                  </h2>
-                </div>
-                <div className="flex flex-wrap gap-3 text-xs">
-                  <span className="text-amber-700 font-bold">Plan: {getPlanLabel(plan)}</span>
-                  <span className="text-green-700 font-bold">Estado: Verificado</span>
-                </div>
+              <div className="flex items-center gap-2 mb-6">
+                <Building2 className="w-4 h-4 text-[#27366D]" />
+                <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+                  Vista de control del negocio
+                </h2>
               </div>
 
               <div className="mb-6 flex flex-wrap items-start gap-6">
@@ -1341,6 +1339,7 @@ export default function PanelDashboard({
           <LogOut className="w-4 h-4" />
           Cerrar sesión
         </button>
+        {isTurista ? <div className="mt-4"><DeleteTuristaAccountLink /></div> : null}
       </section>
       </div>
 
