@@ -180,7 +180,7 @@ function PlanCard({
   return (
     <div
       id={withAnchor ? planToSlug(planId) : undefined}
-      className={`flex flex-col rounded-xl border p-5 md:p-6 bg-white shadow-sm h-full min-h-0 overflow-y-auto overscroll-contain scroll-mt-24 ${
+      className={`flex flex-col rounded-xl border p-5 md:p-6 bg-white shadow-sm md:h-full min-h-0 overflow-y-auto overscroll-contain scroll-mt-24 ${
         isEmphasized ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-200"
       }`}
     >
@@ -207,7 +207,7 @@ function PlanCard({
       <p className="text-xs text-slate-500 mt-2.5 md:mt-3 mb-0 md:mb-4 font-light leading-relaxed">
         {plan.description}
       </p>
-      <ul className="space-y-1.5 md:space-y-2 mt-3 mb-4 md:mb-6 flex-1">
+      <ul className="space-y-1.5 md:space-y-2 mt-3 mb-3 md:mb-6 md:flex-1">
         {plan.benefits.map((b) => (
           <li key={b} className="flex gap-2 text-[11px] text-slate-600 leading-snug">
             <Check className="w-3.5 h-3.5 text-[#27366D] shrink-0 mt-0.5" />
@@ -223,12 +223,12 @@ function PlanCard({
       {isCurrent ? (
         <span
           aria-disabled="true"
-          className="mt-auto block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-default select-none"
+          className="md:mt-auto block w-full text-center font-bold text-xs uppercase tracking-wider py-3 rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-default select-none"
         >
           {planId === "TURISTA" ? "Ya tienes acceso gratis" : "Plan actual"}
         </span>
       ) : useDirectSelect ? (
-        <div className="mt-auto" {...stopDrag}>
+        <div className="md:mt-auto" {...stopDrag}>
           <PlanSelectButton
             planId={planId}
             label={isPlanChange ? "Seleccionar" : cta}
@@ -236,7 +236,7 @@ function PlanCard({
           />
         </div>
       ) : (
-        <Link href={registroUrl(planId)} {...stopDrag} className={`mt-auto ${ctaClass}`}>
+        <Link href={registroUrl(planId)} {...stopDrag} className={`md:mt-auto ${ctaClass}`}>
           {cta}
         </Link>
       )}

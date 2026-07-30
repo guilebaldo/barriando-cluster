@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import SiteShell from "@/app/components/SiteShell";
@@ -237,24 +236,11 @@ export default function CertificacionPagoClient({
 
           <div className="flex flex-col items-center gap-2 pt-1">
             <Link
-              href="/panel"
-              className="text-center text-xs font-semibold text-[#27366D] hover:underline"
-            >
-              Ir a Mi cuenta
-            </Link>
-            <Link
               href="/planes?cambio=1"
               className="text-center text-xs text-slate-500 hover:underline"
             >
               Cambiar plan
             </Link>
-            <button
-              type="button"
-              onClick={() => void signOut({ callbackUrl: "/" })}
-              className="text-center text-[11px] text-slate-400 hover:text-slate-600 underline decoration-dotted underline-offset-2"
-            >
-              Cerrar sesión
-            </button>
           </div>
         </div>
       </main>

@@ -237,8 +237,9 @@ export function isSoftUnpaidPlanIntent(sub: {
 }
 
 /**
- * Alta / edición de ficha de negocio: plan comercial aunque el pago aún no esté confirmado
- * (inactive, manual_pending) o ya activo. Al confirmar el pago, publishBusinessPresenceOnPayment
+ * Acceso al panel con plan comercial aunque el pago aún no esté confirmado
+ * (inactive, manual_pending) o ya activo. Vincular negocio usa canLinkSocioAccount
+ * (solo active / manual_active). Al confirmar el pago, publishBusinessPresenceOnPayment
  * publica en /cuponera, /mapa (Gran Empresa) y /admin.
  */
 export function canRegisterBusinessProfile(plan: MembershipPlan, status: string): boolean {

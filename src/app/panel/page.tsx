@@ -104,7 +104,7 @@ export default async function PanelPage({
 
     // Soft unpaid (eligió plan, aún sin método): Mi cuenta / panel siguen disponibles
     // para cerrar sesión o seguir explorando. El pago se retoma desde CTAs del panel.
-    // Plan comercial: pueden llenar ficha con pago pendiente.
+    // Plan comercial: vincular negocio solo tras pago aceptado (canLinkSocioAccount).
     // Vecino con pago ya iniciado (no soft) sin acceso → certificación.
     if (
       needsCertificationPayment(

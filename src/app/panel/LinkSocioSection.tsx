@@ -176,7 +176,7 @@ export default function LinkSocioSection({
       <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
         Busca tu establecimiento en la lista. Si no lo encuentras, elige{" "}
         <strong className="text-[#27366D]">«Mi negocio no está listado»</strong> para registrarlo
-        con ubicación y datos fiscales. Puedes completar el alta aunque tu pago aún esté pendiente.
+        con ubicación y datos fiscales.
       </p>
 
       <div ref={containerRef} className="relative mb-4">

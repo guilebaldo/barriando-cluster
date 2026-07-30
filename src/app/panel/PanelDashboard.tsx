@@ -15,7 +15,6 @@ import {
   isVecinoPlan,
   isBusinessPlan,
   canLinkSocioAccount,
-  canRegisterBusinessProfile,
   isSubscriptionStatusPending,
   isTransferPaymentPending,
   isOxxoPaymentAwaiting,
@@ -161,7 +160,6 @@ export default function PanelDashboard({
   const isVecino = isVecinoPlan(plan);
   const isBusiness = isBusinessPlan(plan);
   const commercial = hasCommercialAccess(plan, status);
-  const canRegister = canRegisterBusinessProfile(plan, status);
   const canLink = canLinkSocioAccount(status);
   const pendingValidation = isSubscriptionStatusPending(status);
   const transferPending = isTransferPaymentPending(status);
@@ -183,9 +181,12 @@ export default function PanelDashboard({
   const hasBusinessEstablished =
     linkageApproved && Boolean(user.socioId || socioProfile?.businessName?.trim());
   const hasBusinessLinked = Boolean(user.socioId && linkageApproved);
-  const showLinkSection = canRegister && !hasBusinessEstablished && !linkagePending;
+  const showLinkSection = canLink && !hasBusinessEstablished && !linkagePending;
   const showLinkageFirst =
-    canRegister && !hasBusinessEstablished && !linkagePending && !linkageApproved;
+    canLink && !hasBusinessEstablished && !linkagePending && !linkageApproved;
+  /** Plan empresa elegido, pago aún no aceptado: no mostrar vincular. */
+  const showPayBeforeLink =
+    isBusiness && !canLink && !hasBusinessEstablished && !linkagePending;
   const autoRenewal =
     getRenewalMode(status, subscription?.stripeSubscriptionId) === "automatic";
   const nextChargeDate = formatNextChargeDate(subscription?.currentPeriodEnd);
@@ -532,6 +533,61 @@ export default function PanelDashboard({
       ),
     },
     {
+      id: "pay",
+      title: transferPending
+        ? "Pago en revisión"
+        : oxxoAwaiting
+          ? "Esperando pago OXXO"
+          : "Completar pago",
+      subtitle: "Después podrás vincular tu negocio",
+      icon: CreditCard,
+      badge: transferPending || oxxoAwaiting ? "Pendiente" : "Requerido",
+      badgeTone: "warn",
+      show: showPayBeforeLink,
+      detail: (
+        <section className="bg-white border border-amber-200 rounded-xl p-5 shadow-sm space-y-4">
+          <p className="text-sm text-slate-600 font-light leading-relaxed">
+            Elegiste <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>. Cuando el
+            pago quede aceptado podrás vincular o registrar tu negocio para{" "}
+            {describeBusinessPresenceGoal(plan)}.
+          </p>
+          {transferPending || oxxoAwaiting ? (
+            <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+              {transferPending
+                ? "Tu transferencia está en revisión. Te avisaremos cuando se confirme."
+                : "Cuando Stripe confirme el depósito —a menudo al día siguiente hábil— tu membresía se activa sola."}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {stripeConfigured && (
+                <button
+                  type="button"
+                  onClick={() => handleStripePay(plan)}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full"
+                >
+                  {stripeButtonLabel}
+                </button>
+              )}
+              {stripeConfigured && (
+                <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
+              )}
+              <TransferPaymentSection
+                plan={plan}
+                onConfirm={handleManualPayment}
+                disabled={pendingValidation}
+                clabe={paymentDetails.clabe}
+                bankLabel={paymentDetails.bankLabel}
+                paymentEmail={paymentDetails.paymentEmail}
+              />
+              {(payMsg || manualMsg) && (
+                <p className="text-xs text-slate-600">{payMsg || manualMsg}</p>
+              )}
+            </div>
+          )}
+        </section>
+      ),
+    },
+    {
       id: "link",
       title: "Vincular negocio",
       subtitle: showLinkageFirst
@@ -542,31 +598,12 @@ export default function PanelDashboard({
       badgeTone: "warn",
       show: !isTurista && !isVecino && (showLinkageFirst || showLinkSection),
       detail: (
-        <div className="space-y-4">
-          {(transferPending || !commercial) && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-950">
-              <p className="font-bold mb-1">
-                {transferPending
-                  ? "Pago en revisión — puedes completar tu ficha ahora"
-                  : "Completa tu ficha mientras gestiones el pago"}
-              </p>
-              <p className="font-light leading-relaxed">
-                Cuando confirmemos el pago, tu negocio podrá {describeBusinessPresenceGoal(plan)}.{" "}
-                {!commercial && !transferPending ? (
-                  <Link href="/certificacion/pago" className="font-semibold underline">
-                    Ir a pagar
-                  </Link>
-                ) : null}
-              </p>
-            </div>
-          )}
-          <LinkSocioSection
-            socios={socios ?? []}
-            takenSocioIds={takenSocioIds ?? []}
-            accountEmail={user.email}
-            onLinked={refreshSession}
-          />
-        </div>
+        <LinkSocioSection
+          socios={socios ?? []}
+          takenSocioIds={takenSocioIds ?? []}
+          accountEmail={user.email}
+          onLinked={refreshSession}
+        />
       ),
     },
     {
@@ -957,26 +994,67 @@ export default function PanelDashboard({
           showCredential={showCredential}
           stripeConfigured={stripeConfigured}
         />
+      ) : showPayBeforeLink ? (
+        <div className="space-y-6">
+          <div className="bg-white border border-amber-200 rounded-xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-amber-600" />
+              <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
+                {transferPending
+                  ? "Pago en revisión"
+                  : oxxoAwaiting
+                    ? "Esperando pago OXXO"
+                    : "Completa el pago de tu plan"}
+              </h2>
+            </div>
+            <p className="text-sm text-slate-600 font-light leading-relaxed">
+              Elegiste <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>. Cuando el
+              pago quede aceptado podrás vincular o registrar tu negocio para{" "}
+              {describeBusinessPresenceGoal(plan)}.
+            </p>
+            {transferPending || oxxoAwaiting ? (
+              <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                {transferPending
+                  ? "Tu transferencia está en revisión. Te avisaremos cuando se confirme."
+                  : "Cuando Stripe confirme el depósito —a menudo al día siguiente hábil— tu membresía se activa sola."}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {stripeConfigured && (
+                  <button
+                    type="button"
+                    onClick={() => handleStripePay(plan)}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
+                  >
+                    {stripeButtonLabel}
+                  </button>
+                )}
+                {stripeConfigured && (
+                  <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
+                )}
+                <TransferPaymentSection
+                  plan={plan}
+                  onConfirm={handleManualPayment}
+                  disabled={pendingValidation}
+                  clabe={paymentDetails.clabe}
+                  bankLabel={paymentDetails.bankLabel}
+                  paymentEmail={paymentDetails.paymentEmail}
+                />
+                {(payMsg || manualMsg) && (
+                  <p className="text-xs text-slate-600">{payMsg || manualMsg}</p>
+                )}
+                <Link
+                  href="/planes?cambio=1"
+                  className="text-xs text-slate-500 hover:underline w-fit"
+                >
+                  Cambiar plan
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
       ) : showLinkageFirst ? (
         <div className="space-y-6">
-          {(transferPending || !commercial) && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-950">
-              <p className="font-bold mb-1">
-                {transferPending
-                  ? "Pago en revisión — puedes completar tu ficha ahora"
-                  : "Completa tu ficha mientras gestiones el pago"}
-              </p>
-              <p className="font-light leading-relaxed">
-                Cuando confirmemos el pago, tu negocio podrá{" "}
-                {describeBusinessPresenceGoal(plan)}.{" "}
-                {!commercial && !transferPending ? (
-                  <Link href="/certificacion/pago" className="font-semibold underline">
-                    Ir a pagar
-                  </Link>
-                ) : null}
-              </p>
-            </div>
-          )}
           {showLinkageCtaBanner && commercial && (
             <div className="relative bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-sm text-emerald-900">
               <button

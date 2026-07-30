@@ -51,7 +51,10 @@ export default function SociosImmersiveView({
   initialSocioId?: number | null;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
+  /** Si el gesto empezó dentro del listado, el swipe-down solo colapsa arriba. */
+  const touchFromScroller = useRef(false);
   const didApplyInitialSocio = useRef(false);
   const appShell = useAppMobileShell();
 
@@ -76,7 +79,8 @@ export default function SociosImmersiveView({
         Number.parseFloat(
           getComputedStyle(document.documentElement).getPropertyValue("--safe-area-inset-top")
         ) || 0;
-      const topGap = Math.max(20, safeTop + 12);
+      // Deja hueco bajo el notch/status bar + Navbar (~3.5rem de chrome).
+      const topGap = Math.max(72, safeTop + 56);
       const bottomGap = appShell ? 56 : 0;
       setFullSheetPx(Math.max(360, Math.round(window.innerHeight - topGap - bottomGap)));
     };
@@ -152,6 +156,11 @@ export default function SociosImmersiveView({
 
   const onSheetTouchStart = (event: React.TouchEvent) => {
     touchStartY.current = event.touches[0]?.clientY ?? null;
+    const scroller = listScrollRef.current;
+    const target = event.target;
+    touchFromScroller.current = Boolean(
+      scroller && target instanceof Node && scroller.contains(target)
+    );
   };
 
   const onSheetTouchEnd = (event: React.TouchEvent) => {
@@ -159,19 +168,32 @@ export default function SociosImmersiveView({
     const endY = event.changedTouches[0]?.clientY;
     if (endY == null) {
       touchStartY.current = null;
+      touchFromScroller.current = false;
       return;
     }
     const delta = touchStartY.current - endY;
     touchStartY.current = null;
+    const fromScroller = touchFromScroller.current;
+    touchFromScroller.current = false;
 
     // Swipe arriba → expandir (half→full aunque no haya más socios que scrollear).
-    // Swipe abajo → reducir. En half el listado no scrollea para no pelear con el gesto.
+    // Swipe abajo → reducir. Si el gesto viene del listado en full, primero
+    // hay que llegar arriba; solo entonces el mismo gesto colapsa la ficha.
     if (delta > 28) {
       setSheetMode((m) => {
         if (selectedId != null) return m === "peek" ? "half" : "half";
         return stepSheet(m, 1);
       });
     } else if (delta < -28) {
+      const scroller = listScrollRef.current;
+      if (
+        fromScroller &&
+        sheetMode === "full" &&
+        scroller &&
+        scroller.scrollTop > 2
+      ) {
+        return;
+      }
       setSheetMode((m) => stepSheet(m, -1));
     }
   };
@@ -456,7 +478,10 @@ export default function SociosImmersiveView({
             : "flex-1 opacity-100"
         }`}
       >
-        <div className="px-3 pt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-none">
+        <div
+          ref={listScrollRef}
+          className="px-3 pt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y scrollbar-none"
+        >
           {selectedSocio ? detailBody : browseBody}
           {!selectedSocio ? (
             <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">

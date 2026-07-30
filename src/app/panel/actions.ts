@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { listaSocios } from "@/app/data/socios";
-import { canRegisterBusinessProfile, getPlanLabel, isBusinessPlan, isPaidMember, isTuristaPlan } from "@/lib/membresia";
+import { canLinkSocioAccount, getPlanLabel, isBusinessPlan, isPaidMember, isTuristaPlan } from "@/lib/membresia";
 import { isLinkageApproved } from "@/lib/linkage";
 import {
   buildBenefitVerifyUrl,
@@ -120,13 +120,20 @@ export type LinkSocioResult =
   | { ok: true; socioName: string; plan: MembershipPlan; planLabel: string; pendingApproval: true }
   | { ok: false; error: string };
 
-async function assertCanRegisterBusiness(userId: string) {
+async function assertCanLinkBusiness(userId: string) {
   const subscription = await prisma.subscription.findUnique({ where: { userId } });
-  if (!subscription || !canRegisterBusinessProfile(subscription.plan, subscription.status)) {
+  if (!subscription || !isBusinessPlan(subscription.plan)) {
     return {
       ok: false as const,
       error:
-        "Selecciona un plan de negocio (Pequeña, Mediana o Gran Empresa) para registrar tu establecimiento. Puedes completar los datos aunque el pago aún esté pendiente.",
+        "Selecciona un plan de negocio (Pequeña, Mediana o Gran Empresa) para vincular tu establecimiento.",
+    };
+  }
+  if (!canLinkSocioAccount(subscription.status)) {
+    return {
+      ok: false as const,
+      error:
+        "Confirma el pago de tu plan de empresa antes de vincular o registrar tu negocio.",
     };
   }
   return { ok: true as const, subscription };
@@ -171,7 +178,7 @@ export async function linkSocioAccount(socioId: number): Promise<LinkSocioResult
       return { ok: false, error: "Este negocio ya está vinculado a otra cuenta." };
     }
 
-    const linkCheck = await assertCanRegisterBusiness(session.id);
+    const linkCheck = await assertCanLinkBusiness(session.id);
     if (!linkCheck.ok) return linkCheck;
 
     const paidPlan = linkCheck.subscription.plan;
@@ -244,7 +251,7 @@ export async function registerManualBusiness(
       return { ok: false, error: "Indica el email fiscal o marca «usar el mismo»." };
     }
 
-    const linkCheck = await assertCanRegisterBusiness(session.id);
+    const linkCheck = await assertCanLinkBusiness(session.id);
     if (!linkCheck.ok) return linkCheck;
 
     const dbFields = toSocioProfileDbFields({
