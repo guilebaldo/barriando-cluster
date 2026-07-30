@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { isAdminUser } from "@/lib/admin";
 
-const STORAGE_KEY = "hubdebug";
+const HIDE_KEY = "hubdebug:hidden";
 const PROBE_ID = "safe-area-probe";
 const SAMPLES_MS = [0, 60, 150, 300, 600, 1000, 3000];
-const MAX_SAMPLES = 40;
+const MAX_SAMPLES = 24;
 
 type Sample = {
   label: string;
@@ -55,19 +57,22 @@ function takeSample(label: string): Sample {
 
 /**
  * Instrumentación del cold start del hub en standalone (iOS).
- * Inerte salvo que el flag esté en localStorage: se prende con ?hubdebug=1 y se
- * apaga con ?hubdebug=0. El flag vive en localStorage (no en la query) porque la
- * PWA arranca en "/" y el redirect de rol borra los search params.
+ * Solo para la cuenta admin: en standalone no hay barra de direcciones, así que
+ * no sirve un flag por query param. "Ocultar" vive en sessionStorage para que
+ * cada arranque en frío —el caso que estamos midiendo— vuelva a mostrarlo.
  */
 export default function HubDebugOverlay() {
-  const [enabled, setEnabled] = useState(false);
+  const { data: session } = useSession();
+  const isAdmin = isAdminUser({
+    email: session?.user?.email,
+    role: session?.user?.role,
+  });
+  const [hidden, setHidden] = useState(false);
   const [samples, setSamples] = useState<Sample[]>([]);
+  const enabled = isAdmin && !hidden;
 
   useEffect(() => {
-    const flag = new URLSearchParams(window.location.search).get(STORAGE_KEY);
-    if (flag === "1") localStorage.setItem(STORAGE_KEY, "1");
-    if (flag === "0") localStorage.removeItem(STORAGE_KEY);
-    setEnabled(localStorage.getItem(STORAGE_KEY) === "1");
+    setHidden(sessionStorage.getItem(HIDE_KEY) === "1");
   }, []);
 
   useEffect(() => {
@@ -107,9 +112,9 @@ export default function HubDebugOverlay() {
     void navigator.clipboard?.writeText(JSON.stringify(samples, null, 2));
   }, [samples]);
 
-  const disable = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    setEnabled(false);
+  const hide = useCallback(() => {
+    sessionStorage.setItem(HIDE_KEY, "1");
+    setHidden(true);
   }, []);
 
   if (!enabled) return null;
@@ -131,13 +136,13 @@ export default function HubDebugOverlay() {
           pointerEvents: "none",
         }}
       />
-      <div className="fixed top-0 left-0 z-[999] max-w-[92vw] bg-black/85 p-1.5 font-mono text-[9px] leading-[1.25] text-lime-300">
+      <div className="fixed top-0 left-0 z-[999] max-h-[70vh] w-[96vw] overflow-y-auto bg-black/85 p-1.5 font-mono text-[9px] leading-[1.25] text-lime-300">
         <div className="flex gap-2 pb-1">
           <button type="button" onClick={copy} className="underline">
             copiar
           </button>
-          <button type="button" onClick={disable} className="underline">
-            apagar
+          <button type="button" onClick={hide} className="underline">
+            ocultar
           </button>
           <span className="text-slate-400">
             {head
@@ -146,7 +151,7 @@ export default function HubDebugOverlay() {
           </span>
         </div>
         {samples.map((s, i) => (
-          <div key={`${s.label}-${i}`} className="whitespace-nowrap">
+          <div key={`${s.label}-${i}`} className="break-all pb-0.5">
             {s.label} {s.t}ms off={s.hubOffset || "-"} sab={px(s.safeBottom)} iH=
             {s.innerH} cH={s.clientH} vv={s.vvH} hub={px(s.hubTop)}/{px(s.hubH)} sh=
             {px(s.shellH)} pad={s.shellPad ?? "-"}
