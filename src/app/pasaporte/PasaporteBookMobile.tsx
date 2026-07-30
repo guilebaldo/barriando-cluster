@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
-import { registroUrl } from "@/lib/plan-routing";
+import PlanIntentCta from "@/app/components/PlanIntentCta";
 
 type RestaurantCard = {
   id: number;
@@ -563,12 +563,13 @@ export default function PasaporteBookMobile({
                 Ya formas parte del Pasaporte Digital con tu plan de negocio.
               </span>
             ) : (
-              <Link
-                href={registroUrl("NEGOCIO_FAMILIAR")}
+              <PlanIntentCta
+                plan="NEGOCIO_FAMILIAR"
                 className="text-[10px] text-stone-500 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2 decoration-stone-400"
+                alreadyActiveMessage="Ya formas parte del Pasaporte Digital con tu plan de negocio."
               >
                 ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
-              </Link>
+              </PlanIntentCta>
             )}
           </p>
         ) : null}
@@ -620,12 +621,12 @@ export default function PasaporteBookMobile({
                 Ya formas parte del Pasaporte Digital con tu plan de negocio.
               </span>
             ) : (
-              <Link
-                href={registroUrl("NEGOCIO_FAMILIAR")}
+              <PlanIntentCta
+                plan="NEGOCIO_FAMILIAR"
                 className="text-[10px] text-stone-500 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2 decoration-stone-400"
               >
                 ¿Quieres estar en el Pasaporte Digital? Regístrate aquí.
-              </Link>
+              </PlanIntentCta>
             )}
           </p>
         ) : null}

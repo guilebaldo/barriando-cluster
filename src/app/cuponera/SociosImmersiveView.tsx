@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import {
   ExternalLink,
   Gift,
@@ -16,6 +15,7 @@ import SocioLogo from "../components/SocioLogo";
 import type { Socio, SocioBenefitInfo } from "../data/socios";
 import BenefitRedeemQr from "./BenefitRedeemQr";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
+import PlanIntentCta from "@/app/components/PlanIntentCta";
 
 const SociosMap = dynamic(() => import("../components/SociosMapLeaflet"), {
   ssr: false,
@@ -476,12 +476,12 @@ export default function SociosImmersiveView({
             }`}
           >
             <p className="text-center px-1 py-1.5">
-              <Link
-                href="/registro?plan=vecino"
+              <PlanIntentCta
+                plan="VECINO"
                 className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
               >
                 ¿Eres vecino? Obtén cupones exclusivos. Regístrate aquí.
-              </Link>
+              </PlanIntentCta>
             </p>
           </div>
         ) : (
@@ -585,13 +585,13 @@ export default function SociosImmersiveView({
                 <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
                   ¿Eres vecino? Obtén cupones exclusivos con la membresía Vecino.
                 </p>
-                <Link
-                  href="/registro?plan=vecino"
+                <PlanIntentCta
+                  plan="VECINO"
                   className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
-                  onClick={() => setActiveBenefit(null)}
+                  onBeforeNavigate={() => setActiveBenefit(null)}
                 >
                   Ver plan Vecino
-                </Link>
+                </PlanIntentCta>
               </>
             )}
           </div>

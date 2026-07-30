@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Store } from "lucide-react";
 import { hasCommercialAccess } from "@/lib/membresia";
-import { registroUrl } from "@/lib/plan-routing";
+import PlanIntentCta from "@/app/components/PlanIntentCta";
 
 /** Bloque CTA de inscripción al MAPA (respeta Gran Empresa ya activa). */
 export default function MapPageBusinessCta() {
@@ -43,12 +42,12 @@ export default function MapPageBusinessCta() {
             visitantes te encontrarán caminando el circuito, podrán escanear tu QR y sumar sellos en
             su Pasaporte Digital.
           </p>
-          <Link
-            href={registroUrl("GRAN_EMPRESA")}
+          <PlanIntentCta
+            plan="GRAN_EMPRESA"
             className="inline-flex items-center gap-2 mt-6 bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg transition-all"
           >
             Inscribir mi negocio al MAPA
-          </Link>
+          </PlanIntentCta>
         </>
       )}
     </section>

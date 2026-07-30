@@ -8,8 +8,8 @@ import { BookOpen, ChevronRight, Gift, Map as MapIcon, Settings } from "lucide-r
 import { createBenefitCredential } from "../panel/actions";
 import AddToHomeScreenModal from "./AddToHomeScreenModal";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
+import PlanIntentCta from "@/app/components/PlanIntentCta";
 import { formatPlanPriceMxn } from "@/lib/membresia";
-import { registroUrl } from "@/lib/plan-routing";
 
 type BarrIdClientProps = {
   user: {
@@ -178,12 +178,12 @@ function VecinoUpsellPanel({
         <p className="text-sm text-slate-600 font-light leading-snug max-w-[16rem]">
           Para tener acceso a los cupones exclusivos de los negocios socios del barrio.
         </p>
-        <Link
-          href={registroUrl("VECINO")}
+        <PlanIntentCta
+          plan="VECINO"
           className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
         >
           Ser Vecino · {formatPlanPriceMxn("VECINO")}
-        </Link>
+        </PlanIntentCta>
       </div>
       <div className="space-y-1 max-w-xs">
         <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
@@ -507,12 +507,12 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                         <span className="font-bold text-amber-300">Vecino</span> para tener acceso a
                         los cupones.
                       </p>
-                      <Link
-                        href={registroUrl("VECINO")}
+                      <PlanIntentCta
+                        plan="VECINO"
                         className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-500 px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-950 transition hover:bg-amber-400"
                       >
                         Ser Vecino · {formatPlanPriceMxn("VECINO")}
-                      </Link>
+                      </PlanIntentCta>
                     </div>
                   )}
                 </dl>
@@ -569,13 +569,13 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 Mis Cupones
               </Link>
             ) : (
-              <Link
-                href={registroUrl("VECINO")}
+              <PlanIntentCta
+                plan="VECINO"
                 className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
               >
                 <Gift className="w-5 h-5" />
                 Adquirir membresía Vecino
-              </Link>
+              </PlanIntentCta>
             )}
             <div className="grid grid-cols-2 gap-3">
               <Link
