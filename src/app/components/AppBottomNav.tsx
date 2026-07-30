@@ -51,7 +51,11 @@ const TABS = [
   },
 ] as const;
 
-/** Tab bar inferior — móvil + sesión iniciada. Desktop no lo usa. */
+/**
+ * Tab bar inferior — móvil + sesión iniciada.
+ * Vive en Providers (no dentro de Navbar) para no desmontarse en cada navegación;
+ * eso dejaba el hub mal anclado en standalone hasta visitar /panel.
+ */
 export default function AppBottomNav() {
   const pathname = usePathname();
   const enabled = useAppMobileShell();
@@ -72,11 +76,9 @@ export default function AppBottomNav() {
     // Limpia restos de la medición visualViewport (ya no se usa).
     root.classList.remove("app-standalone");
     root.style.removeProperty("--app-shell-height");
-
-    return () => {
-      root.classList.remove("app-mobile-shell", "app-standalone");
-      root.style.removeProperty("--app-shell-height");
-    };
+    // No quitar la clase en cleanup: un remount de Navbar/página borraba
+    // app-mobile-shell a mitad de la transición y el hub quedaba desacomodado
+    // en PWA hasta que /panel volvía a aplicar el candado de viewport.
   }, [enabled]);
 
   if (!enabled || !mounted) return null;

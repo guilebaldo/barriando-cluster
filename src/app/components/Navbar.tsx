@@ -12,7 +12,7 @@ import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
 import { MagicLinkForm } from "@/app/components/MagicLinkForm";
 import { AdminNavLink } from "@/app/components/AdminNavBadge";
-import AppBottomNav, { useAppMobileShell } from "@/app/components/AppBottomNav";
+import { useAppMobileShell } from "@/app/components/AppBottomNav";
 
 function GoogleGlyph() {
   return (
@@ -441,7 +441,6 @@ export default function Navbar() {
           </div>
         )}
       </nav>
-      <AppBottomNav />
     </>
   );
 }
