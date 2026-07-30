@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "./components/Providers";
+import { auth } from "@/auth";
 
 export const viewport: Viewport = {
   themeColor: "#27366D",
@@ -30,13 +31,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Primera pintura con sesión: aplica app-mobile-shell antes de hidratar
+  // (evita cold start sin padding de hub → doble franja).
+  const session = await auth();
+  const appShell = Boolean(session?.user?.id);
+
   return (
-    <html lang="es">
+    <html lang="es" className={appShell ? "app-mobile-shell" : undefined}>
       <body>
         <Providers>{children}</Providers>
       </body>
