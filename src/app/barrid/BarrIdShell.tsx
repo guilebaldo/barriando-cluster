@@ -53,7 +53,7 @@ export default function BarrIdShell({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <div className="barrid-shell relative z-0 flex flex-col h-[100svh] max-h-[100svh] overflow-hidden overscroll-none bg-slate-50 text-slate-900 font-sans antialiased md:h-auto md:max-h-none md:min-h-screen md:overflow-visible md:overscroll-auto">
+    <div className="barrid-shell relative z-0 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden overscroll-none bg-slate-50 text-slate-900 font-sans antialiased md:h-auto md:max-h-none md:min-h-screen md:overflow-visible md:overscroll-auto">
       {children}
     </div>
   );

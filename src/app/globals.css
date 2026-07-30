@@ -30,32 +30,32 @@
   }
 
   /* Shell app móvil: hueco al tab bar.
-     No pintar html/body de navy en immersive: en cold start iOS el desfase
-     dvh/fixed deja ver el body navy + el hub = “doble hub”. El navy es solo el tab. */
+     Body navy mientras hay sesión (también en cold start SSR): si el tab aún
+     no hidrató, el borde inferior sigue navy y no “blanco hasta abajo”.
+     No volver a pintar gradient en el gutter del shell (eso sí era doble hub). */
   @media (max-width: 767px) {
     html.app-mobile-shell {
       --app-hub-offset: calc(3.5rem + env(safe-area-inset-bottom, 0px));
-      /* svh = viewport estable en PWA cold start (dvh varía y desancora el hub). */
-      --app-shell-height: 100svh;
     }
 
-    /* Ajustes es navy de punta a punta: body puede coincidir. */
-    html.app-mobile-shell:has(.panel-mobile-shell),
-    html.app-mobile-shell:has(.panel-mobile-shell) body {
+    html.app-mobile-shell,
+    html.app-mobile-shell body {
       background-color: #27366d;
     }
 
     /*
-      Shells immersive + Ajustes: alto estable + padding del hub.
-      El padding es del color del shell; el hub lo tapa (una sola franja navy).
+      Shells immersive + Ajustes: 100dvh + padding del hub.
+      background-clip: content-box → el padding inferior es transparente y deja
+      ver el body navy (misma franja que el hub), no un rectángulo blanco.
     */
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell,
     html.app-mobile-shell .panel-mobile-shell,
     html.app-mobile-shell .planes-mobile-shell {
-      height: var(--app-shell-height);
-      max-height: var(--app-shell-height);
+      height: 100dvh;
+      max-height: 100dvh;
       padding-bottom: var(--app-hub-offset);
+      background-clip: content-box;
     }
 
     /* Candado de documento en cuanto el shell está en el DOM (antes del useEffect). */

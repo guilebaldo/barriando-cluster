@@ -77,7 +77,6 @@ export default function AppBottomNav() {
     }
     root.classList.add("app-mobile-shell");
     root.classList.remove("app-standalone");
-    // --app-shell-height lo define CSS (100svh); no medir visualViewport.
     root.style.removeProperty("--app-shell-height");
   }, [enabled, status]);
 

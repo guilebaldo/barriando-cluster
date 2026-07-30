@@ -7,7 +7,7 @@ export default function PasaporteImmersiveShell({ children }: { children: React.
   useImmersiveScrollLock();
 
   return (
-    <div className="map-immersive-shell relative z-0 flex flex-col h-[100svh] max-h-[100svh] bg-[#faf6ef] text-slate-900 font-sans antialiased overflow-hidden overscroll-none">
+    <div className="map-immersive-shell relative z-0 flex flex-col h-[100dvh] max-h-[100dvh] bg-[#faf6ef] text-slate-900 font-sans antialiased overflow-hidden overscroll-none">
       {children}
     </div>
   );

@@ -51,10 +51,10 @@ const badgeClass: Record<NonNullable<PanelMobileRow["badgeTone"]>, string> = {
 };
 
 const shellClass =
-  "panel-mobile-shell flex flex-col h-[100svh] max-h-[100svh] overflow-hidden overscroll-none bg-[#27366D] text-slate-900";
+  "panel-mobile-shell flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden overscroll-none bg-[#27366D] text-slate-900";
 
 /**
- * Panel mobile: mismo candado de viewport que MAPA/BarrID (100svh + scroll interno)
+ * Panel mobile: mismo candado de viewport que MAPA/BarrID (100dvh + scroll interno)
  * para que el hub no se desacomode en standalone.
  */
 export default function PanelMobile({
