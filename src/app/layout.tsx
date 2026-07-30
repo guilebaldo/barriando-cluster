@@ -20,7 +20,11 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "BarriApp",
-    statusBarStyle: "black-translucent",
+    // No usar black-translucent: iOS sube el web view bajo la barra de estado
+    // pero no le crece el alto, y deja una franja muerta de safe-area-inset-top
+    // px al fondo (pintada con el background_color del manifest) que se ve como
+    // un segundo hub. Solo se corrige tras un relayout de la ventana.
+    statusBarStyle: "black",
   },
   icons: {
     icon: [
