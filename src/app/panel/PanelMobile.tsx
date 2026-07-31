@@ -66,7 +66,7 @@ export default function PanelMobile({
   rows,
   footer,
 }: Props) {
-  useImmersiveScrollLock();
+  useImmersiveScrollLock({ mobileOnly: true });
   const [activeId, setActiveId] = useState<string | null>(null);
   const visibleRows = rows.filter((r) => r.show !== false);
   const active = visibleRows.find((r) => r.id === activeId) ?? null;

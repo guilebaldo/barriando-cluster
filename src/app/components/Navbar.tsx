@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { isAdminUser } from "@/lib/admin";
+import { isTuristaPlan } from "@/lib/membresia";
+import type { MembershipPlan } from "@/generated/prisma/client";
 import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
@@ -186,8 +188,10 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     email: session?.user?.email,
     role: session?.user?.role,
   });
-  // Nombre / “Mi cuenta” y Panel → siempre /panel (no secuestrar a pago).
-  const profileHref = "/panel";
+  const plan = (session?.user?.plan ?? "TURISTA") as MembershipPlan;
+  const isTurista = isTuristaPlan(plan);
+  // Desktop turista: nombre → BarrID (upsell Vecino). Resto → panel de cuenta.
+  const profileHref = isTurista ? "/barrid" : "/panel";
   const panelHref = "/panel";
 
   useEffect(() => {
@@ -199,6 +203,9 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
 
+  const desktopMenuItemClass =
+    "flex w-full items-center rounded-md px-3 py-2.5 text-xs uppercase tracking-wider font-bold transition text-left";
+
   const logoutButton = (
     <button
       type="button"
@@ -207,7 +214,7 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
       className={
         mobile
           ? "w-full py-3 px-3 rounded-lg text-sm uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition text-left"
-          : "w-full text-left px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-slate-300 hover:bg-[#27366D] hover:text-white transition"
+          : `${desktopMenuItemClass} text-slate-300 hover:bg-[#27366D] hover:text-white`
       }
     >
       Cerrar sesión
@@ -273,13 +280,12 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
         </button>
       </div>
       {open && (
-        <div role="menu" className="absolute right-0 top-full pt-2 z-50 min-w-[11rem]">
-          <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl py-1 overflow-hidden">
-            {panelLink}
+        <div role="menu" className="absolute right-0 top-full z-50 min-w-[12rem] pt-1.5">
+          <div className="rounded-lg border border-[#314385] bg-[#1e2b58] shadow-xl p-1.5 space-y-0.5">
             {isAdmin && (
               <AdminNavLink
                 role="menuitem"
-                className="inline-flex items-center px-4 py-2.5 text-xs uppercase tracking-wider font-bold text-white hover:bg-[#27366D] hover:text-amber-400 transition"
+                className={`${desktopMenuItemClass} text-white hover:bg-[#27366D] hover:text-amber-400`}
                 onClick={() => setOpen(false)}
               />
             )}
