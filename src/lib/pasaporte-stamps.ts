@@ -5,19 +5,88 @@ import {
   findRestaurantBySlugAsync,
   type StampSummary,
 } from "@/lib/pasaporte";
+import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
+import { haversineDistanceKm } from "@/lib/map-route-client";
+
+/** Radio máximo al local para validar sello (GPS urbano típico ~10–50 m de error). */
+export const STAMP_MAX_DISTANCE_M = 200;
 
 export type CreateStampResult =
   | { ok: true; stampId: string; restaurantName: string; cooldown: false }
   | { ok: true; cooldown: true; restaurantName: string; retryAfterMs: number }
-  | { ok: false; error: "invalid_restaurant" | "unauthorized" };
+  | {
+      ok: false;
+      error:
+        | "invalid_restaurant"
+        | "unauthorized"
+        | "location_required"
+        | "too_far"
+        | "invalid_location"
+        | "rate_limited";
+      restaurantName?: string;
+      distanceM?: number;
+      maxDistanceM?: number;
+    };
+
+export type StampLocation = {
+  latitude: number;
+  longitude: number;
+  accuracyM?: number | null;
+};
+
+function isValidCoord(lat: number, lng: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+}
 
 export async function createStampForUser(
   userId: string,
-  restaurantSlug: string
+  restaurantSlug: string,
+  location?: StampLocation | null
 ): Promise<CreateStampResult> {
   const restaurant = await findRestaurantBySlugAsync(restaurantSlug);
   if (!restaurant) {
     return { ok: false, error: "invalid_restaurant" };
+  }
+
+  const venue = resolveSocioMapCoord(restaurant);
+  if (venue) {
+    if (
+      !location ||
+      !isValidCoord(location.latitude, location.longitude)
+    ) {
+      return {
+        ok: false,
+        error: "location_required",
+        restaurantName: restaurant.name,
+      };
+    }
+
+    const distanceKm = haversineDistanceKm(
+      { latitude: location.latitude, longitude: location.longitude },
+      { latitude: venue.lat, longitude: venue.lng }
+    );
+    const distanceM = distanceKm * 1000;
+    // Tolerancia por precisión reportada del GPS (tope 80 m).
+    const accuracyPad = Math.min(Math.max(location.accuracyM ?? 0, 0), 80);
+    const maxM = STAMP_MAX_DISTANCE_M + accuracyPad;
+    if (distanceM > maxM) {
+      return {
+        ok: false,
+        error: "too_far",
+        restaurantName: restaurant.name,
+        distanceM: Math.round(distanceM),
+        maxDistanceM: Math.round(maxM),
+      };
+    }
+  } else if (location && !isValidCoord(location.latitude, location.longitude)) {
+    return { ok: false, error: "invalid_location", restaurantName: restaurant.name };
   }
 
   const since = new Date(Date.now() - STAMP_COOLDOWN_MS);

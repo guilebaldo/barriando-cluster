@@ -4,31 +4,10 @@ import { notFound } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { prisma } from "@/lib/prisma";
+import { renderBlogMarkdown } from "@/lib/blog-content";
 import { Calendar, User, ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
-
-function renderMarkdown(text: string) {
-  return text.split("\n\n").map((block, i) => {
-    if (block.startsWith("## ")) {
-      return (
-        <h2 key={i} className="text-lg font-bold text-slate-950 mt-8 mb-3">
-          {block.replace("## ", "")}
-        </h2>
-      );
-    }
-    const html = block
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/^- /gm, "• ");
-    return (
-      <p
-        key={i}
-        className="text-sm text-slate-600 leading-relaxed font-light mb-4"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    );
-  });
-}
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -66,7 +45,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <p className="text-base text-slate-700 font-medium mb-6 border-b border-slate-100 pb-6">
             {post.excerpt}
           </p>
-          {renderMarkdown(post.content)}
+          {renderBlogMarkdown(post.content)}
         </article>
       </main>
 

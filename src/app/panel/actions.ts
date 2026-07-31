@@ -441,6 +441,19 @@ export async function reportManualPayment(
       return { ok: false, error: "Selecciona un plan de pago." };
     }
 
+    const { rateLimit } = await import("@/lib/rate-limit");
+    const limit = await rateLimit({
+      bucketKey: `manual-payment:user:${session.id}`,
+      limit: 5,
+      windowSeconds: 60 * 60,
+    });
+    if (!limit.ok) {
+      return {
+        ok: false,
+        error: "Demasiados reportes de pago. Espera un momento o escribe a soporte.",
+      };
+    }
+
     await prisma.subscription.upsert({
       where: { userId: session.id },
       create: {

@@ -1,7 +1,16 @@
 import { redirect } from "next/navigation";
+import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/components/Footer";
+import SiteShell from "@/app/components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
-import { buildPasaportePendingStampPath } from "@/lib/pasaporte";
-import { createStampForUser } from "@/lib/pasaporte-stamps";
+import {
+  buildPasaportePendingStampPath,
+  findRestaurantBySlugAsync,
+} from "@/lib/pasaporte";
+import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
+import SellarClient from "./SellarClient";
+
+export const dynamic = "force-dynamic";
 
 export default async function SellarPage({
   searchParams,
@@ -22,20 +31,24 @@ export default async function SellarPage({
     redirect(buildPasaportePendingStampPath(restaurante));
   }
 
-  const result = await createStampForUser(session.id, restaurante);
-
-  if (!result.ok) {
-    redirect(`/pasaporte?error=${result.error}`);
+  const restaurant = await findRestaurantBySlugAsync(restaurante);
+  if (!restaurant) {
+    redirect("/pasaporte?error=invalid_restaurant");
   }
 
-  if (result.cooldown) {
-    const hours = Math.ceil(result.retryAfterMs / (60 * 60 * 1000));
-    redirect(
-      `/pasaporte?info=cooldown&restaurante=${encodeURIComponent(restaurante)}&horas=${hours}`
-    );
-  }
+  const requiresLocation = Boolean(resolveSocioMapCoord(restaurant));
 
-  redirect(
-    `/pasaporte?sello=ok&restaurante=${encodeURIComponent(restaurante)}&nombre=${encodeURIComponent(result.restaurantName)}`
+  return (
+    <SiteShell>
+      <Navbar />
+      <SellarClient
+        restaurantSlug={restaurante}
+        restaurantName={restaurant.name}
+        requiresLocation={requiresLocation}
+      />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+    </SiteShell>
   );
 }
