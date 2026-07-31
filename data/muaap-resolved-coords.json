@@ -180,9 +180,9 @@
     "source": "maps_url_pin"
   },
   "Restauro": {
-    "lat": 19.040859,
-    "lng": -98.195895,
-    "source": "maps_url_pin"
+    "lat": 19.040860338225055,
+    "lng": -98.19590663073208,
+    "source": "manual_pin"
   },
   "Ruinas San Francisco": {
     "lat": 19.0434509,

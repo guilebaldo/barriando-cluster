@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth-utils";
 import { isBusinessPlan, isPaidMember, getPlanLabel, getSubscriptionStatusLabel } from "@/lib/membresia";
 import { isLinkageApproved } from "@/lib/linkage";
 import { verifyBenefitCredentialToken } from "@/lib/benefit-credential";
+import { isBenefitCredentialJtiRedeemed } from "@/lib/benefit-credential-redeem";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 
 export type ConfirmBenefitRedemptionResult =
@@ -52,6 +53,10 @@ export async function loadBenefitVerifyPayload(
     const verified = await verifyBenefitCredentialToken(token);
     if (!verified) {
       return { ok: false, error: "Credencial inválida o expirada. Pide al socio generar un QR nuevo." };
+    }
+
+    if (await isBenefitCredentialJtiRedeemed(verified.jti)) {
+      return { ok: false, error: "Esta credencial ya fue canjeada. Pide al socio generar un QR nuevo." };
     }
 
     const beneficiary = await prisma.user.findUnique({
@@ -116,6 +121,10 @@ export async function confirmBenefitRedemption(
       return { ok: false, error: "Credencial inválida o expirada." };
     }
 
+    if (await isBenefitCredentialJtiRedeemed(verified.jti)) {
+      return { ok: false, error: "Esta credencial ya fue canjeada." };
+    }
+
     if (verified.userId === session.id) {
       return { ok: false, error: "No puedes canjear tu propia credencial." };
     }
@@ -134,6 +143,7 @@ export async function confirmBenefitRedemption(
         beneficiaryUserId: beneficiary.id,
         providerUserId: session.id,
         socioProfileId: providerProfile.id,
+        credentialJti: verified.jti,
       },
     });
 
@@ -144,6 +154,13 @@ export async function confirmBenefitRedemption(
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return { ok: false, error: "Debes iniciar sesión." };
+    }
+    const prismaCode =
+      error && typeof error === "object" && "code" in error
+        ? (error as { code?: string }).code
+        : undefined;
+    if (prismaCode === "P2002") {
+      return { ok: false, error: "Esta credencial ya fue canjeada." };
     }
     return { ok: false, error: "No se pudo registrar el canje. Intenta de nuevo." };
   }

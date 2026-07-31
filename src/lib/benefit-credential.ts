@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 
 const CREDENTIAL_TTL_SECONDS = 15 * 60;
@@ -20,9 +21,11 @@ export function getAppOrigin(): string {
 }
 
 export async function signBenefitCredentialToken(userId: string): Promise<string> {
+  const jti = randomUUID();
   return new SignJWT({ typ: "benefit_credential" })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(userId)
+    .setJti(jti)
     .setIssuedAt()
     .setExpirationTime(`${CREDENTIAL_TTL_SECONDS}s`)
     .sign(getSecretKey());
@@ -30,13 +33,14 @@ export async function signBenefitCredentialToken(userId: string): Promise<string
 
 export async function verifyBenefitCredentialToken(
   token: string
-): Promise<{ userId: string } | null> {
+): Promise<{ userId: string; jti: string } | null> {
   try {
     const { payload } = await jwtVerify(token, getSecretKey());
     if (payload.typ !== "benefit_credential") return null;
     const userId = typeof payload.sub === "string" ? payload.sub : null;
-    if (!userId) return null;
-    return { userId };
+    const jti = typeof payload.jti === "string" ? payload.jti : null;
+    if (!userId || !jti) return null;
+    return { userId, jti };
   } catch {
     return null;
   }

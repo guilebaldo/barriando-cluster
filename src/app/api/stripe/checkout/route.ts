@@ -5,6 +5,7 @@ import { createStripeCheckoutUrl } from "@/lib/stripe-checkout";
 import { createStripeLocalPaymentCheckoutUrl } from "@/lib/stripe-onetime-checkout";
 import { isStripeConfigured, isStripeConfiguredForPlan } from "@/lib/stripe";
 import { secureError, secureJson } from "@/lib/api";
+import { rateLimit } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   plan: z
@@ -17,6 +18,16 @@ const bodySchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
+
+    const checkoutLimit = await rateLimit({
+      bucketKey: `stripe-checkout:user:${session.id}`,
+      limit: 12,
+      windowSeconds: 60 * 60,
+    });
+    if (!checkoutLimit.ok) {
+      return secureError("Demasiados intentos de pago. Espera un momento e intenta de nuevo.", 429);
+    }
+
     const rawBody = await request.json().catch(() => ({}));
     const { plan, method } = bodySchema.parse(rawBody);
 

@@ -117,8 +117,8 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "name": "Priesca"
   },
   "24": {
-    "lat": 19.040920081498466,
-    "lng": -98.19587322783975,
+    "lat": 19.040860338225055,
+    "lng": -98.19590663073208,
     "name": "Restauro"
   },
   "25": {

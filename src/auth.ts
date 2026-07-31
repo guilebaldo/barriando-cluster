@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { magicLinkEmailHtml, magicLinkEmailText } from "@/lib/magic-link-email";
 import { getEmailFrom, getResendApiKey, sendEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 import type { Provider } from "next-auth/providers";
 import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
@@ -63,9 +64,8 @@ function buildProviders(): Provider[] {
       Google({
         clientId: googleClientId,
         clientSecret: googleClientSecret,
-        allowDangerousEmailAccountLinking: true,
-        // Sin PKCE ni state: evita InvalidCheck si el navegador bloquea cookies en el callback OAuth.
-        checks: ["none"],
+        // state (sin PKCE): protege CSRF en OAuth; PKCE se omitió por cookies bloqueadas en algunos webviews.
+        checks: ["state"],
         authorization: {
           params: {
             prompt: "select_account",
@@ -84,7 +84,6 @@ function buildProviders(): Provider[] {
       Apple({
         clientId: appleId,
         clientSecret: appleSecret,
-        allowDangerousEmailAccountLinking: true,
       })
     );
   }
@@ -96,6 +95,16 @@ function buildProviders(): Provider[] {
         from: emailFrom,
         maxAge: 24 * 60 * 60,
         sendVerificationRequest: async ({ identifier: to, url }) => {
+          const emailKey = to.trim().toLowerCase();
+          const limit = await rateLimit({
+            bucketKey: `magic-link:email:${emailKey}`,
+            limit: 5,
+            windowSeconds: 60 * 60,
+          });
+          if (!limit.ok) {
+            throw new Error("Demasiados intentos con este correo. Espera un momento e intenta de nuevo.");
+          }
+
           const { host } = new URL(url);
           const result = await sendEmail({
             to,
@@ -182,6 +191,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           console.error("[auth] Google sign-in rechazado: perfil sin email.");
           return false;
         }
+
+        // Bloquea takeover por email: no fusionar OAuth con cuenta existente de otro proveedor.
+        if (
+          email &&
+          account?.provider &&
+          (account.provider === "google" || account.provider === "apple")
+        ) {
+          const normalized = email.trim().toLowerCase();
+          const existing = await prisma.user.findFirst({
+            where: { email: { equals: normalized, mode: "insensitive" } },
+            include: { accounts: { select: { provider: true } } },
+          });
+          if (
+            existing &&
+            existing.accounts.length > 0 &&
+            !existing.accounts.some((a) => a.provider === account.provider)
+          ) {
+            console.warn("[auth] OAuth rechazado: email ya registrado con otro proveedor.", {
+              email: normalized,
+              attemptedProvider: account.provider,
+              existingProviders: existing.accounts.map((a) => a.provider),
+            });
+            return false;
+          }
+        }
+
         if (account?.provider === "google" || account?.provider === "apple") {
           console.info("[auth] OAuth sign-in attempt:", {
             provider: account.provider,

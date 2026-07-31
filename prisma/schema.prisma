@@ -178,12 +178,25 @@ model BenefitRedemption {
   provider          User     @relation("BenefitProvider", fields: [providerUserId], references: [id], onDelete: Cascade)
   socioProfileId    String
   socioProfile      SocioProfile @relation(fields: [socioProfileId], references: [id], onDelete: Cascade)
+  /** JTI del JWT de credencial; evita canjes repetidos del mismo QR. */
+  credentialJti     String?  @unique
   confirmedAt       DateTime @default(now())
   createdAt         DateTime @default(now())
 
   @@index([beneficiaryUserId])
   @@index([providerUserId])
   @@index([socioProfileId])
+}
+
+model RateLimitBucket {
+  id          String   @id @default(cuid())
+  bucketKey   String
+  windowStart DateTime
+  hits        Int      @default(1)
+  createdAt   DateTime @default(now())
+
+  @@unique([bucketKey, windowStart])
+  @@index([createdAt])
 }
 
 model ContactMessage {
