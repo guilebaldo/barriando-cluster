@@ -32,7 +32,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethodValue, string> = {
 
 export function resolvePaymentMethodLabel(
   paymentMethod: string | null | undefined,
-  stripeSubscriptionId?: string | null,
+  stripeSubscriptionId?: string | boolean | null,
   status?: string | null
 ): string {
   if (paymentMethod && paymentMethod in PAYMENT_METHOD_LABELS) {

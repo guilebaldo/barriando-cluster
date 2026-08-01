@@ -2,12 +2,16 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { MEMBERSHIP_PLANS } from "@/lib/membresia";
 
+/**
+ * Forma que viaja al navegador: nunca los IDs de Stripe, que solo se usan como
+ * banderas de "tiene suscripción/cliente" y son datos de facturación internos.
+ */
 export type SafePanelSubscription = {
   plan: MembershipPlan;
   status: string;
   currentPeriodEnd: string | null;
-  stripeSubscriptionId: string | null;
-  stripeCustomerId: string | null;
+  hasStripeSubscription: boolean;
+  hasStripeCustomer: boolean;
   paymentMethod: string | null;
   createdAt: string | null;
 };
@@ -72,8 +76,8 @@ export const DEFAULT_PANEL_SUBSCRIPTION: SafePanelSubscription = {
   plan: "TURISTA",
   status: "inactive",
   currentPeriodEnd: null,
-  stripeSubscriptionId: null,
-  stripeCustomerId: null,
+  hasStripeSubscription: false,
+  hasStripeCustomer: false,
   paymentMethod: null,
   createdAt: null,
 };
@@ -114,8 +118,8 @@ export function normalizePanelSubscription(
     plan: isMembershipPlan(sub.plan) ? sub.plan : "TURISTA",
     status: typeof sub.status === "string" && sub.status.trim() ? sub.status : "inactive",
     currentPeriodEnd,
-    stripeSubscriptionId: sub.stripeSubscriptionId ?? null,
-    stripeCustomerId: sub.stripeCustomerId ?? null,
+    hasStripeSubscription: Boolean(sub.stripeSubscriptionId),
+    hasStripeCustomer: Boolean(sub.stripeCustomerId),
     paymentMethod:
       typeof sub.paymentMethod === "string" && sub.paymentMethod.trim()
         ? sub.paymentMethod

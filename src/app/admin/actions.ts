@@ -384,7 +384,7 @@ export type AdminUserRow = {
   subscriptionCreatedAt: string | null;
   paymentMethod: string | null;
   manualPaymentNote: string | null;
-  stripeSubscriptionId: string | null;
+  hasStripeSubscription: boolean;
   linkageStatus: string | null;
   isManualEntry: boolean;
   profile: {
@@ -691,7 +691,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
       subscriptionCreatedAt: user.subscription?.createdAt?.toISOString() ?? null,
       paymentMethod: user.subscription?.paymentMethod ?? null,
       manualPaymentNote: user.subscription?.manualPaymentNote ?? null,
-      stripeSubscriptionId: user.subscription?.stripeSubscriptionId ?? null,
+      hasStripeSubscription: Boolean(user.subscription?.stripeSubscriptionId),
       linkageStatus: user.socioProfile?.linkageStatus ?? null,
       isManualEntry: user.socioProfile?.isManualEntry ?? false,
       profile: user.socioProfile
@@ -752,6 +752,10 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
 }
 
 export async function listTakenSocioIds(): Promise<number[]> {
+  const session = await requireSession();
+  if (!isAdminUser(session)) {
+    return [];
+  }
   const rows = await prisma.user.findMany({
     where: { socioId: { not: null } },
     select: { socioId: true },

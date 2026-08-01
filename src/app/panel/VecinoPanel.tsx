@@ -40,7 +40,7 @@ type VecinoPanelProps = {
     plan: MembershipPlan;
     status: string;
     currentPeriodEnd: string | null;
-    stripeSubscriptionId: string | null;
+    hasStripeSubscription: boolean;
     createdAt: string | null;
   };
   showCredential: boolean;
@@ -74,12 +74,12 @@ export default function VecinoPanel({
     status: subscription.status,
     currentPeriodEnd: subscription.currentPeriodEnd,
     subscriptionCreatedAt: subscription.createdAt,
-    stripeSubscriptionId: subscription.stripeSubscriptionId,
+    stripeSubscriptionId: subscription.hasStripeSubscription,
   });
-  const renewalLabel = formatRenewalDisplay(subscription.status, subscription.stripeSubscriptionId);
+  const renewalLabel = formatRenewalDisplay(subscription.status, subscription.hasStripeSubscription);
   const nextChargeDate = formatNextChargeDate(subscription.currentPeriodEnd);
   const autoRenewal =
-    getRenewalMode(subscription.status, subscription.stripeSubscriptionId) === "automatic";
+    getRenewalMode(subscription.status, subscription.hasStripeSubscription) === "automatic";
 
   async function refreshSession() {
     await update();

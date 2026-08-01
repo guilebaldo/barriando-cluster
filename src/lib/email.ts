@@ -1,4 +1,5 @@
 import { BRAND_LOGO_PNG_BASE64 } from "@/lib/brand-logo-base64";
+import { redactEmail } from "@/lib/log-redact";
 
 /** Envío de correos vía Resend (API HTTP). */
 
@@ -107,7 +108,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     }
 
     console.info("[email] sent:", {
-      to,
+      to: redactEmail(to),
       subject: params.subject,
       id: body.id,
       tags: params.tags,

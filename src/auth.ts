@@ -9,6 +9,7 @@ import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { magicLinkEmailHtml, magicLinkEmailText } from "@/lib/magic-link-email";
 import { getEmailFrom, getResendApiKey, sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { redactEmail } from "@/lib/log-redact";
 import type { Provider } from "next-auth/providers";
 import type { MembershipPlan, UserRole } from "@/generated/prisma/client";
 
@@ -209,7 +210,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             !existing.accounts.some((a) => a.provider === account.provider)
           ) {
             console.warn("[auth] OAuth rechazado: email ya registrado con otro proveedor.", {
-              email: normalized,
+              email: redactEmail(normalized),
               attemptedProvider: account.provider,
               existingProviders: existing.accounts.map((a) => a.provider),
             });
@@ -220,12 +221,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (account?.provider === "google" || account?.provider === "apple") {
           console.info("[auth] OAuth sign-in attempt:", {
             provider: account.provider,
-            email,
+            email: redactEmail(email),
             userId: user.id,
           });
         }
         if (account?.provider === "resend" || account?.provider === "email") {
-          console.info("[auth] Email verification sign-in:", { email, userId: user.id });
+          console.info("[auth] Email verification sign-in:", {
+            email: redactEmail(email),
+            userId: user.id,
+          });
         }
         return true;
       } catch (error) {

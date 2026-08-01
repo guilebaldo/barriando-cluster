@@ -54,7 +54,7 @@ export default async function CertificacionPagoPage({
       sub.plan,
       sub.status,
       sub.paymentMethod,
-      sub.stripeSubscriptionId
+      sub.hasStripeSubscription
     ) &&
     sub.status === "manual_pending"
   ) {

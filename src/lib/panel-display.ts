@@ -18,7 +18,7 @@ export type RenewalMode = "automatic" | "manual" | null;
 
 export function getRenewalMode(
   status: string,
-  stripeSubscriptionId?: string | null
+  stripeSubscriptionId?: string | boolean | null
 ): RenewalMode {
   if (status === "active" && stripeSubscriptionId) return "automatic";
   if (status === "manual_active") return "manual";
@@ -45,7 +45,7 @@ export function resolveMembershipExpiryLabel(input: {
   status: string;
   currentPeriodEnd?: string | null;
   subscriptionCreatedAt?: string | null;
-  stripeSubscriptionId?: string | null;
+  stripeSubscriptionId?: string | boolean | null;
 }): string {
   const { status, currentPeriodEnd, subscriptionCreatedAt, stripeSubscriptionId } = input;
 
@@ -85,7 +85,7 @@ export function formatMembershipExpiry(date: Date | string | null | undefined): 
 
 export function formatRenewalDisplay(
   status?: string | null,
-  stripeSubscriptionId?: string | null
+  stripeSubscriptionId?: string | boolean | null
 ): string {
   const mode = getRenewalMode(status ?? "", stripeSubscriptionId);
   return getRenewalModeLabel(mode) ?? RENEWAL_DISPLAY_FALLBACK;

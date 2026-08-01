@@ -49,7 +49,7 @@ export default async function BarrIdPage({
   const shouldSyncStripe =
     paymentReturn ||
     (!isPaidMember(subscription.plan, subscription.status) &&
-      Boolean(subscription.stripeCustomerId));
+      Boolean(subscription.hasStripeCustomer));
 
   if (shouldSyncStripe) {
     try {
@@ -78,11 +78,11 @@ export default async function BarrIdPage({
     status: subscription.status,
     currentPeriodEnd: subscription.currentPeriodEnd,
     subscriptionCreatedAt: subscription.createdAt,
-    stripeSubscriptionId: subscription.stripeSubscriptionId,
+    stripeSubscriptionId: subscription.hasStripeSubscription,
   });
   const renewalLabel = formatRenewalDisplay(
     subscription.status,
-    subscription.stripeSubscriptionId
+    subscription.hasStripeSubscription
   );
 
   return (

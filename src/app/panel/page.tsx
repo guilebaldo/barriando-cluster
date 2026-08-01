@@ -65,7 +65,7 @@ export default async function PanelPage({
       params.pago === "procesando" ||
       params.success === "true" ||
       // Upgrade Vecino → negocio: reconcile latest Checkout even without query params.
-      (peekSub.plan === "VECINO" && Boolean(peekSub.stripeCustomerId));
+      (peekSub.plan === "VECINO" && Boolean(peekSub.hasStripeCustomer));
 
     if (shouldSyncStripe) {
       try {
@@ -86,7 +86,7 @@ export default async function PanelPage({
         refreshedSub.plan,
         refreshedSub.status,
         refreshedSub.paymentMethod,
-        refreshedSub.stripeSubscriptionId
+        refreshedSub.hasStripeSubscription
       )
     ) {
       if (
@@ -94,7 +94,7 @@ export default async function PanelPage({
           refreshedSub.plan,
           refreshedSub.status,
           refreshedSub.paymentMethod,
-          refreshedSub.stripeSubscriptionId
+          refreshedSub.hasStripeSubscription
         )
       ) {
         redirect("/certificacion/pago");
@@ -111,7 +111,7 @@ export default async function PanelPage({
         refreshedSub.plan,
         refreshedSub.status,
         refreshedSub.paymentMethod,
-        refreshedSub.stripeSubscriptionId
+        refreshedSub.hasStripeSubscription
       ) &&
       !canRegisterBusinessProfile(refreshedSub.plan, refreshedSub.status) &&
       !isSoftUnpaidPlanIntent(refreshedSub)
@@ -133,7 +133,7 @@ export default async function PanelPage({
     if (
       pagoParam === "cancelado" &&
       !hasPaidAccess &&
-      !refreshedSub.stripeSubscriptionId
+      !refreshedSub.hasStripeSubscription
     ) {
       paymentNotice = "Pago cancelado. Puedes intentar de nuevo cuando quieras desde tu panel.";
     } else if (pagoParam === "stripe_no_configurado") {

@@ -208,7 +208,7 @@ export function needsCertificationPayment(
   plan: MembershipPlan,
   status: string,
   paymentMethod?: string | null,
-  stripeSubscriptionId?: string | null
+  stripeSubscriptionId?: string | boolean | null
 ): boolean {
   if (isTuristaPlan(plan)) return false;
   if (hasCommercialAccess(plan, status)) return false;
@@ -227,12 +227,14 @@ export function isSoftUnpaidPlanIntent(sub: {
   plan: MembershipPlan;
   status: string;
   paymentMethod?: string | null;
-  stripeSubscriptionId?: string | null;
+  /** Fuentes del servidor pasan el ID; las formas que van al cliente, la bandera. */
+  stripeSubscriptionId?: string | boolean | null;
+  hasStripeSubscription?: boolean;
 }): boolean {
   if (isTuristaPlan(sub.plan)) return false;
   if (sub.status !== "inactive" && sub.status !== "past_due") return false;
   if (sub.paymentMethod) return false;
-  if (sub.stripeSubscriptionId) return false;
+  if (sub.stripeSubscriptionId || sub.hasStripeSubscription) return false;
   return true;
 }
 
@@ -261,7 +263,7 @@ export function canAccessPanel(
   plan: MembershipPlan,
   status: string,
   paymentMethod?: string | null,
-  stripeSubscriptionId?: string | null
+  stripeSubscriptionId?: string | boolean | null
 ): boolean {
   if (isTuristaPlan(plan)) return true;
   if (hasCommercialAccess(plan, status)) return true;

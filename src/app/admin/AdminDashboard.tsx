@@ -243,7 +243,7 @@ export default function AdminDashboard({
         business,
         user.planLabel,
         PLAN_ADMIN_LABELS[user.plan] ?? "",
-        resolvePaymentMethodLabel(user.paymentMethod, user.stripeSubscriptionId, user.status),
+        resolvePaymentMethodLabel(user.paymentMethod, user.hasStripeSubscription, user.status),
         user.profile?.rfc ?? "",
         user.profile?.razonSocial ?? "",
       ]
@@ -729,8 +729,8 @@ function UserRows({
           {PLAN_ADMIN_LABELS[user.plan] ?? user.planLabel}
         </td>
         <td className="px-4 py-3 text-slate-600 whitespace-nowrap max-w-[10rem]">
-          <span className="block truncate" title={resolvePaymentMethodLabel(user.paymentMethod, user.stripeSubscriptionId, user.status)}>
-            {resolvePaymentMethodLabel(user.paymentMethod, user.stripeSubscriptionId, user.status)}
+          <span className="block truncate" title={resolvePaymentMethodLabel(user.paymentMethod, user.hasStripeSubscription, user.status)}>
+            {resolvePaymentMethodLabel(user.paymentMethod, user.hasStripeSubscription, user.status)}
           </span>
         </td>
         <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
@@ -738,7 +738,7 @@ function UserRows({
             status: user.status,
             currentPeriodEnd: user.currentPeriodEnd,
             subscriptionCreatedAt: user.subscriptionCreatedAt,
-            stripeSubscriptionId: user.stripeSubscriptionId,
+            stripeSubscriptionId: user.hasStripeSubscription,
           })}
         </td>
         <td className="px-4 py-3 text-right align-top">

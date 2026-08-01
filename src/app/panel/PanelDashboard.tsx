@@ -87,7 +87,7 @@ interface PanelProps {
     plan: MembershipPlan;
     status: string;
     currentPeriodEnd: string | null;
-    stripeSubscriptionId: string | null;
+    hasStripeSubscription: boolean;
     paymentMethod?: string | null;
     createdAt: string | null;
   };
@@ -169,9 +169,9 @@ export default function PanelDashboard({
     status,
     currentPeriodEnd: subscription?.currentPeriodEnd,
     subscriptionCreatedAt: subscription?.createdAt,
-    stripeSubscriptionId: subscription?.stripeSubscriptionId,
+    stripeSubscriptionId: subscription?.hasStripeSubscription,
   });
-  const renewalLabel = formatRenewalDisplay(status, subscription?.stripeSubscriptionId);
+  const renewalLabel = formatRenewalDisplay(status, subscription?.hasStripeSubscription);
   const upgradePlans =
     commercial && !isTurista ? getUpgradePlans(plan) : [];
 
@@ -188,7 +188,7 @@ export default function PanelDashboard({
   const showPayBeforeLink =
     isBusiness && !canLink && !hasBusinessEstablished && !linkagePending;
   const autoRenewal =
-    getRenewalMode(status, subscription?.stripeSubscriptionId) === "automatic";
+    getRenewalMode(status, subscription?.hasStripeSubscription) === "automatic";
   const nextChargeDate = formatNextChargeDate(subscription?.currentPeriodEnd);
 
   const displayName =
