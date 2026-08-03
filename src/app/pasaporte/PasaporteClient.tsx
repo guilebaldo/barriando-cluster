@@ -918,7 +918,7 @@ function PasaporteInner({
       ) : null}
 
       {noticePopup && (
-        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-4 pb-[calc(var(--app-hub-offset,0px)+1rem)] sm:pb-4 pointer-events-none">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
           <div
             role="status"
             className={`pointer-events-auto relative w-full max-w-sm rounded-2xl border shadow-2xl p-5 animate-popup-in ${
