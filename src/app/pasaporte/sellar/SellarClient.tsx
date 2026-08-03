@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { confirmStampWithLocation } from "./actions";
-import { STAMP_MAX_DISTANCE_M } from "@/lib/pasaporte-stamps";
+import { STAMP_MAX_DISTANCE_M } from "@/lib/pasaporte-stamp-limits";
 
 type Props = {
   restaurantSlug: string;

@@ -7,9 +7,9 @@ import {
 } from "@/lib/pasaporte";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 import { haversineDistanceKm } from "@/lib/map-route-client";
+import { STAMP_MAX_DISTANCE_M } from "@/lib/pasaporte-stamp-limits";
 
-/** Radio máximo al local para validar sello (GPS urbano típico ~10–50 m de error). */
-export const STAMP_MAX_DISTANCE_M = 200;
+export { STAMP_MAX_DISTANCE_M };
 
 export type CreateStampResult =
   | { ok: true; stampId: string; restaurantName: string; cooldown: false }
