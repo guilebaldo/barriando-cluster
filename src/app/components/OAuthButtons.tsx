@@ -35,7 +35,25 @@ function OAuthButtonsInner({
 
   const redirectAfterLogin = useMemo(() => {
     const raw = searchParams.get("callbackUrl");
+    const restaurante = searchParams.get("restaurante")?.trim();
+
     if (raw && raw.startsWith("/") && !raw.startsWith("//")) {
+      // Callback partido: /login?callbackUrl=/pasaporte/sellar&restaurante=foo
+      if (
+        restaurante &&
+        (raw === "/pasaporte/sellar" || raw === "/pasaporte/sellar/")
+      ) {
+        return `/pasaporte/sellar/${encodeURIComponent(restaurante)}`;
+      }
+      if (raw.startsWith("/pasaporte/sellar?")) {
+        try {
+          const url = new URL(raw, "http://local");
+          const slug = url.searchParams.get("restaurante")?.trim();
+          if (slug) return `/pasaporte/sellar/${encodeURIComponent(slug)}`;
+        } catch {
+          /* keep raw */
+        }
+      }
       if (raw.startsWith(ONBOARDING_CONTINUE_PATH) && plan) {
         const url = new URL(raw, "http://local");
         if (!url.searchParams.get("plan")) {

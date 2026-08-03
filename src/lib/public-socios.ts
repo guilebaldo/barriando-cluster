@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { listaSocios, type Socio, type SocioBenefitInfo } from "@/app/data/socios";
 import { sociosCoords } from "@/app/data/socios-coords";
@@ -9,6 +10,7 @@ import {
   dynamicSocioIdFromUserId,
   isSyntheticSocioId,
 } from "@/lib/publish-business";
+import { PUBLIC_SOCIOS_TAG } from "@/lib/public-socios-tag";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 /** Si Business está a más de esto del pin curado, suele ser viewport de embed (no el pin). */
@@ -386,8 +388,28 @@ function dedupeByName(socios: Socio[]): Socio[] {
   return best;
 }
 
-/** Socios visibles en /cuponera: solo membresía de negocio activa (roster o usuario). */
-export async function getPublicSociosList(): Promise<Socio[]> {
+/**
+ * Quita instrucciones de canje del payload al cliente.
+ * Título/descripción siguen como gancho de membresía; howToRedeem solo a pagados.
+ */
+export function redactSociosRedeemDetails(
+  socios: Socio[],
+  includeRedeemDetails: boolean
+): Socio[] {
+  if (includeRedeemDetails) return socios;
+  return socios.map((socio) => {
+    if (!socio.benefit) return socio;
+    return {
+      ...socio,
+      benefit: {
+        ...socio.benefit,
+        howToRedeem: "",
+      },
+    };
+  });
+}
+
+async function fetchPublicSociosList(): Promise<Socio[]> {
   const [publishedUsers, websiteOverrides, memberships] = await Promise.all([
     loadPublishedBusinessUsers(),
     loadCatalogWebsiteOverrides(),
@@ -438,6 +460,13 @@ export async function getPublicSociosList(): Promise<Socio[]> {
 
   return dedupeByName([...byId.values()]).sort(compareSociosByPlan);
 }
+
+/** Socios visibles en /cuponera: solo membresía de negocio activa (roster o usuario). */
+export const getPublicSociosList = unstable_cache(
+  fetchPublicSociosList,
+  ["public-socios-list-v1"],
+  { revalidate: 120, tags: [PUBLIC_SOCIOS_TAG] }
+);
 
 /** Carrusel destacado: Mediana y Gran Empresa. */
 export async function getCarouselSocios(): Promise<Socio[]> {

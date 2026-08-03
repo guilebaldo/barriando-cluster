@@ -124,8 +124,10 @@ export type StampSummary = {
   lastStampAt: string;
 };
 
+/** Ruta canónica del QR de sello (slug en el path: sobrevive recargas y callbacks). */
 export function buildSellarPath(restaurantSlugValue: string): string {
-  return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugValue)}`;
+  const slug = restaurantSlugValue.trim().toLowerCase();
+  return `/pasaporte/sellar/${encodeURIComponent(slug)}`;
 }
 
 /** Ficha del socio en el directorio (sellos del pasaporte no siempre están en el MAPA). */

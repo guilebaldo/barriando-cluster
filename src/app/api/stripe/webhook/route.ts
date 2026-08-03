@@ -8,6 +8,7 @@ import {
 } from "@/lib/activate-manual-month";
 import { isStripeLocalPaymentMethod } from "@/lib/stripe-local-payment";
 import { notifyPaymentCredited } from "@/lib/notify-payment-credited";
+import { revalidatePublicSocios } from "@/lib/revalidate-public-socios";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import type Stripe from "stripe";
 
@@ -79,6 +80,7 @@ async function fulfillSubscriptionCheckout(session: Stripe.Checkout.Session) {
   });
 
   await publishBusinessPresenceOnPayment(userId, plan, { reinstateRoster: true });
+  revalidatePublicSocios();
 
   if (!alreadyActiveOnThisSub && status === "active") {
     await sendPaymentCreditedSafe({
@@ -114,6 +116,7 @@ async function fulfillOneTimeManualCheckout(
     paymentMethod: methodRaw,
     stripeCustomerId: customerId,
   });
+  revalidatePublicSocios();
 
   if (!options.sendReceipt) return;
 
@@ -224,7 +227,10 @@ export async function POST(request: NextRequest) {
           where: { stripeSubscriptionId: sub.id },
           select: { userId: true, plan: true },
         });
-        if (row) await publishBusinessPresenceOnPayment(row.userId, row.plan);
+        if (row) {
+          await publishBusinessPresenceOnPayment(row.userId, row.plan);
+          revalidatePublicSocios();
+        }
       }
     }
   } catch (error) {

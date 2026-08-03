@@ -1,5 +1,5 @@
 import SociosPageClient from "./SociosPageClient";
-import { getPublicSociosList } from "@/lib/public-socios";
+import { getPublicSociosList, redactSociosRedeemDetails } from "@/lib/public-socios";
 import { getSession } from "@/lib/auth-utils";
 import { isPaidMember } from "@/lib/membresia";
 
@@ -16,7 +16,7 @@ export default async function SociosPage({
 }: {
   searchParams: Promise<{ cupones?: string; beneficios?: string; socio?: string }>;
 }) {
-  const [socios, session, params] = await Promise.all([
+  const [sociosRaw, session, params] = await Promise.all([
     getPublicSociosList(),
     getSession(),
     searchParams,
@@ -24,6 +24,7 @@ export default async function SociosPage({
   const canRedeemBenefits = Boolean(
     session?.plan && isPaidMember(session.plan, session.subscriptionStatus ?? "inactive")
   );
+  const socios = redactSociosRedeemDetails(sociosRaw, canRedeemBenefits);
   const initialBenefitsOnly = params.cupones === "1" || params.beneficios === "1";
   const socioParam = Number(params.socio);
   const initialSocioId =

@@ -604,7 +604,10 @@ function PasaporteInner({
     } else if (error === "invalid_restaurant") {
       next = { type: "error", text: "Restaurante no participante o enlace inválido." };
     } else if (error === "restaurante_requerido") {
-      next = { type: "error", text: "Falta el identificador del restaurante en el enlace QR." };
+      next = {
+        type: "error",
+        text: "El QR no trajo el negocio. Vuelve a escanearlo en el local (si el problema sigue, pide un QR actualizado).",
+      };
     }
 
     if (!next) return;
@@ -915,7 +918,7 @@ function PasaporteInner({
       ) : null}
 
       {noticePopup && (
-        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 pointer-events-none">
+        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-4 pb-[calc(var(--app-hub-offset,0px)+1rem)] sm:pb-4 pointer-events-none">
           <div
             role="status"
             className={`pointer-events-auto relative w-full max-w-sm rounded-2xl border shadow-2xl p-5 animate-popup-in ${

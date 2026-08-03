@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicSocios } from "@/lib/revalidate-public-socios";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
@@ -43,7 +44,7 @@ export async function approveManualCertification(userId: string): Promise<Action
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -300,7 +301,7 @@ export async function updateSocioAdmin(input: z.infer<typeof adminUpdateSchema>)
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/mapa");
     return { ok: true };
   } catch (error) {
@@ -356,7 +357,7 @@ export async function deleteSocioUser(userId: string): Promise<ActionResult> {
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/pasaporte");
     revalidatePath("/mapa");
     revalidatePath("/");
@@ -454,7 +455,7 @@ export async function approveLinkage(userId: string): Promise<ActionResult> {
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -1252,7 +1253,7 @@ export async function renewCatalogMembership(socioId: number): Promise<ActionRes
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/pasaporte");
     revalidatePath("/mapa");
     return { ok: true };
@@ -1307,7 +1308,7 @@ export async function updateCatalogMembershipOps(
     });
 
     revalidatePath("/admin");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/pasaporte");
     revalidatePath("/mapa");
     return { ok: true };
@@ -1420,7 +1421,7 @@ export async function updateCatalogMembershipBenefit(input: {
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/");
     return { ok: true };
   } catch (error) {
@@ -1459,7 +1460,7 @@ export async function setCatalogMembershipStatus(
     });
 
     revalidatePath("/admin");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/pasaporte");
     revalidatePath("/mapa");
     revalidatePath("/");
@@ -1504,7 +1505,7 @@ export async function deleteCatalogMembership(socioId: number): Promise<ActionRe
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/pasaporte");
     revalidatePath("/mapa");
     revalidatePath("/");
@@ -1561,7 +1562,7 @@ export async function updateCatalogSocioWebsite(input: {
     }
 
     revalidatePath("/admin");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/mapa");
     revalidatePath("/");
     return { ok: true };
@@ -1703,7 +1704,7 @@ export async function adminUpdateBusinessProfile(
         });
       }
       revalidatePath("/admin");
-      revalidatePath("/cuponera");
+      revalidatePublicSocios();
       revalidatePath("/socios");
       revalidatePath("/mapa");
       return {
@@ -1802,7 +1803,7 @@ export async function adminUpdateBusinessProfile(
 
     revalidatePath("/admin");
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/mapa");
     return { ok: true };
   } catch (error) {
@@ -1913,7 +1914,7 @@ export async function createManualCatalogSocio(
     });
 
     revalidatePath("/admin");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/socios");
     revalidatePath("/mapa");
     revalidatePath("/");

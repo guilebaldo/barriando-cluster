@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidatePublicSocios } from "@/lib/revalidate-public-socios";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
@@ -420,7 +421,7 @@ export async function updateSocioProfile(
 
     revalidatePath("/panel");
     revalidatePath("/admin");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -580,7 +581,7 @@ export async function updateSocioBenefit(input: {
     }
 
     revalidatePath("/panel");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -648,7 +649,7 @@ export async function deleteOwnTuristaAccount(): Promise<
     revalidatePath("/panel");
     revalidatePath("/pasaporte");
     revalidatePath("/mapa");
-    revalidatePath("/cuponera");
+    revalidatePublicSocios();
     revalidatePath("/");
     return { ok: true };
   } catch (error) {

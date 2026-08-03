@@ -41,7 +41,7 @@ export function getPointStampHref(point: MapRoutePoint): string | null {
   if (!point.hasSeasonalStamp) return null;
   const socio = getLinkedSocio(point);
   const name = socio?.name || point.name;
-  return `/pasaporte/sellar?restaurante=${encodeURIComponent(restaurantSlugFromName(name))}`;
+  return `/pasaporte/sellar/${encodeURIComponent(restaurantSlugFromName(name))}`;
 }
 
 export function pointHasScannableStamp(point: MapRoutePoint): boolean {

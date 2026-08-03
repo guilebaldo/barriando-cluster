@@ -36,6 +36,12 @@ export default function SellarClient({
       let longitude: number | null = null;
       let accuracyM: number | null = null;
 
+      // Deja pintar la UI antes del prompt de GPS (Safari/Camera a veces mata la
+      // pestaña si se pide geolocation en el mismo tick que hidrata la página).
+      await new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 120);
+      });
+
       if (requiresLocation) {
         if (!navigator.geolocation) {
           setError(
@@ -90,7 +96,9 @@ export default function SellarClient({
           return;
         }
         if (result.error === "unauthorized") {
-          router.replace(`/login?callbackUrl=${encodeURIComponent(`/pasaporte/sellar?restaurante=${restaurantSlug}`)}`);
+          router.replace(
+            `/login?callbackUrl=${encodeURIComponent(`/pasaporte/sellar/${encodeURIComponent(restaurantSlug)}`)}`
+          );
           return;
         }
         router.replace(`/pasaporte?error=${result.error}`);
