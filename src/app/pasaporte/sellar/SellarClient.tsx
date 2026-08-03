@@ -103,7 +103,7 @@ export default function SellarClient({
       }
       if (result.error === "unauthorized") {
         router.replace(
-          `/login?callbackUrl=${encodeURIComponent(`/pasaporte/sellar/${encodeURIComponent(restaurantSlug)}`)}`
+          `/login?callbackUrl=${encodeURIComponent(`/pasaporte?pendiente=${encodeURIComponent(restaurantSlug)}`)}`
         );
         return;
       }

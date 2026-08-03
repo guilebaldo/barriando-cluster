@@ -38,18 +38,24 @@ function OAuthButtonsInner({
     const restaurante = searchParams.get("restaurante")?.trim();
 
     if (raw && raw.startsWith("/") && !raw.startsWith("//")) {
-      // Callback partido: /login?callbackUrl=/pasaporte/sellar&restaurante=foo
+      // Callback partido o QR viejo → /pasaporte?pendiente=
       if (
         restaurante &&
         (raw === "/pasaporte/sellar" || raw === "/pasaporte/sellar/")
       ) {
-        return `/pasaporte/sellar/${encodeURIComponent(restaurante)}`;
+        return `/pasaporte?pendiente=${encodeURIComponent(restaurante)}`;
       }
-      if (raw.startsWith("/pasaporte/sellar?")) {
+      if (raw.startsWith("/pasaporte/sellar")) {
         try {
           const url = new URL(raw, "http://local");
-          const slug = url.searchParams.get("restaurante")?.trim();
-          if (slug) return `/pasaporte/sellar/${encodeURIComponent(slug)}`;
+          const fromQuery = url.searchParams.get("restaurante")?.trim();
+          if (fromQuery) {
+            return `/pasaporte?pendiente=${encodeURIComponent(fromQuery)}`;
+          }
+          const pathSlug = url.pathname.replace(/^\/pasaporte\/sellar\/?/, "").trim();
+          if (pathSlug) {
+            return `/pasaporte?pendiente=${encodeURIComponent(decodeURIComponent(pathSlug))}`;
+          }
         } catch {
           /* keep raw */
         }

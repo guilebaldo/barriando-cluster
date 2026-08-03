@@ -13,6 +13,7 @@ import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
 import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
 import PasaporteBookMobile from "./PasaporteBookMobile";
+import SellarClient from "./sellar/SellarClient";
 
 type RestaurantCard = {
   id: number;
@@ -21,6 +22,12 @@ type RestaurantCard = {
   foto: string;
   categoria: string;
   logoUrl?: string | null;
+};
+
+type PendingConfirm = {
+  slug: string;
+  name: string;
+  requiresLocation: boolean;
 };
 
 interface PasaporteClientProps {
@@ -44,6 +51,9 @@ interface PasaporteClientProps {
   tierId: "turista" | "poblano";
   isPoblanoComplete: boolean;
   progress: number;
+  /** Logueado + QR: confirmar sello aquí (sin navegar a /sellar). */
+  pendingConfirm?: PendingConfirm | null;
+  pendingInvalid?: boolean;
 }
 
 const STAMP_OUTLINE_COLORS = [
@@ -503,6 +513,8 @@ function PasaporteInner({
   tierId,
   isPoblanoComplete,
   progress,
+  pendingConfirm = null,
+  pendingInvalid = false,
 }: PasaporteClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -530,6 +542,15 @@ function PasaporteInner({
       name: match?.name ?? pendingSlug.replace(/-/g, " "),
     };
   }, [pendingSlug, restaurants, isAuthenticated]);
+
+  useEffect(() => {
+    if (!pendingInvalid) return;
+    setNoticePopup({
+      type: "error",
+      text: "Restaurante no participante o enlace inválido.",
+    });
+    router.replace("/pasaporte", { scroll: false });
+  }, [pendingInvalid, router]);
   const previewStampIds = useMemo(
     () => (isPreview ? pickPreviewStampIds(restaurants, featuredPreviewStampIds) : []),
     [isPreview, restaurants, featuredPreviewStampIds]
@@ -903,6 +924,16 @@ function PasaporteInner({
 
   const sharedOverlays = (
     <>
+      {pendingConfirm ? (
+        <div className="fixed inset-0 z-[110] bg-[#e8e0d0]/95 backdrop-blur-sm overflow-y-auto">
+          <SellarClient
+            restaurantSlug={pendingConfirm.slug}
+            restaurantName={pendingConfirm.name}
+            requiresLocation={pendingConfirm.requiresLocation}
+          />
+        </div>
+      ) : null}
+
       <QrScanModal
         open={scannerOpen}
         onClose={() => setScannerOpen(false)}

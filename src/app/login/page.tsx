@@ -16,15 +16,17 @@ function resolveCallbackUrl(params: {
     restaurante &&
     (raw === "/pasaporte/sellar" || raw === "/pasaporte/sellar/")
   ) {
-    return `/pasaporte/sellar/${encodeURIComponent(restaurante)}`;
+    return `/pasaporte?pendiente=${encodeURIComponent(restaurante)}`;
   }
 
-  // /pasaporte/sellar?restaurante=foo llegó entero (bien encodeado)
-  if (raw.startsWith("/pasaporte/sellar?")) {
+  // /pasaporte/sellar?restaurante=foo o /pasaporte/sellar/slug
+  if (raw.startsWith("/pasaporte/sellar")) {
     try {
       const url = new URL(raw, "http://local");
-      const slug = url.searchParams.get("restaurante")?.trim();
-      if (slug) return `/pasaporte/sellar/${encodeURIComponent(slug)}`;
+      const fromQuery = url.searchParams.get("restaurante")?.trim();
+      if (fromQuery) return `/pasaporte?pendiente=${encodeURIComponent(fromQuery)}`;
+      const pathSlug = url.pathname.replace(/^\/pasaporte\/sellar\/?/, "").trim();
+      if (pathSlug) return `/pasaporte?pendiente=${encodeURIComponent(decodeURIComponent(pathSlug))}`;
     } catch {
       /* keep raw */
     }

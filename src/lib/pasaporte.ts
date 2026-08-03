@@ -124,8 +124,22 @@ export type StampSummary = {
   lastStampAt: string;
 };
 
-/** Ruta canónica del QR de sello (slug en el path: sobrevive recargas y callbacks). */
+/** Landing del QR: una sola página (guest CTA o sello si ya hay sesión). */
+export function buildPasaportePendingStampPath(restaurantSlugValue: string): string {
+  const slug = restaurantSlugValue.trim().toLowerCase();
+  return `/pasaporte?pendiente=${encodeURIComponent(slug)}`;
+}
+
+/**
+ * URL del QR de sello (impreso / compartido).
+ * Misma que pendiente — evita /pasaporte/sellar que Safari/Camera tumba a negro.
+ */
 export function buildSellarPath(restaurantSlugValue: string): string {
+  return buildPasaportePendingStampPath(restaurantSlugValue);
+}
+
+/** Ruta interna del flujo de sello (GPS + confirm). Preferir pendiente en QR. */
+export function buildSellarActionPath(restaurantSlugValue: string): string {
   const slug = restaurantSlugValue.trim().toLowerCase();
   return `/pasaporte/sellar/${encodeURIComponent(slug)}`;
 }
@@ -138,11 +152,6 @@ export function getSociosHrefForRestaurant(socioId: number): string {
 /** @deprecated Usa getSociosHrefForRestaurant — no todos los sellos aparecen en /map. */
 export function getMapHrefForRestaurant(socioId: number): string {
   return getSociosHrefForRestaurant(socioId);
-}
-
-/** Guest landing after scanning a stamp QR — keeps sell intent for Google CTA. */
-export function buildPasaportePendingStampPath(restaurantSlugValue: string): string {
-  return `/pasaporte?pendiente=${encodeURIComponent(restaurantSlugValue)}`;
 }
 
 export function buildLoginRedirectPath(callbackPath: string): string {

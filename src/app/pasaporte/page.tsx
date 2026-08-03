@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
@@ -6,7 +5,7 @@ import PasaporteClient from "./PasaporteClient";
 import PasaporteImmersiveShell from "./PasaporteImmersiveShell";
 import { getSession } from "@/lib/auth-utils";
 import {
-  buildSellarPath,
+  findRestaurantBySlugAsync,
   getParticipatingRestaurantsAsync,
   getPassportProgress,
   getPassportRank,
@@ -20,6 +19,7 @@ import { countUserStamps, loadUserStampSummaries } from "@/lib/pasaporte-stamps"
 import { loadPanelUser } from "@/lib/panel-data";
 import { isFirstLoginAccount } from "@/lib/add-to-home-screen";
 import { canOfferPassportStamp } from "@/lib/plan-visibility";
+import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 export default async function PasaportePage({
@@ -29,11 +29,24 @@ export default async function PasaportePage({
 }) {
   const session = await getSession();
   const params = await searchParams;
-  const pendiente = params.pendiente?.trim();
+  const pendiente = params.pendiente?.trim() ?? "";
 
-  // Already signed in with a pending stamp from a QR scan — complete it.
+  // Logueado + QR: sello en esta misma página (sin redirect a /sellar → Safari negro).
+  let pendingConfirm: {
+    slug: string;
+    name: string;
+    requiresLocation: boolean;
+  } | null = null;
+
   if (session && pendiente) {
-    redirect(buildSellarPath(pendiente));
+    const restaurant = await findRestaurantBySlugAsync(pendiente);
+    if (restaurant) {
+      pendingConfirm = {
+        slug: pendiente,
+        name: restaurant.name,
+        requiresLocation: Boolean(resolveSocioMapCoord(restaurant)),
+      };
+    }
   }
 
   const participating = await getParticipatingRestaurantsAsync();
@@ -105,6 +118,8 @@ export default async function PasaportePage({
       tierId={rank.id}
       isPoblanoComplete={rank.isComplete}
       progress={progress}
+      pendingConfirm={pendingConfirm}
+      pendingInvalid={Boolean(session && pendiente && !pendingConfirm)}
     />
   );
 
