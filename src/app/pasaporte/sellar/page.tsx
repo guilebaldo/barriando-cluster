@@ -1,15 +1,14 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import SiteShell from "@/app/components/SiteShell";
-import { buildSellarPath } from "@/lib/pasaporte";
+import { loadSellarPage } from "./load-sellar-page";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Compatibilidad con QR viejos (`?restaurante=slug`).
- * Los nuevos usan `/pasaporte/sellar/[slug]` (más resistente a scrapes/recargas).
+ * QR viejos: `?restaurante=slug` (sin redirect extra → más estable en Safari/Camera).
+ * QR nuevos: `/pasaporte/sellar/[slug]`.
  */
 export default async function SellarLegacyQueryPage({
   searchParams,
@@ -20,7 +19,7 @@ export default async function SellarLegacyQueryPage({
   const restaurante = params.restaurante?.trim();
 
   if (restaurante) {
-    redirect(buildSellarPath(restaurante));
+    return loadSellarPage(restaurante);
   }
 
   return (
