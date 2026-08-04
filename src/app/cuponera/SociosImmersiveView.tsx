@@ -16,6 +16,7 @@ import type { Socio, SocioBenefitInfo } from "../data/socios";
 import BenefitRedeemQr from "./BenefitRedeemQr";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
+import type { UserMapLocation } from "@/app/mapa/user-map-location";
 
 const SociosMap = dynamic(() => import("../components/SociosMapLeaflet"), {
   ssr: false,
@@ -72,6 +73,37 @@ export default function SociosImmersiveView({
     name: string;
     benefit: SocioBenefitInfo;
   } | null>(null);
+  const [userLocation, setUserLocation] = useState<UserMapLocation | null>(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const onSuccess = (pos: GeolocationPosition) => {
+      setUserLocation({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        speed:
+          typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
+            ? pos.coords.speed
+            : null,
+        heading:
+          typeof pos.coords.heading === "number" && Number.isFinite(pos.coords.heading)
+            ? pos.coords.heading
+            : null,
+      });
+    };
+    navigator.geolocation.getCurrentPosition(onSuccess, () => {}, {
+      enableHighAccuracy: true,
+      timeout: 12_000,
+      maximumAge: 30_000,
+    });
+    const watchId = navigator.geolocation.watchPosition(onSuccess, () => {}, {
+      enableHighAccuracy: true,
+      maximumAge: 2_000,
+      timeout: 25_000,
+    });
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
 
   useEffect(() => {
     const measure = () => {
@@ -312,42 +344,46 @@ export default function SociosImmersiveView({
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {selectedSocio.url && selectedSocio.url !== "#" && (
-          <a
-            href={selectedSocio.url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 border border-slate-200 text-[#27366D] text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg hover:bg-slate-50"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Sitio web
-          </a>
-        )}
-        {selectedSocio.direccion && /^https?:\/\//i.test(selectedSocio.direccion) && (
-          <a
-            href={selectedSocio.direccion}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 border border-slate-200 text-[#27366D] text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg hover:bg-slate-50"
-          >
-            <MapPin className="w-3.5 h-3.5 text-amber-500" />
-            Google Maps
-          </a>
-        )}
-        {selectedSocio.benefit ? (
-          <button
-            type="button"
-            onClick={() =>
-              setActiveBenefit({ name: selectedSocio.name, benefit: selectedSocio.benefit! })
-            }
-            className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg"
-          >
-            <Gift className="w-3.5 h-3.5" />
-            Activar cupón
-          </button>
-        ) : null}
-      </div>
+      {selectedSocio.benefit ? (
+        <button
+          type="button"
+          onClick={() =>
+            setActiveBenefit({ name: selectedSocio.name, benefit: selectedSocio.benefit! })
+          }
+          className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold uppercase tracking-wider px-4 py-3.5 rounded-xl shadow-sm active:scale-[0.99] transition"
+        >
+          <Gift className="w-4 h-4" />
+          Activar cupón
+        </button>
+      ) : null}
+
+      {(selectedSocio.url && selectedSocio.url !== "#") ||
+      (selectedSocio.direccion && /^https?:\/\//i.test(selectedSocio.direccion)) ? (
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-slate-500">
+          {selectedSocio.url && selectedSocio.url !== "#" ? (
+            <a
+              href={selectedSocio.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 underline decoration-slate-300 underline-offset-2 hover:text-[#27366D]"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Sitio web
+            </a>
+          ) : null}
+          {selectedSocio.direccion && /^https?:\/\//i.test(selectedSocio.direccion) ? (
+            <a
+              href={selectedSocio.direccion}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 underline decoration-slate-300 underline-offset-2 hover:text-[#27366D]"
+            >
+              <MapPin className="w-3 h-3" />
+              Google Maps
+            </a>
+          ) : null}
+        </p>
+      ) : null}
     </div>
   );
 
@@ -538,6 +574,7 @@ export default function SociosImmersiveView({
         onSelect={selectSocio}
         immersive
         bottomSheetHeight={mapSheetHeight}
+        userLocation={userLocation}
       />
 
       <div

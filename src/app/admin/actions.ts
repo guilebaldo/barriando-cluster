@@ -1154,7 +1154,12 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
           "";
         return {
           socioId: row.socioId,
-          businessName: row.businessName?.trim() || catalog?.name || `Socio #${row.socioId}`,
+          businessName:
+            (() => {
+              const raw = row.businessName?.trim();
+              if (raw && !/^socio\s*#?\s*\d+$/i.test(raw)) return raw;
+              return catalog?.name || `Socio #${row.socioId}`;
+            })(),
           plan: row.plan,
           planLabel: getPlanLabel(row.plan),
           paymentMethod: row.paymentMethod,

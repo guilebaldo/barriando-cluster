@@ -717,6 +717,7 @@ export default function AdminOperations({
                     <AdminEstablishmentQrButton
                       businessName={row.businessName}
                       plan={row.plan}
+                      socioId={row.socioId}
                       disabled={saving}
                     />
                     <button
@@ -854,6 +855,7 @@ export default function AdminOperations({
                             businessName={row.businessName}
                             category={row.categoria}
                             plan={row.plan}
+                            socioId={row.socioId}
                             disabled={saving}
                           />
                         </div>

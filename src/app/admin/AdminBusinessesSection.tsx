@@ -419,6 +419,7 @@ export default function AdminBusinessesSection({
                               businessName={row.businessName}
                               category={row.categoria}
                               plan={row.plan}
+                              socioId={row.socioId}
                               disabled={saving}
                             />
                           </div>

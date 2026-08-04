@@ -30,6 +30,8 @@ type BarrIdClientProps = {
   canRedeemCoupons: boolean;
   /** Cuenta recién creada: mostrar prompt de instalar BarriApp en móvil. */
   isFirstLoginUser?: boolean;
+  /** Abrir ficha al montar (vuelta desde Mi cuenta). */
+  initialSheetExpanded?: boolean;
 };
 
 function formatCountdown(totalSeconds: number): string {
@@ -43,7 +45,7 @@ function formatCountdown(totalSeconds: number): string {
 function MiCuentaLink({ compact = false }: { compact?: boolean }) {
   return (
     <Link
-      href="/panel"
+      href="/panel?from=barrid"
       className={`mt-5 flex w-full items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 active:scale-[0.99] ${
         compact ? "px-4 py-3.5" : "px-4 py-3"
       }`}
@@ -244,7 +246,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
   const appShell = useAppMobileShell();
   const canRedeem = props.canRedeemCoupons;
 
-  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [sheetExpanded, setSheetExpanded] = useState(Boolean(props.initialSheetExpanded));
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [credError, setCredError] = useState<string | null>(null);
   const [loadingCred, setLoadingCred] = useState(canRedeem);
@@ -377,11 +379,13 @@ export default function BarrIdClient(props: BarrIdClientProps) {
             )}
           </div>
         </div>
-        <div className="absolute inset-x-0 z-20 bottom-0 top-[max(0.75rem,env(safe-area-inset-top,0px))] overflow-hidden pointer-events-none">
+        <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
           <div
             ref={sheetRef}
-            className={`pointer-events-auto mx-auto w-full h-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] will-change-transform transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              sheetExpanded ? "translate-y-0" : "translate-y-[calc(100%-7.25rem)]"
+            className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] transition-[max-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              sheetExpanded
+                ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)]"
+                : "max-h-[7.25rem]"
             }`}
             onTouchStart={onSheetTouchStart}
             onTouchEnd={onSheetTouchEnd}
@@ -413,12 +417,8 @@ export default function BarrIdClient(props: BarrIdClientProps) {
               </button>
             )}
 
-            <div
-              className={`flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5 transition-opacity duration-500 ease-out ${
-                sheetExpanded ? "opacity-100" : "opacity-0 pointer-events-none"
-              }`}
-              aria-hidden={!sheetExpanded}
-            >
+            {sheetExpanded ? (
+              <div className="overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5">
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-200 shrink-0 border-[3px] border-amber-400/70">
                     {props.user.image ? (
@@ -502,6 +502,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                   </a>
                 </p>
               </div>
+            ) : null}
           </div>
         </div>
       </div>

@@ -25,13 +25,13 @@ export function getMapFocusPanOffsetPx(
       ? Math.round(window.visualViewport?.height ?? window.innerHeight)
       : 700;
   const safeTop = Math.max(0, readCssPxVar("--safe-area-inset-top"));
-  // Globo bajo el notch, con menos aire que antes (pin un poco más arriba).
+  // Globo bajo el notch; pin un poco más cerca del safe-area superior.
   const topPad = stampPopup
-    ? Math.round(safeTop + 28 + 148)
-    : Math.round(safeTop + 18);
+    ? Math.round(safeTop + 24 + 148)
+    : Math.round(safeTop + 12);
   const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight) : 0;
   const usable = Math.max(140, H - topPad - bottomPad);
-  const targetFromTop = topPad + usable * (stampPopup ? 0.52 : 0.45);
+  const targetFromTop = topPad + usable * (stampPopup ? 0.48 : 0.38);
   return Math.round(H / 2 - targetFromTop);
 }
 

@@ -377,6 +377,13 @@ export default function PasaporteBookMobile({
   }, []);
 
   const settle = useCallback((next: number) => {
+    // El drag muta el transform en el DOM; si next === pageIndex React
+    // puede no reescribir el style y la hoja queda un poco arriba del hub.
+    const el = trackRef.current;
+    if (el) {
+      el.style.transition = "transform 460ms cubic-bezier(0.22, 1, 0.36, 1)";
+      el.style.transform = `translate3d(0, ${-next * 100}%, 0)`;
+    }
     setPageIndex(next);
     setAnimating(true);
     window.setTimeout(() => setAnimating(false), 460);

@@ -5,8 +5,21 @@ import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Socio } from "../data/socios";
-import { leafletFlyToWithBottomBias } from "@/lib/map-focus-pan";
+import { getMapFocusPanOffsetPx, leafletFlyToWithBottomBias } from "@/lib/map-focus-pan";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
+import type { UserMapLocation } from "@/app/mapa/user-map-location";
+
+function makeUserDotIcon(): L.DivIcon {
+  return L.divIcon({
+    className: "user-location-marker",
+    html: `<div style="
+      width:16px;height:16px;background:#3b82f6;border:3px solid #fff;border-radius:50%;
+      box-shadow:0 1px 6px rgba(37,99,235,.45);
+    "></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+}
 
 function makeIcon(selected: boolean, hasBenefit: boolean) {
   const size = selected ? 20 : 11;
@@ -51,7 +64,7 @@ function FocusSelected({
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      const offsetY = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.5) : 0;
+      const offsetY = getMapFocusPanOffsetPx(bottomSheetHeight, false);
       leafletFlyToWithBottomBias(map, [point.lat, point.lng], 17, offsetY, idChanged ? 0.4 : 0);
     }, idChanged ? 280 : 260);
 
@@ -137,12 +150,14 @@ export default function SociosMapLeaflet({
   onSelect,
   immersive = false,
   bottomSheetHeight = 0,
+  userLocation = null,
 }: {
   socios: Socio[];
   selectedId?: number | null;
   onSelect?: (id: number) => void;
   immersive?: boolean;
   bottomSheetHeight?: number;
+  userLocation?: UserMapLocation | null;
 }) {
   const puntos = useMemo(
     () =>
@@ -159,6 +174,7 @@ export default function SociosMapLeaflet({
   const center: [number, number] = puntos[0]
     ? [puntos[0].lat, puntos[0].lng]
     : [19.0414, -98.2063];
+  const userIcon = useMemo(() => makeUserDotIcon(), []);
 
   return (
     <div
@@ -179,6 +195,26 @@ export default function SociosMapLeaflet({
           puntos={puntos}
           bottomSheetHeight={bottomSheetHeight}
         />
+        {userLocation ? (
+          <>
+            <Circle
+              center={[userLocation.latitude, userLocation.longitude]}
+              radius={userLocation.accuracy ?? 25}
+              pathOptions={{
+                color: "#3b82f6",
+                fillColor: "#3b82f6",
+                fillOpacity: 0.12,
+                weight: 1,
+              }}
+            />
+            <Marker
+              position={[userLocation.latitude, userLocation.longitude]}
+              icon={userIcon}
+              zIndexOffset={1000}
+              interactive={false}
+            />
+          </>
+        ) : null}
         {puntos.map((p) => (
           <SocioMarker
             key={p.socio.id}

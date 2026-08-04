@@ -12,6 +12,7 @@ export function revalidatePublicSocios() {
   revalidateTag(PUBLIC_SOCIOS_TAG, "max");
   revalidatePath("/cuponera");
   revalidatePath("/mapa");
+  revalidatePath("/pasaporte");
   revalidatePath("/");
   revalidatePath("/inicio");
 }

@@ -28,7 +28,12 @@ export const metadata = {
 export default async function BarrIdPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pago?: string; bienvenida?: string; success?: string }>;
+  searchParams: Promise<{
+    pago?: string;
+    bienvenida?: string;
+    success?: string;
+    ficha?: string;
+  }>;
 }) {
   const params = await searchParams;
   const session = await getSession();
@@ -107,6 +112,7 @@ export default async function BarrIdPage({
           progress={progress}
           canRedeemCoupons={canRedeemCoupons}
           isFirstLoginUser={isFirstLoginAccount(user?.createdAt)}
+          initialSheetExpanded={params.ficha === "1"}
         />
       </main>
       <div className="hidden md:block shrink-0">

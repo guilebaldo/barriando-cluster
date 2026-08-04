@@ -11,6 +11,7 @@ import {
   isSyntheticSocioId,
 } from "@/lib/publish-business";
 import { PUBLIC_SOCIOS_TAG } from "@/lib/public-socios-tag";
+import { resolveSocioDisplayName } from "@/lib/socio-display-name";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 /** Si Business está a más de esto del pin curado, suele ser viewport de embed (no el pin). */
@@ -280,8 +281,8 @@ function catalogSocioFromRoster(
   businesses: Map<number, { website: string | null; mapsUrl: string | null; latitude: number | null; longitude: number | null }>
 ): Socio | null {
   const catalog = listaSocios.find((s) => s.id === socioId);
-  const name = membership.businessName?.trim() || catalog?.name;
-  if (!name) return null;
+  const name = resolveSocioDisplayName(socioId, membership.businessName, catalog?.name);
+  if (!name || /^socio\s*#?\s*\d+$/i.test(name)) return null;
 
   const overrideUrl = websiteOverrides.get(socioId);
   const biz = businesses.get(socioId);
@@ -332,7 +333,12 @@ function userToSocio(
   if (catalog) {
     return {
       ...catalog,
-      name: name || roster?.businessName?.trim() || catalog.name,
+      name: resolveSocioDisplayName(
+        socioId,
+        name,
+        roster?.businessName,
+        catalog.name
+      ),
       url: profile.website?.trim() || overrideUrl || catalog.url,
       direccion: mapsLinkFrom(profile.googleBusinessUrl, catalog.direccion),
       categoria:
@@ -464,7 +470,7 @@ async function fetchPublicSociosList(): Promise<Socio[]> {
 /** Socios visibles en /cuponera: solo membresía de negocio activa (roster o usuario). */
 export const getPublicSociosList = unstable_cache(
   fetchPublicSociosList,
-  ["public-socios-list-v1"],
+  ["public-socios-list-v2"],
   { revalidate: 120, tags: [PUBLIC_SOCIOS_TAG] }
 );
 

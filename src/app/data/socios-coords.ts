@@ -102,8 +102,8 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "name": "Hotel Casa de la Palma"
   },
   "21": {
-    "lat": 19.041085068928258,
-    "lng": -98.19616092692185,
+    "lat": 19.04097763294165,
+    "lng": -98.19628465965523,
     "name": "Perla L'Hotel Boutique"
   },
   "22": {
@@ -117,8 +117,8 @@ export const sociosCoords: Record<number, SocioCoord> = {
     "name": "Priesca"
   },
   "24": {
-    "lat": 19.040860338225055,
-    "lng": -98.19590663073208,
+    "lat": 19.040903470661313,
+    "lng": -98.19587428167101,
     "name": "Restauro"
   },
   "25": {

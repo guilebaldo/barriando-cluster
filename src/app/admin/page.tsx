@@ -45,7 +45,7 @@ export default async function AdminPage({
   return (
     <SiteShell>
       <Navbar />
-      <main className="admin-touch-forms flex-1 min-h-0 w-full max-w-7xl mx-auto py-8 sm:py-12 px-4 sm:px-6 overflow-y-auto overflow-x-hidden overscroll-y-none md:overscroll-auto">
+      <main className="admin-touch-forms flex-1 min-h-0 w-full max-w-7xl mx-auto pt-[max(2rem,calc(env(safe-area-inset-top,0px)+0.75rem))] pb-8 sm:py-12 px-4 sm:px-6 overflow-y-auto overflow-x-hidden overscroll-y-none md:overscroll-auto">
         <AdminDashboard
           users={users}
           testimonials={testimonials}

@@ -51,6 +51,11 @@ function triggerAnchorDownload(file: File): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 2_500);
 }
 
+/** Descarga directa (sin hoja de compartir). Útil en admin / escritorio. */
+export function downloadFile(file: File): void {
+  triggerAnchorDownload(file);
+}
+
 export type ShareOrDownloadResult = "shared" | "downloaded" | "aborted";
 
 /**

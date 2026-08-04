@@ -3,16 +3,24 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Download, FileDown, Share2 } from "lucide-react";
+import { listaSocios } from "@/app/data/socios";
 import { buildSellarPath, restaurantSlug } from "@/lib/pasaporte";
 import { canOfferPassportStamp } from "@/lib/plan-visibility";
 import { buildPassportTableDisplayPdfBlob } from "@/lib/passport-table-display-pdf";
-import { dataUrlToFile, shareOrDownloadFile, shouldOfferNativeShare } from "@/lib/share-file";
+import {
+  dataUrlToFile,
+  downloadFile,
+  shareOrDownloadFile,
+  shouldOfferNativeShare,
+} from "@/lib/share-file";
+import { resolveSocioDisplayName } from "@/lib/socio-display-name";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 type Props = {
   businessName: string;
   category?: string | null;
   plan?: MembershipPlan | null;
+  socioId?: number | null;
   disabled?: boolean;
 };
 
@@ -20,14 +28,20 @@ type Props = {
 export default function AdminEstablishmentQrButton({
   businessName,
   plan,
+  socioId = null,
   disabled,
 }: Props) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [pngBusy, setPngBusy] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [shareCapable, setShareCapable] = useState(false);
-  const canStamp = canOfferPassportStamp(plan) && Boolean(businessName.trim());
-  const name = businessName.trim();
+
+  const catalog = socioId != null ? listaSocios.find((s) => s.id === socioId) ?? null : null;
+  const name =
+    socioId != null
+      ? resolveSocioDisplayName(socioId, businessName, catalog?.name)
+      : businessName.trim();
+  const canStamp = canOfferPassportStamp(plan) && Boolean(name);
   const slug = canStamp ? restaurantSlug({ name }) : null;
   const absoluteUrl =
     typeof window !== "undefined" && slug
@@ -65,6 +79,17 @@ export default function AdminEstablishmentQrButton({
   }, [slug]);
 
   if (!canStamp) return null;
+
+  async function handleDownloadPng() {
+    if (!dataUrl || !slug) return;
+    setPngBusy(true);
+    try {
+      const file = await dataUrlToFile(dataUrl, `qr-sello-${slug}.png`, "image/png");
+      downloadFile(file);
+    } finally {
+      setPngBusy(false);
+    }
+  }
 
   async function handleSharePng() {
     if (!dataUrl || !slug) return;
@@ -104,18 +129,26 @@ export default function AdminEstablishmentQrButton({
     <>
       <button
         type="button"
-        title={
-          shareCapable
-            ? "Compartir / guardar QR de sello Pasaporte"
-            : "Descargar QR de sello Pasaporte"
-        }
+        title="Descargar QR de sello Pasaporte"
         disabled={disabled || !dataUrl || pngBusy}
-        onClick={() => void handleSharePng()}
+        onClick={() => void handleDownloadPng()}
         className="p-2 rounded-lg text-amber-700 hover:bg-amber-50 disabled:opacity-40"
       >
-        {shareCapable ? <Share2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-        <span className="sr-only">{shareCapable ? "Compartir QR" : "Descargar QR"}</span>
+        <Download className="w-4 h-4" />
+        <span className="sr-only">Descargar QR</span>
       </button>
+      {shareCapable ? (
+        <button
+          type="button"
+          title="Compartir QR de sello Pasaporte"
+          disabled={disabled || !dataUrl || pngBusy}
+          onClick={() => void handleSharePng()}
+          className="p-2 rounded-lg text-amber-700/80 hover:bg-amber-50 disabled:opacity-40"
+        >
+          <Share2 className="w-4 h-4" />
+          <span className="sr-only">Compartir QR</span>
+        </button>
+      ) : null}
       <button
         type="button"
         title={
