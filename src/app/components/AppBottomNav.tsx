@@ -75,6 +75,7 @@ export default function AppBottomNav() {
   return (
     <nav
       className="app-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-[70] bg-[#27366D] pb-[env(safe-area-inset-bottom,0px)]"
+      style={{ transform: "translate3d(0, calc(-1 * var(--vv-offset-top, 0px)), 0)" }}
       aria-label="Navegación de app"
     >
       <ul className="grid grid-cols-5 h-14 max-w-lg mx-auto border-t border-[#1e2b58]">

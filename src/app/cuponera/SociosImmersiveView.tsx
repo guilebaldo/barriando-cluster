@@ -316,6 +316,33 @@ export default function SociosImmersiveView({
           <h2 className="text-lg font-black font-serif-cluster text-[#27366D] leading-tight mt-0.5">
             {selectedSocio.name}
           </h2>
+          {(selectedSocio.url && selectedSocio.url !== "#") ||
+          (selectedSocio.direccion && /^https?:\/\//i.test(selectedSocio.direccion)) ? (
+            <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-slate-500">
+              {selectedSocio.url && selectedSocio.url !== "#" ? (
+                <a
+                  href={selectedSocio.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 underline decoration-slate-300 underline-offset-2 hover:text-[#27366D]"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Sitio web
+                </a>
+              ) : null}
+              {selectedSocio.direccion && /^https?:\/\//i.test(selectedSocio.direccion) ? (
+                <a
+                  href={selectedSocio.direccion}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 underline decoration-slate-300 underline-offset-2 hover:text-[#27366D]"
+                >
+                  <MapPin className="w-3 h-3" />
+                  Google Maps
+                </a>
+              ) : null}
+            </p>
+          ) : null}
           {selectedSocio.benefit ? (
             <div className="mt-1.5 space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -355,34 +382,6 @@ export default function SociosImmersiveView({
           <Gift className="w-4 h-4" />
           Activar cupón
         </button>
-      ) : null}
-
-      {(selectedSocio.url && selectedSocio.url !== "#") ||
-      (selectedSocio.direccion && /^https?:\/\//i.test(selectedSocio.direccion)) ? (
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-slate-500">
-          {selectedSocio.url && selectedSocio.url !== "#" ? (
-            <a
-              href={selectedSocio.url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 underline decoration-slate-300 underline-offset-2 hover:text-[#27366D]"
-            >
-              <ExternalLink className="w-3 h-3" />
-              Sitio web
-            </a>
-          ) : null}
-          {selectedSocio.direccion && /^https?:\/\//i.test(selectedSocio.direccion) ? (
-            <a
-              href={selectedSocio.direccion}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 underline decoration-slate-300 underline-offset-2 hover:text-[#27366D]"
-            >
-              <MapPin className="w-3 h-3" />
-              Google Maps
-            </a>
-          ) : null}
-        </p>
       ) : null}
     </div>
   );

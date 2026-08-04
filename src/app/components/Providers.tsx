@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import type { Session } from "next-auth";
 import SessionRefetchOnShow from "./SessionRefetchOnShow";
 import AppBottomNav from "./AppBottomNav";
+import StandaloneViewportFix from "./StandaloneViewportFix";
 import { ensureInstallPromptListener } from "@/lib/add-to-home-screen";
 
 /**
@@ -26,6 +27,7 @@ export default function Providers({
   return (
     <SessionProvider session={session} basePath="/api/auth" refetchOnWindowFocus>
       <SessionRefetchOnShow />
+      <StandaloneViewportFix />
       {children}
       {/* Persistente: no remontar el hub en cada página (rompe anclaje en standalone). */}
       <AppBottomNav />
