@@ -392,12 +392,17 @@ export default function SociosImmersiveView({
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
-            type="text"
+            type="search"
             placeholder="Buscar socio o giro…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => {
+              if (sheetMode === "peek") setSheetMode("half");
+            }}
             enterKeyHint="search"
             autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             className={`w-full pl-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white ${
               searchQuery ? "pr-10" : "pr-3"
             }`}
@@ -577,7 +582,8 @@ export default function SociosImmersiveView({
       />
 
       <div
-        className="absolute inset-x-0 bottom-0 z-20 pointer-events-none"
+        className="absolute inset-x-0 bottom-0 z-20 pointer-events-none transition-[bottom] duration-200 ease-out"
+        style={{ bottom: "var(--keyboard-inset, 0px)" }}
         onTouchStart={onSheetTouchStart}
         onTouchEnd={onSheetTouchEnd}
       >
