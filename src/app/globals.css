@@ -14,8 +14,6 @@
     --app-hub-offset: 0px;
     /* Alto del teclado nativo (StandaloneViewportFix). */
     --keyboard-inset: 0px;
-    /* Hueco bajo el layout viewport tras cerrar el teclado (iOS PWA). */
-    --hub-gap-fix: 0px;
   }
 
   body {
@@ -36,9 +34,7 @@
   /* Shell app móvil: hueco al tab bar. */
   @media (max-width: 767px) {
     html.app-mobile-shell {
-      --app-hub-offset: calc(3.5rem + env(safe-area-inset-bottom, 0px) + var(--hub-gap-fix, 0px));
-      /* Si iOS deja píxeles bajo el layout viewport, que no se vean blancos. */
-      background-color: #27366D;
+      --app-hub-offset: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     /* Shells immersive + Ajustes: 100dvh + padding del hub. */
@@ -54,11 +50,9 @@
     /* Páginas con scroll genéricas (pago, etc.): hueco bajo el hub.
        Las páginas con shell lo anulan desde useImmersiveScrollLock: no con
        :has(), que Chrome ignora antes de la 105 y dejaría el documento 90px
-       más alto que la pantalla en Android viejo.
-       Fondo navy: tapa la franja que iOS deja bajo el layout tras el teclado. */
+       más alto que la pantalla en Android viejo. */
     html.app-mobile-shell body {
       padding-bottom: var(--app-hub-offset);
-      background-color: #27366D;
     }
 
     /* Hub activo: sin footer de marketing (PIPOPETL, blog, equipo, etc.) */
@@ -76,20 +70,9 @@
       padding-bottom: 0.5rem;
     }
 
-    /*
-     * Hub: si iOS deja el viewport corto tras el teclado, bajamos el nav
-     * (`bottom` negativo) y alargamos el padding para llenar la franja.
-     * html/body ya son navy de respaldo.
-     */
-    .app-bottom-nav {
-      bottom: calc(-1 * var(--hub-gap-fix, 0px));
-      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--hub-gap-fix, 0px));
-      overflow: visible;
-    }
-
-    /* Teclado abierto: esconde el hub para no tapar el input ni pelear con iOS. */
+    /* Teclado abierto: esconde el hub; al cerrar StandaloneViewportFix lo re-ancla. */
     html[data-keyboard-open] .app-bottom-nav {
-      transform: translate3d(0, 100%, 0);
+      transform: translate3d(0, 110%, 0) !important;
       pointer-events: none;
     }
   }

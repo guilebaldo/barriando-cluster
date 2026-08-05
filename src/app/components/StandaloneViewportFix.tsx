@@ -5,11 +5,11 @@ import { useEffect } from "react";
 const KEYBOARD_OPEN_PX = 100;
 
 /**
- * iOS standalone + teclado:
- * - `--keyboard-inset`: sube fichas mientras se escribe
- * - `data-keyboard-open`: esconde el hub
- * - `--hub-gap-fix`: cuando iOS deja el layout viewport más bajo que
- *   antes del teclado, empuja el hub hacia abajo a tapar la franja
+ * iOS standalone: tras cerrar el teclado, `position: fixed; bottom: 0`
+ * se queda calculado como si el teclado siguiera abierto → el hub flota.
+ *
+ * Solución: anclar el hub al borde inferior del visualViewport en cada
+ * resize/scroll, y al blur forzar un reflow (display) + scrollTo(0,0).
  */
 export default function StandaloneViewportFix() {
   useEffect(() => {
@@ -18,51 +18,79 @@ export default function StandaloneViewportFix() {
 
     let frame = 0;
     let closeTimers: number[] = [];
-    let baselineHeight = Math.max(
-      window.innerHeight,
-      vv?.height ?? 0,
-      root.clientHeight
-    );
+
+    const nav = () =>
+      document.querySelector<HTMLElement>(".app-bottom-nav");
 
     const clearCloseTimers = () => {
       for (const id of closeTimers) window.clearTimeout(id);
       closeTimers = [];
     };
 
-    const setGapFix = (px: number) => {
-      root.style.setProperty("--hub-gap-fix", `${Math.max(0, Math.round(px))}px`);
+    const clearNavPin = () => {
+      const el = nav();
+      if (!el) return;
+      el.style.top = "";
+      el.style.bottom = "";
+      el.style.transform = "";
     };
 
-    const applyKeyboard = (inset: number, open: boolean) => {
+    /** Pega el hub al fondo del visual viewport (coordenadas del layout). */
+    const pinHub = () => {
+      const el = nav();
+      if (!el || !vv) return;
+
+      if (root.hasAttribute("data-keyboard-open")) {
+        // Lo esconde el CSS; no pelear con el transform.
+        el.style.top = "";
+        el.style.bottom = "";
+        return;
+      }
+
+      const height = el.offsetHeight || Math.round(56 + (Number.parseFloat(
+        getComputedStyle(root).getPropertyValue("--safe-area-inset-bottom")
+      ) || 0));
+      const top = Math.round(vv.offsetTop + vv.height - height);
+      el.style.bottom = "auto";
+      el.style.top = `${Math.max(0, top)}px`;
+      el.style.transform = "";
+    };
+
+    const setKeyboardOpen = (open: boolean, inset = 0) => {
       root.style.setProperty("--keyboard-inset", `${Math.max(0, Math.round(inset))}px`);
       if (open) root.setAttribute("data-keyboard-open", "");
       else root.removeAttribute("data-keyboard-open");
     };
 
-    const recoverAfterKeyboard = () => {
+    /** WebKit a veces deja el fixed “congelado”; ocultar/mostrar lo despega. */
+    const unstickHub = () => {
+      const el = nav();
       window.scrollTo(0, 0);
       if (document.body.scrollTop) document.body.scrollTop = 0;
       if (root.scrollTop) root.scrollTop = 0;
 
-      const gap = Math.max(0, baselineHeight - window.innerHeight);
-      setGapFix(gap);
-      applyKeyboard(0, false);
+      setKeyboardOpen(false, 0);
 
-      // Si el viewport se recupera un momento después, limpiar el fix.
-      window.setTimeout(() => {
-        if (window.innerHeight >= baselineHeight - 2) {
-          baselineHeight = Math.max(baselineHeight, window.innerHeight);
-          setGapFix(0);
-        }
-      }, 400);
+      if (el) {
+        const prev = el.style.display;
+        el.style.display = "none";
+        void el.offsetHeight;
+        el.style.display = prev;
+      }
+
+      // Dos frames: el viewport termina de asentarse.
+      requestAnimationFrame(() => {
+        pinHub();
+        requestAnimationFrame(pinHub);
+      });
     };
 
     const sync = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         if (!vv) {
-          applyKeyboard(0, false);
-          setGapFix(0);
+          setKeyboardOpen(false, 0);
+          clearNavPin();
           return;
         }
 
@@ -71,9 +99,7 @@ export default function StandaloneViewportFix() {
 
         if (open) {
           clearCloseTimers();
-          // No actualizar baseline con el alto reducido del teclado.
-          setGapFix(0);
-          applyKeyboard(inset, true);
+          setKeyboardOpen(true, inset);
 
           const active = document.activeElement;
           if (
@@ -87,14 +113,8 @@ export default function StandaloneViewportFix() {
           return;
         }
 
-        // Teclado cerrado: recordar el alto “sano” y medir si iOS lo dejó corto.
-        if (window.innerHeight >= baselineHeight - 2) {
-          baselineHeight = Math.max(baselineHeight, window.innerHeight);
-          setGapFix(0);
-        } else {
-          setGapFix(baselineHeight - window.innerHeight);
-        }
-        applyKeyboard(0, false);
+        setKeyboardOpen(false, 0);
+        pinHub();
       });
     };
 
@@ -107,11 +127,12 @@ export default function StandaloneViewportFix() {
         return;
       }
       clearCloseTimers();
-      closeTimers = [80, 320, 600, 900].map((ms) =>
+      // El teclado iOS anima ~300ms; despegar en varios ticks.
+      closeTimers = [100, 350, 600, 1000].map((ms) =>
         window.setTimeout(() => {
           sync();
           if (!root.hasAttribute("data-keyboard-open")) {
-            recoverAfterKeyboard();
+            unstickHub();
           }
         }, ms)
       );
@@ -127,21 +148,11 @@ export default function StandaloneViewportFix() {
       ) {
         return;
       }
-      // Capturar alto real justo antes de que el teclado encoja el viewport.
-      if (!root.hasAttribute("data-keyboard-open")) {
-        baselineHeight = Math.max(baselineHeight, window.innerHeight, vv?.height ?? 0);
-      }
       window.setTimeout(() => {
         sync();
         target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
       }, 50);
       window.setTimeout(sync, 300);
-    };
-
-    const onOrientation = () => {
-      baselineHeight = Math.max(window.innerHeight, vv?.height ?? 0);
-      setGapFix(0);
-      sync();
     };
 
     sync();
@@ -150,7 +161,11 @@ export default function StandaloneViewportFix() {
     window.addEventListener("resize", sync);
     window.addEventListener("focusin", onFocusIn);
     window.addEventListener("focusout", onFocusOut);
-    window.addEventListener("orientationchange", onOrientation);
+    window.addEventListener("orientationchange", () => {
+      clearNavPin();
+      window.setTimeout(unstickHub, 100);
+      window.setTimeout(sync, 300);
+    });
 
     return () => {
       cancelAnimationFrame(frame);
@@ -160,7 +175,7 @@ export default function StandaloneViewportFix() {
       window.removeEventListener("resize", sync);
       window.removeEventListener("focusin", onFocusIn);
       window.removeEventListener("focusout", onFocusOut);
-      window.removeEventListener("orientationchange", onOrientation);
+      clearNavPin();
       root.style.removeProperty("--keyboard-inset");
       root.style.removeProperty("--hub-gap-fix");
       root.removeAttribute("data-keyboard-open");
