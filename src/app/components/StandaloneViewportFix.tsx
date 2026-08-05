@@ -5,11 +5,11 @@ import { useEffect } from "react";
 const KEYBOARD_OPEN_PX = 100;
 
 /**
- * iOS standalone / Safari + teclado nativo:
- * 1) Publica `--keyboard-inset` (alto del teclado) para subir fichas/inputs.
- * 2) Marca `html[data-keyboard-open]` para ocultar el hub mientras se escribe.
- * 3) Al cerrar, resetea scroll y recupera el viewport (evita franja blanca
- *    bajo el hub). Un ::after del hub cubre residuales.
+ * iOS standalone + teclado:
+ * - `--keyboard-inset`: sube fichas mientras se escribe
+ * - `data-keyboard-open`: esconde el hub
+ * - `--hub-gap-fix`: cuando iOS deja el layout viewport más bajo que
+ *   antes del teclado, empuja el hub hacia abajo a tapar la franja
  */
 export default function StandaloneViewportFix() {
   useEffect(() => {
@@ -18,13 +18,22 @@ export default function StandaloneViewportFix() {
 
     let frame = 0;
     let closeTimers: number[] = [];
+    let baselineHeight = Math.max(
+      window.innerHeight,
+      vv?.height ?? 0,
+      root.clientHeight
+    );
 
     const clearCloseTimers = () => {
       for (const id of closeTimers) window.clearTimeout(id);
       closeTimers = [];
     };
 
-    const apply = (inset: number, open: boolean) => {
+    const setGapFix = (px: number) => {
+      root.style.setProperty("--hub-gap-fix", `${Math.max(0, Math.round(px))}px`);
+    };
+
+    const applyKeyboard = (inset: number, open: boolean) => {
       root.style.setProperty("--keyboard-inset", `${Math.max(0, Math.round(inset))}px`);
       if (open) root.setAttribute("data-keyboard-open", "");
       else root.removeAttribute("data-keyboard-open");
@@ -35,30 +44,36 @@ export default function StandaloneViewportFix() {
       if (document.body.scrollTop) document.body.scrollTop = 0;
       if (root.scrollTop) root.scrollTop = 0;
 
-      // Truco iOS: forzar reflow del layout viewport tras cerrar el teclado.
-      const prev = root.style.height;
-      root.style.height = `${window.innerHeight}px`;
-      void root.offsetHeight;
-      root.style.height = prev;
+      const gap = Math.max(0, baselineHeight - window.innerHeight);
+      setGapFix(gap);
+      applyKeyboard(0, false);
 
-      apply(0, false);
+      // Si el viewport se recupera un momento después, limpiar el fix.
+      window.setTimeout(() => {
+        if (window.innerHeight >= baselineHeight - 2) {
+          baselineHeight = Math.max(baselineHeight, window.innerHeight);
+          setGapFix(0);
+        }
+      }, 400);
     };
 
     const sync = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         if (!vv) {
-          apply(0, false);
+          applyKeyboard(0, false);
+          setGapFix(0);
           return;
         }
 
-        // Distancia entre el borde inferior del layout y el del visual viewport.
         const inset = Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0));
         const open = inset >= KEYBOARD_OPEN_PX;
 
         if (open) {
           clearCloseTimers();
-          apply(inset, true);
+          // No actualizar baseline con el alto reducido del teclado.
+          setGapFix(0);
+          applyKeyboard(inset, true);
 
           const active = document.activeElement;
           if (
@@ -67,13 +82,19 @@ export default function StandaloneViewportFix() {
               active.tagName === "TEXTAREA" ||
               active.isContentEditable)
           ) {
-            // Con overflow del documento bloqueado, iOS no scrollea solo.
             active.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
           }
           return;
         }
 
-        apply(0, false);
+        // Teclado cerrado: recordar el alto “sano” y medir si iOS lo dejó corto.
+        if (window.innerHeight >= baselineHeight - 2) {
+          baselineHeight = Math.max(baselineHeight, window.innerHeight);
+          setGapFix(0);
+        } else {
+          setGapFix(baselineHeight - window.innerHeight);
+        }
+        applyKeyboard(0, false);
       });
     };
 
@@ -85,9 +106,8 @@ export default function StandaloneViewportFix() {
       ) {
         return;
       }
-      // El teclado anima ~300ms; recuperar en varios ticks.
       clearCloseTimers();
-      closeTimers = [50, 280, 500, 800].map((ms) =>
+      closeTimers = [80, 320, 600, 900].map((ms) =>
         window.setTimeout(() => {
           sync();
           if (!root.hasAttribute("data-keyboard-open")) {
@@ -107,11 +127,21 @@ export default function StandaloneViewportFix() {
       ) {
         return;
       }
+      // Capturar alto real justo antes de que el teclado encoja el viewport.
+      if (!root.hasAttribute("data-keyboard-open")) {
+        baselineHeight = Math.max(baselineHeight, window.innerHeight, vv?.height ?? 0);
+      }
       window.setTimeout(() => {
         sync();
         target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
       }, 50);
       window.setTimeout(sync, 300);
+    };
+
+    const onOrientation = () => {
+      baselineHeight = Math.max(window.innerHeight, vv?.height ?? 0);
+      setGapFix(0);
+      sync();
     };
 
     sync();
@@ -120,7 +150,7 @@ export default function StandaloneViewportFix() {
     window.addEventListener("resize", sync);
     window.addEventListener("focusin", onFocusIn);
     window.addEventListener("focusout", onFocusOut);
-    window.addEventListener("orientationchange", sync);
+    window.addEventListener("orientationchange", onOrientation);
 
     return () => {
       cancelAnimationFrame(frame);
@@ -130,8 +160,9 @@ export default function StandaloneViewportFix() {
       window.removeEventListener("resize", sync);
       window.removeEventListener("focusin", onFocusIn);
       window.removeEventListener("focusout", onFocusOut);
-      window.removeEventListener("orientationchange", sync);
+      window.removeEventListener("orientationchange", onOrientation);
       root.style.removeProperty("--keyboard-inset");
+      root.style.removeProperty("--hub-gap-fix");
       root.removeAttribute("data-keyboard-open");
     };
   }, []);
