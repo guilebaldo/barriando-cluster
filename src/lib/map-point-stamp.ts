@@ -1,12 +1,8 @@
 import { listaSocios, type Socio } from "@/app/data/socios";
 import type { MapRoutePoint } from "@/lib/map-route-client";
 
-/** Campaña activa: Chiles en Nogada. */
-export const SEASONAL_STAMP_LABEL = "Temporada";
-/** Nombre completo (fichas, títulos, metadatos). */
+/** Campaña activa: texto en la cara del sello (popup MAPA / Pasaporte). */
 export const SEASONAL_STAMP_SUBTITLE = "Chiles en Nogada";
-/** Texto corto en la cara del sello circular (debe caber entero). */
-export const SEASONAL_STAMP_BADGE_TEXT = "Nogada";
 
 export type StampDisplayInfo = {
   kind: "seasonal_nogada";
@@ -99,16 +95,15 @@ export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
   row.className = "mt-1.5 flex items-center gap-2";
   row.innerHTML = `
     <div style="
-      width:64px;height:64px;border-radius:50%;flex-shrink:0;
-      background:linear-gradient(145deg,#fbbf24 0%,#f59e0b 55%,#d97706 100%);
-      border:2px solid #92400e;
+      width:88px;height:88px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(145deg,#fbbf24 0%,#f59e0b 45%,#d97706 100%);
+      border:3px solid #b45309;
       display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:4px;
+      padding:8px;
       box-shadow:0 4px 10px rgba(146,64,14,0.25);
     ">
-      <img src="${stamp.logoSrc}" alt="" style="width:22px;height:22px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'" />
-      <span style="font-size:6px;font-weight:800;color:#422006;text-transform:uppercase;letter-spacing:0.04em;line-height:1;text-align:center;margin-top:2px;flex-shrink:0;">${SEASONAL_STAMP_LABEL}</span>
-      <span style="font-size:10px;font-weight:900;color:#1c1917;line-height:1;text-align:center;flex-shrink:0;">${SEASONAL_STAMP_BADGE_TEXT}</span>
+      <img src="${stamp.logoSrc}" alt="" style="width:36px;height:36px;object-fit:contain;" onerror="this.style.display='none'" />
+      <span style="font-size:8px;font-weight:900;color:#1c1917;line-height:1.15;text-align:center;margin-top:2px;padding:0 2px;">${stamp.subtitle}</span>
     </div>
     <p style="font-size:10px;color:#475569;line-height:1.35;margin:0;">
       Escanea el QR en el local para sellar tu Pasaporte.

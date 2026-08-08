@@ -1,53 +1,46 @@
 import Image from "next/image";
-import {
-  SEASONAL_STAMP_BADGE_TEXT,
-  SEASONAL_STAMP_LABEL,
-} from "@/lib/map-point-stamp";
+import { SEASONAL_STAMP_SUBTITLE } from "@/lib/map-point-stamp";
 
+/**
+ * Mismo sello dorado del popup MAPA (`MapStampPreview` original):
+ * logo + "Chiles en Nogada" (sin la etiqueta "Temporada").
+ */
 const SIZE = {
+  /** Celda densa del pasaporte (escritorio / páginas internas). */
   sm: {
-    box: "w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20",
-    pad: "px-1 pt-1 pb-1.5",
-    img: 28,
-    imgClass: "w-6 h-6 sm:w-7 sm:h-7",
-    label: "text-[5.5px] sm:text-[6px]",
-    word: "text-[9px] sm:text-[10px]",
-  },
-  md: {
-    box: "w-[5.05rem] h-[5.05rem]",
-    pad: "px-1.5 pt-1.5 pb-2",
+    box: "w-[4.75rem] h-[4.75rem] sm:w-[5.25rem] sm:h-[5.25rem]",
     img: 32,
     imgClass: "w-8 h-8",
-    label: "text-[6.5px]",
-    word: "text-[11px]",
+    text: "text-[7px] sm:text-[8px]",
   },
-  lg: {
-    box: "w-[5.5rem] h-[5.5rem]",
-    pad: "px-1.5 pt-1.5 pb-2",
+  /** Portada móvil / tamaño intermedio. */
+  md: {
+    box: "w-[5.25rem] h-[5.25rem]",
     img: 36,
     imgClass: "w-9 h-9",
-    label: "text-[7px]",
-    word: "text-[12px]",
+    text: "text-[8px]",
+  },
+  /** Popup MAPA (referencia visual). */
+  lg: {
+    box: "w-[5.5rem] h-[5.5rem]",
+    img: 40,
+    imgClass: "w-9 h-9",
+    text: "text-[8px]",
   },
 } as const;
 
 type Size = keyof typeof SIZE;
 
-/**
- * Sello dorado de temporada (mismo look que el popup del MAPA).
- * En la cara solo va la palabra corta "Nogada" para que no se corte.
- */
 export default function SeasonalStampBadge({
   logoSrc,
   alt = "",
-  badgeText = SEASONAL_STAMP_BADGE_TEXT,
+  subtitle = SEASONAL_STAMP_SUBTITLE,
   size = "lg",
   className = "",
 }: {
   logoSrc: string;
   alt?: string;
-  /** Palabra corta en el sello (default: Nogada). */
-  badgeText?: string;
+  subtitle?: string;
   size?: Size;
   className?: string;
 }) {
@@ -55,7 +48,7 @@ export default function SeasonalStampBadge({
 
   return (
     <div
-      className={`${s.box} ${s.pad} shrink-0 rounded-full flex flex-col items-center justify-center overflow-hidden shadow-lg border-[3px] border-amber-700 ${className}`}
+      className={`${s.box} shrink-0 rounded-full flex flex-col items-center justify-center p-2 shadow-lg border-[3px] border-amber-700 ${className}`}
       style={{
         background: "linear-gradient(145deg, #fbbf24 0%, #f59e0b 45%, #d97706 100%)",
       }}
@@ -65,18 +58,13 @@ export default function SeasonalStampBadge({
         alt={alt}
         width={s.img}
         height={s.img}
-        className={`${s.imgClass} object-contain shrink-0`}
+        className={`${s.imgClass} object-contain`}
         unoptimized
       />
       <span
-        className={`${s.label} font-extrabold uppercase tracking-wider text-amber-950/80 mt-0.5 leading-none shrink-0`}
+        className={`${s.text} font-black text-stone-900 leading-tight text-center mt-0.5 px-0.5`}
       >
-        {SEASONAL_STAMP_LABEL}
-      </span>
-      <span
-        className={`${s.word} font-black text-stone-900 leading-none text-center tracking-tight shrink-0`}
-      >
-        {badgeText}
+        {subtitle}
       </span>
     </div>
   );
