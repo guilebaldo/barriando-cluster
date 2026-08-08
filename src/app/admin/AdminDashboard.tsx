@@ -40,7 +40,7 @@ import AdminNotificationBadge from "@/app/components/AdminNotificationBadge";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
-import { computeAdminOpsStats } from "@/lib/admin-ops";
+import { computeAdminOpsStats, formatAdminTimestamp } from "@/lib/admin-ops";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
@@ -492,7 +492,7 @@ export default function AdminDashboard({
           initialFilter={initialOpsFilter}
         />
       ) : (
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden overscroll-y-contain">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
         <div className="px-3 sm:px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -521,8 +521,8 @@ export default function AdminDashboard({
               : `${(safeAccountsPage - 1) * ACCOUNTS_PAGE_SIZE + 1}–${Math.min(safeAccountsPage * ACCOUNTS_PAGE_SIZE, visibleUsers.length)} de ${visibleUsers.length}${query.trim() ? " (filtro)" : ""} · ${listTotal} total`}
           </p>
         </div>
-        <div className="overflow-x-auto touch-pan-y overscroll-x-contain">
-          <table className="w-full text-xs min-w-[720px] md:min-w-0">
+        <div className="overflow-x-auto overscroll-x-contain touch-pan-x">
+          <table className="w-full text-xs min-w-[860px]">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-[10px] uppercase tracking-wider text-slate-500">
                 <th className="px-4 py-3 w-10" />
@@ -532,13 +532,14 @@ export default function AdminDashboard({
                 <th className="px-4 py-3">Cuenta</th>
                 <th className="px-4 py-3">Método de pago</th>
                 <th className="px-4 py-3">Vencimiento</th>
+                <th className="px-4 py-3 whitespace-nowrap">Registro</th>
                 <th className="px-4 py-3 w-28 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {pageUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
+                  <td colSpan={9} className="px-4 py-10 text-center text-slate-500">
                     {query.trim()
                       ? "No hay cuentas que coincidan con tu búsqueda."
                       : "No hay cuentas registradas."}
@@ -741,6 +742,12 @@ function UserRows({
             stripeSubscriptionId: user.hasStripeSubscription,
           })}
         </td>
+        <td
+          className="px-4 py-3 text-slate-600 whitespace-nowrap tabular-nums"
+          title={user.createdAt}
+        >
+          {formatAdminTimestamp(user.createdAt)}
+        </td>
         <td className="px-4 py-3 text-right align-top">
           <div className="inline-flex flex-col items-end gap-2">
             <div className="inline-flex gap-1">
@@ -800,7 +807,7 @@ function UserRows({
       </tr>
       {isEditing && (
         <tr className="bg-slate-50 border-b border-slate-200">
-          <td colSpan={8} className="px-3 sm:px-4 py-5 max-w-0">
+          <td colSpan={9} className="px-3 sm:px-4 py-5 max-w-0">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs min-w-0 max-w-full">
               <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Nombre</span>

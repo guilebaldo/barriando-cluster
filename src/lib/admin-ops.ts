@@ -68,3 +68,17 @@ export function formatExpiryShort(iso: string | null | undefined): string {
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
 }
+
+/** Marca temporal de registro (fecha + hora) para tablas admin. */
+export function formatAdminTimestamp(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("es-MX", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
