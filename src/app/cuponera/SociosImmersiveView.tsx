@@ -627,9 +627,7 @@ export default function SociosImmersiveView({
 
       {activeBenefit && (
         <div
-          className={`fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 ${
-            appShell ? "pb-[calc(3.5rem+env(safe-area-inset-bottom,0px)+0.75rem)]" : ""
-          }`}
+          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 app-modal-hub-pad"
         >
           <button
             type="button"

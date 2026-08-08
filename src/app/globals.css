@@ -35,6 +35,8 @@
   @media (max-width: 767px) {
     html.app-mobile-shell {
       --app-hub-offset: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+      /* iOS PWA + black-translucent: pinta la franja bajo el hub (no blanco). */
+      background-color: #27366d;
     }
 
     /* Shells immersive + Ajustes: 100dvh + padding del hub. */
@@ -52,8 +54,10 @@
     /* Páginas con scroll genéricas (pago, etc.): hueco bajo el hub.
        Las páginas con shell lo anulan desde useImmersiveScrollLock: no con
        :has(), que Chrome ignora antes de la 105 y dejaría el documento 90px
-       más alto que la pantalla en Android viejo. */
+       más alto que la pantalla en Android viejo.
+       Fondo navy: si iOS deja franja bajo el hub, no se ve blanca. */
     html.app-mobile-shell body {
+      background-color: #27366d;
       padding-bottom: var(--app-hub-offset);
     }
 
@@ -76,6 +80,15 @@
     html[data-keyboard-open] .app-bottom-nav {
       transform: translate3d(0, 110%, 0) !important;
       pointer-events: none;
+    }
+
+    /*
+     * Diálogos / sheets bottom o centrados: dejan hueco del hub.
+     * Usar en overlays `fixed inset-0` con clase `app-modal-hub-pad`
+     * (además de p-4). Especificidad gana a utilidades Tailwind de padding.
+     */
+    html.app-mobile-shell .app-modal-hub-pad {
+      padding-bottom: calc(var(--app-hub-offset) + 0.75rem);
     }
   }
 

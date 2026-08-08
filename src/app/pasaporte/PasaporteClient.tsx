@@ -914,7 +914,7 @@ function PasaporteInner({
   const sharedOverlays = (
     <>
       {pendingConfirm ? (
-        <div className="fixed inset-0 z-[110] bg-[#e8e0d0]/95 backdrop-blur-sm overflow-y-auto">
+        <div className="fixed inset-0 z-[110] bg-[#e8e0d0]/95 backdrop-blur-sm overflow-y-auto app-modal-hub-pad">
           <SellarClient
             restaurantSlug={pendingConfirm.slug}
             restaurantName={pendingConfirm.name}
@@ -938,7 +938,7 @@ function PasaporteInner({
       ) : null}
 
       {noticePopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pointer-events-none">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 app-modal-hub-pad pointer-events-none">
           <div
             role="status"
             className={`pointer-events-auto relative w-full max-w-sm rounded-2xl border shadow-2xl p-5 animate-popup-in ${

@@ -437,7 +437,7 @@ export default function PasaporteBookMobile({
 
   /* —— Portada: 50% identidad / 50% 4 sellos —— */
   const renderCover = () => (
-    <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-12 overflow-hidden">
+    <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden">
       <PageBackdrop />
       <div className="relative z-10 h-1/2 min-h-0 flex flex-col border-b border-[#d9cdb3]/80 pb-2">
         <div className="flex items-start justify-between gap-3 shrink-0">
@@ -573,9 +573,7 @@ export default function PasaporteBookMobile({
     const isLastPage = pageNum === pageCount - 1;
     return (
       <section
-        className={`relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-[max(0.5rem,env(safe-area-inset-top,0px))] overflow-hidden ${
-          isLastPage ? "pb-3" : "pb-12"
-        }`}
+        className={`relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden`}
       >
         <PageBackdrop />
         <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-2">

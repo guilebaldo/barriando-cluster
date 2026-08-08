@@ -115,7 +115,7 @@ export default function AddToHomeScreenModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/45 backdrop-blur-[2px] md:hidden"
+      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 app-modal-hub-pad bg-black/45 backdrop-blur-[2px] md:hidden"
       role="dialog"
       aria-modal="true"
       aria-labelledby="a2hs-title"

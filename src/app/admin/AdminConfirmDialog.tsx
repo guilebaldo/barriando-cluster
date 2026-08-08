@@ -38,7 +38,7 @@ export default function AdminConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 app-modal-hub-pad">
       <button
         type="button"
         aria-label="Cerrar"

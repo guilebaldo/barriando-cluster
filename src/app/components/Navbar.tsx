@@ -394,7 +394,7 @@ export default function Navbar() {
 
         {open && (
           <div
-            className="md:hidden fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-[2px]"
+            className="md:hidden fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 app-modal-hub-pad bg-black/50 backdrop-blur-[2px]"
             role="dialog"
             aria-modal="true"
             aria-labelledby="mobile-nav-title"

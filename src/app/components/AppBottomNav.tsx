@@ -9,6 +9,9 @@ import { BookOpen, Camera, Gift, IdCard, Map as MapIcon } from "lucide-react";
 export const APP_TAB_BOTTOM =
   "calc(3.5rem + env(safe-area-inset-bottom, 0px))" as const;
 
+/** Clase CSS: padding-bottom = hub en `html.app-mobile-shell` (ver globals.css). */
+export const APP_MODAL_HUB_PAD = "app-modal-hub-pad" as const;
+
 /** Hub móvil (tab bar + chrome) para cualquier sesión autenticada, incl. Turista. */
 export function useAppMobileShell(): boolean {
   const { data: session, status } = useSession();

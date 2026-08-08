@@ -268,7 +268,7 @@ export default function AdminEditDrawer({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-[80] flex justify-end">
       <button
         type="button"
         aria-label="Cerrar"

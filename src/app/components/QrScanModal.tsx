@@ -191,7 +191,7 @@ export default function QrScanModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col pt-[max(0.75rem,env(safe-area-inset-top))]">
+    <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col pt-[max(0.75rem,env(safe-area-inset-top))] app-modal-hub-pad">
       <div className="flex items-center justify-between px-4 py-3 text-white shrink-0">
         <p className="text-sm font-bold uppercase tracking-wider">Escanear QR</p>
         <button
@@ -229,7 +229,7 @@ export default function QrScanModal({
         )}
       </div>
 
-      <div className="px-4 pt-1 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center space-y-2 shrink-0">
+      <div className="px-4 pt-1 pb-3 text-center space-y-2 shrink-0">
         <p className="text-xs text-slate-300 font-light leading-relaxed">{hint}</p>
         {fallbackHref && (
           <a

@@ -24,7 +24,7 @@ export default function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 app-modal-hub-pad">
       <button
         type="button"
         className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]"
