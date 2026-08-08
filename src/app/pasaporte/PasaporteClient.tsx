@@ -848,8 +848,7 @@ function PasaporteInner({
                         <SeasonalStampBadge
                           logoSrc={logoSrc}
                           alt={restaurant.name}
-                          size="lg"
-                          className={`scale-100 transition-all duration-700 ${stampTiltClass(restaurant.id)} ${
+                          className={`transition-all duration-700 ${stampTiltClass(restaurant.id)} ${
                             isFlashing ? "animate-stamp-press" : ""
                           }`}
                         />

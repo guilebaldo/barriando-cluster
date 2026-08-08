@@ -101,9 +101,11 @@ export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       padding:8px;
       box-shadow:0 4px 10px rgba(146,64,14,0.25);
+      transform:rotate(-6deg);
     ">
       <img src="${stamp.logoSrc}" alt="" style="width:36px;height:36px;object-fit:contain;" onerror="this.style.display='none'" />
-      <span style="font-size:8px;font-weight:900;color:#1c1917;line-height:1.15;text-align:center;margin-top:2px;padding:0 2px;">${stamp.subtitle}</span>
+      <span style="font-size:7px;font-weight:800;color:rgba(69,26,3,0.8);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">Temporada</span>
+      <span style="font-size:8px;font-weight:900;color:#1c1917;line-height:1.15;text-align:center;">${stamp.subtitle}</span>
     </div>
     <p style="font-size:10px;color:#475569;line-height:1.35;margin:0;">
       Escanea el QR en el local para sellar tu Pasaporte.
