@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
+import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
 
 type RestaurantCard = {
   id: number;
@@ -14,12 +15,6 @@ type RestaurantCard = {
   categoria: string;
   logoUrl?: string | null;
 };
-
-const STAMP_OUTLINE_COLORS = [
-  "border-emerald-700",
-  "border-red-600",
-  "border-[#27366D]",
-] as const;
 
 /** Primera página (mitad inferior): 2×2 */
 const COVER_STAMP_COUNT = 4;
@@ -122,26 +117,24 @@ function PassportProgressTrack({
 
 function StampCell({
   restaurant,
-  index,
   hasStamp,
   count,
   isFlashing,
   size = "md",
 }: {
   restaurant: RestaurantCard;
-  index: number;
   hasStamp: boolean;
   count?: number;
   isFlashing?: boolean;
   size?: "md" | "sm";
 }) {
-  const colorClass = STAMP_OUTLINE_COLORS[index % STAMP_OUTLINE_COLORS.length];
   const stampSize = size === "sm" ? "w-[5.05rem] h-[5.05rem]" : "w-[5.5rem] h-[5.5rem]";
-  const imgSize = size === "sm" ? 64 : 72;
+  const badgeSize = size === "sm" ? "md" : "lg";
   const nameClass =
     size === "sm"
       ? "text-[10px] max-w-[7rem]"
       : "text-[11px] max-w-[7.5rem]";
+  const logoSrc = restaurant.logoUrl?.trim() || `/logos/${restaurant.foto}.png`;
 
   return (
     <Link
@@ -152,24 +145,20 @@ function StampCell({
       }`}
     >
       <div className="relative">
-        <div
-          className={`${stampSize} rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-500 ${
-            hasStamp
-              ? `${colorClass} border-solid scale-100 ${stampTiltClass(restaurant.id)}`
-              : "border-dashed border-stone-300 scale-95"
-          } ${isFlashing ? "animate-stamp-press" : ""}`}
-        >
-          {hasStamp && (
-            <Image
-              src={restaurant.logoUrl?.trim() || `/logos/${restaurant.foto}.png`}
-              alt={restaurant.name}
-              width={imgSize}
-              height={imgSize}
-              className="w-full h-full object-contain"
-              unoptimized
-            />
-          )}
-        </div>
+        {hasStamp ? (
+          <SeasonalStampBadge
+            logoSrc={logoSrc}
+            alt={restaurant.name}
+            size={badgeSize}
+            className={`scale-100 transition-all duration-500 ${stampTiltClass(restaurant.id)} ${
+              isFlashing ? "animate-stamp-press" : ""
+            }`}
+          />
+        ) : (
+          <div
+            className={`${stampSize} rounded-full border-2 border-dashed border-stone-300 flex items-center justify-center bg-transparent scale-95`}
+          />
+        )}
         {count != null && count > 1 && (
           <span className="absolute -top-1 -right-1 min-w-[1.15rem] h-4 px-1 rounded-full bg-[#27366D] text-white text-[9px] font-bold flex items-center justify-center shadow">
             x{count}
@@ -546,13 +535,12 @@ export default function PasaporteBookMobile({
           Desliza hacia arriba para pasar la hoja
         </p>
         <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-2 place-items-center overflow-hidden">
-          {coverStamps.map((restaurant, index) => {
+          {coverStamps.map((restaurant) => {
             const stamp = stampMap[restaurant.id];
             return (
               <StampCell
                 key={restaurant.id}
                 restaurant={restaurant}
-                index={index}
                 hasStamp={Boolean(stamp?.count)}
                 count={stamp?.count}
                 isFlashing={stampFlashId === restaurant.id}
@@ -602,14 +590,12 @@ export default function PasaporteBookMobile({
           </p>
         </div>
         <div className="relative z-10 flex-1 min-h-0 grid grid-cols-2 grid-rows-4 gap-2 place-items-center overflow-hidden">
-          {page.map((restaurant, index) => {
-            const globalIndex = COVER_STAMP_COUNT + (pageNum - 1) * PAGE_STAMP_COUNT + index;
+          {page.map((restaurant) => {
             const stamp = stampMap[restaurant.id];
             return (
               <StampCell
                 key={restaurant.id}
                 restaurant={restaurant}
-                index={globalIndex}
                 hasStamp={Boolean(stamp?.count)}
                 count={stamp?.count}
                 isFlashing={stampFlashId === restaurant.id}

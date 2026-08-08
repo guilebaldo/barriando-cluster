@@ -8,6 +8,7 @@ import { Suspense } from "react";
 import { X } from "lucide-react";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
+import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
@@ -55,12 +56,6 @@ interface PasaporteClientProps {
   pendingConfirm?: PendingConfirm | null;
   pendingInvalid?: boolean;
 }
-
-const STAMP_OUTLINE_COLORS = [
-  "border-emerald-700",
-  "border-red-600",
-  "border-[#27366D]",
-] as const;
 
 const MRZ_SLOTS = 20; // 10 a cada lado del porcentaje
 const STATS_ANIMATION_MS = 1600;
@@ -825,13 +820,14 @@ function PasaporteInner({
                 </p>
               )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
-              {restaurants.map((restaurant, index) => {
+              {restaurants.map((restaurant) => {
                 const stamp = stampMap[restaurant.id];
                 const hasStamp = isPreview
                   ? previewScroll.visibleStampIds.has(restaurant.id)
                   : Boolean(stamp?.count);
-                const colorClass = STAMP_OUTLINE_COLORS[index % STAMP_OUTLINE_COLORS.length];
                 const isFlashing = stampFlashId === restaurant.id;
+                const logoSrc =
+                  restaurant.logoUrl?.trim() || `/logos/${restaurant.foto}.png`;
 
                 return (
                   <Link
@@ -848,24 +844,18 @@ function PasaporteInner({
                     }`}
                   >
                     <div className="relative">
-                      <div
-                        className={`w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 flex items-center justify-center bg-transparent p-2.5 transition-all duration-700 ${
-                          hasStamp
-                            ? `${colorClass} border-solid scale-100 ${stampTiltClass(restaurant.id)}`
-                            : "border-dashed border-stone-300 scale-95"
-                        } ${isFlashing ? "animate-stamp-press" : ""}`}
-                      >
-                        {hasStamp && (
-                          <Image
-                            src={restaurant.logoUrl?.trim() || `/logos/${restaurant.foto}.png`}
-                            alt={restaurant.name}
-                            width={56}
-                            height={56}
-                            className="w-full h-full object-contain"
-                            unoptimized
-                          />
-                        )}
-                      </div>
+                      {hasStamp ? (
+                        <SeasonalStampBadge
+                          logoSrc={logoSrc}
+                          alt={restaurant.name}
+                          size="sm"
+                          className={`scale-100 transition-all duration-700 ${stampTiltClass(restaurant.id)} ${
+                            isFlashing ? "animate-stamp-press" : ""
+                          }`}
+                        />
+                      ) : (
+                        <div className="w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20 rounded-full border-2 border-dashed border-stone-300 bg-transparent scale-95" />
+                      )}
                       {stamp && stamp.count > 1 && (
                         <span className="absolute -top-1 -right-1 min-w-[1.15rem] h-4 px-1 rounded-full bg-[#27366D] text-white text-[9px] font-bold flex items-center justify-center shadow">
                           x{stamp.count}
