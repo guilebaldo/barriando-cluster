@@ -279,10 +279,10 @@ export default function AdminEditDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-edit-drawer-title"
-        className="relative z-10 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl border-l border-slate-200 animate-in slide-in-from-right"
+        className="relative z-10 flex h-full w-full max-w-xl min-w-0 flex-col bg-white shadow-2xl border-l border-slate-200 animate-in slide-in-from-right pt-[env(safe-area-inset-top,0px)] pb-[var(--app-hub-offset,0px)]"
       >
-        <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-5 py-4 shrink-0">
-          <div className="min-w-0">
+        <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 sm:px-5 py-4 shrink-0">
+          <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Editar socio
             </p>
@@ -306,14 +306,14 @@ export default function AdminEditDrawer({
           </button>
         </header>
 
-        <div className="flex gap-1 px-4 pt-3 pb-2 border-b border-slate-100 shrink-0 overflow-x-auto">
+        <div className="flex gap-1 px-4 pt-3 pb-2 border-b border-slate-100 shrink-0 overflow-x-auto overscroll-x-contain">
           {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
               data-cuelume-toggle=""
-              className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition ${
+              className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition shrink-0 ${
                 tab === t.id
                   ? "bg-[#27366D] text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -324,7 +324,7 @@ export default function AdminEditDrawer({
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-5 py-4">
           {!linkedUser && tab === "negocio" ? (
             <p className="mb-4 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
               Sin cuenta vinculada: se guardan nombre y sitio web en el roster. Ubicación y CFDI se
@@ -371,7 +371,7 @@ export default function AdminEditDrawer({
                 <select
                   value={plan}
                   onChange={(e) => setPlan(e.target.value as MembershipPlan)}
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
                 >
                   {BUSINESS_PLANS.map((p) => (
                     <option key={p} value={p}>
@@ -388,7 +388,7 @@ export default function AdminEditDrawer({
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
                 >
                   <option value="">—</option>
                   {PAYMENT_METHOD_OPTIONS.map((o) => (
@@ -406,7 +406,7 @@ export default function AdminEditDrawer({
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as "active" | "inactive")}
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white"
                 >
                   <option value="active">Activo</option>
                   <option value="inactive">Inactivo</option>

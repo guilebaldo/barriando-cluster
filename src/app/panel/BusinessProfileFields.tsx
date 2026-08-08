@@ -52,12 +52,12 @@ export default function BusinessProfileFields({
   );
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-3">
+    <div className="space-y-8 min-w-0 max-w-full">
+      <section className="space-y-3 min-w-0">
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#27366D]">
           Datos generales de la empresa
         </h3>
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={`${formFieldLabelClass}${hideBusinessName ? " sm:col-span-2" : ""}`}>
             <span className={formFieldLegendClass}>Giro / categoría *</span>
             <select
@@ -90,7 +90,7 @@ export default function BusinessProfileFields({
           ) : null}
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>Calle *</span>
             <input
@@ -193,7 +193,7 @@ export default function BusinessProfileFields({
           </span>
         </label>
 
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>Teléfono del negocio *</span>
             <input
@@ -224,7 +224,7 @@ export default function BusinessProfileFields({
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#27366D]">
           Datos de contacto
         </h3>
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>Nombre *</span>
             <input
@@ -314,7 +314,7 @@ export default function BusinessProfileFields({
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#27366D]">
           Datos para facturación
         </h3>
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={`${formFieldLabelClass} sm:col-span-2`}>
             <span className={formFieldLegendClass}>
               Razón social{requireFiscal ? " *" : ""}
@@ -386,7 +386,7 @@ export default function BusinessProfileFields({
           <span>Usar el mismo domicilio del negocio para facturación</span>
         </label>
         {!form.billingSameAddress ? (
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>Calle{requireFiscal ? " *" : ""}</span>
             <input
@@ -461,7 +461,7 @@ export default function BusinessProfileFields({
         </div>
         ) : null}
 
-        <div className="grid gap-3">
+        <div className="grid gap-3 min-w-0">
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>Uso de CFDI{requireFiscal ? " *" : ""}</span>
             <select

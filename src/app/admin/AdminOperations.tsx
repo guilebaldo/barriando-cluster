@@ -519,7 +519,7 @@ export default function AdminOperations({
       </div>
 
       {showManualForm ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-sm min-w-0 overflow-x-hidden">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Alta manual (sin cuenta)
@@ -528,21 +528,21 @@ export default function AdminOperations({
               Crea solo la entrada de roster. El negocio aparece en directorio/pasaporte; no se crea login.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 gap-3 text-xs">
+          <div className="grid sm:grid-cols-2 gap-3 text-xs min-w-0">
             <input
-              className="border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
               placeholder="Nombre del negocio *"
               value={manualForm.businessName}
               onChange={(e) => setManualForm((f) => ({ ...f, businessName: e.target.value }))}
             />
             <input
-              className="border border-slate-200 rounded-lg p-2.5"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5"
               placeholder="Categoría / giro *"
               value={manualForm.category}
               onChange={(e) => setManualForm((f) => ({ ...f, category: e.target.value }))}
             />
             <select
-              className="border border-slate-200 rounded-lg p-2.5 bg-white"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5 bg-white"
               value={manualForm.plan}
               onChange={(e) =>
                 setManualForm((f) => ({
@@ -558,7 +558,7 @@ export default function AdminOperations({
               ))}
             </select>
             <select
-              className="border border-slate-200 rounded-lg p-2.5 bg-white"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5 bg-white"
               value={manualForm.paymentMethod}
               onChange={(e) => setManualForm((f) => ({ ...f, paymentMethod: e.target.value }))}
             >
@@ -570,25 +570,25 @@ export default function AdminOperations({
             </select>
             <input
               type="date"
-              className="border border-slate-200 rounded-lg p-2.5"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5"
               value={manualForm.currentPeriodEnd}
               onChange={(e) => setManualForm((f) => ({ ...f, currentPeriodEnd: e.target.value }))}
               aria-label="Fecha de vencimiento"
             />
             <input
-              className="border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
               placeholder="Website (opcional, https://…)"
               value={manualForm.website}
               onChange={(e) => setManualForm((f) => ({ ...f, website: e.target.value }))}
             />
             <input
-              className="border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5 sm:col-span-2"
               placeholder="URL Google Maps (opcional)"
               value={manualForm.mapsUrl}
               onChange={(e) => setManualForm((f) => ({ ...f, mapsUrl: e.target.value }))}
             />
             <input
-              className="border border-slate-200 rounded-lg p-2.5"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5"
               placeholder="Latitud (opcional)"
               type="number"
               step="any"
@@ -596,7 +596,7 @@ export default function AdminOperations({
               onChange={(e) => setManualForm((f) => ({ ...f, latitude: e.target.value }))}
             />
             <input
-              className="border border-slate-200 rounded-lg p-2.5"
+              className="w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2.5"
               placeholder="Longitud (opcional)"
               type="number"
               step="any"
@@ -615,7 +615,7 @@ export default function AdminOperations({
         </div>
       ) : null}
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-w-0">
         <div className="px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
             {(

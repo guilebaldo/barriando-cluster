@@ -41,10 +41,12 @@
     html.app-mobile-shell .map-immersive-shell,
     html.app-mobile-shell .barrid-shell,
     html.app-mobile-shell .panel-mobile-shell,
-    html.app-mobile-shell .planes-mobile-shell {
+    html.app-mobile-shell .planes-mobile-shell,
+    html.app-mobile-shell .admin-mobile-shell {
       height: 100dvh;
       max-height: 100dvh;
       padding-bottom: var(--app-hub-offset);
+      overscroll-behavior: none;
     }
 
     /* Páginas con scroll genéricas (pago, etc.): hueco bajo el hub.
@@ -70,7 +72,7 @@
       padding-bottom: 0.5rem;
     }
 
-    /* Teclado abierto: esconde el hub; al cerrar StandaloneViewportFix lo re-ancla. */
+    /* Teclado abierto: esconde el hub (sin re-anclar con top). */
     html[data-keyboard-open] .app-bottom-nav {
       transform: translate3d(0, 110%, 0) !important;
       pointer-events: none;
@@ -262,7 +264,12 @@
   animation: barriando-nudge-shake 0.45s ease-in-out;
 }
 
-/* iOS Safari: zoom al enfocar si font-size < 16px. */
+/* iOS Safari: zoom al enfocar si font-size < 16px; evita desborde horizontal. */
+.admin-touch-forms {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .admin-touch-forms :is(input, select, textarea):not(
     [type="checkbox"],
     [type="radio"],
@@ -274,6 +281,24 @@
     [type="image"]
   ) {
   font-size: 1rem !important;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-touch-forms :is(form, section, .grid, .space-y-6, .space-y-8) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-touch-forms label,
+.admin-touch-forms .grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-touch-forms select {
+  text-overflow: ellipsis;
 }
 
 /* Sitio completo en móvil: inputs/búsqueda ≥16px para evitar zoom al foco. */

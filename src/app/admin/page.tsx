@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import SiteShell from "../components/SiteShell";
+import AdminShell from "./AdminShell";
 import AdminDashboard from "./AdminDashboard";
 import { getSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
@@ -43,9 +43,9 @@ export default async function AdminPage({
     ]);
 
   return (
-    <SiteShell>
+    <AdminShell>
       <Navbar />
-      <main className="admin-touch-forms flex-1 min-h-0 w-full max-w-7xl mx-auto pt-[max(2rem,calc(env(safe-area-inset-top,0px)+0.75rem))] pb-8 sm:py-12 px-4 sm:px-6 overflow-y-auto overflow-x-hidden overscroll-y-none md:overscroll-auto">
+      <main className="admin-touch-forms flex-1 min-h-0 w-full max-w-7xl mx-auto pt-[max(1rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-6 sm:py-12 px-3 sm:px-6 overflow-y-auto overflow-x-hidden overscroll-y-none touch-pan-y md:overflow-visible md:overscroll-auto">
         <AdminDashboard
           users={users}
           testimonials={testimonials}
@@ -56,9 +56,9 @@ export default async function AdminPage({
           initialFocus={focus}
         />
       </main>
-      <div className="hidden md:block">
+      <div className="hidden md:block shrink-0">
         <Footer />
       </div>
-    </SiteShell>
+    </AdminShell>
   );
 }

@@ -17,6 +17,7 @@ import BenefitRedeemQr from "./BenefitRedeemQr";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import type { UserMapLocation } from "@/app/mapa/user-map-location";
+import { isStandaloneDisplay } from "@/lib/add-to-home-screen";
 
 const SociosMap = dynamic(() => import("../components/SociosMapLeaflet"), {
   ssr: false,
@@ -58,6 +59,7 @@ export default function SociosImmersiveView({
   const touchFromScroller = useRef(false);
   const didApplyInitialSocio = useRef(false);
   const appShell = useAppMobileShell();
+  const [standalone, setStandalone] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
@@ -74,6 +76,15 @@ export default function SociosImmersiveView({
     benefit: SocioBenefitInfo;
   } | null>(null);
   const [userLocation, setUserLocation] = useState<UserMapLocation | null>(null);
+
+  useEffect(() => {
+    setStandalone(isStandaloneDisplay());
+  }, []);
+
+  // Standalone: sin teclado de búsqueda (evita el hub flotante de iOS PWA).
+  useEffect(() => {
+    if (standalone && searchQuery) setSearchQuery("");
+  }, [standalone, searchQuery]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -389,35 +400,41 @@ export default function SociosImmersiveView({
   const filtersBar = (
     <div className="border-t border-slate-100 bg-white px-3 pt-2 space-y-2 shrink-0">
       <div className="flex items-center gap-2">
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <input
-            type="search"
-            placeholder="Buscar socio o giro…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => {
-              if (sheetMode === "peek") setSheetMode("half");
-            }}
-            enterKeyHint="search"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-            className={`w-full pl-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white ${
-              searchQuery ? "pr-10" : "pr-3"
-            }`}
-          />
-          {searchQuery ? (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/80"
-              aria-label="Borrar búsqueda"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          ) : null}
-        </div>
+        {!standalone ? (
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="search"
+              placeholder="Buscar socio o giro…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => {
+                if (sheetMode === "peek") setSheetMode("half");
+              }}
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              className={`w-full pl-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white ${
+                searchQuery ? "pr-10" : "pr-3"
+              }`}
+            />
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/80"
+                aria-label="Borrar búsqueda"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <p className="flex-1 min-w-0 text-[11px] text-slate-500 font-medium truncate">
+            Filtra por cupón o categoría
+          </p>
+        )}
         <div className="flex shrink-0 rounded-xl border border-slate-200 overflow-hidden">
           <button
             type="button"

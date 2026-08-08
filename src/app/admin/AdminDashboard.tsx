@@ -409,12 +409,12 @@ export default function AdminDashboard({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 max-w-full">
       {msg && (
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 text-xs">{msg}</div>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 min-w-0">
         <button
           type="button"
           onClick={() => setTab("operations")}
@@ -492,16 +492,16 @@ export default function AdminDashboard({
           initialFilter={initialOpsFilter}
         />
       ) : (
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-hidden md:overflow-x-auto overscroll-y-contain">
-        <div className="px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden overscroll-y-contain">
+        <div className="px-3 sm:px-4 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             <input
-              type="text"
+              type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por nombre, correo, negocio, plan o RFC…"
-              className="w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#27366D]/20 focus:border-[#27366D]"
+              placeholder="Buscar por nombre, correo, negocio…"
+              className="w-full min-w-0 max-w-full pl-9 pr-9 py-2.5 border border-slate-200 rounded-lg text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#27366D]/20 focus:border-[#27366D]"
               aria-label="Buscar cuentas"
             />
             {query.trim() && (
@@ -521,8 +521,8 @@ export default function AdminDashboard({
               : `${(safeAccountsPage - 1) * ACCOUNTS_PAGE_SIZE + 1}–${Math.min(safeAccountsPage * ACCOUNTS_PAGE_SIZE, visibleUsers.length)} de ${visibleUsers.length}${query.trim() ? " (filtro)" : ""} · ${listTotal} total`}
           </p>
         </div>
-        <div className="overflow-x-hidden md:overflow-x-auto touch-pan-y">
-          <table className="w-full text-xs">
+        <div className="overflow-x-auto touch-pan-y overscroll-x-contain">
+          <table className="w-full text-xs min-w-[720px] md:min-w-0">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left text-[10px] uppercase tracking-wider text-slate-500">
                 <th className="px-4 py-3 w-10" />
@@ -800,20 +800,20 @@ function UserRows({
       </tr>
       {isEditing && (
         <tr className="bg-slate-50 border-b border-slate-200">
-          <td colSpan={8} className="px-4 py-5">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-              <label className="block">
+          <td colSpan={8} className="px-3 sm:px-4 py-5 max-w-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs min-w-0 max-w-full">
+              <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Nombre</span>
                 <input
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.nombre ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, nombre: e.target.value }))}
                 />
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Rol</span>
                 <select
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.role ?? "SOCIO"}
                   onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
                 >
@@ -821,10 +821,10 @@ function UserRows({
                   <option value="ADMIN">Administrador</option>
                 </select>
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Negocio catálogo</span>
                 <select
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.socioId ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, socioId: e.target.value }))}
                 >
@@ -836,10 +836,10 @@ function UserRows({
                   ))}
                 </select>
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Plan</span>
                 <select
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.plan ?? "TURISTA"}
                   onChange={(e) => setEditForm((f) => ({ ...f, plan: e.target.value }))}
                 >
@@ -850,10 +850,10 @@ function UserRows({
                   ))}
                 </select>
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Estado membresía</span>
                 <select
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.status ?? "inactive"}
                   onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
                 >
@@ -864,10 +864,10 @@ function UserRows({
                   ))}
                 </select>
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Método de pago</span>
                 <select
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.paymentMethod ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, paymentMethod: e.target.value }))}
                 >
@@ -882,7 +882,7 @@ function UserRows({
               <label className="block sm:col-span-2 lg:col-span-3">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Nombre negocio</span>
                 <input
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.businessName ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, businessName: e.target.value }))}
                 />
@@ -890,23 +890,23 @@ function UserRows({
               <label className="block sm:col-span-2">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Dirección negocio</span>
                 <input
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.address ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, address: e.target.value }))}
                 />
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Categoría</span>
                 <input
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.category ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
                 />
               </label>
-              <label className="block">
+              <label className="block min-w-0">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Sitio web</span>
                 <input
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.website ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, website: e.target.value }))}
                 />
@@ -916,7 +916,7 @@ function UserRows({
                   Link de Google Maps
                 </span>
                 <input
-                  className="mt-1 w-full border border-slate-200 rounded-lg p-2 bg-white"
+                  className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 bg-white"
                   value={editForm.googleBusinessUrl ?? ""}
                   onChange={(e) => setEditForm((f) => ({ ...f, googleBusinessUrl: e.target.value }))}
                   placeholder="https://maps.app.goo.gl/… o https://maps.google.com/…"
@@ -925,34 +925,34 @@ function UserRows({
               <div className="sm:col-span-2 lg:col-span-3 rounded-lg border border-slate-200 bg-white p-4 space-y-3">
                 <p className="font-bold text-[#27366D] uppercase tracking-wider text-[10px]">Datos fiscales (CFDI 4.0)</p>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <label className="block">
+                  <label className="block min-w-0">
                     <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">RFC</span>
                     <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2 uppercase"
+                      className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2 uppercase"
                       value={editForm.rfc ?? ""}
                       onChange={(e) => setEditForm((f) => ({ ...f, rfc: e.target.value }))}
                     />
                   </label>
-                  <label className="block">
+                  <label className="block min-w-0">
                     <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Razón social</span>
                     <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                      className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2"
                       value={editForm.razonSocial ?? ""}
                       onChange={(e) => setEditForm((f) => ({ ...f, razonSocial: e.target.value }))}
                     />
                   </label>
-                  <label className="block">
+                  <label className="block min-w-0">
                     <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Régimen fiscal</span>
                     <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                      className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2"
                       value={editForm.regimenFiscal ?? ""}
                       onChange={(e) => setEditForm((f) => ({ ...f, regimenFiscal: e.target.value }))}
                     />
                   </label>
-                  <label className="block">
+                  <label className="block min-w-0">
                     <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Uso de CFDI</span>
                     <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                      className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2"
                       value={editForm.usoCfdi ?? ""}
                       onChange={(e) => setEditForm((f) => ({ ...f, usoCfdi: e.target.value }))}
                     />
@@ -960,15 +960,15 @@ function UserRows({
                   <label className="block sm:col-span-2">
                     <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Dirección fiscal</span>
                     <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                      className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2"
                       value={editForm.billingAddressFull ?? ""}
                       onChange={(e) => setEditForm((f) => ({ ...f, billingAddressFull: e.target.value }))}
                     />
                   </label>
-                  <label className="block">
+                  <label className="block min-w-0">
                     <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">C.P. fiscal</span>
                     <input
-                      className="mt-1 w-full border border-slate-200 rounded-lg p-2"
+                      className="mt-1 w-full min-w-0 max-w-full border border-slate-200 rounded-lg p-2"
                       value={editForm.billingCodigoPostal ?? ""}
                       onChange={(e) => setEditForm((f) => ({ ...f, billingCodigoPostal: e.target.value }))}
                     />
