@@ -71,6 +71,10 @@ export default function SociosImmersiveView({
   const [sheetMode, setSheetMode] = useState<SheetMode>(initialSocioId != null ? "half" : "half");
   /** Altura full anclada abajo (misma fórmula que el style del sheet). */
   const [fullSheetPx, setFullSheetPx] = useState(640);
+  /** Altura medida del sheet (para padding del mapa al autoajustar half). */
+  const [sheetHeightPx, setSheetHeightPx] = useState(400);
+  /** Viewport para calcular filas del grid (md: 6 cols / móvil: 3). */
+  const [viewport, setViewport] = useState({ isMd: false, width: 390 });
   const [activeBenefit, setActiveBenefit] = useState<{
     name: string;
     benefit: SocioBenefitInfo;
@@ -126,20 +130,15 @@ export default function SociosImmersiveView({
       const topGap = Math.max(72, safeTop + 56);
       const bottomGap = appShell ? 56 : 0;
       setFullSheetPx(Math.max(360, Math.round(window.innerHeight - topGap - bottomGap)));
+      setViewport({
+        isMd: window.matchMedia("(min-width: 768px)").matches,
+        width: window.innerWidth,
+      });
     };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, [appShell]);
-
-  const mapSheetHeight =
-    sheetMode === "peek"
-      ? 0
-      : sheetMode === "full"
-        ? fullSheetPx
-        : selectedId != null
-          ? 280
-          : 400;
 
   const categorias = useMemo(() => {
     return Array.from(new Set(socios.map((s) => s.categoria))).sort();
@@ -158,6 +157,71 @@ export default function SociosImmersiveView({
       return matchesSearch && matchesCategory && matchesBenefits;
     });
   }, [searchQuery, activeCategories, benefitsOnly, socios]);
+
+  /**
+   * Altura del modo half en listado: se encoge/crece con los socios filtrados
+   * (hasta el tope histórico de 400px) según vista iconos o lista.
+   */
+  const halfBrowsePx = useMemo(() => {
+    const maxPx = Math.min(400, fullSheetPx);
+    const minPx = 200;
+    const handlePx = 22;
+    const listPadPx = 8;
+    const countLabelPx = 28;
+    const filtersPx = standalone ? 88 : 112;
+    const footerPx = canRedeemBenefits ? (appShell ? 16 : 20) : appShell ? 48 : 56;
+    const chromePx = handlePx + listPadPx + countLabelPx + filtersPx + footerPx;
+
+    const count = sociosFiltrados.length;
+    let bodyPx: number;
+    if (count === 0) {
+      bodyPx = 80;
+    } else if (viewMode === "list") {
+      bodyPx = count * 52;
+    } else {
+      const cols = viewport.isMd ? 6 : 3;
+      const rows = Math.ceil(count / cols);
+      const sheetWidth = Math.min(viewport.width, viewport.isMd ? 896 : 512);
+      const padX = 24;
+      const gap = viewport.isMd ? 6 : 8;
+      const cell = Math.max(72, (sheetWidth - padX - gap * (cols - 1)) / cols);
+      bodyPx = rows * cell + gap * Math.max(0, rows - 1);
+    }
+
+    return Math.round(Math.min(maxPx, Math.max(minPx, chromePx + bodyPx)));
+  }, [
+    sociosFiltrados.length,
+    viewMode,
+    viewport.isMd,
+    viewport.width,
+    fullSheetPx,
+    standalone,
+    canRedeemBenefits,
+    appShell,
+  ]);
+
+  useEffect(() => {
+    const el = sheetRef.current;
+    if (!el) return;
+    const update = () => {
+      setSheetHeightPx(Math.round(el.getBoundingClientRect().height));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [
+    sheetMode,
+    selectedId,
+    halfBrowsePx,
+    sociosFiltrados.length,
+    viewMode,
+    canRedeemBenefits,
+    standalone,
+    fullSheetPx,
+  ]);
+
+  const mapSheetHeight = sheetMode === "peek" ? 0 : sheetHeightPx;
 
   const selectedSocio = useMemo(
     () => (selectedId == null ? null : sociosFiltrados.find((s) => s.id === selectedId) ?? null),
@@ -540,7 +604,7 @@ export default function SociosImmersiveView({
             ? "flex-none max-h-0 opacity-0 pointer-events-none overflow-hidden"
             : selectedSocio && sheetMode === "half"
               ? "flex-none opacity-100"
-              : "flex-1 opacity-100"
+              : "flex-1 min-h-0 opacity-100"
         }`}
       >
         <div
@@ -617,7 +681,7 @@ export default function SociosImmersiveView({
                   ? 92
                   : selectedSocio
                     ? "auto"
-                    : 400,
+                    : halfBrowsePx,
             maxHeight: sheetMode === "half" && selectedSocio ? fullSheetPx : undefined,
           }}
         >
