@@ -336,8 +336,8 @@ export default function PasaporteBookMobile({
   const prevMove = useRef<{ y: number; t: number } | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const pageIndexRef = useRef(0);
   const [pageIndex, setPageIndex] = useState(0);
-  const [animating, setAnimating] = useState(false);
 
   const coverStamps = useMemo(
     () => restaurants.slice(0, COVER_STAMP_COUNT),
@@ -348,37 +348,42 @@ export default function PasaporteBookMobile({
     [restaurants]
   );
   const pageCount = 1 + (restaurants.length > COVER_STAMP_COUNT ? restPages.length : 0);
+  const pageCountRef = useRef(pageCount);
+  pageCountRef.current = pageCount;
 
   /**
-   * El arrastre se aplica directo al DOM para no re-renderizar la pila de
-   * hojas en cada frame; React sólo toma el control al asentar la página.
+   * Transform solo por DOM. Si React también escribe `transform` en style,
+   * cada re-render (p. ej. al soltar animating) pelea con el drag y rebota.
    */
-  const dragTo = useCallback((offset: number, fromPage: number) => {
+  const applyTrack = useCallback((page: number, offsetPx = 0, animate: boolean) => {
     const el = trackRef.current;
     if (!el) return;
-    el.style.transition = "none";
-    el.style.transform = `translate3d(0, calc(${-fromPage * 100}% + ${offset}px), 0)`;
+    el.style.transition = animate
+      ? "transform 460ms cubic-bezier(0.22, 1, 0.36, 1)"
+      : "none";
+    el.style.transform =
+      offsetPx === 0
+        ? `translate3d(0, ${-page * 100}%, 0)`
+        : `translate3d(0, calc(${-page * 100}% + ${offsetPx}px), 0)`;
   }, []);
 
-  const settle = useCallback((next: number) => {
-    // El drag muta el transform en el DOM; si next === pageIndex React
-    // puede no reescribir el style y la hoja queda un poco arriba del hub.
-    const el = trackRef.current;
-    if (el) {
-      el.style.transition = "transform 460ms cubic-bezier(0.22, 1, 0.36, 1)";
-      el.style.transform = `translate3d(0, ${-next * 100}%, 0)`;
-    }
-    setPageIndex(next);
-    setAnimating(true);
-    window.setTimeout(() => setAnimating(false), 460);
-  }, []);
+  const settle = useCallback(
+    (next: number) => {
+      const clamped = Math.max(0, Math.min(pageCountRef.current - 1, next));
+      pageIndexRef.current = clamped;
+      applyTrack(clamped, 0, true);
+      setPageIndex(clamped);
+    },
+    [applyTrack]
+  );
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0]?.clientY ?? null;
     touchStartX.current = e.touches[0]?.clientX ?? null;
     lastMove.current = null;
     prevMove.current = null;
-    setAnimating(false);
+    // Cortar transición sin setState (evita re-render que resetea el transform).
+    applyTrack(pageIndexRef.current, 0, false);
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
@@ -395,11 +400,11 @@ export default function PasaporteBookMobile({
     lastMove.current = { y, t: performance.now() };
 
     const height = viewportRef.current?.clientHeight ?? 700;
-    const atStart = pageIndex === 0 && dy > 0;
-    const atEnd = pageIndex >= pageCount - 1 && dy < 0;
-    // En los extremos el recorrido se frena (rubber band)
+    const page = pageIndexRef.current;
+    const atStart = page === 0 && dy > 0;
+    const atEnd = page >= pageCountRef.current - 1 && dy < 0;
     const offset = atStart || atEnd ? dy * 0.25 : dy;
-    dragTo(Math.max(-height, Math.min(height, offset)), pageIndex);
+    applyTrack(page, Math.max(-height, Math.min(height, offset)), false);
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
@@ -407,6 +412,8 @@ export default function PasaporteBookMobile({
     touchStartY.current = null;
     touchStartX.current = null;
     const endY = e.changedTouches[0]?.clientY;
+    const page = pageIndexRef.current;
+    const count = pageCountRef.current;
 
     let velocity = 0;
     if (lastMove.current && prevMove.current) {
@@ -417,21 +424,20 @@ export default function PasaporteBookMobile({
     prevMove.current = null;
 
     if (startY == null || endY == null) {
-      settle(pageIndex);
+      settle(page);
       return;
     }
 
     const dy = startY - endY; // + = swipe up = página siguiente
-    // Un flick corto pero rápido también cambia de hoja
     const fastUp = velocity > 0.5 && dy > 12;
     const fastDown = velocity < -0.5 && dy < -12;
 
-    if ((dy > SWIPE_THRESHOLD_PX || fastUp) && pageIndex < pageCount - 1) {
-      settle(pageIndex + 1);
-    } else if ((dy < -SWIPE_THRESHOLD_PX || fastDown) && pageIndex > 0) {
-      settle(pageIndex - 1);
+    if ((dy > SWIPE_THRESHOLD_PX || fastUp) && page < count - 1) {
+      settle(page + 1);
+    } else if ((dy < -SWIPE_THRESHOLD_PX || fastDown) && page > 0) {
+      settle(page - 1);
     } else {
-      settle(pageIndex);
+      settle(page);
     }
   };
 
@@ -624,18 +630,16 @@ export default function PasaporteBookMobile({
     <div className="relative flex-1 min-h-0 w-full bg-[#faf6ef] text-slate-900 overflow-hidden overscroll-none select-none">
       <div
         ref={viewportRef}
-        className="relative z-10 h-full w-full overflow-hidden"
+        className="relative z-10 h-full w-full overflow-hidden touch-none"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={() => settle(pageIndexRef.current)}
       >
         <div
           ref={trackRef}
           className="relative h-full w-full will-change-transform"
-          style={{
-            transform: `translate3d(0, ${-pageIndex * 100}%, 0)`,
-            transition: animating ? "transform 460ms cubic-bezier(0.22, 1, 0.36, 1)" : "none",
-          }}
+          style={{ transform: "translate3d(0, 0%, 0)" }}
         >
           {Array.from({ length: pageCount }).map((_, i) => (
             <div
