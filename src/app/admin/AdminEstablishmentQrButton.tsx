@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Download, FileDown, Share2 } from "lucide-react";
+import { Download, FileDown } from "lucide-react";
 import { listaSocios } from "@/app/data/socios";
 import { buildSellarPath, restaurantSlug } from "@/lib/pasaporte";
 import { canOfferPassportStamp } from "@/lib/plan-visibility";
 import { buildPassportTableDisplayPdfBlob } from "@/lib/passport-table-display-pdf";
 import {
   dataUrlToFile,
-  downloadFile,
   shareOrDownloadFile,
   shouldOfferNativeShare,
 } from "@/lib/share-file";
@@ -85,17 +84,6 @@ export default function AdminEstablishmentQrButton({
     setPngBusy(true);
     try {
       const file = await dataUrlToFile(dataUrl, `qr-sello-${slug}.png`, "image/png");
-      downloadFile(file);
-    } finally {
-      setPngBusy(false);
-    }
-  }
-
-  async function handleSharePng() {
-    if (!dataUrl || !slug) return;
-    setPngBusy(true);
-    try {
-      const file = await dataUrlToFile(dataUrl, `qr-sello-${slug}.png`, "image/png");
       await shareOrDownloadFile(file, {
         title: `QR Pasaporte · ${name}`,
         text: "Escanea para sellar el Pasaporte Digital del Barrio",
@@ -129,26 +117,20 @@ export default function AdminEstablishmentQrButton({
     <>
       <button
         type="button"
-        title="Descargar QR de sello Pasaporte"
+        title={
+          shareCapable
+            ? "Compartir / guardar QR de sello Pasaporte"
+            : "Descargar QR de sello Pasaporte"
+        }
         disabled={disabled || !dataUrl || pngBusy}
         onClick={() => void handleDownloadPng()}
         className="p-2 rounded-lg text-amber-700 hover:bg-amber-50 disabled:opacity-40"
       >
         <Download className="w-4 h-4" />
-        <span className="sr-only">Descargar QR</span>
+        <span className="sr-only">
+          {shareCapable ? "Compartir QR" : "Descargar QR"}
+        </span>
       </button>
-      {shareCapable ? (
-        <button
-          type="button"
-          title="Compartir QR de sello Pasaporte"
-          disabled={disabled || !dataUrl || pngBusy}
-          onClick={() => void handleSharePng()}
-          className="p-2 rounded-lg text-amber-700/80 hover:bg-amber-50 disabled:opacity-40"
-        >
-          <Share2 className="w-4 h-4" />
-          <span className="sr-only">Compartir QR</span>
-        </button>
-      ) : null}
       <button
         type="button"
         title={
