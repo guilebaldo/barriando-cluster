@@ -3,7 +3,10 @@ import type { MapRoutePoint } from "@/lib/map-route-client";
 
 /** Campaña activa: Chiles en Nogada. */
 export const SEASONAL_STAMP_LABEL = "Temporada";
+/** Nombre completo (fichas, títulos, metadatos). */
 export const SEASONAL_STAMP_SUBTITLE = "Chiles en Nogada";
+/** Texto corto en la cara del sello circular (debe caber entero). */
+export const SEASONAL_STAMP_BADGE_TEXT = "Nogada";
 
 export type StampDisplayInfo = {
   kind: "seasonal_nogada";
@@ -103,9 +106,9 @@ export function buildMapMarkerPopupContent(point: MapRoutePoint): HTMLElement {
       padding:4px;
       box-shadow:0 4px 10px rgba(146,64,14,0.25);
     ">
-      <img src="${stamp.logoSrc}" alt="" style="width:22px;height:22px;object-fit:contain;" onerror="this.style.display='none'" />
-      <span style="font-size:6px;font-weight:800;color:#422006;text-transform:uppercase;letter-spacing:0.04em;line-height:1;text-align:center;margin-top:2px;">${SEASONAL_STAMP_LABEL}</span>
-      <span style="font-size:7px;font-weight:900;color:#1c1917;line-height:1.1;text-align:center;padding:0 2px;">${stamp.subtitle}</span>
+      <img src="${stamp.logoSrc}" alt="" style="width:22px;height:22px;object-fit:contain;flex-shrink:0;" onerror="this.style.display='none'" />
+      <span style="font-size:6px;font-weight:800;color:#422006;text-transform:uppercase;letter-spacing:0.04em;line-height:1;text-align:center;margin-top:2px;flex-shrink:0;">${SEASONAL_STAMP_LABEL}</span>
+      <span style="font-size:10px;font-weight:900;color:#1c1917;line-height:1;text-align:center;flex-shrink:0;">${SEASONAL_STAMP_BADGE_TEXT}</span>
     </div>
     <p style="font-size:10px;color:#475569;line-height:1.35;margin:0;">
       Escanea el QR en el local para sellar tu Pasaporte.

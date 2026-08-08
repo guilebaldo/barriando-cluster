@@ -1,33 +1,33 @@
 import Image from "next/image";
 import {
+  SEASONAL_STAMP_BADGE_TEXT,
   SEASONAL_STAMP_LABEL,
-  SEASONAL_STAMP_SUBTITLE,
 } from "@/lib/map-point-stamp";
 
 const SIZE = {
   sm: {
     box: "w-[4.25rem] h-[4.25rem] sm:w-20 sm:h-20",
-    pad: "p-1.5",
-    img: 36,
-    imgClass: "w-8 h-8",
-    label: "text-[6px]",
-    subtitle: "text-[7px]",
+    pad: "px-1 pt-1 pb-1.5",
+    img: 28,
+    imgClass: "w-6 h-6 sm:w-7 sm:h-7",
+    label: "text-[5.5px] sm:text-[6px]",
+    word: "text-[9px] sm:text-[10px]",
   },
   md: {
     box: "w-[5.05rem] h-[5.05rem]",
-    pad: "p-2",
-    img: 40,
-    imgClass: "w-9 h-9",
-    label: "text-[7px]",
-    subtitle: "text-[8px]",
+    pad: "px-1.5 pt-1.5 pb-2",
+    img: 32,
+    imgClass: "w-8 h-8",
+    label: "text-[6.5px]",
+    word: "text-[11px]",
   },
   lg: {
     box: "w-[5.5rem] h-[5.5rem]",
-    pad: "p-2",
-    img: 40,
+    pad: "px-1.5 pt-1.5 pb-2",
+    img: 36,
     imgClass: "w-9 h-9",
     label: "text-[7px]",
-    subtitle: "text-[8px]",
+    word: "text-[12px]",
   },
 } as const;
 
@@ -35,18 +35,19 @@ type Size = keyof typeof SIZE;
 
 /**
  * Sello dorado de temporada (mismo look que el popup del MAPA).
- * El logo del negocio va dentro; no reemplaza el sello por el logo solo.
+ * En la cara solo va la palabra corta "Nogada" para que no se corte.
  */
 export default function SeasonalStampBadge({
   logoSrc,
   alt = "",
-  subtitle = SEASONAL_STAMP_SUBTITLE,
+  badgeText = SEASONAL_STAMP_BADGE_TEXT,
   size = "lg",
   className = "",
 }: {
   logoSrc: string;
   alt?: string;
-  subtitle?: string;
+  /** Palabra corta en el sello (default: Nogada). */
+  badgeText?: string;
   size?: Size;
   className?: string;
 }) {
@@ -54,7 +55,7 @@ export default function SeasonalStampBadge({
 
   return (
     <div
-      className={`${s.box} ${s.pad} shrink-0 rounded-full flex flex-col items-center justify-center shadow-lg border-[3px] border-amber-700 ${className}`}
+      className={`${s.box} ${s.pad} shrink-0 rounded-full flex flex-col items-center justify-center overflow-hidden shadow-lg border-[3px] border-amber-700 ${className}`}
       style={{
         background: "linear-gradient(145deg, #fbbf24 0%, #f59e0b 45%, #d97706 100%)",
       }}
@@ -64,18 +65,18 @@ export default function SeasonalStampBadge({
         alt={alt}
         width={s.img}
         height={s.img}
-        className={`${s.imgClass} object-contain`}
+        className={`${s.imgClass} object-contain shrink-0`}
         unoptimized
       />
       <span
-        className={`${s.label} font-extrabold uppercase tracking-wider text-amber-950/80 mt-0.5 leading-none`}
+        className={`${s.label} font-extrabold uppercase tracking-wider text-amber-950/80 mt-0.5 leading-none shrink-0`}
       >
         {SEASONAL_STAMP_LABEL}
       </span>
       <span
-        className={`${s.subtitle} font-black text-stone-900 leading-tight text-center line-clamp-2 px-0.5`}
+        className={`${s.word} font-black text-stone-900 leading-none text-center tracking-tight shrink-0`}
       >
-        {subtitle}
+        {badgeText}
       </span>
     </div>
   );

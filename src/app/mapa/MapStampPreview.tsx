@@ -7,7 +7,6 @@ export default function MapStampPreview({ stamp }: { stamp: StampDisplayInfo }) 
     <div className="flex justify-center mt-2">
       <SeasonalStampBadge
         logoSrc={stamp.logoSrc}
-        subtitle={stamp.subtitle}
         size="lg"
         className="-rotate-6 animate-float-y"
       />
