@@ -53,10 +53,10 @@ export default function TransferPaymentSection({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 border border-[#27366D] text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 border border-[#27366D] text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition disabled:opacity-50"
       >
         <Banknote className="w-4 h-4" />
-        Solicitar Pago por CLABE / Efectivo (validación manual)
+        Transferencia CLABE (validación manual)
       </button>
 
       {open && (

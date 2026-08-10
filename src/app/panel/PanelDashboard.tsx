@@ -767,7 +767,7 @@ export default function PanelDashboard({
             {stripeConfigured && !autoRenewal && plan !== "TURISTA" && (
               <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
             )}
-            {!commercial && plan !== "TURISTA" && (
+            {!autoRenewal && plan !== "TURISTA" && (
               <TransferPaymentSection
                 plan={plan}
                 onConfirm={handleManualPayment}
@@ -1347,7 +1347,7 @@ export default function PanelDashboard({
                 {stripeConfigured && !autoRenewal && plan !== "TURISTA" && (
                   <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
                 )}
-                {!commercial && plan !== "TURISTA" && (
+                {!autoRenewal && plan !== "TURISTA" && (
                   <TransferPaymentSection
                     plan={plan}
                     onConfirm={handleManualPayment}
