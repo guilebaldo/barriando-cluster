@@ -14,6 +14,11 @@ import { toSocioProfileDbFields } from "@/lib/business-profile-payload";
 import { emptyBusinessProfile } from "@/lib/business-address";
 import type { SocioProfileFormInitial } from "@/app/panel/business-profile-types";
 import type { MembershipPlan } from "@/generated/prisma/client";
+import {
+  STAMP_STATUS_VALIDATED,
+  getParticipatingRestaurantsAsync,
+  getPassportProgress,
+} from "@/lib/pasaporte";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -434,6 +439,10 @@ export type AdminUserRow = {
     privacyAccepted: boolean;
   } | null;
   requestedBusinessName: string | null;
+  /** % de negocios participantes sellados (únicos / total). */
+  passportProgress: number;
+  passportStampedCount: number;
+  passportTotalCount: number;
 };
 
 export async function approveLinkage(userId: string): Promise<ActionResult> {
@@ -667,6 +676,22 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
   }
 
   const users = await fetchAdminUserRecords();
+  const userIds = users.map((u) => u.id);
+  const [participating, stampGroups] = await Promise.all([
+    getParticipatingRestaurantsAsync(),
+    userIds.length === 0
+      ? Promise.resolve([] as { userId: string; restaurantId: number }[])
+      : prisma.stamp.groupBy({
+          by: ["userId", "restaurantId"],
+          where: { userId: { in: userIds }, status: STAMP_STATUS_VALIDATED },
+        }),
+  ]);
+
+  const passportTotalCount = participating.length;
+  const stampedByUser = new Map<string, number>();
+  for (const row of stampGroups) {
+    stampedByUser.set(row.userId, (stampedByUser.get(row.userId) ?? 0) + 1);
+  }
 
   return users.map((user) => {
     const catalogSocio = user.socioId ? listaSocios.find((s) => s.id === user.socioId) : null;
@@ -675,6 +700,7 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
 
     const requestedBusinessName =
       user.socioProfile?.businessName?.trim() || catalogSocio?.name || null;
+    const passportStampedCount = stampedByUser.get(user.id) ?? 0;
 
     return {
       id: user.id,
@@ -695,6 +721,9 @@ export async function listAdminUsers(): Promise<AdminUserRow[]> {
       hasStripeSubscription: Boolean(user.subscription?.stripeSubscriptionId),
       linkageStatus: user.socioProfile?.linkageStatus ?? null,
       isManualEntry: user.socioProfile?.isManualEntry ?? false,
+      passportProgress: getPassportProgress(passportStampedCount, passportTotalCount),
+      passportStampedCount,
+      passportTotalCount,
       profile: user.socioProfile
         ? {
             businessName: user.socioProfile.businessName ?? "",

@@ -48,6 +48,14 @@ type AdminTab = "operations" | "accounts" | "content" | "hitos";
 type ResolvedAction = "approved" | "rejected";
 type HealthStatus = "ok" | "pending" | "expired";
 
+function formatPassportFill(user: AdminUserRow): string {
+  return `${user.passportProgress}%`;
+}
+
+function passportFillTitle(user: AdminUserRow): string {
+  return `Pasaporte: ${user.passportStampedCount} de ${user.passportTotalCount} negocios sellados`;
+}
+
 const ACCOUNTS_PAGE_SIZE = 10;
 
 function hasPendingLinkageRequest(user: AdminUserRow): boolean {
@@ -615,6 +623,7 @@ export default function AdminDashboard({
                     <th className="px-4 py-3">Método de pago</th>
                     <th className="px-4 py-3">Vencimiento</th>
                     <th className="px-4 py-3 whitespace-nowrap">Registro</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Pasaporte</th>
                     <th className="px-4 py-3 w-28 text-right">Acciones</th>
                   </tr>
                 </thead>
@@ -733,6 +742,16 @@ function AccountMobileCard({
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5 tabular-nums" title={user.createdAt}>
             Registro {formatAdminTimestamp(user.createdAt)}
+          </p>
+          <p
+            className="text-[11px] text-slate-600 mt-0.5 tabular-nums"
+            title={passportFillTitle(user)}
+          >
+            Pasaporte {formatPassportFill(user)}
+            <span className="text-slate-400">
+              {" "}
+              · {user.passportStampedCount}/{user.passportTotalCount}
+            </span>
           </p>
         </div>
         <button
@@ -867,6 +886,16 @@ function UserRows({
         >
           {formatAdminTimestamp(user.createdAt)}
         </td>
+        <td
+          className="px-4 py-3 text-slate-700 whitespace-nowrap tabular-nums"
+          title={passportFillTitle(user)}
+        >
+          {formatPassportFill(user)}
+          <span className="text-slate-400">
+            {" "}
+            ({user.passportStampedCount}/{user.passportTotalCount})
+          </span>
+        </td>
         <td className="px-4 py-3 text-right align-top">
           <div className="inline-flex flex-col items-end gap-2">
             <div className="inline-flex gap-1">
@@ -926,7 +955,7 @@ function UserRows({
       </tr>
       {isEditing && (
         <tr className="bg-slate-50 border-b border-slate-200">
-          <td colSpan={9} className="px-3 sm:px-4 py-5 max-w-0">
+          <td colSpan={10} className="px-3 sm:px-4 py-5 max-w-0">
             <AccountEditForm
               user={user}
               loadingId={loadingId}
