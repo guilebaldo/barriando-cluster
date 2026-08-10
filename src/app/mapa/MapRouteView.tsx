@@ -1,26 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
-  Camera,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   Landmark,
   MapPin,
   Sparkles,
 } from "lucide-react";
 import { buildWalkingItinerary, haversineDistanceKm, type MapRouteResult } from "@/lib/map-route-client";
 import { getHitoIntro } from "@/lib/map-hito-intro";
-import { getPointStampHref } from "@/lib/map-point-stamp";
 import MapWelcomeFicha from "./MapWelcomeFicha";
 import MapGeoModal from "./MapGeoModal";
 import { MapBusinessSignupLink } from "./MapBusinessSignupLink";
 import type { UserMapLocation } from "./user-map-location";
-import QrScanModal from "../components/QrScanModal";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
 import {
   headingsNearlyEqual,
@@ -100,7 +95,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [sheetExpanded, setSheetExpanded] = useState(true);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
-  const [scannerOpen, setScannerOpen] = useState(false);
 
   const hasSocioDeepLink = useMemo(() => {
     const socioParam = searchParams.get("socio");
@@ -394,7 +388,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
   const activeCardIndex = Math.max(0, selectedIndex >= 0 ? selectedIndex : cardIndex);
   const activePoint = route.points[activeCardIndex] ?? route.points[0];
-  const stampHref = activePoint ? getPointStampHref(activePoint) : null;
 
   function selectPoint(id: string) {
     setWelcomeOpen(false);
@@ -411,10 +404,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     setCardIndex(wrapped);
     setSelectedId(route.points[wrapped].id);
   }
-
-  const openNativeCamera = useCallback(() => {
-    setScannerOpen(true);
-  }, []);
 
   const onSheetTouchStart = (event: React.TouchEvent) => {
     touchStartY.current = event.touches[0]?.clientY ?? null;
@@ -456,28 +445,19 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         <p className="text-[11px] text-slate-500 mt-2 font-medium">{activePoint.category}</p>
       )}
 
-      <div className="flex flex-wrap gap-2 mt-4">
-        {stampHref && (
-          <button
-            type="button"
-            onClick={openNativeCamera}
-            className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-lg transition active:scale-95 animate-soft-glow"
+      {activePoint.mapsUrl ? (
+        <p className="mt-2">
+          <a
+            href={activePoint.mapsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-[12px] text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-[#27366D]"
           >
-            <Camera className="w-4 h-4" />
-            Abrir pasaporte
-          </button>
-        )}
-        <Link
-          href={activePoint.mapsUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 border border-slate-200 text-[#27366D] text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-lg hover:bg-slate-50 transition active:scale-95"
-        >
-          <MapPin className="w-4 h-4" />
-          Maps
-          <ExternalLink className="w-3 h-3" />
-        </Link>
-      </div>
+            <MapPin className="w-3 h-3" />
+            Google Maps
+          </a>
+        </p>
+      ) : null}
     </>
   );
 
@@ -620,13 +600,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         onClose={() => setGeoModalOpen(false)}
         onRetry={requestGeolocation}
         detail={geoDetail}
-      />
-
-      <QrScanModal
-        open={scannerOpen}
-        onClose={() => setScannerOpen(false)}
-        hint="Apunta al QR del negocio o hito. Se lee solo al enfocar, sin tomar foto."
-        fallbackHref="/pasaporte"
       />
     </div>
   );
