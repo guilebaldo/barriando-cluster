@@ -37,6 +37,15 @@ function describeGeoError(err: GeolocationPositionError): string {
   }
 }
 
+/** Misma lógica de ficha que cuponera / BarrID: peek → half (preview) → full (texto completo). */
+type SheetMode = "peek" | "half" | "full";
+const SHEET_ORDER: SheetMode[] = ["peek", "half", "full"];
+
+function stepSheet(mode: SheetMode, delta: 1 | -1): SheetMode {
+  const idx = SHEET_ORDER.indexOf(mode);
+  return SHEET_ORDER[Math.max(0, Math.min(SHEET_ORDER.length - 1, idx + delta))];
+}
+
 const MapRouteMap = dynamic(() => import("./MapRouteMap"), {
   ssr: false,
   loading: () => <div className="absolute inset-0 bg-slate-100 animate-pulse" />,
@@ -82,7 +91,9 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
 function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const searchParams = useSearchParams();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
+  const touchFromScroller = useRef(false);
   const hasAutoRoutedRef = useRef(false);
 
   const [route, setRoute] = useState(initialRoute);
@@ -93,7 +104,8 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const [geoDetail, setGeoDetail] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<UserMapLocation | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
-  const [sheetExpanded, setSheetExpanded] = useState(true);
+  const [sheetMode, setSheetMode] = useState<SheetMode>("half");
+  const [fullSheetPx, setFullSheetPx] = useState(640);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
 
   const hasSocioDeepLink = useMemo(() => {
@@ -116,11 +128,26 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       setSelectedId(point.id);
       setCardIndex(idx);
       setWelcomeOpen(false);
-      setSheetExpanded(true);
+      setSheetMode("half");
       return true;
     },
     [searchParams]
   );
+
+  useEffect(() => {
+    const updateFullHeight = () => {
+      const safeTop =
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--safe-area-inset-top")
+        ) || 0;
+      const topGap = Math.max(72, safeTop + 56);
+      const bottomGap = appShell ? 56 : 0;
+      setFullSheetPx(Math.max(360, Math.round(window.innerHeight - topGap - bottomGap)));
+    };
+    updateFullHeight();
+    window.addEventListener("resize", updateFullHeight);
+    return () => window.removeEventListener("resize", updateFullHeight);
+  }, [appShell]);
 
   const applyLocationUpdate = useCallback((location: UserMapLocation) => {
     setUserLocation((prev) => {
@@ -379,7 +406,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     const observer = new ResizeObserver(updateHeight);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [sheetExpanded, welcomeOpen]);
+  }, [sheetMode, welcomeOpen, fullSheetPx, selectedId, cardIndex]);
 
   const selectedIndex = useMemo(
     () => route.points.findIndex((p) => p.id === selectedId),
@@ -388,12 +415,18 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
   const activeCardIndex = Math.max(0, selectedIndex >= 0 ? selectedIndex : cardIndex);
   const activePoint = route.points[activeCardIndex] ?? route.points[0];
+  const activeDescription = activePoint
+    ? activePoint.description?.trim() || getHitoIntro(activePoint.name, activePoint.zone)
+    : "";
+  const descriptionHasMore = activeDescription.length > 160;
 
   function selectPoint(id: string) {
     setWelcomeOpen(false);
     setSelectedId(id);
     const idx = route.points.findIndex((p) => p.id === id);
     if (idx >= 0) setCardIndex(idx);
+    setSheetMode("half");
+    bodyScrollRef.current?.scrollTo({ top: 0 });
   }
 
   function goToIndex(next: number) {
@@ -403,20 +436,45 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     setWelcomeOpen(false);
     setCardIndex(wrapped);
     setSelectedId(route.points[wrapped].id);
+    setSheetMode("half");
+    bodyScrollRef.current?.scrollTo({ top: 0 });
   }
 
   const onSheetTouchStart = (event: React.TouchEvent) => {
     touchStartY.current = event.touches[0]?.clientY ?? null;
+    const scroller = bodyScrollRef.current;
+    const target = event.target;
+    touchFromScroller.current = Boolean(
+      scroller && target instanceof Node && scroller.contains(target)
+    );
   };
 
   const onSheetTouchEnd = (event: React.TouchEvent) => {
     if (touchStartY.current === null) return;
     const endY = event.changedTouches[0]?.clientY;
-    if (endY == null) return;
+    if (endY == null) {
+      touchStartY.current = null;
+      touchFromScroller.current = false;
+      return;
+    }
     const delta = touchStartY.current - endY;
-    if (delta > 28) setSheetExpanded(true);
-    else if (delta < -28) setSheetExpanded(false);
     touchStartY.current = null;
+    const fromScroller = touchFromScroller.current;
+    touchFromScroller.current = false;
+
+    if (delta > 28) {
+      setSheetMode((m) => stepSheet(m, 1));
+    } else if (delta < -28) {
+      const scroller = bodyScrollRef.current;
+      if (fromScroller && sheetMode === "full" && scroller && scroller.scrollTop > 2) {
+        return;
+      }
+      setSheetMode((m) => stepSheet(m, -1));
+    }
+  };
+
+  const cycleSheetFromHandle = () => {
+    setSheetMode((m) => (m === "full" ? "half" : stepSheet(m, 1)));
   };
 
   const fichaBody = activePoint && (
@@ -437,9 +495,22 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         )}
       </div>
 
-      <p className="text-sm text-slate-600 leading-relaxed font-light mt-3 line-clamp-3">
-        {activePoint.description?.trim() || getHitoIntro(activePoint.name, activePoint.zone)}
+      <p
+        className={`text-sm text-slate-600 leading-relaxed font-light mt-3 ${
+          sheetMode === "full" ? "" : "line-clamp-3"
+        }`}
+      >
+        {activeDescription}
       </p>
+      {sheetMode === "half" && descriptionHasMore ? (
+        <button
+          type="button"
+          onClick={() => setSheetMode("full")}
+          className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-[#27366D]"
+        >
+          Desliza arriba para leer más
+        </button>
+      ) : null}
 
       {activePoint.category && (
         <p className="text-[11px] text-slate-500 mt-2 font-medium">{activePoint.category}</p>
@@ -496,36 +567,45 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       >
         <div
           ref={sheetRef}
-          className={`mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl overflow-hidden transition-[max-height,transform] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overscroll-contain will-change-[max-height] ${
+          className={`mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl overflow-hidden flex flex-col min-h-0 transition-[height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overscroll-contain will-change-[height] ${
             appShell
-              ? "w-full max-w-none rounded-t-2xl border-b-0"
-              : "max-w-lg rounded-2xl"
-          } ${
-            sheetExpanded
-              ? welcomeOpen
-                ? "max-h-[min(62vh,480px)]"
-                : "max-h-[min(52vh,420px)]"
-              : welcomeOpen
-                ? "max-h-[9.5rem]"
-                : "max-h-[6.5rem]"
-          }`}
+              ? "w-full max-w-none border-b-0"
+              : "max-w-lg"
+          } ${sheetMode === "full" ? "rounded-t-3xl" : "rounded-t-2xl"}`}
+          style={{
+            height:
+              sheetMode === "full"
+                ? fullSheetPx
+                : sheetMode === "peek"
+                  ? welcomeOpen
+                    ? 152
+                    : 104
+                  : "auto",
+            maxHeight: sheetMode === "half" ? fullSheetPx : undefined,
+          }}
           onTouchStart={onSheetTouchStart}
           onTouchEnd={onSheetTouchEnd}
         >
           <button
             type="button"
-            onClick={() => setSheetExpanded((v) => !v)}
-            className={`w-full flex justify-center touch-manipulation ${
-              sheetExpanded ? "pt-2.5 pb-1 border-b border-slate-100/80" : "pt-2.5 pb-2"
+            onClick={cycleSheetFromHandle}
+            className={`w-full flex justify-center touch-manipulation shrink-0 ${
+              sheetMode !== "peek" ? "pt-2.5 pb-1 border-b border-slate-100/80" : "pt-2.5 pb-2"
             }`}
-            aria-expanded={sheetExpanded}
-            aria-label={sheetExpanded ? "Ocultar ficha" : "Mostrar ficha"}
+            aria-expanded={sheetMode !== "peek"}
+            aria-label={
+              sheetMode === "peek"
+                ? "Mostrar ficha"
+                : sheetMode === "full"
+                  ? "Reducir ficha"
+                  : "Expandir ficha"
+            }
           >
             <span className="w-10 h-1 rounded-full bg-slate-300" />
           </button>
 
-          {!sheetExpanded && (
-            <div className="px-2 pb-2.5">
+          {sheetMode === "peek" && (
+            <div className="px-2 pb-2.5 shrink-0">
               {!welcomeOpen ? (
                 <div className="flex items-center gap-1.5">
                   <NavArrowButton
@@ -564,7 +644,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
                     type="button"
                     onClick={() => {
                       setWelcomeOpen(false);
-                      setSheetExpanded(true);
+                      setSheetMode("half");
                     }}
                     className="w-full bg-[#27366D] hover:bg-[#1e2b58] text-white text-[11px] font-bold uppercase tracking-wider py-2.5 rounded-xl transition active:scale-[0.98]"
                   >
@@ -575,23 +655,32 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
             </div>
           )}
 
-          <div
-            className={`p-3.5 space-y-2.5 overflow-y-auto overscroll-contain touch-pan-y ${
-              sheetExpanded ? "max-h-[min(calc(58vh-2.5rem),440px)]" : "hidden"
-            }`}
-          >
-            {welcomeOpen ? (
-              <MapWelcomeFicha route={initialRoute} onStart={() => setWelcomeOpen(false)} />
-            ) : (
-              <>
-                {fichaBody}
-                {navRow}
-                <p className="text-center">
-                  <MapBusinessSignupLink />
-                </p>
-              </>
-            )}
-          </div>
+          {sheetMode !== "peek" ? (
+            <div
+              ref={bodyScrollRef}
+              className={`p-3.5 space-y-2.5 overscroll-contain touch-pan-y min-h-0 ${
+                sheetMode === "full" ? "flex-1 overflow-y-auto" : "overflow-visible"
+              }`}
+            >
+              {welcomeOpen ? (
+                <MapWelcomeFicha
+                  route={initialRoute}
+                  onStart={() => {
+                    setWelcomeOpen(false);
+                    setSheetMode("half");
+                  }}
+                />
+              ) : (
+                <>
+                  {fichaBody}
+                  {navRow}
+                  <p className="text-center">
+                    <MapBusinessSignupLink />
+                  </p>
+                </>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
 
