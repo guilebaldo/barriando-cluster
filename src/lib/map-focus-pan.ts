@@ -37,10 +37,10 @@ export function getMapFocusPanOffsetPx(
     ? Math.round(safeTop + 28 + 168)
     : Math.round(safeTop + 16);
   // Extra aire para que el pin no quede pegado al borde de la ficha.
-  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight + 28) : 0;
+  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight + 40) : 0;
   const usable = Math.max(140, H - topPad - bottomPad);
   // Pin alto en la banda útil (la ficha suele ser alta con descripción completa).
-  const targetFromTop = topPad + usable * (stampPopup ? 0.48 : 0.28);
+  const targetFromTop = topPad + usable * (stampPopup ? 0.38 : 0.18);
   return Math.round(H / 2 - targetFromTop);
 }
 

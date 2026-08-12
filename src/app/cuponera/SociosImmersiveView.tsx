@@ -693,7 +693,7 @@ export default function SociosImmersiveView({
       {activeBenefit &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 app-modal-hub-pad">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 app-modal-hub-pad">
             <button
               type="button"
               className="absolute inset-0 bg-black/50"

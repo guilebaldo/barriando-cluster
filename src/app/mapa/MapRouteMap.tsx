@@ -9,42 +9,17 @@ import { circuitViaWalkPath } from "@/lib/map-circuit";
 import type { UserMapLocation } from "./user-map-location";
 import MapMarkerPopup from "./MapMarkerPopup";
 import { pointHasScannableStamp } from "@/lib/map-point-stamp";
-import { quantizeHeading } from "./map-heading";
 import { getMapFocusPanOffsetPx, leafletFlyToWithBottomBias, readCssPxVar } from "@/lib/map-focus-pan";
 
-function makeUserLocationIcon(heading: number | null | undefined): L.DivIcon {
-  const hasHeading = typeof heading === "number" && Number.isFinite(heading);
-  const rotation = hasHeading ? heading : 0;
-  const cone = hasHeading
-    ? `<div style="
-          position:absolute;left:50%;top:50%;width:64px;height:64px;
-          transform:translate(-50%,-50%) rotate(${rotation}deg);
-          pointer-events:none;
-        ">
-          <div style="
-            position:absolute;left:50%;bottom:50%;width:52px;height:46px;
-            transform:translateX(-50%);
-            background:linear-gradient(to top, rgba(59,130,246,0.05) 0%, rgba(59,130,246,0.38) 70%, rgba(59,130,246,0.12) 100%);
-            clip-path:polygon(50% 0%, 0% 100%, 100% 100%);
-          "></div>
-        </div>`
-    : "";
-
-  return L.divIcon({
-    className: "user-location-marker",
-    html: `<div style="position:relative;width:72px;height:72px;">
-      ${cone}
-      <div style="
-        position:absolute;left:50%;top:50%;width:16px;height:16px;
-        transform:translate(-50%,-50%);
-        background:#3b82f6;border:3px solid #fff;border-radius:50%;
-        box-shadow:0 1px 6px rgba(37,99,235,.45);
-      "></div>
-    </div>`,
-    iconSize: [72, 72],
-    iconAnchor: [36, 36],
-  });
-}
+const USER_LOCATION_ICON = L.divIcon({
+  className: "user-location-marker",
+  html: `<div style="
+      width:16px;height:16px;background:#3b82f6;border:3px solid #fff;border-radius:50%;
+      box-shadow:0 1px 6px rgba(37,99,235,.45);
+    "></div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
 
 function FitRouteBounds({
   points,
@@ -290,12 +265,6 @@ export default function MapRouteMap({
     return [first.latitude, first.longitude];
   }, [points]);
 
-  const displayHeading = quantizeHeading(userLocation?.heading, 5);
-  const userIcon = useMemo(
-    () => makeUserLocationIcon(displayHeading),
-    [displayHeading]
-  );
-
   if (points.length === 0) {
     return (
       <div className="h-[480px] rounded-2xl border border-slate-200 bg-slate-100 flex items-center justify-center text-sm text-slate-500">
@@ -352,7 +321,7 @@ export default function MapRouteMap({
             />
             <Marker
               position={[userLocation.latitude, userLocation.longitude]}
-              icon={userIcon}
+              icon={USER_LOCATION_ICON}
               zIndexOffset={1000}
               interactive={false}
             />

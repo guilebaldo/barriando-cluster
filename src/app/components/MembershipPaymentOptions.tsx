@@ -61,7 +61,7 @@ export default function MembershipPaymentOptions({
             <CreditCard className="w-4 h-4 shrink-0" />
             {stripeLoading ? "Redirigiendo…" : stripeLabel}
           </button>
-          <AcceptedPaymentMethods includeOxxo={false} caption="" />
+          <AcceptedPaymentMethods includeOxxo={false} caption="" align="center" />
         </section>
       ) : null}
 
@@ -72,7 +72,7 @@ export default function MembershipPaymentOptions({
               Pago mensual manual
             </p>
             <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
-              Paga un mes con OXXO o transferencia. Sin cargo recurrente.
+              Paga un mes con OXXO o SPEI. Sin cargo recurrente.
             </p>
           </div>
           <div className={`grid gap-2 ${stripeConfigured && showOxxo && showTransfer ? "grid-cols-2" : "grid-cols-1"}`}>

@@ -12,6 +12,8 @@ type Props = {
   /** Incluye OXXO (útil junto a botones de tarjeta). */
   includeOxxo?: boolean;
   caption?: string;
+  /** Alinea los badges (p. ej. bajo un botón de pago). */
+  align?: "start" | "center";
 };
 
 /**
@@ -23,6 +25,7 @@ export default function AcceptedPaymentMethods({
   className = "",
   includeOxxo = true,
   caption = "Pagos seguros con Stripe",
+  align = "start",
 }: Props) {
   const methods = includeOxxo ? METHODS : METHODS.filter((m) => m.label !== "OXXO");
   const captionClass = tone === "dark" ? "text-slate-400" : "text-slate-500";
@@ -30,10 +33,12 @@ export default function AcceptedPaymentMethods({
     tone === "dark"
       ? "bg-white/10 ring-1 ring-white/15"
       : "bg-white ring-1 ring-slate-200 shadow-sm";
+  const alignClass = align === "center" ? "items-center" : "items-start";
+  const listAlign = align === "center" ? "justify-center" : "";
 
   return (
     <div
-      className={`flex flex-col gap-2 ${className}`}
+      className={`flex flex-col gap-2 ${alignClass} ${className}`}
       role="group"
       aria-label="Métodos de pago aceptados"
     >
@@ -42,7 +47,7 @@ export default function AcceptedPaymentMethods({
           {caption}
         </p>
       ) : null}
-      <ul className="flex flex-wrap items-center gap-2">
+      <ul className={`flex flex-wrap items-center gap-2 ${listAlign}`}>
         {methods.map((method) => (
           <li key={method.label}>
             {/* eslint-disable-next-line @next/next/no-img-element */}

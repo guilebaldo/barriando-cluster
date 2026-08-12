@@ -17,12 +17,6 @@ import MapGeoModal from "./MapGeoModal";
 import { MapBusinessSignupLink } from "./MapBusinessSignupLink";
 import type { UserMapLocation } from "./user-map-location";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
-import {
-  headingsNearlyEqual,
-  isIOSLike,
-  normalizeHeading,
-  smoothHeading,
-} from "./map-heading";
 
 function describeGeoError(err: GeolocationPositionError): string {
   switch (err.code) {
@@ -143,44 +137,17 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
   const applyLocationUpdate = useCallback((location: UserMapLocation) => {
     setUserLocation((prev) => {
-      // GPS heading on Android is noisy when nearly still — keep compass heading.
-      const gpsHeading =
-        typeof location.heading === "number" &&
-        Number.isFinite(location.heading) &&
-        location.heading >= 0
-          ? normalizeHeading(location.heading)
-          : null;
-      const movingFastEnough =
-        typeof location.speed === "number" &&
-        Number.isFinite(location.speed) &&
-        location.speed >= 0.8;
-
       if (prev && haversineDistanceKm(prev, location) < 0.008) {
-        const nextHeading =
-          movingFastEnough && gpsHeading != null
-            ? smoothHeading(prev.heading ?? null, gpsHeading, 0.35)
-            : prev.heading;
-        if (
-          nextHeading === prev.heading &&
-          location.accuracy === prev.accuracy &&
-          location.speed === prev.speed
-        ) {
+        if (location.accuracy === prev.accuracy && location.speed === prev.speed) {
           return prev;
         }
         return {
           ...prev,
-          heading: nextHeading,
           accuracy: location.accuracy ?? prev.accuracy,
           speed: location.speed ?? prev.speed,
         };
       }
-      return {
-        ...location,
-        heading:
-          movingFastEnough && gpsHeading != null
-            ? gpsHeading
-            : prev?.heading ?? gpsHeading,
-      };
+      return location;
     });
     setGeoModalOpen(false);
   }, []);
@@ -228,10 +195,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
             typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
               ? pos.coords.speed
               : null,
-          heading:
-            typeof pos.coords.heading === "number" && Number.isFinite(pos.coords.heading)
-              ? pos.coords.heading
-              : null,
         });
       },
       (err) => {
@@ -251,10 +214,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
     const onSuccess = (pos: GeolocationPosition) => {
       setGeoDetail(null);
-      const heading =
-        typeof pos.coords.heading === "number" && Number.isFinite(pos.coords.heading)
-          ? pos.coords.heading
-          : null;
       const speed =
         typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
           ? pos.coords.speed
@@ -264,7 +223,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         longitude: pos.coords.longitude,
         accuracy: pos.coords.accuracy,
         speed,
-        heading,
       };
 
       if (!hasAutoRoutedRef.current) {
@@ -293,88 +251,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [applyInitialRouteFromLocation, applyLocationUpdate]);
-
-  useEffect(() => {
-    const ios = isIOSLike();
-    let smoothed: number | null = null;
-    let lastCommitMs = 0;
-    let absoluteSeen = false;
-    let relativeAttached = false;
-
-    const commitHeading = (raw: number) => {
-      smoothed = smoothHeading(smoothed, raw, ios ? 0.28 : 0.16);
-      const now = performance.now();
-      // Throttle React updates — Android fires orientation at very high rate.
-      if (now - lastCommitMs < 80) return;
-      lastCommitMs = now;
-      setUserLocation((prev) => {
-        if (!prev) return prev;
-        if (prev.heading != null && headingsNearlyEqual(prev.heading, smoothed!, 5)) {
-          return prev;
-        }
-        return { ...prev, heading: smoothed };
-      });
-    };
-
-    const readFromEvent = (event: DeviceOrientationEvent, requireAbsolute: boolean) => {
-      const webkitHeading = (event as DeviceOrientationEvent & { webkitCompassHeading?: number })
-        .webkitCompassHeading;
-      if (typeof webkitHeading === "number" && Number.isFinite(webkitHeading)) {
-        absoluteSeen = true;
-        commitHeading(webkitHeading);
-        return;
-      }
-
-      if (typeof event.alpha !== "number" || !Number.isFinite(event.alpha)) return;
-
-      // Relative alpha (common on Android without absolute) spins wildly — ignore it.
-      const isAbsolute = event.absolute === true || !requireAbsolute;
-      if (requireAbsolute && event.absolute !== true) return;
-      if (!isAbsolute && !ios) return;
-
-      absoluteSeen = absoluteSeen || event.absolute === true;
-      // Screen-compass: 0 = north when phone is upright / flat.
-      commitHeading(normalizeHeading(360 - event.alpha));
-    };
-
-    const onAbsolute = (event: Event) => {
-      absoluteSeen = true;
-      readFromEvent(event as DeviceOrientationEvent, false);
-    };
-    const onRelative = (event: Event) => {
-      // iOS: webkitCompassHeading lives on deviceorientation.
-      // Android: only use if absolute never arrives (and still skip non-absolute alpha).
-      if (!ios && absoluteSeen) return;
-      readFromEvent(event as DeviceOrientationEvent, !ios);
-    };
-
-    window.addEventListener("deviceorientationabsolute", onAbsolute, true);
-    if (ios) {
-      window.addEventListener("deviceorientation", onRelative, true);
-      relativeAttached = true;
-    } else {
-      // Give absolute sensor a moment; fall back only if it never fires.
-      const fallbackTimer = window.setTimeout(() => {
-        if (absoluteSeen || relativeAttached) return;
-        window.addEventListener("deviceorientation", onRelative, true);
-        relativeAttached = true;
-      }, 1200);
-      return () => {
-        window.clearTimeout(fallbackTimer);
-        window.removeEventListener("deviceorientationabsolute", onAbsolute, true);
-        if (relativeAttached) {
-          window.removeEventListener("deviceorientation", onRelative, true);
-        }
-      };
-    }
-
-    return () => {
-      window.removeEventListener("deviceorientationabsolute", onAbsolute, true);
-      if (relativeAttached) {
-        window.removeEventListener("deviceorientation", onRelative, true);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (hasSocioDeepLink) {

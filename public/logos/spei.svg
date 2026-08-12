@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 40" role="img" aria-label="SPEI">
+  <rect width="72" height="40" rx="6" fill="#003DA5"/>
+  <text
+    x="36"
+    y="26"
+    text-anchor="middle"
+    fill="#FFFFFF"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="16"
+    font-weight="800"
+    letter-spacing="1.2"
+  >SPEI</text>
+</svg>

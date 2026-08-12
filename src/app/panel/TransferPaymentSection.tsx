@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Banknote, Copy, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 interface TransferPaymentSectionProps {
@@ -53,16 +53,23 @@ export default function TransferPaymentSection({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="h-12 w-full inline-flex items-center justify-center gap-2 border border-[#27366D] text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-3 rounded-lg transition disabled:opacity-50"
+        aria-label={open ? "Ocultar datos SPEI" : "Pagar con SPEI"}
+        className="h-12 w-full inline-flex items-center justify-center rounded-lg border border-[#27366D] bg-white hover:bg-slate-50 transition disabled:opacity-50 px-3"
       >
-        <Banknote className="w-4 h-4 shrink-0" />
-        Transferencia
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logos/spei.svg"
+          alt="SPEI"
+          width={72}
+          height={40}
+          className="h-7 w-auto rounded-[3px]"
+        />
       </button>
 
       {open && (
         <div className="col-span-full rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-3 text-xs text-slate-700">
           <p className="font-semibold text-[#27366D] uppercase tracking-wider">
-            Datos para transferencia
+            Datos SPEI
           </p>
           <p>
             <span className="text-slate-500">Banco / beneficiario:</span>{" "}
