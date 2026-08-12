@@ -35,11 +35,12 @@ export function getMapFocusPanOffsetPx(
   // Globo abre arriba del pin: reserva su alto + un poco de aire.
   const topPad = stampPopup
     ? Math.round(safeTop + 28 + 168)
-    : Math.round(safeTop + 12);
-  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight + 8) : 0;
+    : Math.round(safeTop + 16);
+  // Extra aire para que el pin no quede pegado al borde de la ficha.
+  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight + 28) : 0;
   const usable = Math.max(140, H - topPad - bottomPad);
-  // Con sello, pin más abajo en la banda útil para que el globo quede centrado.
-  const targetFromTop = topPad + usable * (stampPopup ? 0.58 : 0.38);
+  // Pin alto en la banda útil (la ficha suele ser alta con descripción completa).
+  const targetFromTop = topPad + usable * (stampPopup ? 0.48 : 0.28);
   return Math.round(H / 2 - targetFromTop);
 }
 

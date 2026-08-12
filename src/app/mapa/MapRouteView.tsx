@@ -82,6 +82,7 @@ export default function MapRouteView({ route: initialRoute }: { route: MapRouteR
 function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const searchParams = useSearchParams();
   const sheetRef = useRef<HTMLDivElement>(null);
+  const sheetChromeRef = useRef<HTMLDivElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
   const touchFromScroller = useRef(false);
@@ -386,10 +387,11 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   }, [focusSocioOnRoute, route]);
 
   useEffect(() => {
-    const el = sheetRef.current;
+    const el = sheetChromeRef.current ?? sheetRef.current;
     if (!el) return;
 
     const updateHeight = () => {
+      // Incluye padding inferior del chrome (ficha flotante sin hub).
       setBottomSheetHeight(el.getBoundingClientRect().height);
     };
 
@@ -397,7 +399,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     const observer = new ResizeObserver(updateHeight);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [sheetExpanded, welcomeOpen, maxSheetPx, selectedId, cardIndex]);
+  }, [sheetExpanded, welcomeOpen, maxSheetPx, selectedId, cardIndex, appShell]);
 
   const selectedIndex = useMemo(
     () => route.points.findIndex((p) => p.id === selectedId),
@@ -534,14 +536,17 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       </div>
 
       <div
+        ref={sheetChromeRef}
         className={`absolute left-0 right-0 bottom-0 z-20 ${
           appShell ? "px-0" : "px-2 sm:px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
         }`}
       >
         <div
           ref={sheetRef}
-          className={`mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl overflow-hidden flex flex-col min-h-0 rounded-t-2xl transition-[height] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overscroll-contain will-change-[height] ${
-            appShell ? "w-full max-w-none border-b-0" : "max-w-lg"
+          className={`mx-auto bg-white/95 backdrop-blur-sm border border-slate-200 shadow-2xl overflow-hidden flex flex-col min-h-0 transition-[height] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] overscroll-contain will-change-[height] ${
+            appShell
+              ? "w-full max-w-none rounded-t-2xl border-b-0"
+              : "max-w-lg rounded-2xl"
           }`}
           style={{
             height: sheetExpanded ? "auto" : welcomeOpen ? 152 : 104,
