@@ -37,10 +37,16 @@ export function getMapFocusPanOffsetPx(
     ? Math.round(safeTop + 28 + 168)
     : Math.round(safeTop + 16);
   // Extra aire para que el pin no quede pegado al borde de la ficha.
-  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight + 40) : 0;
+  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight + 16) : 0;
   const usable = Math.max(140, H - topPad - bottomPad);
-  // Pin alto en la banda útil (la ficha suele ser alta con descripción completa).
-  const targetFromTop = topPad + usable * (stampPopup ? 0.38 : 0.18);
+  // Interpola según qué tanto de la pantalla come la ficha:
+  // ficha baja (cuponera / colapsada) → pin más centrado;
+  // ficha alta (MAPA expandido) → pin más arriba.
+  // Con globo de sello, el pin se mantiene más alto para dejar el popup.
+  const sheetFrac = H > 0 ? bottomPad / H : 0;
+  const t = Math.min(1, Math.max(0, (sheetFrac - 0.18) / 0.4));
+  const ratio = stampPopup ? 0.22 + 0.08 * t : 0.5 - 0.22 * t;
+  const targetFromTop = topPad + usable * ratio;
   return Math.round(H / 2 - targetFromTop);
 }
 

@@ -304,7 +304,6 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     setWelcomeOpen(false);
     setCardIndex(wrapped);
     setSelectedId(route.points[wrapped].id);
-    setSheetExpanded(true);
     bodyScrollRef.current?.scrollTo({ top: 0 });
   }
 
@@ -425,7 +424,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
               : "max-w-lg rounded-2xl"
           }`}
           style={{
-            height: sheetExpanded ? "auto" : welcomeOpen ? 152 : 104,
+            height: "auto",
             maxHeight: maxSheetPx,
           }}
           onTouchStart={onSheetTouchStart}
@@ -444,31 +443,36 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
           </button>
 
           {!sheetExpanded && (
-            <div className="px-2 pb-2.5 shrink-0">
+            <div className="px-2 pb-2.5 shrink-0 space-y-2">
               {!welcomeOpen ? (
-                <div className="flex items-center gap-1.5">
-                  <NavArrowButton
-                    direction="prev"
-                    onClick={() => goToIndex(activeCardIndex - 1)}
-                  />
-                  <div className="flex-1 min-w-0 text-center px-1">
-                    {activePoint && (
-                      <>
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-                          Hito {activePoint.order} de {route.points.length}
-                        </p>
-                        <p className="text-sm font-semibold text-[#27366D] truncate leading-tight mt-0.5">
-                          {activePoint.name}
-                        </p>
-                      </>
-                    )}
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <NavArrowButton
+                      direction="prev"
+                      onClick={() => goToIndex(activeCardIndex - 1)}
+                    />
+                    <div className="flex-1 min-w-0 text-center px-1">
+                      {activePoint && (
+                        <>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                            Hito {activePoint.order} de {route.points.length}
+                          </p>
+                          <p className="text-sm font-semibold text-[#27366D] truncate leading-tight mt-0.5">
+                            {activePoint.name}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    <NavArrowButton
+                      direction="next"
+                      primary
+                      onClick={() => goToIndex(activeCardIndex + 1)}
+                    />
                   </div>
-                  <NavArrowButton
-                    direction="next"
-                    primary
-                    onClick={() => goToIndex(activeCardIndex + 1)}
-                  />
-                </div>
+                  <p className="text-center">
+                    <MapBusinessSignupLink />
+                  </p>
+                </>
               ) : (
                 <div className="space-y-2 px-1">
                   <div className="text-center">
@@ -485,10 +489,13 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
                       setWelcomeOpen(false);
                       setSheetExpanded(true);
                     }}
-                    className="w-full bg-[#27366D] hover:bg-[#1e2b58] text-white text-[11px] font-bold uppercase tracking-wider py-2.5 rounded-xl transition active:scale-[0.98]"
+                    className="w-full bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider py-3 rounded-xl transition active:scale-[0.98]"
                   >
                     Comenzar recorrido
                   </button>
+                  <p className="text-center">
+                    <MapBusinessSignupLink />
+                  </p>
                 </div>
               )}
             </div>
