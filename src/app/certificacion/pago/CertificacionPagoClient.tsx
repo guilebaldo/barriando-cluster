@@ -6,9 +6,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import SiteShell from "@/app/components/SiteShell";
-import TransferPaymentSection from "@/app/panel/TransferPaymentSection";
-import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
-import AcceptedPaymentMethods from "@/app/components/AcceptedPaymentMethods";
+import MembershipPaymentOptions from "@/app/components/MembershipPaymentOptions";
 import {
   MEMBERSHIP_PLANS,
   formatPlanPriceMxn,
@@ -17,7 +15,7 @@ import {
 } from "@/lib/membresia";
 import { reportManualPayment } from "@/app/panel/actions";
 import type { MembershipPlan } from "@/generated/prisma/client";
-import { Clock, CreditCard, ShieldCheck } from "lucide-react";
+import { Clock, ShieldCheck } from "lucide-react";
 
 interface CertificacionPagoClientProps {
   plan: MembershipPlan;
@@ -165,69 +163,26 @@ export default function CertificacionPagoClient({
               )}
 
               <div className="space-y-4">
-                {stripeConfigured ? (
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={handleStripePay}
-                      className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition disabled:opacity-50"
-                    >
-                      <CreditCard className="w-4 h-4" />
-                      {loading ? "Redirigiendo..." : "Pagar con tarjeta (domiciliación mensual)"}
-                    </button>
-                    <AcceptedPaymentMethods
-                      includeOxxo={false}
-                      caption="Tarjetas aceptadas"
-                    />
-                  </div>
-                ) : (
+                {stripeConfigured ? null : (
                   <p className="text-xs text-amber-700 text-center">
                     El pago con tarjeta no está disponible en este momento.
                   </p>
                 )}
-
-                {stripeConfigured ? (
-                  <>
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-200" />
-                      </div>
-                      <div className="relative flex justify-center text-[10px] uppercase">
-                        <span className="bg-white px-2 text-slate-400">pago de un mes</span>
-                      </div>
-                    </div>
-                    <StripeLocalPaymentButtons plan={plan} disabled={loading} />
-                  </>
-                ) : null}
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200" />
-                  </div>
-                  <div className="relative flex justify-center text-[10px] uppercase">
-                    <span className="bg-white px-2 text-slate-400">o CLABE manual</span>
-                  </div>
-                </div>
-
-                <TransferPaymentSection
+                <MembershipPaymentOptions
                   plan={plan}
-                  onConfirm={handleManualPayment}
+                  stripeConfigured={stripeConfigured}
                   disabled={loading}
-                  clabe={paymentDetails.clabe}
-                  bankLabel={paymentDetails.bankLabel}
-                  paymentEmail={paymentDetails.paymentEmail}
+                  stripeLoading={loading}
+                  onStripePay={handleStripePay}
+                  onManualConfirm={handleManualPayment}
+                  paymentDetails={paymentDetails}
+                  showOxxo={stripeConfigured}
                 />
               </div>
 
               {(payMsg || manualMsg) && (
                 <p className="text-xs text-slate-600 text-center">{payMsg || manualMsg}</p>
               )}
-
-              <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-                Tarjeta: domiciliación automática. OXXO: pago único; al confirmar Stripe se activa tu mes
-                (sin cargo recurrente). CLABE: un administrador valida tu comprobante.
-              </p>
 
               {awaitingOxxo ? (
                 <button

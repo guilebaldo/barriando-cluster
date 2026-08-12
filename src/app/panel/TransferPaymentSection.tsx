@@ -48,19 +48,19 @@ export default function TransferPaymentSection({
   }
 
   return (
-    <div className="space-y-3">
+    <>
       <button
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="w-full sm:w-fit flex items-center justify-center gap-2 border border-[#27366D] text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition disabled:opacity-50"
+        className="h-12 w-full inline-flex items-center justify-center gap-2 border border-[#27366D] text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-3 rounded-lg transition disabled:opacity-50"
       >
-        <Banknote className="w-4 h-4" />
-        Transferencia CLABE (validación manual)
+        <Banknote className="w-4 h-4 shrink-0" />
+        Transferencia
       </button>
 
       {open && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-3 text-xs text-slate-700">
+        <div className="col-span-full rounded-xl border border-amber-200 bg-amber-50/60 p-4 space-y-3 text-xs text-slate-700">
           <p className="font-semibold text-[#27366D] uppercase tracking-wider">
             Datos para transferencia
           </p>
@@ -110,12 +110,12 @@ export default function TransferPaymentSection({
             type="button"
             disabled={submitting || disabled}
             onClick={handleConfirm}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition disabled:opacity-50"
+            className="h-12 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 rounded-lg transition disabled:opacity-50"
           >
             {submitting ? "Registrando solicitud..." : "Ya realicé el pago — enviar solicitud"}
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }

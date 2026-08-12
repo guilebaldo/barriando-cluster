@@ -26,9 +26,7 @@ import { planToSlug } from "@/lib/plan-routing";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
 import BenefitCredentialCard from "./BenefitCredentialCard";
-import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
-import AcceptedPaymentMethods from "@/app/components/AcceptedPaymentMethods";
-import TransferPaymentSection from "./TransferPaymentSection";
+import MembershipPaymentOptions from "@/app/components/MembershipPaymentOptions";
 import { cancelMembership, reportManualPayment } from "./actions";
 
 type VecinoPanelProps = {
@@ -201,36 +199,16 @@ export default function VecinoPanel({
         )}
 
         {!autoRenewal && (
-          <div className="flex flex-col gap-3">
-            {stripeConfigured && (
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => void handleStripePay(subscription.plan)}
-                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
-                >
-                  {paidActive ? "Domiciliar membresía" : "Pagar con tarjeta (domiciliación)"}
-                </button>
-                <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
-              </div>
-            )}
-            {stripeConfigured && (
-              <StripeLocalPaymentButtons
-                plan={subscription.plan}
-                disabled={pendingValidation}
-              />
-            )}
-            {!paidActive && (
-              <TransferPaymentSection
-                plan={subscription.plan}
-                onConfirm={handleManualPayment}
-                disabled={pendingValidation}
-                clabe={paymentDetails.clabe}
-                bankLabel={paymentDetails.bankLabel}
-                paymentEmail={paymentDetails.paymentEmail}
-              />
-            )}
-          </div>
+          <MembershipPaymentOptions
+            plan={subscription.plan}
+            stripeConfigured={stripeConfigured}
+            disabled={pendingValidation}
+            onStripePay={() => void handleStripePay(subscription.plan)}
+            onManualConfirm={handleManualPayment}
+            paymentDetails={paymentDetails}
+            showTransfer={!paidActive}
+            stripeLabel="Domiciliar con tarjeta"
+          />
         )}
 
         {upgradePlans.length > 0 && (

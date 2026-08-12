@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { MembershipPlan } from "@/generated/prisma/client";
-import { MEMBERSHIP_GRACE_DAYS } from "@/lib/membership-constants";
 
 type Props = {
   plan: MembershipPlan;
@@ -38,31 +37,30 @@ export default function StripeLocalPaymentButtons({ plan, disabled, className }:
   }
 
   return (
-    <div className={className ?? "space-y-3"}>
+    <div className={className ?? "min-w-0"}>
       <button
         type="button"
         disabled={disabled || loading}
         onClick={() => void startOxxo()}
-        className="w-full sm:w-fit flex items-center justify-center gap-2.5 border-2 border-[#27366D] bg-white text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition disabled:opacity-50"
+        aria-label={loading ? "Abriendo pago OXXO" : "Pagar con OXXO"}
+        className="h-12 w-full inline-flex items-center justify-center rounded-lg border border-[#27366D] bg-white hover:bg-slate-50 transition disabled:opacity-50 px-3"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logos/oxxo.svg"
-          alt=""
-          width={54}
-          height={30}
-          className="h-7 w-auto shrink-0 rounded-[3px]"
-          aria-hidden
-        />
-        {loading ? "Abriendo OXXO…" : "Pagar con OXXO"}
+        {loading ? (
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#27366D]">
+            Abriendo…
+          </span>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src="/logos/oxxo.svg"
+            alt="OXXO"
+            width={72}
+            height={40}
+            className="h-7 w-auto rounded-[3px]"
+          />
+        )}
       </button>
-      <p className="text-[10px] text-slate-500 leading-relaxed max-w-md">
-        Pago único de un mes (mismo monto que la membresía). Stripe te muestra un código de barras:
-        págalo en cualquier OXXO. Cuando Stripe confirme el depósito (suele ser al día siguiente
-        hábil), tu plan se activa solo. Renueva desde el panel al vencer ({MEMBERSHIP_GRACE_DAYS}{" "}
-        días de gracia).
-      </p>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="mt-1.5 text-[10px] text-red-600">{error}</p> : null}
     </div>
   );
 }

@@ -38,9 +38,7 @@ import {
 } from "@/lib/panel-notices-storage";
 import { reportManualPayment, cancelMembership } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
-import TransferPaymentSection from "./TransferPaymentSection";
-import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
-import AcceptedPaymentMethods from "@/app/components/AcceptedPaymentMethods";
+import MembershipPaymentOptions from "@/app/components/MembershipPaymentOptions";
 import LinkSocioSection from "./LinkSocioSection";
 import TouristPanel from "./TouristPanel";
 import VecinoPanel from "./VecinoPanel";
@@ -301,7 +299,7 @@ export default function PanelDashboard({
     await refreshSession();
   }
 
-  const stripeButtonLabel = commercial ? "Domiciliar membresía" : "Pagar con tarjeta bancaria";
+  const stripeButtonLabel = "Domiciliar con tarjeta";
 
   useEffect(() => {
     if (hasBusinessEstablished) {
@@ -560,29 +558,15 @@ export default function PanelDashboard({
                 : "Cuando Stripe confirme el depósito —a menudo al día siguiente hábil— tu membresía se activa sola."}
             </p>
           ) : (
-            <div className="flex flex-col gap-3">
-              {stripeConfigured && (
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => handleStripePay(plan)}
-                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
-                  >
-                    {stripeButtonLabel}
-                  </button>
-                  <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
-                </div>
-              )}
-              {stripeConfigured && (
-                <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
-              )}
-              <TransferPaymentSection
+            <div className="space-y-3">
+              <MembershipPaymentOptions
                 plan={plan}
-                onConfirm={handleManualPayment}
+                stripeConfigured={stripeConfigured}
                 disabled={pendingValidation}
-                clabe={paymentDetails.clabe}
-                bankLabel={paymentDetails.bankLabel}
-                paymentEmail={paymentDetails.paymentEmail}
+                onStripePay={() => handleStripePay(plan)}
+                onManualConfirm={handleManualPayment}
+                paymentDetails={paymentDetails}
+                stripeLabel={stripeButtonLabel}
               />
               {(payMsg || manualMsg) && (
                 <p className="text-xs text-slate-600">{payMsg || manualMsg}</p>
@@ -758,33 +742,19 @@ export default function PanelDashboard({
               Renovación automática activa. Próximo cargo: <strong>{nextChargeDate}</strong>.
             </div>
           )}
-          <div className="flex flex-col gap-3">
-            {stripeConfigured && !autoRenewal && (
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => handleStripePay(plan)}
-                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
-                >
-                  {stripeButtonLabel}
-                </button>
-                <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
-              </div>
-            )}
-            {stripeConfigured && !autoRenewal && plan !== "TURISTA" && (
-              <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
-            )}
-            {!autoRenewal && plan !== "TURISTA" && (
-              <TransferPaymentSection
-                plan={plan}
-                onConfirm={handleManualPayment}
-                disabled={pendingValidation}
-                clabe={paymentDetails.clabe}
-                bankLabel={paymentDetails.bankLabel}
-                paymentEmail={paymentDetails.paymentEmail}
-              />
-            )}
-          </div>
+          {!autoRenewal ? (
+            <MembershipPaymentOptions
+              plan={plan}
+              stripeConfigured={stripeConfigured}
+              disabled={pendingValidation}
+              onStripePay={() => handleStripePay(plan)}
+              onManualConfirm={handleManualPayment}
+              paymentDetails={paymentDetails}
+              showOxxo={plan !== "TURISTA"}
+              showTransfer={plan !== "TURISTA"}
+              stripeLabel={stripeButtonLabel}
+            />
+          ) : null}
           {upgradePlans.length > 0 && (
             <div className="pt-4 border-t border-slate-100 space-y-3">
               <div className="flex items-center gap-2">
@@ -1028,29 +998,15 @@ export default function PanelDashboard({
                   : "Cuando Stripe confirme el depósito —a menudo al día siguiente hábil— tu membresía se activa sola."}
               </p>
             ) : (
-              <div className="flex flex-col gap-3">
-                {stripeConfigured && (
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => handleStripePay(plan)}
-                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
-                    >
-                      {stripeButtonLabel}
-                    </button>
-                    <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
-                  </div>
-                )}
-                {stripeConfigured && (
-                  <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
-                )}
-                <TransferPaymentSection
+              <div className="space-y-3">
+                <MembershipPaymentOptions
                   plan={plan}
-                  onConfirm={handleManualPayment}
+                  stripeConfigured={stripeConfigured}
                   disabled={pendingValidation}
-                  clabe={paymentDetails.clabe}
-                  bankLabel={paymentDetails.bankLabel}
-                  paymentEmail={paymentDetails.paymentEmail}
+                  onStripePay={() => handleStripePay(plan)}
+                  onManualConfirm={handleManualPayment}
+                  paymentDetails={paymentDetails}
+                  stripeLabel={stripeButtonLabel}
                 />
                 {(payMsg || manualMsg) && (
                   <p className="text-xs text-slate-600">{payMsg || manualMsg}</p>
@@ -1344,33 +1300,19 @@ export default function PanelDashboard({
                 </div>
               )}
 
-              <div className="flex flex-col gap-3">
-                {stripeConfigured && !autoRenewal && (
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => handleStripePay(plan)}
-                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
-                    >
-                      {stripeButtonLabel}
-                    </button>
-                    <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
-                  </div>
-                )}
-                {stripeConfigured && !autoRenewal && plan !== "TURISTA" && (
-                  <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
-                )}
-                {!autoRenewal && plan !== "TURISTA" && (
-                  <TransferPaymentSection
-                    plan={plan}
-                    onConfirm={handleManualPayment}
-                    disabled={pendingValidation}
-                    clabe={paymentDetails.clabe}
-                    bankLabel={paymentDetails.bankLabel}
-                    paymentEmail={paymentDetails.paymentEmail}
-                  />
-                )}
-              </div>
+              {!autoRenewal ? (
+                <MembershipPaymentOptions
+                  plan={plan}
+                  stripeConfigured={stripeConfigured}
+                  disabled={pendingValidation}
+                  onStripePay={() => handleStripePay(plan)}
+                  onManualConfirm={handleManualPayment}
+                  paymentDetails={paymentDetails}
+                  showOxxo={plan !== "TURISTA"}
+                  showTransfer={plan !== "TURISTA"}
+                  stripeLabel={stripeButtonLabel}
+                />
+              ) : null}
               {upgradePlans.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
                   <div className="flex items-center gap-2 mb-3">
