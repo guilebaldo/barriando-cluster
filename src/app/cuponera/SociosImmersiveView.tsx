@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import {
@@ -246,21 +246,50 @@ export default function SociosImmersiveView({
     setSheetMode("half");
   }, [initialSocioId, socios]);
 
-  const selectSocio = useCallback((id: number) => {
-    setSelectedId(id);
-    setSheetMode("half");
+  const resetListScroll = useCallback(() => {
+    const el = listScrollRef.current;
+    if (el) el.scrollTop = 0;
   }, []);
 
+  const selectSocio = useCallback((id: number) => {
+    resetListScroll();
+    setSelectedId(id);
+    setSheetMode("half");
+  }, [resetListScroll]);
+
   const clearSelection = useCallback(() => {
+    resetListScroll();
     setSelectedId(null);
     setSheetMode("half");
-  }, []);
+  }, [resetListScroll]);
 
   useEffect(() => {
     if (selectedId != null && sheetMode === "full") {
       setSheetMode("half");
     }
   }, [selectedId, sheetMode]);
+
+  // Si el listado ya no llena el tope de half, no tiene sentido quedarse en full
+  // (p. ej. filtro Cupones con 2 socios): colapsar evita el hueco y el scroll trabado.
+  useEffect(() => {
+    if (selectedId != null || sheetMode !== "full") return;
+    const cap = Math.min(400, fullSheetPx);
+    if (halfBrowsePx < cap) setSheetMode("half");
+  }, [selectedId, sheetMode, halfBrowsePx, fullSheetPx]);
+
+  // Antes del paint: si el contenido encogió o salimos de full, el scrollTop
+  // viejo deja el listado en blanco y iOS rebota al animar la altura.
+  useLayoutEffect(() => {
+    resetListScroll();
+  }, [
+    resetListScroll,
+    benefitsOnly,
+    activeCategories,
+    searchQuery,
+    sociosFiltrados.length,
+    viewMode,
+    sheetMode,
+  ]);
 
   const toggleCategory = useCallback((cat: string) => {
     setActiveCategories((prev) =>
@@ -308,11 +337,15 @@ export default function SociosImmersiveView({
       ) {
         return;
       }
+      resetListScroll();
       setSheetMode((m) => stepSheet(m, -1));
     }
   };
 
   const cycleSheetFromHandle = () => {
+    if (sheetMode === "full" || (selectedId != null && sheetMode !== "peek")) {
+      resetListScroll();
+    }
     setSheetMode((m) => {
       if (selectedId != null) {
         return m === "peek" ? "half" : "peek";
@@ -613,7 +646,9 @@ export default function SociosImmersiveView({
           className={`px-3 pt-2 min-h-0 overscroll-contain touch-pan-y scrollbar-none ${
             selectedSocio && sheetMode === "half"
               ? "overflow-visible"
-              : "flex-1 overflow-y-auto"
+              : sheetMode === "full"
+                ? "flex-1 overflow-y-auto"
+                : "overflow-hidden"
           }`}
         >
           {selectedSocio ? detailBody : browseBody}
