@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { X } from "lucide-react";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
@@ -15,6 +14,7 @@ import QrScanModal from "../components/QrScanModal";
 import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
 import PasaporteBookMobile from "./PasaporteBookMobile";
 import SellarClient from "./sellar/SellarClient";
+import PassportNoticeToast, { type PassportNotice } from "./PassportNoticeToast";
 
 type RestaurantCard = {
   id: number;
@@ -519,10 +519,7 @@ function PasaporteInner({
   const previewStampsRef = useRef<HTMLDivElement>(null);
   const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [noticePopup, setNoticePopup] = useState<{
-    type: "success" | "error" | "info";
-    text: string;
-  } | null>(null);
+  const [noticePopup, setNoticePopup] = useState<PassportNotice | null>(null);
   const [stampFlashId, setStampFlashId] = useState<number | null>(null);
   const [addToHomeEligible, setAddToHomeEligible] = useState(false);
   const isPreview = !isAuthenticated;
@@ -542,6 +539,7 @@ function PasaporteInner({
     if (!pendingInvalid) return;
     setNoticePopup({
       type: "error",
+      title: "No se pudo sellar",
       text: "Restaurante no participante o enlace inválido.",
     });
     router.replace("/pasaporte", { scroll: false });
@@ -604,24 +602,35 @@ function PasaporteInner({
     const queryKey = searchParams.toString();
     if (!queryKey) return;
 
-    let next: { type: "success" | "error" | "info"; text: string } | null = null;
+    let next: PassportNotice | null = null;
 
     if (sello === "ok" && nombre) {
       next = {
         type: "success",
+        title: "Sello agregado",
         text: `¡Sello registrado en ${decodeURIComponent(nombre)}!`,
       };
     } else if (info === "cooldown") {
       const horas = searchParams.get("horas") ?? "18";
+      const slug = restauranteSlug?.trim().toLowerCase() ?? "";
+      const place = restaurants.find((r) => r.slug.toLowerCase() === slug)?.name;
       next = {
         type: "info",
-        text: `Ya sellaste este restaurante recientemente. Vuelve en ~${horas} h para un nuevo sello.`,
+        title: "Ya sellaste aquí",
+        text: place
+          ? `Vuelve a ${place} en ~${horas} h para un nuevo sello.`
+          : `Ya sellaste este lugar recientemente. Vuelve en ~${horas} h.`,
       };
     } else if (error === "invalid_restaurant") {
-      next = { type: "error", text: "Restaurante no participante o enlace inválido." };
+      next = {
+        type: "error",
+        title: "No se pudo sellar",
+        text: "Restaurante no participante o enlace inválido.",
+      };
     } else if (error === "restaurante_requerido") {
       next = {
         type: "error",
+        title: "No se pudo sellar",
         text: "El QR no trajo el negocio. Vuelve a escanearlo en el local (si el problema sigue, pide un QR actualizado).",
       };
     }
@@ -648,7 +657,7 @@ function PasaporteInner({
 
   useEffect(() => {
     if (!noticePopup) return;
-    const autoClose = window.setTimeout(() => setNoticePopup(null), 5000);
+    const autoClose = window.setTimeout(() => setNoticePopup(null), 5500);
     return () => window.clearTimeout(autoClose);
   }, [noticePopup]);
 
@@ -937,37 +946,9 @@ function PasaporteInner({
         />
       ) : null}
 
-      {noticePopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 app-modal-hub-pad pointer-events-none">
-          <div
-            role="status"
-            className={`pointer-events-auto relative w-full max-w-sm rounded-2xl border shadow-2xl p-5 animate-popup-in ${
-              noticePopup.type === "success"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-950"
-                : noticePopup.type === "error"
-                  ? "bg-red-50 border-red-200 text-red-900"
-                  : "bg-amber-50 border-amber-200 text-amber-950"
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => setNoticePopup(null)}
-              className="absolute top-3 right-3 text-current/50 hover:text-current"
-              aria-label="Cerrar aviso"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1 pr-6">
-              {noticePopup.type === "success"
-                ? "Sello agregado"
-                : noticePopup.type === "error"
-                  ? "No se pudo sellar"
-                  : "Aviso"}
-            </p>
-            <p className="text-sm font-medium leading-relaxed pr-6">{noticePopup.text}</p>
-          </div>
-        </div>
-      )}
+      {noticePopup ? (
+        <PassportNoticeToast notice={noticePopup} onClose={() => setNoticePopup(null)} />
+      ) : null}
     </>
   );
 
