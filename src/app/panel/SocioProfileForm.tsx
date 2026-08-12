@@ -17,6 +17,8 @@ interface SocioProfileFormProps {
   embedded?: boolean;
   requireFiscal?: boolean;
   requirePrivacy?: boolean;
+  /** Solo un bloque del perfil (móvil: titular / negocio / facturación). */
+  section?: "business" | "contact" | "billing";
   onSave?: (
     payload: SocioProfileFormInitial
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
@@ -57,6 +59,7 @@ export default function SocioProfileForm({
   embedded = false,
   requireFiscal = true,
   requirePrivacy = false,
+  section,
   onSave,
   onSaved,
   onDelete,
@@ -90,31 +93,35 @@ export default function SocioProfileForm({
       setMsg("Debes aceptar el aviso de privacidad.");
       return;
     }
-    if (form.latitude == null || form.longitude == null) {
-      setMsg("Confirma la ubicación en el mapa.");
-      return;
-    }
-    if (!form.billingSameAddress) {
-      const missingBilling =
-        !form.billingStreet.trim() ||
-        !form.billingStreetNumber.trim() ||
-        !form.billingColonia.trim() ||
-        !(form.billingMunicipio.trim() || form.billingCiudad.trim()) ||
-        !form.billingEstado.trim() ||
-        !form.billingPais.trim() ||
-        !form.billingCodigoPostal.trim();
-      if (missingBilling) {
-        setMsg("Completa la dirección fiscal o marca «usar el mismo domicilio».");
+    if (section !== "contact" && section !== "billing") {
+      if (form.latitude == null || form.longitude == null) {
+        setMsg("Confirma la ubicación en el mapa.");
         return;
       }
     }
-    if (!form.billingSameWhatsapp && !form.billingWhatsapp.trim()) {
-      setMsg("Indica el WhatsApp fiscal o marca «usar el mismo».");
-      return;
-    }
-    if (!form.billingSameEmail && !form.billingEmail.trim()) {
-      setMsg("Indica el email fiscal o marca «usar el mismo».");
-      return;
+    if (section !== "contact" && section !== "business") {
+      if (!form.billingSameAddress) {
+        const missingBilling =
+          !form.billingStreet.trim() ||
+          !form.billingStreetNumber.trim() ||
+          !form.billingColonia.trim() ||
+          !(form.billingMunicipio.trim() || form.billingCiudad.trim()) ||
+          !form.billingEstado.trim() ||
+          !form.billingPais.trim() ||
+          !form.billingCodigoPostal.trim();
+        if (missingBilling) {
+          setMsg("Completa la dirección fiscal o marca «usar el mismo domicilio».");
+          return;
+        }
+      }
+      if (!form.billingSameWhatsapp && !form.billingWhatsapp.trim()) {
+        setMsg("Indica el WhatsApp fiscal o marca «usar el mismo».");
+        return;
+      }
+      if (!form.billingSameEmail && !form.billingEmail.trim()) {
+        setMsg("Indica el email fiscal o marca «usar el mismo».");
+        return;
+      }
     }
 
     setMsg("");
@@ -147,6 +154,7 @@ export default function SocioProfileForm({
         requireFiscal={requireFiscal}
         requirePrivacy={requirePrivacy}
         hideBusinessName={hideBusinessName}
+        section={section}
       />
 
       <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100">

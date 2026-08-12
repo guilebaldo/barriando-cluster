@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -522,6 +523,7 @@ function PasaporteInner({
   const [noticePopup, setNoticePopup] = useState<PassportNotice | null>(null);
   const [stampFlashId, setStampFlashId] = useState<number | null>(null);
   const [addToHomeEligible, setAddToHomeEligible] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
   const isPreview = !isAuthenticated;
   const pendingSlug = searchParams.get("pendiente")?.trim() ?? "";
   const pendingStamp = useMemo(() => {
@@ -534,6 +536,10 @@ function PasaporteInner({
       name: match?.name ?? pendingSlug.replace(/-/g, " "),
     };
   }, [pendingSlug, restaurants, isAuthenticated]);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   useEffect(() => {
     if (!pendingInvalid) return;
@@ -645,6 +651,9 @@ function PasaporteInner({
       if (match) {
         setStampFlashId(match.id);
         window.setTimeout(() => {
+          // El libro móvil pagina con transform: scrollIntoView mueve el
+          // visualViewport (Safari en navegador) y “pasa” hojas de más.
+          if (window.matchMedia("(max-width: 767px)").matches) return;
           const el = document.querySelector<HTMLElement>(`[data-stamp-id="${match.id}"]`);
           el?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
         }, 120);
@@ -922,15 +931,18 @@ function PasaporteInner({
 
   const sharedOverlays = (
     <>
-      {pendingConfirm ? (
-        <div className="fixed inset-0 z-[110] bg-[#e8e0d0]/95 backdrop-blur-sm overflow-y-auto app-modal-hub-pad">
-          <SellarClient
-            restaurantSlug={pendingConfirm.slug}
-            restaurantName={pendingConfirm.name}
-            requiresLocation={pendingConfirm.requiresLocation}
-          />
-        </div>
-      ) : null}
+      {pendingConfirm && portalReady
+        ? createPortal(
+            <div className="fixed inset-0 z-[110] bg-[#e8e0d0]/95 overflow-hidden overscroll-none app-modal-hub-pad">
+              <SellarClient
+                restaurantSlug={pendingConfirm.slug}
+                restaurantName={pendingConfirm.name}
+                requiresLocation={pendingConfirm.requiresLocation}
+              />
+            </div>,
+            document.body
+          )
+        : null}
 
       <QrScanModal
         open={scannerOpen}

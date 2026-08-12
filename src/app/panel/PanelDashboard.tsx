@@ -63,6 +63,8 @@ import {
   IdCard,
   MapPin,
   BookOpen,
+  User,
+  Receipt,
 } from "lucide-react";
 import PanelMobile, { type PanelMobileRow } from "./PanelMobile";
 import DeleteTuristaAccountLink from "./DeleteTuristaAccountLink";
@@ -596,6 +598,26 @@ export default function PanelDashboard({
       ),
     },
     {
+      id: "titular",
+      title: "Información personal",
+      subtitle: "Titular de la cuenta",
+      icon: User,
+      show: !isTurista && !isVecino && hasBusinessEstablished,
+      detail: (
+        <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <SocioProfileForm
+            initial={profileDefaults}
+            email={user.email}
+            disabled={!linkageApproved}
+            hideBusinessName={plan === "VECINO"}
+            section="contact"
+            embedded
+            onSaved={refreshSession}
+          />
+        </section>
+      ),
+    },
+    {
       id: "negocio",
       title: "Ficha del negocio",
       subtitle: displayName || "Perfil y datos públicos",
@@ -645,7 +667,29 @@ export default function PanelDashboard({
             email={user.email}
             disabled={!linkageApproved}
             hideBusinessName={plan === "VECINO"}
+            section="business"
             embedded
+            onSaved={refreshSession}
+          />
+        </section>
+      ),
+    },
+    {
+      id: "facturacion",
+      title: "Facturación",
+      subtitle: "RFC y datos fiscales",
+      icon: Receipt,
+      show: !isTurista && !isVecino && hasBusinessEstablished,
+      detail: (
+        <section className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+          <SocioProfileForm
+            initial={profileDefaults}
+            email={user.email}
+            disabled={!linkageApproved}
+            hideBusinessName={plan === "VECINO"}
+            section="billing"
+            embedded
+            onSaved={refreshSession}
           />
         </section>
       ),

@@ -36,7 +36,16 @@ type Props = {
   requireFiscal?: boolean;
   requirePrivacy?: boolean;
   hideBusinessName?: boolean;
+  /** Si se pasa, solo se muestra ese bloque (el resto sigue en el estado del form). */
+  section?: "business" | "contact" | "billing";
 };
+
+function includeSection(
+  current: "business" | "contact" | "billing" | undefined,
+  name: "business" | "contact" | "billing"
+) {
+  return current == null || current === name;
+}
 
 export default function BusinessProfileFields({
   form,
@@ -45,6 +54,7 @@ export default function BusinessProfileFields({
   requireFiscal = true,
   requirePrivacy = false,
   hideBusinessName = false,
+  section,
 }: Props) {
   const categoryOptions = useMemo(
     () => categorySelectOptions(form.category),
@@ -53,6 +63,7 @@ export default function BusinessProfileFields({
 
   return (
     <div className="space-y-8 min-w-0 max-w-full">
+      {includeSection(section, "business") ? (
       <section className="space-y-3 min-w-0">
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#27366D]">
           Datos generales de la empresa
@@ -219,10 +230,12 @@ export default function BusinessProfileFields({
           </label>
         </div>
       </section>
+      ) : null}
 
+      {includeSection(section, "contact") ? (
       <section className="space-y-3">
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#27366D]">
-          Datos de contacto
+          {section === "contact" ? "Titular de la cuenta" : "Datos de contacto"}
         </h3>
         <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
@@ -309,7 +322,9 @@ export default function BusinessProfileFields({
           </label>
         </div>
       </section>
+      ) : null}
 
+      {includeSection(section, "billing") ? (
       <section className="space-y-3">
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#27366D]">
           Datos para facturación
@@ -552,8 +567,9 @@ export default function BusinessProfileFields({
           </label>
         ) : null}
       </section>
+      ) : null}
 
-      {requirePrivacy ? (
+      {requirePrivacy && includeSection(section, "contact") ? (
         <label className="flex items-start gap-2 text-sm text-slate-700 leading-relaxed">
           <input
             type="checkbox"

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AlertCircle, Check, Clock, X } from "lucide-react";
 
 export type PassportNotice = {
@@ -38,8 +40,15 @@ export default function PassportNoticeToast({
 }) {
   const tone = TONE[notice.type];
   const Icon = tone.Icon;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-x-0 bottom-0 z-[100] flex justify-center px-3 pb-[max(0.85rem,calc(var(--app-hub-offset,0px)+0.55rem))] pointer-events-none">
       <div
         role="status"
@@ -71,6 +80,7 @@ export default function PassportNoticeToast({
           <div className={`h-full origin-left animate-toast-bar ${tone.bar}`} />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -68,8 +68,18 @@ export default function PanelMobile({
 }: Props) {
   useImmersiveScrollLock({ mobileOnly: true });
   const [activeId, setActiveId] = useState<string | null>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
+  const detailScrollRef = useRef<HTMLDivElement>(null);
   const visibleRows = rows.filter((r) => r.show !== false);
   const active = visibleRows.find((r) => r.id === activeId) ?? null;
+
+  useLayoutEffect(() => {
+    const scroller = activeId ? detailScrollRef.current : listScrollRef.current;
+    if (scroller) scroller.scrollTop = 0;
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [activeId]);
 
   if (active?.detail) {
     return (
@@ -92,7 +102,10 @@ export default function PanelMobile({
             </div>
           </div>
         </header>
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4 pb-8 space-y-4">
+        <div
+          ref={detailScrollRef}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4 pb-8 space-y-4"
+        >
           {active.detail}
         </div>
       </div>
@@ -131,7 +144,10 @@ export default function PanelMobile({
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4 pb-10 space-y-5">
+      <div
+        ref={listScrollRef}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4 pb-10 space-y-5"
+      >
         <section className="flex items-center gap-3.5 rounded-2xl bg-white border border-slate-200 px-4 py-4 shadow-sm">
           <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-200 shrink-0 border-2 border-amber-400/50">
             {user.image ? (

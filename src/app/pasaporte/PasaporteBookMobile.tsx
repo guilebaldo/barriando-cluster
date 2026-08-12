@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
@@ -377,6 +377,17 @@ export default function PasaporteBookMobile({
     [applyTrack]
   );
 
+  useEffect(() => {
+    if (stampFlashId == null) return;
+    const idx = restaurants.findIndex((r) => r.id === stampFlashId);
+    if (idx < 0) return;
+    const page =
+      idx < COVER_STAMP_COUNT
+        ? 0
+        : 1 + Math.floor((idx - COVER_STAMP_COUNT) / PAGE_STAMP_COUNT);
+    settle(page);
+  }, [stampFlashId, restaurants, settle]);
+
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0]?.clientY ?? null;
     touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -403,8 +414,9 @@ export default function PasaporteBookMobile({
     const page = pageIndexRef.current;
     const atStart = page === 0 && dy > 0;
     const atEnd = page >= pageCountRef.current - 1 && dy < 0;
-    const offset = atStart || atEnd ? dy * 0.25 : dy;
-    applyTrack(page, Math.max(-height, Math.min(height, offset)), false);
+    // En los extremos no arrastrar: el 0.25 de rubber se leía como otra hoja.
+    if (atStart || atEnd) return;
+    applyTrack(page, Math.max(-height, Math.min(height, dy)), false);
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
