@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { Check } from "lucide-react";
 import { confirmBenefitRedemption } from "../actions";
 
 type Props = {
@@ -17,38 +17,55 @@ type Props = {
   };
 };
 
+type Phase = "redeeming" | "success" | "error";
+
 export default function BenefitVerifyClient({ token, beneficiary }: Props) {
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<Phase>("redeeming");
   const [error, setError] = useState<string | null>(null);
-  const [confirmedName, setConfirmedName] = useState<string | null>(null);
+  const [confirmedName, setConfirmedName] = useState(beneficiary.nombre);
 
-  async function handleConfirm() {
-    setLoading(true);
-    setError(null);
-    const result = await confirmBenefitRedemption(token);
-    setLoading(false);
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
-    setConfirmedName(result.beneficiaryName);
-  }
+  useEffect(() => {
+    let cancelled = false;
 
-  if (confirmedName) {
+    (async () => {
+      const result = await confirmBenefitRedemption(token);
+      if (cancelled) return;
+      if (!result.ok) {
+        setError(result.error);
+        setPhase("error");
+        return;
+      }
+      setConfirmedName(result.beneficiaryName);
+      setPhase("success");
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  if (phase === "success") {
     return (
-      <div className="bg-white border border-emerald-200 rounded-xl p-6 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 text-emerald-700">
-          <ShieldCheck className="w-5 h-5" />
-          <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide">
-            Canje confirmado
-          </h1>
+      <div
+        className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-emerald-500 text-white px-6"
+        role="status"
+        aria-live="polite"
+        aria-label="Canje confirmado"
+      >
+        <div className="flex flex-col items-center animate-redeem-success">
+          <div className="flex h-28 w-28 items-center justify-center rounded-full border-[3px] border-white shadow-[0_0_0_12px_rgba(255,255,255,0.18)]">
+            <Check className="h-14 w-14 stroke-[2.5]" absoluteStrokeWidth />
+          </div>
+          <p className="mt-8 text-center text-lg font-semibold tracking-wide">
+            Canje listo
+          </p>
+          <p className="mt-2 max-w-xs text-center text-sm text-emerald-50/95 font-light">
+            Cupón otorgado a <span className="font-semibold text-white">{confirmedName}</span>
+          </p>
         </div>
-        <p className="text-sm text-slate-700">
-          Cupón otorgado a <strong>{confirmedName}</strong>. El registro quedó guardado.
-        </p>
         <Link
           href="/panel"
-          className="inline-flex text-xs font-bold text-[#27366D] hover:underline uppercase tracking-wider"
+          className="absolute bottom-[max(2rem,calc(env(safe-area-inset-bottom)+1.25rem))] text-xs font-bold uppercase tracking-wider text-white/85 underline decoration-white/40 underline-offset-4 hover:text-white"
         >
           Volver al panel
         </Link>
@@ -56,54 +73,29 @@ export default function BenefitVerifyClient({ token, beneficiary }: Props) {
     );
   }
 
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-5">
-      <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-        Validar cupón
-      </h1>
-      <p className="text-sm text-slate-600 font-light">
-        Revisa los datos del socio antes de confirmar el canje.
-      </p>
-
-      <div className="rounded-lg border border-slate-100 bg-slate-50 p-4 space-y-2 text-sm">
-        <p>
-          <span className="text-slate-500 text-xs uppercase tracking-wider font-bold">Nombre</span>
-          <br />
-          <strong className="text-slate-900">{beneficiary.nombre}</strong>
-        </p>
-        {beneficiary.email && (
-          <p className="text-xs text-slate-500">{beneficiary.email}</p>
-        )}
-        <p>
-          <span className="text-slate-500 text-xs uppercase tracking-wider font-bold">Plan</span>
-          <br />
-          <strong className="text-[#27366D]">{beneficiary.planLabel}</strong>
-        </p>
-        <p>
-          <span className="text-slate-500 text-xs uppercase tracking-wider font-bold">Estado</span>
-          <br />
-          <strong className="text-green-700">{beneficiary.statusLabel}</strong>
-        </p>
-        <p>
-          <span className="text-slate-500 text-xs uppercase tracking-wider font-bold">Vigencia</span>
-          <br />
-          <strong className="text-slate-900">{beneficiary.expiryLabel}</strong>
-        </p>
+  if (phase === "error") {
+    return (
+      <div className="bg-white border border-red-200 rounded-xl p-6 shadow-sm space-y-3">
+        <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+          No se pudo canjear
+        </h1>
+        <p className="text-sm text-red-800">{error}</p>
+        <Link
+          href="/panel"
+          className="inline-flex text-xs font-bold text-[#27366D] hover:underline uppercase tracking-wider"
+        >
+          Ir al panel
+        </Link>
       </div>
+    );
+  }
 
-      <button
-        type="button"
-        onClick={handleConfirm}
-        disabled={loading}
-        className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
-      >
-        {loading ? "Confirmando…" : "Confirmar canje"}
-      </button>
-      {error && (
-        <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+  return (
+    <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-emerald-500/95 text-white px-6">
+      <div className="h-12 w-12 rounded-full border-2 border-white/35 border-t-white animate-spin" />
+      <p className="mt-6 text-sm font-medium tracking-wide text-emerald-50">
+        Validando cupón…
+      </p>
     </div>
   );
 }

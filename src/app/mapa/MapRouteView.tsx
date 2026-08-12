@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { buildWalkingItinerary, haversineDistanceKm, type MapRouteResult } from "@/lib/map-route-client";
 import { getHitoIntro } from "@/lib/map-hito-intro";
+import { pointHasScannableStamp } from "@/lib/map-point-stamp";
 import MapWelcomeFicha from "./MapWelcomeFicha";
 import MapGeoModal from "./MapGeoModal";
 import { MapBusinessSignupLink } from "./MapBusinessSignupLink";
@@ -119,7 +120,8 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       setSelectedId(point.id);
       setCardIndex(idx);
       setWelcomeOpen(false);
-      setSheetExpanded(true);
+      // Con sello, ficha colapsada para que el globo no quede bajo el hub/ficha.
+      setSheetExpanded(!pointHasScannableStamp(point));
       return true;
     },
     [searchParams]
@@ -415,7 +417,8 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     setSelectedId(id);
     const idx = route.points.findIndex((p) => p.id === id);
     if (idx >= 0) setCardIndex(idx);
-    setSheetExpanded(true);
+    const point = idx >= 0 ? route.points[idx] : null;
+    setSheetExpanded(!(point && pointHasScannableStamp(point)));
     bodyScrollRef.current?.scrollTo({ top: 0 });
   }
 
@@ -423,10 +426,11 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     const total = route.points.length;
     if (!total) return;
     const wrapped = ((next % total) + total) % total;
+    const point = route.points[wrapped];
     setWelcomeOpen(false);
     setCardIndex(wrapped);
-    setSelectedId(route.points[wrapped].id);
-    setSheetExpanded(true);
+    setSelectedId(point.id);
+    setSheetExpanded(!pointHasScannableStamp(point));
     bodyScrollRef.current?.scrollTo({ top: 0 });
   }
 

@@ -121,10 +121,6 @@ export async function confirmBenefitRedemption(
       return { ok: false, error: "Credencial inválida o expirada." };
     }
 
-    if (await isBenefitCredentialJtiRedeemed(verified.jti)) {
-      return { ok: false, error: "Esta credencial ya fue canjeada." };
-    }
-
     if (verified.userId === session.id) {
       return { ok: false, error: "No puedes canjear tu propia credencial." };
     }
@@ -138,29 +134,49 @@ export async function confirmBenefitRedemption(
       return { ok: false, error: "El beneficiario no tiene membresía activa." };
     }
 
-    await prisma.benefitRedemption.create({
-      data: {
-        beneficiaryUserId: beneficiary.id,
-        providerUserId: session.id,
-        socioProfileId: providerProfile.id,
-        credentialJti: verified.jti,
-      },
-    });
+    const beneficiaryName = beneficiary.nombre?.trim() || beneficiary.email || "Socio";
 
-    return {
-      ok: true,
-      beneficiaryName: beneficiary.nombre?.trim() || beneficiary.email || "Socio",
-    };
+    // Idempotente si este mismo negocio ya canjeó el jti (p. ej. doble mount / re-scan).
+    if (await isBenefitCredentialJtiRedeemed(verified.jti)) {
+      const existing = await prisma.benefitRedemption.findUnique({
+        where: { credentialJti: verified.jti },
+      });
+      if (existing?.providerUserId === session.id) {
+        return { ok: true, beneficiaryName };
+      }
+      return { ok: false, error: "Esta credencial ya fue canjeada." };
+    }
+
+    try {
+      await prisma.benefitRedemption.create({
+        data: {
+          beneficiaryUserId: beneficiary.id,
+          providerUserId: session.id,
+          socioProfileId: providerProfile.id,
+          credentialJti: verified.jti,
+        },
+      });
+    } catch (createError) {
+      const prismaCode =
+        createError && typeof createError === "object" && "code" in createError
+          ? (createError as { code?: string }).code
+          : undefined;
+      if (prismaCode === "P2002") {
+        const existing = await prisma.benefitRedemption.findUnique({
+          where: { credentialJti: verified.jti },
+        });
+        if (existing?.providerUserId === session.id) {
+          return { ok: true, beneficiaryName };
+        }
+        return { ok: false, error: "Esta credencial ya fue canjeada." };
+      }
+      throw createError;
+    }
+
+    return { ok: true, beneficiaryName };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return { ok: false, error: "Debes iniciar sesión." };
-    }
-    const prismaCode =
-      error && typeof error === "object" && "code" in error
-        ? (error as { code?: string }).code
-        : undefined;
-    if (prismaCode === "P2002") {
-      return { ok: false, error: "Esta credencial ya fue canjeada." };
     }
     return { ok: false, error: "No se pudo registrar el canje. Intenta de nuevo." };
   }

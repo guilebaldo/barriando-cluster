@@ -64,7 +64,7 @@ function FocusSelected({
 
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      const offsetY = getMapFocusPanOffsetPx(bottomSheetHeight, false);
+      const offsetY = getMapFocusPanOffsetPx(bottomSheetHeight, false, map.getSize().y);
       leafletFlyToWithBottomBias(map, [point.lat, point.lng], 17, offsetY, idChanged ? 0.4 : 0);
     }, idChanged ? 280 : 260);
 

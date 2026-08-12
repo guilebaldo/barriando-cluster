@@ -13,25 +13,33 @@ export function readCssPxVar(varName: string): number {
  * Desplazamiento vertical para centrar el pin en la banda visible.
  * offset > 0 → el marcador queda más arriba en pantalla.
  *
+ * `viewportHeight` debe ser el alto del contenedor del mapa (p. ej.
+ * map.getSize().y), no window.innerHeight: el shell ya resta el hub
+ * con padding y si usamos la ventana el pin queda demasiado abajo.
+ *
  * Con sello/globo: reserva notch + altura del popup para que el globo
  * quede bajo el safe-area (Safari y standalone), no pegado ni tapado.
  */
 export function getMapFocusPanOffsetPx(
   bottomSheetHeight: number,
-  stampPopup: boolean
+  stampPopup: boolean,
+  viewportHeight?: number
 ): number {
   const H =
-    typeof window !== "undefined"
-      ? Math.round(window.visualViewport?.height ?? window.innerHeight)
-      : 700;
+    typeof viewportHeight === "number" && viewportHeight > 0
+      ? Math.round(viewportHeight)
+      : typeof window !== "undefined"
+        ? Math.round(window.visualViewport?.height ?? window.innerHeight)
+        : 700;
   const safeTop = Math.max(0, readCssPxVar("--safe-area-inset-top"));
-  // Globo bajo el notch; pin un poco más cerca del safe-area superior.
+  // Globo abre arriba del pin: reserva su alto + un poco de aire.
   const topPad = stampPopup
-    ? Math.round(safeTop + 24 + 148)
+    ? Math.round(safeTop + 28 + 168)
     : Math.round(safeTop + 12);
-  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight) : 0;
+  const bottomPad = bottomSheetHeight > 0 ? Math.round(bottomSheetHeight + 8) : 0;
   const usable = Math.max(140, H - topPad - bottomPad);
-  const targetFromTop = topPad + usable * (stampPopup ? 0.48 : 0.38);
+  // Con sello, pin más abajo en la banda útil para que el globo quede centrado.
+  const targetFromTop = topPad + usable * (stampPopup ? 0.58 : 0.38);
   return Math.round(H / 2 - targetFromTop);
 }
 

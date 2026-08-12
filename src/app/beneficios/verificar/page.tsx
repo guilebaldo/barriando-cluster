@@ -41,7 +41,7 @@ export default async function BenefitVerifyPage({
               Validar cupón
             </h1>
             <p className="text-sm text-slate-600">
-              Inicia sesión como socio del negocio para verificar la credencial y confirmar el canje.
+              Inicia sesión como socio del negocio para canjear la credencial escaneada.
             </p>
             <Link
               href={buildLoginRedirectPath(callback)}

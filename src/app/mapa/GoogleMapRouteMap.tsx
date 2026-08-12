@@ -22,8 +22,12 @@ export type UserMapLocation = {
 };
 
 /** Centra el marcador en el espacio visible entre el notch y la ficha inferior. */
-function getFocusPanOffsetPx(bottomSheetHeight: number, stampPopup: boolean): number {
-  return getMapFocusPanOffsetPx(bottomSheetHeight, stampPopup);
+function getFocusPanOffsetPx(
+  bottomSheetHeight: number,
+  stampPopup: boolean,
+  viewportHeight?: number
+): number {
+  return getMapFocusPanOffsetPx(bottomSheetHeight, stampPopup, viewportHeight);
 }
 
 export default function GoogleMapRouteMap({
@@ -231,7 +235,10 @@ export default function GoogleMapRouteMap({
     lastFocusIdRef.current = hp.id;
 
     const focusHighlighted = (animate: boolean) => {
-      const verticalOffset = immersive ? getFocusPanOffsetPx(bottomSheetHeight, stampPopup) : 0;
+      const mapH = containerRef.current?.clientHeight ?? 0;
+      const verticalOffset = immersive
+        ? getFocusPanOffsetPx(bottomSheetHeight, stampPopup, mapH)
+        : 0;
       const targetZoom = !userLocation ? 17 : map.getZoom() ?? 17;
       const target =
         verticalOffset !== 0

@@ -95,7 +95,11 @@ function FocusHighlightedPoint({
 
     const run = (duration: number) => {
       const hasStampPopup = pointHasScannableStamp(point);
-      const offsetY = getMapFocusPanOffsetPx(bottomSheetHeight, hasStampPopup);
+      const offsetY = getMapFocusPanOffsetPx(
+        bottomSheetHeight,
+        hasStampPopup,
+        map.getSize().y
+      );
       leafletFlyToWithBottomBias(
         map,
         [point.latitude, point.longitude],
