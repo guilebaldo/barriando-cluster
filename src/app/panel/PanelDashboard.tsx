@@ -40,6 +40,7 @@ import { reportManualPayment, cancelMembership } from "./actions";
 import SocioProfileForm from "./SocioProfileForm";
 import TransferPaymentSection from "./TransferPaymentSection";
 import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
+import AcceptedPaymentMethods from "@/app/components/AcceptedPaymentMethods";
 import LinkSocioSection from "./LinkSocioSection";
 import TouristPanel from "./TouristPanel";
 import VecinoPanel from "./VecinoPanel";
@@ -561,13 +562,16 @@ export default function PanelDashboard({
           ) : (
             <div className="flex flex-col gap-3">
               {stripeConfigured && (
-                <button
-                  type="button"
-                  onClick={() => handleStripePay(plan)}
-                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full"
-                >
-                  {stripeButtonLabel}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => handleStripePay(plan)}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
+                  >
+                    {stripeButtonLabel}
+                  </button>
+                  <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
+                </div>
               )}
               {stripeConfigured && (
                 <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
@@ -756,13 +760,16 @@ export default function PanelDashboard({
           )}
           <div className="flex flex-col gap-3">
             {stripeConfigured && !autoRenewal && (
-              <button
-                type="button"
-                onClick={() => handleStripePay(plan)}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full"
-              >
-                {stripeButtonLabel}
-              </button>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleStripePay(plan)}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
+                >
+                  {stripeButtonLabel}
+                </button>
+                <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
+              </div>
             )}
             {stripeConfigured && !autoRenewal && plan !== "TURISTA" && (
               <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
@@ -1023,13 +1030,16 @@ export default function PanelDashboard({
             ) : (
               <div className="flex flex-col gap-3">
                 {stripeConfigured && (
-                  <button
-                    type="button"
-                    onClick={() => handleStripePay(plan)}
-                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
-                  >
-                    {stripeButtonLabel}
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => handleStripePay(plan)}
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
+                    >
+                      {stripeButtonLabel}
+                    </button>
+                    <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
+                  </div>
                 )}
                 {stripeConfigured && (
                   <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />
@@ -1336,13 +1346,16 @@ export default function PanelDashboard({
 
               <div className="flex flex-col gap-3">
                 {stripeConfigured && !autoRenewal && (
-                  <button
-                    type="button"
-                    onClick={() => handleStripePay(plan)}
-                    className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-fit"
-                  >
-                    {stripeButtonLabel}
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => handleStripePay(plan)}
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-lg transition w-full sm:w-fit"
+                    >
+                      {stripeButtonLabel}
+                    </button>
+                    <AcceptedPaymentMethods includeOxxo={false} caption="Tarjetas aceptadas" />
+                  </div>
                 )}
                 {stripeConfigured && !autoRenewal && plan !== "TURISTA" && (
                   <StripeLocalPaymentButtons plan={plan} disabled={pendingValidation} />

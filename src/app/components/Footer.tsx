@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Mail, Phone, Shield } from "lucide-react";
+import AcceptedPaymentMethods from "./AcceptedPaymentMethods";
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -153,7 +154,7 @@ export default function Footer() {
             ))}
           </div>
 
-          <div className="mt-12 pt-8 border-t border-[#1e2b58]/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="mt-12 pt-8 border-t border-[#1e2b58]/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
             <div>
               <p className="font-bold text-white text-xs mb-0.5">Barriando</p>
               <p className="text-slate-400 text-[10px]">
@@ -172,12 +173,15 @@ export default function Footer() {
                 </a>
               </p>
             </div>
-            <Link
-              href="/privacidad"
-              className="inline-flex items-center gap-1 text-slate-400 hover:text-white transition"
-            >
-              <Shield className="w-3 h-3" /> Aviso de Privacidad
-            </Link>
+            <div className="flex flex-col items-start md:items-end gap-3">
+              <AcceptedPaymentMethods tone="dark" />
+              <Link
+                href="/privacidad"
+                className="inline-flex items-center gap-1 text-slate-400 hover:text-white transition"
+              >
+                <Shield className="w-3 h-3" /> Aviso de Privacidad
+              </Link>
+            </div>
           </div>
 
           <div className="mt-6 pt-6 border-t border-[#1e2b58]/50 text-slate-400/80 text-center md:text-left leading-relaxed">

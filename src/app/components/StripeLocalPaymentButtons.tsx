@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Store } from "lucide-react";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import { MEMBERSHIP_GRACE_DAYS } from "@/lib/membership-constants";
 
@@ -44,18 +43,26 @@ export default function StripeLocalPaymentButtons({ plan, disabled, className }:
         type="button"
         disabled={disabled || loading}
         onClick={() => void startOxxo()}
-        className="w-full flex items-center justify-center gap-2 border-2 border-[#27366D] bg-white text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition disabled:opacity-50"
+        className="w-full sm:w-fit flex items-center justify-center gap-2.5 border-2 border-[#27366D] bg-white text-[#27366D] hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition disabled:opacity-50"
       >
-        <Store className="w-4 h-4" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logos/oxxo.svg"
+          alt=""
+          width={54}
+          height={30}
+          className="h-7 w-auto shrink-0 rounded-[3px]"
+          aria-hidden
+        />
         {loading ? "Abriendo OXXO…" : "Pagar con OXXO"}
       </button>
-      <p className="text-[10px] text-slate-500 leading-relaxed text-center">
+      <p className="text-[10px] text-slate-500 leading-relaxed max-w-md">
         Pago único de un mes (mismo monto que la membresía). Stripe te muestra un código de barras:
         págalo en cualquier OXXO. Cuando Stripe confirme el depósito (suele ser al día siguiente
         hábil), tu plan se activa solo. Renueva desde el panel al vencer ({MEMBERSHIP_GRACE_DAYS}{" "}
         días de gracia).
       </p>
-      {error ? <p className="text-xs text-red-600 text-center">{error}</p> : null}
+      {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
   );
 }

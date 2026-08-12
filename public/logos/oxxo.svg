@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 40" role="img" aria-label="OXXO">
+  <rect width="72" height="40" rx="6" fill="#E21C2A"/>
+  <rect x="0" y="0" width="72" height="5" fill="#F0A929"/>
+  <rect x="0" y="35" width="72" height="5" fill="#F0A929"/>
+  <text
+    x="36"
+    y="26"
+    text-anchor="middle"
+    fill="#FFFFFF"
+    font-family="Arial Black, Arial, Helvetica, sans-serif"
+    font-size="16"
+    font-weight="900"
+    letter-spacing="0.5"
+  >OXXO</text>
+</svg>

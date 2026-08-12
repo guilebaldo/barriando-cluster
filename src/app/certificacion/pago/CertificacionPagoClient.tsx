@@ -8,6 +8,7 @@ import Footer from "@/app/components/Footer";
 import SiteShell from "@/app/components/SiteShell";
 import TransferPaymentSection from "@/app/panel/TransferPaymentSection";
 import StripeLocalPaymentButtons from "@/app/components/StripeLocalPaymentButtons";
+import AcceptedPaymentMethods from "@/app/components/AcceptedPaymentMethods";
 import {
   MEMBERSHIP_PLANS,
   formatPlanPriceMxn,
@@ -165,15 +166,21 @@ export default function CertificacionPagoClient({
 
               <div className="space-y-4">
                 {stripeConfigured ? (
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={handleStripePay}
-                    className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition disabled:opacity-50"
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    {loading ? "Redirigiendo..." : "Pagar con tarjeta (domiciliación mensual)"}
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={handleStripePay}
+                      className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition disabled:opacity-50"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      {loading ? "Redirigiendo..." : "Pagar con tarjeta (domiciliación mensual)"}
+                    </button>
+                    <AcceptedPaymentMethods
+                      includeOxxo={false}
+                      caption="Tarjetas aceptadas"
+                    />
+                  </div>
                 ) : (
                   <p className="text-xs text-amber-700 text-center">
                     El pago con tarjeta no está disponible en este momento.
