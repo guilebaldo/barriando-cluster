@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
@@ -13,25 +13,24 @@ type Props = {
   requiresLocation: boolean;
 };
 
-type Phase = "ready" | "working" | "error";
-
 export default function SellarClient({
   restaurantSlug,
   restaurantName,
   requiresLocation,
 }: Props) {
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>("ready");
   const [message, setMessage] = useState(
     requiresLocation
-      ? "Estás en el local? Confirma para validar tu ubicación y sellar."
-      : "Toca el botón para registrar tu sello."
+      ? "Validando tu ubicación cerca del negocio…"
+      : "Registrando tu sello…"
   );
   const [error, setError] = useState<string | null>(null);
+  const inFlightRef = useRef(false);
+  const cancelledRef = useRef(false);
 
-  async function runStamp() {
-    if (phase === "working") return;
-    setPhase("working");
+  const runStamp = useCallback(async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setError(null);
     setMessage(
       requiresLocation
@@ -43,86 +42,98 @@ export default function SellarClient({
     let longitude: number | null = null;
     let accuracyM: number | null = null;
 
-    if (requiresLocation) {
-      if (!navigator.geolocation) {
-        setPhase("error");
-        setError(
-          "Tu navegador no permite GPS. Activa la ubicación o abre este enlace desde el celular en el local."
-        );
-        return;
-      }
+    try {
+      if (requiresLocation) {
+        if (!navigator.geolocation) {
+          if (!cancelledRef.current) {
+            setError(
+              "Tu navegador no permite GPS. Activa la ubicación o abre este enlace desde el celular en el local."
+            );
+          }
+          return;
+        }
 
-      try {
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 20_000,
-            maximumAge: 15_000,
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 20_000,
+              maximumAge: 15_000,
+            });
           });
-        });
-        latitude = pos.coords.latitude;
-        longitude = pos.coords.longitude;
-        accuracyM =
-          typeof pos.coords.accuracy === "number" && Number.isFinite(pos.coords.accuracy)
-            ? pos.coords.accuracy
-            : null;
-      } catch {
-        setPhase("error");
-        setError(
-          "No pudimos leer tu ubicación. Activa el GPS, permite acceso a Barriando y vuelve a escanear el QR en el local."
-        );
-        return;
+          latitude = pos.coords.latitude;
+          longitude = pos.coords.longitude;
+          accuracyM =
+            typeof pos.coords.accuracy === "number" && Number.isFinite(pos.coords.accuracy)
+              ? pos.coords.accuracy
+              : null;
+        } catch {
+          if (!cancelledRef.current) {
+            setError(
+              "No pudimos leer tu ubicación. Activa el GPS, permite acceso a Barriando y vuelve a escanear el QR en el local."
+            );
+          }
+          return;
+        }
       }
-    }
 
-    setMessage("Confirmando sello…");
-    const result = await confirmStampWithLocation({
-      restaurantSlug,
-      latitude,
-      longitude,
-      accuracyM,
-    });
+      if (!cancelledRef.current) setMessage("Confirmando sello…");
+      const result = await confirmStampWithLocation({
+        restaurantSlug,
+        latitude,
+        longitude,
+        accuracyM,
+      });
+      if (cancelledRef.current) return;
 
-    if (!result.ok) {
-      if (result.error === "too_far") {
-        setPhase("error");
-        setError(
-          `Estás a unos ${result.distanceM ?? "?"} m de ${result.restaurantName ?? restaurantName}. Acércate a menos de ${result.maxDistanceM ?? STAMP_MAX_DISTANCE_M} m e intenta de nuevo.`
-        );
+      if (!result.ok) {
+        if (result.error === "too_far") {
+          setError(
+            `Estás a unos ${result.distanceM ?? "?"} m de ${result.restaurantName ?? restaurantName}. Acércate a menos de ${result.maxDistanceM ?? STAMP_MAX_DISTANCE_M} m e intenta de nuevo.`
+          );
+          return;
+        }
+        if (result.error === "location_required") {
+          setError("Se necesita tu ubicación para validar este sello.");
+          return;
+        }
+        if (result.error === "rate_limited") {
+          setError("Demasiados intentos de sello. Espera un momento e intenta de nuevo.");
+          return;
+        }
+        if (result.error === "unauthorized") {
+          router.replace(
+            `/login?callbackUrl=${encodeURIComponent(`/pasaporte?pendiente=${encodeURIComponent(restaurantSlug)}`)}`
+          );
+          return;
+        }
+        router.replace(`/pasaporte?error=${result.error}`);
         return;
       }
-      if (result.error === "location_required") {
-        setPhase("error");
-        setError("Se necesita tu ubicación para validar este sello.");
-        return;
-      }
-      if (result.error === "rate_limited") {
-        setPhase("error");
-        setError("Demasiados intentos de sello. Espera un momento e intenta de nuevo.");
-        return;
-      }
-      if (result.error === "unauthorized") {
+
+      if (result.cooldown) {
+        const hours = Math.ceil(result.retryAfterMs / (60 * 60 * 1000));
         router.replace(
-          `/login?callbackUrl=${encodeURIComponent(`/pasaporte?pendiente=${encodeURIComponent(restaurantSlug)}`)}`
+          `/pasaporte?info=cooldown&restaurante=${encodeURIComponent(restaurantSlug)}&horas=${hours}`
         );
         return;
       }
-      router.replace(`/pasaporte?error=${result.error}`);
-      return;
-    }
 
-    if (result.cooldown) {
-      const hours = Math.ceil(result.retryAfterMs / (60 * 60 * 1000));
       router.replace(
-        `/pasaporte?info=cooldown&restaurante=${encodeURIComponent(restaurantSlug)}&horas=${hours}`
+        `/pasaporte?sello=ok&restaurante=${encodeURIComponent(restaurantSlug)}&nombre=${encodeURIComponent(result.restaurantName)}`
       );
-      return;
+    } finally {
+      inFlightRef.current = false;
     }
+  }, [requiresLocation, restaurantName, restaurantSlug, router]);
 
-    router.replace(
-      `/pasaporte?sello=ok&restaurante=${encodeURIComponent(restaurantSlug)}&nombre=${encodeURIComponent(result.restaurantName)}`
-    );
-  }
+  useEffect(() => {
+    cancelledRef.current = false;
+    void runStamp();
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [runStamp]);
 
   return (
     <main className="flex-1 max-w-lg mx-auto w-full px-6 py-16">
@@ -156,16 +167,8 @@ export default function SellarClient({
           </>
         ) : (
           <>
+            <div className="mx-auto h-9 w-9 rounded-full border-2 border-[#27366D]/25 border-t-[#27366D] animate-spin" />
             <p className="text-sm text-slate-500">{message}</p>
-            {phase === "ready" ? (
-              <button
-                type="button"
-                onClick={() => void runStamp()}
-                className="inline-flex bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3.5 rounded-lg transition"
-              >
-                {requiresLocation ? "Confirmar ubicación y sellar" : "Registrar sello"}
-              </button>
-            ) : null}
           </>
         )}
       </div>
