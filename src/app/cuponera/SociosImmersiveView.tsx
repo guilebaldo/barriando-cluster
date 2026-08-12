@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import {
   ExternalLink,
@@ -689,80 +690,81 @@ export default function SociosImmersiveView({
         </div>
       </div>
 
-      {activeBenefit && (
-        <div
-          className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 app-modal-hub-pad"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/50"
-            aria-label="Cerrar"
-            onClick={() => setActiveBenefit(null)}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="activar-beneficio-title"
-            className="relative w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-6"
-          >
+      {activeBenefit &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 app-modal-hub-pad">
             <button
               type="button"
+              className="absolute inset-0 bg-black/50"
+              aria-label="Cerrar"
               onClick={() => setActiveBenefit(null)}
-              className="absolute top-3 right-3 text-slate-400 hover:text-slate-700"
-              aria-label="Cerrar diálogo"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="activar-beneficio-title"
+              className="relative w-full max-w-md max-h-[min(85dvh,calc(100dvh-var(--app-hub-offset)-2rem))] overflow-y-auto overscroll-contain bg-white rounded-2xl border border-slate-200 shadow-2xl p-6"
             >
-              <X className="w-5 h-5" />
-            </button>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">
-              Activar cupón
-            </p>
-            <h2 id="activar-beneficio-title" className="text-lg font-bold text-slate-950 pr-8">
-              {activeBenefit.name}
-            </h2>
+              <button
+                type="button"
+                onClick={() => setActiveBenefit(null)}
+                className="absolute top-3 right-3 text-slate-400 hover:text-slate-700"
+                aria-label="Cerrar diálogo"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1">
+                Activar cupón
+              </p>
+              <h2 id="activar-beneficio-title" className="text-lg font-bold text-slate-950 pr-8">
+                {activeBenefit.name}
+              </h2>
 
-            {canRedeemBenefits ? (
-              <>
-                {activeBenefit.benefit.redeemViaQr ? (
-                  <BenefitRedeemQr />
-                ) : (
-                  <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
-                      Requisitos para el canje
+              {canRedeemBenefits ? (
+                <>
+                  {activeBenefit.benefit.redeemViaQr ? (
+                    <BenefitRedeemQr />
+                  ) : (
+                    <div className="mt-4 rounded-lg bg-slate-50 border border-slate-100 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                        Requisitos para el canje
+                      </p>
+                      <p className="text-sm text-slate-700 leading-relaxed">
+                        {activeBenefit.benefit.howToRedeem}
+                      </p>
+                    </div>
+                  )}
+                  {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
+                    <p className="mt-3 text-[11px] text-slate-500 text-center">
+                      Vigencia
+                      {activeBenefit.benefit.validFrom
+                        ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
+                        : ""}
+                      {activeBenefit.benefit.validUntil
+                        ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
+                        : ""}
                     </p>
-                    <p className="text-sm text-slate-700 leading-relaxed">
-                      {activeBenefit.benefit.howToRedeem}
-                    </p>
-                  </div>
-                )}
-                {(activeBenefit.benefit.validFrom || activeBenefit.benefit.validUntil) && (
-                  <p className="mt-3 text-[11px] text-slate-500 text-center">
-                    Vigencia
-                    {activeBenefit.benefit.validFrom
-                      ? ` desde ${formatBenefitDate(activeBenefit.benefit.validFrom)}`
-                      : ""}
-                    {activeBenefit.benefit.validUntil
-                      ? ` hasta ${formatBenefitDate(activeBenefit.benefit.validUntil)}`
-                      : ""}
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    ¿Eres vecino? Obtén cupones exclusivos con la membresía Vecino.
                   </p>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="mt-4 text-xs text-slate-600 leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                  ¿Eres vecino? Obtén cupones exclusivos con la membresía Vecino.
-                </p>
-                <PlanIntentCta
-                  plan="VECINO"
-                  className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
-                  onBeforeNavigate={() => setActiveBenefit(null)}
-                >
-                  Ver plan Vecino
-                </PlanIntentCta>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+                  <PlanIntentCta
+                    plan="VECINO"
+                    className="mt-5 w-full inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
+                    onBeforeNavigate={() => setActiveBenefit(null)}
+                  >
+                    Ver plan Vecino
+                  </PlanIntentCta>
+                </>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
