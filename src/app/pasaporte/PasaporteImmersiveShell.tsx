@@ -9,7 +9,7 @@ import { useImmersiveScrollLock } from "@/app/components/useImmersiveScrollLock"
  * en loop con el track de páginas del libro).
  */
 export default function PasaporteImmersiveShell({ children }: { children: ReactNode }) {
-  useImmersiveScrollLock();
+  useImmersiveScrollLock({ maxWidthPx: 1023 });
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function PasaporteImmersiveShell({ children }: { children: ReactN
   return (
     <div
       ref={ref}
-      className="map-immersive-shell relative z-0 flex flex-col h-[100dvh] max-h-[100dvh] bg-[#faf6ef] text-slate-900 font-sans antialiased overflow-hidden overscroll-none pt-[env(safe-area-inset-top,0px)] lg:h-screen lg:max-h-screen"
+      className="map-immersive-shell relative z-0 flex flex-col h-[100dvh] max-h-[100dvh] bg-[#faf6ef] text-slate-900 font-sans antialiased overflow-hidden overscroll-none pt-[env(safe-area-inset-top,0px)] lg:h-auto lg:max-h-none lg:min-h-screen lg:overflow-visible lg:overscroll-auto"
     >
       {children}
     </div>

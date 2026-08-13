@@ -995,7 +995,7 @@ function PasaporteInner({
         </div>
         <div
           ref={scrollContainerRef}
-          className="hidden md:block flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#faf6ef]"
+          className="hidden md:block flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[#faf6ef] lg:overflow-visible lg:h-auto"
         >
           {passportBody}
         </div>

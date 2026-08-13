@@ -20,7 +20,7 @@ export default function SociosPageClient({
   return (
     <MapImmersiveShell>
       <Navbar />
-      <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <main className="flex-1 min-h-0 flex flex-col overflow-hidden lg:overflow-visible lg:h-auto">
         <SociosImmersiveView
           socios={socios}
           canRedeemBenefits={canRedeemBenefits}
@@ -29,7 +29,7 @@ export default function SociosPageClient({
         />
       </main>
       <div className="hidden lg:block shrink-0">
-        <Footer compact />
+        <Footer />
       </div>
     </MapImmersiveShell>
   );

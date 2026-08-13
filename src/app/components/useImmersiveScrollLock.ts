@@ -10,10 +10,13 @@ import { useEffect } from "react";
  * shell ya reserva --app-hub-offset por dentro, y sumar los dos dejaría el
  * documento más alto que la pantalla.
  *
- * `mobileOnly` para los shells que en escritorio vuelven a layout normal con
- * scroll y footer (BarrID, Planes).
+ * `mobileOnly` / `maxWidthPx`: en escritorio el documento vuelve a scrollear
+ * (BarrID, MAPA, Cuponera) para mostrar el footer completo.
  */
-export function useImmersiveScrollLock({ mobileOnly = false } = {}) {
+export function useImmersiveScrollLock({
+  mobileOnly = false,
+  maxWidthPx,
+}: { mobileOnly?: boolean; maxWidthPx?: number } = {}) {
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
@@ -48,12 +51,13 @@ export function useImmersiveScrollLock({ mobileOnly = false } = {}) {
       body.style.paddingBottom = previous.bodyPaddingBottom;
     };
 
-    if (!mobileOnly) {
+    const queryPx = maxWidthPx ?? (mobileOnly ? 767 : null);
+    if (queryPx == null) {
       lock();
       return unlock;
     }
 
-    const mq = window.matchMedia("(max-width: 767px)");
+    const mq = window.matchMedia(`(max-width: ${queryPx}px)`);
     const sync = () => {
       if (mq.matches) lock();
       else unlock();
@@ -65,5 +69,5 @@ export function useImmersiveScrollLock({ mobileOnly = false } = {}) {
       mq.removeEventListener("change", sync);
       unlock();
     };
-  }, [mobileOnly]);
+  }, [mobileOnly, maxWidthPx]);
 }

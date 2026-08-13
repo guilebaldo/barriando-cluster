@@ -93,6 +93,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const [sheetExpanded, setSheetExpanded] = useState(true);
   const [maxSheetPx, setMaxSheetPx] = useState(640);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
+  const [isLg, setIsLg] = useState(false);
 
   const hasSocioDeepLink = useMemo(() => {
     const socioParam = searchParams.get("socio");
@@ -129,6 +130,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       const topGap = Math.max(72, safeTop + 56);
       const bottomGap = appShell ? 56 : 0;
       setMaxSheetPx(Math.max(360, Math.round(window.innerHeight - topGap - bottomGap)));
+      setIsLg(window.matchMedia("(min-width: 1024px)").matches);
     };
     updateMaxHeight();
     window.addEventListener("resize", updateMaxHeight);
@@ -396,21 +398,20 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   );
 
   return (
-    <div className="relative h-full w-full overflow-hidden overscroll-none flex lg:flex-row">
-      <div className="relative flex-1 min-h-0 min-w-0">
-        <div className="absolute inset-0">
+    <div className="relative h-full w-full overflow-hidden overscroll-none lg:h-auto lg:overflow-visible lg:overscroll-auto">
+      <div className="relative h-full min-h-0 lg:h-auto lg:max-w-6xl lg:mx-auto lg:w-full lg:px-6 lg:px-8 lg:py-10 lg:py-14 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.95fr)] lg:gap-10 lg:items-start">
+        <div className="absolute inset-0 lg:relative lg:inset-auto lg:h-[min(70vh,560px)] lg:rounded-2xl lg:overflow-hidden lg:border lg:border-slate-200 lg:shadow-sm lg:bg-white">
           <MapRouteMap
             points={route.points}
             walkPath={route.walkPath}
             highlightedId={welcomeOpen ? null : selectedId}
             userLocation={userLocation}
             immersive
-            bottomSheetHeight={bottomSheetHeight}
+            bottomSheetHeight={isLg ? 0 : bottomSheetHeight}
             showStampPopups={!welcomeOpen}
             onPointSelect={selectPoint}
           />
         </div>
-      </div>
 
       <div
         ref={sheetChromeRef}
@@ -530,7 +531,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         </div>
       </div>
 
-      <aside className="hidden lg:flex w-[min(26rem,38vw)] xl:w-[28rem] shrink-0 flex-col min-h-0 bg-white border-l border-slate-200">
+      <aside className="hidden lg:flex flex-col min-h-0 h-[min(70vh,560px)] rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 space-y-4">
           {welcomeOpen ? (
             <MapWelcomeFicha
@@ -551,6 +552,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
           )}
         </div>
       </aside>
+      </div>
 
       <MapGeoModal
         open={geoModalOpen}

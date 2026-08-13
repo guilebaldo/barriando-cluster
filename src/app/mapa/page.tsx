@@ -17,11 +17,11 @@ export default async function MapPage() {
   return (
     <MapImmersiveShell>
       <Navbar />
-      <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <main className="flex-1 min-h-0 flex flex-col overflow-hidden lg:overflow-visible lg:h-auto">
         <MapRouteView route={route} />
       </main>
       <div className="hidden lg:block shrink-0">
-        <Footer compact />
+        <Footer />
       </div>
     </MapImmersiveShell>
   );
