@@ -396,23 +396,25 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   );
 
   return (
-    <div className="relative h-full w-full overflow-hidden overscroll-none">
-      <div className="absolute inset-0">
-        <MapRouteMap
-          points={route.points}
-          walkPath={route.walkPath}
-          highlightedId={welcomeOpen ? null : selectedId}
-          userLocation={userLocation}
-          immersive
-          bottomSheetHeight={bottomSheetHeight}
-          showStampPopups={!welcomeOpen}
-          onPointSelect={selectPoint}
-        />
+    <div className="relative h-full w-full overflow-hidden overscroll-none flex lg:flex-row">
+      <div className="relative flex-1 min-h-0 min-w-0">
+        <div className="absolute inset-0">
+          <MapRouteMap
+            points={route.points}
+            walkPath={route.walkPath}
+            highlightedId={welcomeOpen ? null : selectedId}
+            userLocation={userLocation}
+            immersive
+            bottomSheetHeight={bottomSheetHeight}
+            showStampPopups={!welcomeOpen}
+            onPointSelect={selectPoint}
+          />
+        </div>
       </div>
 
       <div
         ref={sheetChromeRef}
-        className={`absolute left-0 right-0 bottom-0 z-20 ${
+        className={`lg:hidden absolute left-0 right-0 bottom-0 z-20 ${
           appShell ? "px-0" : "px-2 sm:px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
         }`}
       >
@@ -527,6 +529,28 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
           ) : null}
         </div>
       </div>
+
+      <aside className="hidden lg:flex w-[min(26rem,38vw)] xl:w-[28rem] shrink-0 flex-col min-h-0 bg-white border-l border-slate-200">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 space-y-4">
+          {welcomeOpen ? (
+            <MapWelcomeFicha
+              route={initialRoute}
+              onStart={() => {
+                setWelcomeOpen(false);
+                setSheetExpanded(true);
+              }}
+            />
+          ) : (
+            <>
+              {fichaBody}
+              {navRow}
+              <p className="text-center">
+                <MapBusinessSignupLink />
+              </p>
+            </>
+          )}
+        </div>
+      </aside>
 
       <MapGeoModal
         open={geoModalOpen}

@@ -19,10 +19,16 @@ export default function PasaporteImmersiveShell({ children }: { children: ReactN
     let lastH = 0;
     let frame = 0;
 
+    const mq = window.matchMedia("(min-width: 1024px)");
     const sync = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        // svh/dvh vía CSS; solo ajustamos si el VV difiere de forma clara (rotación).
+        if (mq.matches) {
+          el.style.removeProperty("height");
+          el.style.removeProperty("max-height");
+          lastH = 0;
+          return;
+        }
         const h = Math.round(window.visualViewport?.height ?? window.innerHeight);
         if (h <= 0 || Math.abs(h - lastH) < 2) return;
         lastH = h;
@@ -32,11 +38,13 @@ export default function PasaporteImmersiveShell({ children }: { children: ReactN
     };
 
     sync();
+    mq.addEventListener("change", sync);
     window.visualViewport?.addEventListener("resize", sync);
     window.addEventListener("orientationchange", sync);
 
     return () => {
       cancelAnimationFrame(frame);
+      mq.removeEventListener("change", sync);
       window.visualViewport?.removeEventListener("resize", sync);
       window.removeEventListener("orientationchange", sync);
       el.style.removeProperty("height");
@@ -47,7 +55,7 @@ export default function PasaporteImmersiveShell({ children }: { children: ReactN
   return (
     <div
       ref={ref}
-      className="map-immersive-shell relative z-0 flex flex-col h-[100dvh] max-h-[100dvh] bg-[#faf6ef] text-slate-900 font-sans antialiased overflow-hidden overscroll-none pt-[env(safe-area-inset-top,0px)]"
+      className="map-immersive-shell relative z-0 flex flex-col h-[100dvh] max-h-[100dvh] bg-[#faf6ef] text-slate-900 font-sans antialiased overflow-hidden overscroll-none pt-[env(safe-area-inset-top,0px)] lg:h-screen lg:max-h-screen"
     >
       {children}
     </div>

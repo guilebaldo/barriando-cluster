@@ -38,6 +38,19 @@ function makeIcon(selected: boolean, hasBenefit: boolean) {
   });
 }
 
+function InvalidateOnResize() {
+  const map = useMap();
+  useEffect(() => {
+    const run = () => map.invalidateSize({ animate: false });
+    run();
+    const el = map.getContainer();
+    const ro = new ResizeObserver(run);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [map]);
+  return null;
+}
+
 function FocusSelected({
   selectedId,
   puntos,
@@ -190,6 +203,7 @@ export default function SociosMapLeaflet({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitAllOnce puntos={puntos} bottomSheetHeight={bottomSheetHeight} />
+        <InvalidateOnResize />
         <FocusSelected
           selectedId={selectedId}
           puntos={puntos}

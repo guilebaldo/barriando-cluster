@@ -128,6 +128,9 @@ export default async function PasaportePage({
       <PasaporteImmersiveShell>
         <Navbar />
         <main className="flex-1 min-h-0 flex flex-col overflow-hidden">{client}</main>
+        <div className="hidden lg:block shrink-0">
+          <Footer compact />
+        </div>
       </PasaporteImmersiveShell>
     );
   }

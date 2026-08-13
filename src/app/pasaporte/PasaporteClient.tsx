@@ -691,7 +691,7 @@ function PasaporteInner({
           isAuthenticated ? "pb-6" : "pb-6"
         }`}
       >
-      <div className="max-w-lg sm:max-w-2xl mx-auto">
+      <div className="max-w-lg sm:max-w-2xl lg:max-w-6xl mx-auto">
         {!isAuthenticated && (
           <PasaporteInfoCard className="mb-3 sm:mb-4" pendingStamp={pendingStamp} />
         )}
@@ -837,7 +837,7 @@ function PasaporteInner({
                   Toca un sello para ver la ficha del socio
                 </p>
               )}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fill,minmax(6.75rem,1fr))] gap-4 sm:gap-5">
               {restaurants.map((restaurant) => {
                 const stamp = stampMap[restaurant.id];
                 const hasStamp = isPreview

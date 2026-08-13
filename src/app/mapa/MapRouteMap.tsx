@@ -21,6 +21,19 @@ const USER_LOCATION_ICON = L.divIcon({
   iconAnchor: [8, 8],
 });
 
+function InvalidateOnResize() {
+  const map = useMap();
+  useEffect(() => {
+    const run = () => map.invalidateSize({ animate: false });
+    run();
+    const el = map.getContainer();
+    const ro = new ResizeObserver(run);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [map]);
+  return null;
+}
+
 function FitRouteBounds({
   points,
   highlightedId,
@@ -292,6 +305,7 @@ export default function MapRouteMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <InvalidateOnResize />
         <FitRouteBounds points={points} highlightedId={highlightedId} />
         <FocusHighlightedPoint
           points={points}

@@ -98,7 +98,35 @@ const FOOTER_COLUMNS = [
   },
 ] as const;
 
-export default function Footer() {
+export default function Footer({ compact = false }: { compact?: boolean }) {
+  if (compact) {
+    const compactLinks = [
+      ...FOOTER_COLUMNS[0]!.links,
+      { href: "/privacidad", label: "Privacidad" },
+    ];
+    return (
+      <div className="site-footer w-full shrink-0">
+        <footer className="bg-[#27366D] text-slate-300 text-[11px] py-3 px-5 border-t border-[#1e2b58]">
+          <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+            <p className="text-white text-xs font-bold shrink-0">Barriando</p>
+            <nav className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
+              {compactLinks.map((link) => (
+                <Link
+                  key={link.href + link.label}
+                  href={link.href}
+                  className="text-slate-400 hover:text-white transition uppercase tracking-wider font-semibold"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            <p className="text-slate-400 text-[10px] shrink-0">© 2026 Barriando Puebla</p>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="site-footer mt-auto w-full">
       <section className="py-10 bg-white border-t border-slate-200 px-6">

@@ -1,6 +1,7 @@
 "use client";
 
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import MapImmersiveShell from "../mapa/MapImmersiveShell";
 import SociosImmersiveView from "./SociosImmersiveView";
 import type { Socio } from "../data/socios";
@@ -27,6 +28,9 @@ export default function SociosPageClient({
           initialSocioId={initialSocioId}
         />
       </main>
+      <div className="hidden lg:block shrink-0">
+        <Footer compact />
+      </div>
     </MapImmersiveShell>
   );
 }

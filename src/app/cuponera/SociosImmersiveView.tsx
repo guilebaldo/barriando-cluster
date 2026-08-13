@@ -359,7 +359,7 @@ export default function SociosImmersiveView({
     sociosFiltrados.length === 0 ? (
       <p className="text-center text-sm text-slate-400 py-8">No hay socios con ese criterio.</p>
     ) : viewMode === "icons" ? (
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-1.5">
+      <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-3 gap-2 md:gap-1.5 lg:gap-2">
         {sociosFiltrados.map((s) => (
           <button
             key={s.id}
@@ -473,7 +473,7 @@ export default function SociosImmersiveView({
         <button
           type="button"
           onClick={clearSelection}
-          className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 shrink-0"
+          className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 shrink-0 lg:hidden"
           aria-label="Volver al listado"
         >
           <X className="w-4 h-4" />
@@ -667,7 +667,7 @@ export default function SociosImmersiveView({
           <div
             className={`px-3 border-t border-slate-100 shrink-0 bg-white ${
               selectedSocio ? "pt-1.5" : "pt-2"
-            } ${appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"}`}
+            } ${appShell ? "pb-3" : "pb-[max(0.75rem,env(safe-area-inset-bottom))]"} lg:pb-3`}
           >
             <p className="text-center px-1 py-1">
               <PlanIntentCta
@@ -688,42 +688,92 @@ export default function SociosImmersiveView({
   );
 
   return (
-    <div className="relative h-full w-full overflow-hidden overscroll-none">
-      <SociosMap
-        socios={sociosFiltrados}
-        selectedId={selectedId}
-        onSelect={selectSocio}
-        immersive
-        bottomSheetHeight={mapSheetHeight}
-        userLocation={userLocation}
-      />
+    <div className="relative h-full w-full overflow-hidden overscroll-none flex lg:flex-row">
+      <div className="relative flex-1 min-h-0 min-w-0">
+        <SociosMap
+          socios={sociosFiltrados}
+          selectedId={selectedId}
+          onSelect={selectSocio}
+          immersive
+          bottomSheetHeight={mapSheetHeight}
+          userLocation={userLocation}
+        />
 
-      <div
-        className="absolute inset-x-0 bottom-0 z-20 pointer-events-none transition-[bottom] duration-200 ease-out"
-        style={{ bottom: "var(--keyboard-inset, 0px)" }}
-        onTouchStart={onSheetTouchStart}
-        onTouchEnd={onSheetTouchEnd}
-      >
         <div
-          ref={sheetRef}
-          className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[height] ${
-            sheetMode === "full" ? "rounded-t-3xl" : "rounded-t-2xl"
-          }`}
-          style={{
-            height:
-              sheetMode === "full"
-                ? fullSheetPx
-                : sheetMode === "peek"
-                  ? 92
-                  : selectedSocio
-                    ? "auto"
-                    : halfBrowsePx,
-            maxHeight: sheetMode === "half" && selectedSocio ? fullSheetPx : undefined,
-          }}
+          className="lg:hidden absolute inset-x-0 bottom-0 z-20 pointer-events-none transition-[bottom] duration-200 ease-out"
+          style={{ bottom: "var(--keyboard-inset, 0px)" }}
+          onTouchStart={onSheetTouchStart}
+          onTouchEnd={onSheetTouchEnd}
         >
-          {sheetChrome}
+          <div
+            ref={sheetRef}
+            className={`pointer-events-auto mx-auto w-full max-w-lg md:max-w-4xl bg-white border border-slate-200/80 border-b-0 overflow-hidden flex flex-col min-h-0 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] transition-[height,border-radius] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[height] ${
+              sheetMode === "full" ? "rounded-t-3xl" : "rounded-t-2xl"
+            }`}
+            style={{
+              height:
+                sheetMode === "full"
+                  ? fullSheetPx
+                  : sheetMode === "peek"
+                    ? 92
+                    : selectedSocio
+                      ? "auto"
+                      : halfBrowsePx,
+              maxHeight: sheetMode === "half" && selectedSocio ? fullSheetPx : undefined,
+            }}
+          >
+            {sheetChrome}
+          </div>
         </div>
       </div>
+
+      <aside className="hidden lg:flex w-[min(26rem,38vw)] xl:w-[28rem] shrink-0 flex-col min-h-0 bg-white border-l border-slate-200">
+        <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+              {selectedSocio ? selectedSocio.categoria : "Red empresarial"}
+            </p>
+            <p className="text-sm font-semibold text-[#27366D] truncate">
+              {selectedSocio?.name ?? `${sociosFiltrados.length} socios`}
+            </p>
+          </div>
+          {selectedSocio ? (
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 shrink-0"
+              aria-label="Volver al listado"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : null}
+        </div>
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 pt-2 scrollbar-none">
+            {selectedSocio ? detailBody : browseBody}
+            {!selectedSocio ? (
+              <p className="text-[10px] text-slate-400 text-center mt-2 mb-1">
+                {sociosFiltrados.length} miembros
+              </p>
+            ) : null}
+          </div>
+          {!selectedSocio ? filtersBar : null}
+          {!canRedeemBenefits ? (
+            <div className="px-3 pt-2 pb-3 border-t border-slate-100 shrink-0 bg-white">
+              <p className="text-center px-1 py-1">
+                <PlanIntentCta
+                  plan="VECINO"
+                  className="text-[10px] text-slate-400 hover:text-[#27366D] transition underline decoration-dotted underline-offset-2"
+                >
+                  ¿Eres vecino? Obtén cupones exclusivos. Regístrate aquí.
+                </PlanIntentCta>
+              </p>
+            </div>
+          ) : (
+            <div className="shrink-0 pb-2" />
+          )}
+        </div>
+      </aside>
 
       {activeBenefit &&
         typeof document !== "undefined" &&
