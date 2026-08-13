@@ -37,7 +37,13 @@ export const dynamic = "force-dynamic";
 export default async function PanelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bienvenida?: string; pago?: string; credencial?: string; success?: string }>;
+  searchParams: Promise<{
+    bienvenida?: string;
+    pago?: string;
+    credencial?: string;
+    success?: string;
+    seccion?: string;
+  }>;
 }) {
   const params = await searchParams;
   const session = await getSession();
@@ -162,7 +168,7 @@ export default async function PanelPage({
     <SiteShell>
       <RefreshSessionAfterPayment />
       <Navbar />
-      <main className="flex-1 w-full max-md:max-w-none max-md:px-0 max-md:py-0 max-w-5xl mx-auto md:py-12 md:px-6">
+      <main className="flex-1 w-full max-md:max-w-none max-md:px-0 max-md:py-0 max-w-6xl mx-auto md:py-12 md:px-6">
         <PanelDashboard
           user={{
             id: panelUser.id,
@@ -195,6 +201,7 @@ export default async function PanelPage({
           totalMilestones={listaHitos.length}
           milestonesVisited={milestonesVisited}
           showCredential={params.credencial === "1"}
+          initialSection={params.seccion ?? null}
         />
       </main>
       {/* Desktop: footer del sitio. En móvil el hub lo oculta vía app-mobile-shell. */}

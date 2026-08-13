@@ -51,7 +51,6 @@ import {
   Building2,
   CreditCard,
   Sparkles,
-  Upload,
   Shield,
   ArrowUpCircle,
   ArrowLeft,
@@ -67,6 +66,8 @@ import {
   Receipt,
 } from "lucide-react";
 import PanelMobile, { type PanelMobileRow } from "./PanelMobile";
+import PanelDesktopNav from "./PanelDesktopNav";
+import { panelUrlWithSection, resolvePanelSection } from "./panel-section";
 import DeleteTuristaAccountLink from "./DeleteTuristaAccountLink";
 
 interface SocioOption {
@@ -114,6 +115,8 @@ interface PanelProps {
   totalMilestones: number;
   milestonesVisited: number;
   showCredential?: boolean;
+  /** Deep-link: /panel?seccion=membresia */
+  initialSection?: string | null;
 }
 
 export default function PanelDashboard({
@@ -132,6 +135,7 @@ export default function PanelDashboard({
   totalMilestones,
   milestonesVisited,
   showCredential = false,
+  initialSection = null,
 }: PanelProps) {
   const router = useRouter();
   const { update } = useSession();
@@ -153,6 +157,7 @@ export default function PanelDashboard({
     hasSeenPanelNotice(user.id, "linkage_rejected")
   );
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [desktopSection, setDesktopSection] = useState<string | null>(null);
 
   const plan = subscription?.plan ?? "TURISTA";
   const status = subscription?.status ?? "inactive";
@@ -834,6 +839,20 @@ export default function PanelDashboard({
     },
   ];
 
+  const explicitSection = initialSection
+    ? resolvePanelSection(initialSection, mobileRows)
+    : null;
+  const desktopDefault = explicitSection ?? resolvePanelSection(null, mobileRows);
+
+  function selectDesktopSection(id: string) {
+    setDesktopSection(id);
+    router.replace(panelUrlWithSection(id), { scroll: false });
+  }
+
+  const activeDesktopId = desktopSection ?? desktopDefault;
+  const activeDesktopRow =
+    mobileRows.find((r) => r.id === activeDesktopId && r.show !== false) ?? null;
+
   return (
     <>
       <div className="md:hidden">
@@ -844,6 +863,7 @@ export default function PanelDashboard({
           showBackToBarrId={!isTurista}
           notices={mobileNotices}
           rows={mobileRows}
+          initialSection={explicitSection}
           footer={isTurista ? <DeleteTuristaAccountLink /> : null}
         />
       </div>
@@ -980,7 +1000,7 @@ export default function PanelDashboard({
         )}
       </div>
 
-      {showWelcome && (
+          {showWelcome && (
         <div className="bg-gradient-to-r from-[#27366D] to-[#1e2b58] text-white rounded-xl px-5 py-4 shadow-sm border border-amber-400/30">
           <div className="flex items-center gap-3">
             <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
@@ -995,432 +1015,46 @@ export default function PanelDashboard({
         </div>
       )}
 
-      {isTurista ? (
-        <TouristPanel
-          user={{
-            nombre: user.nombre,
-            email: user.email,
-            image: user.image,
-          }}
-          milestonesVisited={milestonesVisited}
-          totalMilestones={totalMilestones}
-        />
-      ) : isVecino ? (
-        <VecinoPanel
-          user={{
-            nombre: user.nombre,
-            email: user.email,
-            image: user.image,
-          }}
-          subscription={subscription}
-          showCredential={showCredential}
-          stripeConfigured={stripeConfigured}
-          paymentDetails={paymentDetails}
-        />
-      ) : showPayBeforeLink ? (
-        <div className="space-y-6">
-          <div className="bg-white border border-amber-200 rounded-xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-amber-600" />
-              <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                {transferPending
-                  ? "Pago en revisión"
-                  : oxxoAwaiting
-                    ? "Esperando pago OXXO"
-                    : "Completa el pago de tu plan"}
-              </h2>
-            </div>
-            <p className="text-sm text-slate-600 font-light leading-relaxed">
-              Elegiste <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>. Cuando el
-              pago quede aceptado podrás vincular o registrar tu negocio para{" "}
-              {describeBusinessPresenceGoal(plan)}.
-            </p>
-            {transferPending || oxxoAwaiting ? (
-              <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-                {transferPending
-                  ? "Tu transferencia está en revisión. Te avisaremos cuando se confirme."
-                  : "Cuando Stripe confirme el depósito —a menudo al día siguiente hábil— tu membresía se activa sola."}
-              </p>
-            ) : (
-              <div className="space-y-3">
-                <MembershipPaymentOptions
-                  plan={plan}
-                  stripeConfigured={stripeConfigured}
-                  disabled={pendingValidation}
-                  onStripePay={() => handleStripePay(plan)}
-                  onManualConfirm={handleManualPayment}
-                  paymentDetails={paymentDetails}
-                  stripeLabel={stripeButtonLabel}
-                />
-                {(payMsg || manualMsg) && (
-                  <p className="text-xs text-slate-600">{payMsg || manualMsg}</p>
-                )}
-                <Link
-                  href="/planes?cambio=1"
-                  className="text-xs text-slate-500 hover:underline w-fit"
-                >
-                  Cambiar plan
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : showLinkageFirst ? (
-        <div className="space-y-6">
-          {showLinkageCtaBanner && commercial && (
-            <div className="relative bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-sm text-emerald-900">
-              <button
-                type="button"
-                onClick={() => {
-                  markPanelNoticeSeen(user.id, "linkage_cta");
-                  markPanelNoticeSeen(user.id, "payment_confirmed");
-                  setLinkageCtaSeen(true);
-                  setDismissedNotice(true);
-                }}
-                className="absolute top-3 right-3 text-emerald-700 hover:text-emerald-900 transition"
-                aria-label="Cerrar aviso"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <p className="font-bold mb-1 pr-6">¡Pago confirmado! Siguiente paso: vincula tu negocio</p>
-              <p className="text-xs font-light leading-relaxed">
-                Tu membresía está activa. Completa la vinculación para{" "}
-                {describeBusinessPresenceGoal(plan)}.
-              </p>
-            </div>
-          )}
-          <LinkSocioSection
-            socios={socios ?? []}
-            takenSocioIds={takenSocioIds ?? []}
-            accountEmail={user.email}
-            onLinked={refreshSession}
+      <div className="flex items-start gap-6">
+        <div className="w-56 shrink-0 space-y-3 md:sticky md:top-24">
+          <PanelDesktopNav
+            rows={mobileRows}
+            activeId={activeDesktopId}
+            onSelect={selectDesktopSection}
           />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {showCredential && commercial && (
-            <BenefitCredentialCard
-              userName={user.nombre}
-              plan={plan}
-              expiryLabel={expiryLabel}
-            />
-          )}
-          {showLinkSection && (
-            <LinkSocioSection
-              socios={socios ?? []}
-              takenSocioIds={takenSocioIds ?? []}
-              accountEmail={user.email}
-              onLinked={refreshSession}
-            />
-          )}
-
-          {linkagePending && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-4 text-xs">
-              Tu vinculación está <strong>Pendiente de aprobación</strong>. Un administrador revisará tu
-              solicitud antes de activar tu perfil público.
-            </div>
-          )}
-
-          {hasBusinessEstablished && (
-            <section className="bg-white border border-emerald-200 rounded-xl p-6 shadow-sm md:col-span-2">
-              <div className="flex items-center gap-2 mb-6">
-                <Building2 className="w-4 h-4 text-[#27366D]" />
-                <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                  Vista de control del negocio
-                </h2>
+          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="inline-flex w-full items-center justify-center gap-2 border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-[10px] uppercase tracking-wider px-3 py-2.5 rounded-lg transition"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Cerrar sesión
+            </button>
+            {isTurista ? (
+              <div className="mt-2">
+                <DeleteTuristaAccountLink />
               </div>
-
-              <div className="mb-6 flex flex-wrap items-start gap-6">
-                <div className="h-28 w-44 shrink-0 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
-                  {displayLogo ? (
-                    <img
-                      src={displayLogo}
-                      alt={displayName ?? "Logo"}
-                      className="max-h-full max-w-full object-contain p-2"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <Building2 className="w-10 h-10 text-slate-300" aria-hidden />
-                  )}
-                </div>
-                <div className="flex-1 min-w-[12rem] max-w-md">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
-                    Logotipo
-                  </p>
-                  <p className="text-xs text-slate-600 mb-2 font-light leading-relaxed">
-                    La carga desde el panel aún no está habilitada. Mientras tanto, envía tu logotipo en{" "}
-                    <strong className="font-semibold text-slate-800">PNG con fondo transparente</strong>,
-                    idealmente <strong className="font-semibold text-slate-800">512×512 px</strong>{" "}
-                    (máx. 1024×1024), a{" "}
-                    <a
-                      href="mailto:clusterturistico.pue@gmail.com"
-                      className="font-semibold text-[#27366D] underline underline-offset-2"
-                    >
-                      clusterturistico.pue@gmail.com
-                    </a>{" "}
-                    o por WhatsApp{" "}
-                    <a
-                      href="https://wa.me/522214296540"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-semibold text-[#27366D] underline underline-offset-2"
-                    >
-                      22 14 29 65 40
-                    </a>
-                    .
-                  </p>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    disabled
-                    className="text-xs w-full opacity-40 cursor-not-allowed"
-                    aria-disabled
-                  />
-                  <p className="text-[10px] text-amber-700 mt-2 font-medium">
-                    Carga automática próximamente — por ahora envíalo por correo o WhatsApp
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-100">
-                <SocioProfileForm
-                  initial={profileDefaults}
-                  email={user.email}
-                  disabled={!linkageApproved}
-                  hideBusinessName={plan === "VECINO"}
-                  embedded
-                />
-              </div>
-            </section>
-          )}
-
-          {hasBusinessEstablished && isBusiness && commercial && socioProfile && (
-            <>
-              <SocioBenefitForm
-                initial={{
-                  offersBenefit: socioProfile.offersBenefit,
-                  benefitTitle: socioProfile.benefitTitle,
-                  benefitDescription: socioProfile.benefitDescription,
-                  benefitHowToRedeem: socioProfile.benefitHowToRedeem,
-                  benefitRedeemViaQr: socioProfile.benefitRedeemViaQr,
-                  benefitValidFrom: socioProfile.benefitValidFrom,
-                  benefitValidUntil: socioProfile.benefitValidUntil,
-                }}
-                onSaved={refreshSession}
-              />
-              <EstablishmentQrDownload
-                socioId={user.socioId}
-                businessName={displayName ?? socioProfile.businessName}
-              />
-            </>
-          )}
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {!hasBusinessEstablished && (
-            <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-4 h-4 text-[#27366D]" />
-                <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Tu negocio</h2>
-              </div>
-              {displayName ? (
-                <div>
-                  <p className="font-bold text-slate-950">{displayName}</p>
-                  {(catalogSocio?.categoria || socioProfile?.category) && (
-                    <p className="text-xs text-slate-500 mt-1">
-                      {socioProfile?.category || catalogSocio?.categoria}
-                    </p>
-                  )}
-                  {socioProfile?.address && (
-                    <p className="text-xs text-slate-500 mt-1">{socioProfile.address}</p>
-                  )}
-                  {socioProfile?.linkageStatus && (
-                    <p
-                      className={`text-xs mt-2 font-bold ${
-                        linkageApproved ? "text-green-700" : linkagePending ? "text-amber-600" : "text-red-600"
-                      }`}
-                    >
-                      Estado: {getLinkageStatusLabel(socioProfile.linkageStatus as "pending" | "approved" | "rejected")}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-xs text-slate-500">
-                  {canLink
-                    ? "Usa el buscador de arriba para vincular o registrar tu negocio."
-                    : "Cuando tu pago esté verificado podrás vincular tu negocio."}
-                </p>
-              )}
-            </section>
-            )}
-
-            {!hasBusinessEstablished && (
-            <section className="bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-sm opacity-90">
-              <div className="flex items-center gap-2 mb-4">
-                <Upload className="w-4 h-4 text-slate-400" />
-                <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Actualizar logo</h2>
-              </div>
-              <p className="text-xs text-slate-600 mb-3 font-light leading-relaxed">
-                La carga desde el panel aún no está habilitada. Mientras tanto, envía tu logotipo en{" "}
-                <strong className="font-semibold text-slate-800">PNG con fondo transparente</strong>,
-                idealmente <strong className="font-semibold text-slate-800">512×512 px</strong> (máx.
-                1024×1024), a{" "}
-                <a
-                  href="mailto:clusterturistico.pue@gmail.com"
-                  className="font-semibold text-[#27366D] underline underline-offset-2"
-                >
-                  clusterturistico.pue@gmail.com
-                </a>{" "}
-                o por WhatsApp{" "}
-                <a
-                  href="https://wa.me/522214296540"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-semibold text-[#27366D] underline underline-offset-2"
-                >
-                  22 14 29 65 40
-                </a>
-                .
-              </p>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                disabled
-                className="text-xs w-full opacity-40 cursor-not-allowed"
-                aria-disabled
-              />
-              <p className="text-[10px] text-amber-700 mt-2 font-medium">
-                Carga automática próximamente — por ahora envíalo por correo o WhatsApp
-              </p>
-            </section>
-            )}
-
-            <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm md:col-span-2 relative">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-[#27366D]" />
-                  <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">Membresía</h2>
-                </div>
-                {commercial && !isTurista && (
-                  <button
-                    type="button"
-                    disabled={cancelLoading}
-                    onClick={() => setShowCancelDialog(true)}
-                    className="text-[10px] text-slate-400 hover:text-red-600 underline underline-offset-2 transition shrink-0"
-                  >
-                    Cancelar membresía
-                  </button>
-                )}
-              </div>
-              <p className="text-sm text-slate-700 mb-1">
-                Estado:{" "}
-                <strong
-                  className={
-                    commercial
-                      ? "text-green-700"
-                      : pendingValidation
-                        ? "text-amber-600"
-                        : "text-slate-500"
-                  }
-                >
-                  {getSubscriptionStatusLabel(status)}
-                </strong>
-              </p>
-              <p className="text-sm font-semibold text-[#27366D] mb-2">
-                {safePlanPriceLabel(plan)} · {getPlanLabel(plan)}
-              </p>
-              <p className="text-sm text-slate-700 mb-1">
-                Vencimiento: <strong className="text-slate-900">{expiryLabel}</strong>
-              </p>
-              <p className="text-xs text-slate-500 mb-4">
-                Tipo de renovación: <strong className="text-[#27366D]">{renewalLabel}</strong>
-              </p>
-
-              {autoRenewal && nextChargeDate && (
-                <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-xs text-emerald-900">
-                  Tu renovación automática está activa. Tu próximo cargo será el{" "}
-                  <strong>{nextChargeDate}</strong>.
-                </div>
-              )}
-
-              {!autoRenewal ? (
-                <MembershipPaymentOptions
-                  plan={plan}
-                  stripeConfigured={stripeConfigured}
-                  disabled={pendingValidation}
-                  onStripePay={() => handleStripePay(plan)}
-                  onManualConfirm={handleManualPayment}
-                  paymentDetails={paymentDetails}
-                  showOxxo={plan !== "TURISTA"}
-                  showTransfer={plan !== "TURISTA"}
-                  stripeLabel={stripeButtonLabel}
-                />
-              ) : null}
-              {upgradePlans.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-slate-100">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ArrowUpCircle className="w-4 h-4 text-amber-600" />
-                    <h3 className="text-xs font-bold text-[#27366D] uppercase tracking-widest">
-                      Upgrade a plan superior
-                    </h3>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    {upgradePlans.map((planId) => (
-                      <div
-                        key={planId}
-                        className="border border-slate-200 rounded-lg p-4 bg-slate-50 min-w-[10rem] flex-1"
-                      >
-                        <p className="font-bold text-slate-900 text-sm">{MEMBERSHIP_PLANS[planId].label}</p>
-                        <p className="text-xs text-[#27366D] font-semibold mt-1">
-                          {formatPlanPriceMxn(planId)}
-                        </p>
-                        <ul className="mt-2 space-y-1">
-                          {MEMBERSHIP_PLANS[planId].benefits.slice(0, 3).map((b) => (
-                            <li key={b} className="text-[10px] text-slate-600 leading-snug">
-                              · {b}
-                            </li>
-                          ))}
-                        </ul>
-                        {stripeConfigured && (
-                          <button
-                            type="button"
-                            onClick={() => handleStripePay(planId)}
-                            className="mt-3 text-[10px] font-bold uppercase tracking-wider bg-[#27366D] text-white px-3 py-2 rounded-lg hover:bg-[#1e2b58] transition"
-                          >
-                            Upgrade
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {payMsg && <p className="text-xs mt-3 text-slate-600">{payMsg}</p>}
-              {manualMsg && <p className="text-xs mt-3 text-slate-600">{manualMsg}</p>}
-              {cancelMsg && <p className="text-xs mt-3 text-slate-600">{cancelMsg}</p>}
-            </section>
+            ) : null}
           </div>
         </div>
-      )}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-        <h2 className="text-xs font-bold text-[#27366D] uppercase tracking-widest mb-2">
-          Cuenta
-        </h2>
-        <p className="text-sm text-slate-600 font-light mb-4">
-          Cierra tu sesión en este dispositivo. Podrás volver a entrar con Google o correo.
-        </p>
-        <button
-          type="button"
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="inline-flex items-center justify-center gap-2 border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs uppercase tracking-wider px-5 py-3 rounded-lg transition"
-        >
-          <LogOut className="w-4 h-4" />
-          Cerrar sesión
-        </button>
-        {isTurista ? <div className="mt-4"><DeleteTuristaAccountLink /></div> : null}
-      </section>
+        <div className="min-w-0 flex-1">
+          {activeDesktopRow?.detail ??
+            (isTurista ? (
+              <TouristPanel
+                user={{
+                  nombre: user.nombre,
+                  email: user.email,
+                  image: user.image,
+                }}
+                milestonesVisited={milestonesVisited}
+                totalMilestones={totalMilestones}
+              />
+            ) : null)}
+        </div>
       </div>
+      </div>
+
 
       <ConfirmDialog
         open={showCancelDialog}

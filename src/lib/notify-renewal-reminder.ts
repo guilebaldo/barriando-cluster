@@ -15,7 +15,7 @@ export async function notifyRenewalReminder(params: {
 }): Promise<{ ok: boolean; error?: string }> {
   const planLabel = MEMBERSHIP_PLANS[params.plan]?.label ?? params.plan;
   const origin = resolvePublicAppOrigin();
-  const panelUrl = `${origin}/panel`;
+  const panelUrl = `${origin}/panel?seccion=membresia`;
   const firstName = params.nombre?.trim()?.split(/\s+/)[0] || null;
   const periodLabel = params.periodEnd.toLocaleDateString("es-MX", {
     day: "numeric",

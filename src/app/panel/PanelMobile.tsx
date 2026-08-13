@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   ArrowLeft,
@@ -11,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useImmersiveScrollLock } from "@/app/components/useImmersiveScrollLock";
+import { panelUrlWithSection } from "./panel-section";
 
 export type PanelMobileRow = {
   id: string;
@@ -41,6 +43,8 @@ type Props = {
   rows: PanelMobileRow[];
   /** Pie discreto (p. ej. eliminar cuenta Turista) */
   footer?: ReactNode;
+  /** Abre esta sección al montar (p. ej. ?seccion=membresia). */
+  initialSection?: string | null;
 };
 
 const badgeClass: Record<NonNullable<PanelMobileRow["badgeTone"]>, string> = {
@@ -65,13 +69,19 @@ export default function PanelMobile({
   notices,
   rows,
   footer,
+  initialSection = null,
 }: Props) {
   useImmersiveScrollLock({ mobileOnly: true });
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const router = useRouter();
+  const [activeId, setActiveId] = useState<string | null>(initialSection);
   const listScrollRef = useRef<HTMLDivElement>(null);
   const detailScrollRef = useRef<HTMLDivElement>(null);
   const visibleRows = rows.filter((r) => r.show !== false);
   const active = visibleRows.find((r) => r.id === activeId) ?? null;
+
+  useLayoutEffect(() => {
+    if (initialSection) setActiveId(initialSection);
+  }, [initialSection]);
 
   useLayoutEffect(() => {
     const scroller = activeId ? detailScrollRef.current : listScrollRef.current;
@@ -88,7 +98,10 @@ export default function PanelMobile({
           <div className="flex items-center gap-2 px-3 py-3">
             <button
               type="button"
-              onClick={() => setActiveId(null)}
+              onClick={() => {
+                setActiveId(null);
+                router.replace(panelUrlWithSection(null), { scroll: false });
+              }}
               className="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition touch-manipulation"
               aria-label="Volver"
             >
@@ -227,7 +240,10 @@ export default function PanelMobile({
                 <button
                   key={row.id}
                   type="button"
-                  onClick={() => setActiveId(row.id)}
+                  onClick={() => {
+                    setActiveId(row.id);
+                    router.replace(panelUrlWithSection(row.id), { scroll: false });
+                  }}
                   className="flex w-full items-center gap-3 px-4 py-3.5 active:bg-slate-50 transition touch-manipulation"
                 >
                   {body}
