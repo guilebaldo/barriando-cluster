@@ -20,6 +20,13 @@ export function resolveAppOrigin(): string {
   ).replace(/\/$/, "");
 }
 
+/** Origen público para correos transaccionales (nunca localhost). */
+export function resolvePublicAppOrigin(): string {
+  const origin = resolveAppOrigin();
+  if (/localhost|127\.0\.0\.1/i.test(origin)) return "https://barriando.org";
+  return origin;
+}
+
 export function getEmailFrom(): string {
   return readEnv("EMAIL_FROM", "AUTH_EMAIL_FROM") || "Barriando <noreply@barriando.org>";
 }

@@ -1,4 +1,4 @@
-import { resolveAppOrigin, sendEmail } from "@/lib/email";
+import { resolvePublicAppOrigin, sendEmail } from "@/lib/email";
 import { escapeHtml, renderBrandedEmailHtml } from "@/lib/email-layout";
 import { MEMBERSHIP_PLANS, formatPlanPriceMxn, type PaidMembershipPlan } from "@/lib/membresia";
 import type { MembershipPlan } from "@/generated/prisma/client";
@@ -14,7 +14,7 @@ export async function notifyRenewalReminder(params: {
   periodEnd: Date;
 }): Promise<{ ok: boolean; error?: string }> {
   const planLabel = MEMBERSHIP_PLANS[params.plan]?.label ?? params.plan;
-  const origin = resolveAppOrigin();
+  const origin = resolvePublicAppOrigin();
   const panelUrl = `${origin}/panel`;
   const firstName = params.nombre?.trim()?.split(/\s+/)[0] || null;
   const periodLabel = params.periodEnd.toLocaleDateString("es-MX", {

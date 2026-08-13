@@ -1,4 +1,4 @@
-import { BRAND_LOGO_CID, resolveAppOrigin } from "@/lib/email";
+import { BRAND_LOGO_CID, resolvePublicAppOrigin } from "@/lib/email";
 
 const BRAND = "#27366D";
 const ACCENT = "#b45309";
@@ -23,7 +23,7 @@ export type BrandedEmailContent = {
  * Wordmark de navbar embebido vía CID (no URL remota).
  */
 export function renderBrandedEmailHtml(content: BrandedEmailContent): string {
-  const siteUrl = resolveAppOrigin();
+  const siteUrl = resolvePublicAppOrigin();
   const year = new Date().getFullYear();
   const footerNote =
     content.footerNote ||
