@@ -31,7 +31,6 @@ import {
 } from "@/lib/panel-display";
 import { getLinkageStatusLabel, isLinkageApproved, isLinkagePending, isLinkageRejected } from "@/lib/linkage";
 import ConfirmDialog from "@/app/components/ConfirmDialog";
-import { AdminNavLink } from "@/app/components/AdminNavBadge";
 import {
   hasSeenPanelNotice,
   markPanelNoticeSeen,
@@ -957,46 +956,38 @@ export default function PanelDashboard({
         </>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div>
-          {!isTurista ? (
-            <Link
-              href="/barrid"
-              className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600 mb-2"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Volver a BarrID
-            </Link>
-          ) : null}
-          <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
-            {isTurista ? "Mi cuenta" : isVecino ? "Panel del vecino" : "Panel del socio"}
-          </h1>
-          {/* Turista/Vecino ya muestran nombre y plan en su ficha; no repetir aquí. */}
-          {!isTurista && !isVecino ? (
-            <p className="text-sm text-slate-600 mt-1">
-              {user.nombre} · Plan{" "}
-              <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>
-              <>
-                {" "}
-                · Estado{" "}
-                <strong className={pendingValidation ? "text-amber-600" : "text-[#27366D]"}>
-                  {getSubscriptionStatusLabel(status)}
-                </strong>
-              </>
-            </p>
-          ) : (
-            <p className="text-sm text-slate-500 mt-1">
-              {isTurista
-                ? "MAPA, Pasaporte y opciones de tu cuenta"
-                : "Membresía, cupones y opciones de tu cuenta"}
-            </p>
-          )}
-        </div>
-        {isAdmin && (
-          <AdminNavLink className="inline-flex items-center gap-2 bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition shrink-0">
-            <Shield className="w-4 h-4" />
-            Panel Admin
-          </AdminNavLink>
+      <div>
+        {!isTurista ? (
+          <Link
+            href="/barrid"
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600 mb-2"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Volver a BarrID
+          </Link>
+        ) : null}
+        <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+          {isTurista ? "Mi cuenta" : isVecino ? "Panel del vecino" : "Panel del socio"}
+        </h1>
+        {/* Turista/Vecino ya muestran nombre y plan en su ficha; no repetir aquí. */}
+        {!isTurista && !isVecino ? (
+          <p className="text-sm text-slate-600 mt-1">
+            {user.nombre} · Plan{" "}
+            <strong className="text-[#27366D]">{getPlanLabel(plan)}</strong>
+            <>
+              {" "}
+              · Estado{" "}
+              <strong className={pendingValidation ? "text-amber-600" : "text-[#27366D]"}>
+                {getSubscriptionStatusLabel(status)}
+              </strong>
+            </>
+          </p>
+        ) : (
+          <p className="text-sm text-slate-500 mt-1">
+            {isTurista
+              ? "MAPA, Pasaporte y opciones de tu cuenta"
+              : "Membresía, cupones y opciones de tu cuenta"}
+          </p>
         )}
       </div>
 
