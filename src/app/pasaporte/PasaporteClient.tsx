@@ -16,6 +16,7 @@ import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
 import PasaporteBookMobile from "./PasaporteBookMobile";
 import SellarClient from "./sellar/SellarClient";
 import PassportLeaderLine from "./PassportLeaderLine";
+import PassportAdStamp, { stampPadCount } from "./PassportAdStamp";
 import PassportNoticeToast, { type PassportNotice } from "./PassportNoticeToast";
 
 type RestaurantCard = {
@@ -890,6 +891,9 @@ function PasaporteInner({
                   </Link>
                 );
               })}
+              {Array.from({ length: stampPadCount(restaurants.length, 6) }).map((_, i) => (
+                <PassportAdStamp key={`ad-desktop-${i}`} />
+              ))}
               </div>
               {isPreview && (
                 <div className="flex flex-col items-center justify-center px-4 sm:px-8 pt-8 pb-6 sm:pt-10 sm:pb-8 text-center">

@@ -8,6 +8,7 @@ import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
 import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PassportLeaderLine from "./PassportLeaderLine";
+import PassportAdStamp, { stampPadCount } from "./PassportAdStamp";
 
 type RestaurantCard = {
   id: number;
@@ -445,6 +446,9 @@ export default function PasaporteBookMobile({
               />
             );
           })}
+          {Array.from({ length: stampPadCount(coverStamps.length, COVER_STAMP_COUNT) }).map((_, i) => (
+            <PassportAdStamp key={`ad-cover-${i}`} />
+          ))}
         </div>
         {pageCount === 1 ? (
           <p className="shrink-0 text-center pt-2 pb-1">
@@ -499,6 +503,11 @@ export default function PasaporteBookMobile({
               />
             );
           })}
+          {isLastPage
+            ? Array.from({ length: stampPadCount(page.length, PAGE_STAMP_COUNT) }).map((_, i) => (
+                <PassportAdStamp key={`ad-page-${i}`} size="sm" />
+              ))
+            : null}
         </div>
         {isLastPage ? (
           <p className="relative z-10 shrink-0 text-center mt-3 pt-2.5 border-t border-[#d9cdb3]/55 pb-1">
