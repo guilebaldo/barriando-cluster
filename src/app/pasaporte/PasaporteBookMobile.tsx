@@ -6,6 +6,8 @@ import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
+import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
+import PassportLeaderLine from "./PassportLeaderLine";
 
 type RestaurantCard = {
   id: number;
@@ -79,7 +81,7 @@ function PassportProgressTrack({
 
   return (
     <div
-      className="mt-3 flex w-full items-center gap-1 font-passport-mrz text-[9px] font-bold tracking-[0.06em] select-none"
+      className="mt-0 flex w-full items-center gap-1 font-passport-mrz text-[9px] font-bold tracking-[0.06em] select-none"
       role="progressbar"
       aria-valuenow={animatedProgress}
       aria-valuemin={0}
@@ -167,136 +169,16 @@ function StampCell({
   );
 }
 
-/* —— Guilloché de página completa (estilo hoja interior de pasaporte) —— */
-
-const GUILLOCHE_W = 390;
-const GUILLOCHE_H = 800;
-
-/**
- * Onda horizontal con envolvente de amplitud y un segundo armónico: la
- * amplitud varía a lo largo de x y el armónico rompe la sinusoide simple,
- * que es lo que da el trazo "labrado" de los billetes.
- */
-function wavePath({
-  baseY,
-  amp,
-  wavelength,
-  phase,
-  ampMod = 0,
-  ampModWavelength = 200,
-  harmonic = 0,
-}: {
-  baseY: number;
-  amp: number;
-  wavelength: number;
-  phase: number;
-  ampMod?: number;
-  ampModWavelength?: number;
-  /** Peso del 2º armónico (0-0.5): añade el detalle fino del guilloché */
-  harmonic?: number;
-}): string {
-  const pts: string[] = [];
-  for (let x = 0; x <= GUILLOCHE_W; x += 2.5) {
-    const envelope = 1 + ampMod * Math.sin((2 * Math.PI * x) / ampModWavelength);
-    const theta = (2 * Math.PI * x) / wavelength + phase;
-    const y = baseY + amp * envelope * (Math.sin(theta) + harmonic * Math.sin(3 * theta + phase));
-    pts.push(`${x},${y.toFixed(2)}`);
-  }
-  return `M${pts.join(" L")}`;
-}
-
-/** Anillo de roseta: círculo con radio modulado (lóbulos), clásico de pasaportes. */
-function rosettePath(
-  cx: number,
-  cy: number,
-  radius: number,
-  lobeAmp: number,
-  lobes: number,
-  phase: number
-): string {
-  const pts: string[] = [];
-  const steps = 140;
-  for (let i = 0; i <= steps; i++) {
-    const t = (i / steps) * Math.PI * 2;
-    const r = radius + lobeAmp * Math.sin(lobes * t + phase);
-    pts.push(`${(cx + r * Math.cos(t)).toFixed(1)},${(cy + r * Math.sin(t)).toFixed(1)}`);
-  }
-  return `M${pts.join(" L")}Z`;
-}
-
-function PageBackdrop() {
-  const { bands, drift, rosette } = useMemo(() => {
-    // Bandas trenzadas: pares de ondas en contrafase que se cruzan formando
-    // la "cadena" que recorre la hoja. Interlineado corto = trama cerrada.
-    const bands: string[] = [];
-    for (let y = 8; y < GUILLOCHE_H; y += 13) {
-      const rowPhase = (y / 13) * 0.55;
-      const common = { amp: 4.2, wavelength: 26, ampMod: 0.5, ampModWavelength: 118, harmonic: 0.3 };
-      bands.push(wavePath({ ...common, baseY: y, phase: rowPhase }));
-      bands.push(wavePath({ ...common, baseY: y, phase: rowPhase + Math.PI }));
-    }
-
-    // Capa de deriva: ondas más largas y suaves, rotadas unos grados,
-    // en segundo tono para el moiré sutil.
-    const drift: string[] = [];
-    for (let y = -40; y < GUILLOCHE_H + 40; y += 19) {
-      drift.push(
-        wavePath({ baseY: y, amp: 6.5, wavelength: 74, phase: (y / 19) * 0.8, harmonic: 0.18 })
-      );
-    }
-
-    // Roseta central: anillos concéntricos lobulados alternando fase.
-    const rosette: string[] = [];
-    for (let i = 0; i < 16; i++) {
-      rosette.push(
-        rosettePath(
-          GUILLOCHE_W / 2,
-          GUILLOCHE_H / 2,
-          34 + i * 5.5,
-          3 + (i % 2) * 1.8,
-          18,
-          i % 2 ? Math.PI / 18 : 0
-        )
-      );
-    }
-
-    return { bands, drift, rosette };
-  }, []);
-
+function PaperSecurityPattern() {
   return (
     <>
-      <svg
-        className="absolute inset-0 z-0 h-full w-full pointer-events-none select-none"
-        viewBox={`0 0 ${GUILLOCHE_W} ${GUILLOCHE_H}`}
-        preserveAspectRatio="xMidYMid slice"
-        aria-hidden="true"
-      >
-        <g fill="none" stroke="#6b5d45" strokeOpacity={0.075} strokeWidth={0.35}>
-          {bands.map((d, i) => (
-            <path key={`b-${i}`} d={d} />
-          ))}
-        </g>
-        <g
-          fill="none"
-          stroke="#4e6f63"
-          strokeOpacity={0.055}
-          strokeWidth={0.35}
-          transform={`rotate(-7 ${GUILLOCHE_W / 2} ${GUILLOCHE_H / 2})`}
-        >
-          {drift.map((d, i) => (
-            <path key={`d-${i}`} d={d} />
-          ))}
-        </g>
-        <g fill="none" stroke="#6b5d45" strokeOpacity={0.07} strokeWidth={0.35}>
-          {rosette.map((d, i) => (
-            <path key={`r-${i}`} d={d} />
-          ))}
-        </g>
-      </svg>
-      {/* Viñeta suave en los bordes para dar profundidad de papel */}
+      <SecurityPatternBackground opacity={0.09} density={0.98} className="text-stone-500" />
       <div
-        className="absolute inset-0 z-0 pointer-events-none"
-        style={{ boxShadow: "inset 0 0 64px rgba(120,90,40,0.07)" }}
+        className="absolute inset-0 z-0 opacity-[0.22] pointer-events-none"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(160,120,60,0.06) 24px, rgba(160,120,60,0.06) 25px)",
+        }}
       />
     </>
   );
@@ -315,6 +197,7 @@ export default function PasaporteBookMobile({
   progress,
   stampFlashId,
   alreadyOnPassportRoster = false,
+  leaderNames = [],
 }: {
   userName: string;
   userImage: string | null;
@@ -328,6 +211,7 @@ export default function PasaporteBookMobile({
   progress: number;
   stampFlashId: number | null;
   alreadyOnPassportRoster?: boolean;
+  leaderNames?: string[];
 }) {
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
@@ -455,8 +339,8 @@ export default function PasaporteBookMobile({
 
   /* —— Portada: 50% identidad / 50% 4 sellos —— */
   const renderCover = () => (
-    <section className="relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden">
-      <PageBackdrop />
+    <section className="relative isolate h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden">
+      <PaperSecurityPattern />
       <div className="relative z-10 h-1/2 min-h-0 flex flex-col border-b border-[#d9cdb3]/80 pb-2">
         <div className="flex items-start justify-between gap-3 shrink-0">
           <div>
@@ -538,7 +422,11 @@ export default function PasaporteBookMobile({
           </div>
         </div>
 
-        <div className="shrink-0 mt-auto pt-1">
+        <div className="shrink-0 mt-auto pt-1 space-y-1">
+          <PassportLeaderLine
+            names={leaderNames}
+            className="font-passport-mrz text-[9px] font-bold tracking-[0.06em] text-[#27366D] uppercase truncate"
+          />
           <PassportProgressTrack animatedProgress={progress} tierId={tierId} />
         </div>
       </div>
@@ -591,9 +479,9 @@ export default function PasaporteBookMobile({
     const isLastPage = pageNum === pageCount - 1;
     return (
       <section
-        className={`relative h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden`}
+        className={`relative isolate h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden`}
       >
-        <PageBackdrop />
+        <PaperSecurityPattern />
         <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Sellos</p>
           <p className="text-[10px] font-passport-mrz text-stone-400 tabular-nums">

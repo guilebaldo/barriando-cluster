@@ -15,7 +15,7 @@ import {
   getFeaturedPassportPreviewIds,
   scatterFeaturedPassportStamps,
 } from "@/lib/passport-preview-layout";
-import { countUserStamps, loadUserStampSummaries } from "@/lib/pasaporte-stamps";
+import { countUserStamps, loadPassportLeaderNames, loadUserStampSummaries } from "@/lib/pasaporte-stamps";
 import { loadPanelUser } from "@/lib/panel-data";
 import { isFirstLoginAccount } from "@/lib/add-to-home-screen";
 import { canOfferPassportStamp } from "@/lib/plan-visibility";
@@ -50,6 +50,7 @@ export default async function PasaportePage({
   }
 
   const participating = await getParticipatingRestaurantsAsync();
+  const leaderNamesPromise = loadPassportLeaderNames(3);
 
   // Guest stamp demo: Mediana + Gran Empresa AyB, scattered across the grid.
   const featuredPreviewStampIds = getFeaturedPassportPreviewIds(participating);
@@ -76,13 +77,16 @@ export default async function PasaportePage({
   let userId: string | null = null;
   let isFirstLoginUser = false;
   let alreadyOnPassportRoster = false;
+  let leaderNames: string[] = [];
 
   if (session) {
-    const [summaries, stampTotal, panelUser] = await Promise.all([
+    const [summaries, stampTotal, panelUser, ranking] = await Promise.all([
       loadUserStampSummaries(session.id),
       countUserStamps(session.id),
       loadPanelUser(session.id),
+      leaderNamesPromise,
     ]);
+    leaderNames = ranking;
     totalStamps = stampTotal;
     stampMap = Object.fromEntries(
       summaries.map((s) => [s.restaurantId, { count: s.count, lastStampAt: s.lastStampAt }])
@@ -92,6 +96,8 @@ export default async function PasaportePage({
     isFirstLoginUser = isFirstLoginAccount(panelUser?.createdAt);
     const dbPlan = (panelUser?.subscription?.plan ?? session.plan) as MembershipPlan;
     alreadyOnPassportRoster = canOfferPassportStamp(dbPlan);
+  } else {
+    leaderNames = await leaderNamesPromise;
   }
 
   const uniqueStampedCount = Object.values(stampMap).filter((s) => s.count > 0).length;
@@ -118,6 +124,7 @@ export default async function PasaportePage({
       tierId={rank.id}
       isPoblanoComplete={rank.isComplete}
       progress={progress}
+      leaderNames={leaderNames}
       pendingConfirm={pendingConfirm}
       pendingInvalid={Boolean(session && pendiente && !pendingConfirm)}
     />

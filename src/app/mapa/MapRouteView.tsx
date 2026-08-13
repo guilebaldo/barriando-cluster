@@ -7,6 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Landmark,
+  Loader2,
+  LocateFixed,
   MapPin,
   Sparkles,
 } from "lucide-react";
@@ -94,6 +96,9 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
   const [maxSheetPx, setMaxSheetPx] = useState(640);
   const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
   const [isLg, setIsLg] = useState(false);
+  const [lockCameraToUser, setLockCameraToUser] = useState(false);
+  const [recenterNonce, setRecenterNonce] = useState(0);
+  const [locating, setLocating] = useState(false);
 
   const hasSocioDeepLink = useMemo(() => {
     const socioParam = searchParams.get("socio");
@@ -291,6 +296,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     : "";
 
   function selectPoint(id: string) {
+    setLockCameraToUser(false);
     setWelcomeOpen(false);
     setSelectedId(id);
     const idx = route.points.findIndex((p) => p.id === id);
@@ -303,11 +309,57 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
     const total = route.points.length;
     if (!total) return;
     const wrapped = ((next % total) + total) % total;
+    setLockCameraToUser(false);
     setWelcomeOpen(false);
     setCardIndex(wrapped);
     setSelectedId(route.points[wrapped].id);
     bodyScrollRef.current?.scrollTo({ top: 0 });
   }
+
+  const recenterOnMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGeoDetail("Este dispositivo no soporta geolocalización.");
+      setGeoModalOpen(true);
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        setGeoDetail(null);
+        setGeoModalOpen(false);
+        const location: UserMapLocation = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          speed:
+            typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
+              ? pos.coords.speed
+              : null,
+        };
+        applyLocationUpdate(location);
+        const reordered = buildWalkingItinerary(location, initialRoute);
+        setRoute(reordered);
+        const start = reordered.points[0];
+        if (start) {
+          setSelectedId(start.id);
+          setCardIndex(0);
+        }
+        setWelcomeOpen(false);
+        setSheetExpanded(true);
+        setLockCameraToUser(true);
+        setRecenterNonce((n) => n + 1);
+        hasAutoRoutedRef.current = true;
+        bodyScrollRef.current?.scrollTo({ top: 0 });
+      },
+      (err) => {
+        setLocating(false);
+        setGeoDetail(describeGeoError(err));
+        setGeoModalOpen(true);
+      },
+      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 5_000 }
+    );
+  }, [applyLocationUpdate, initialRoute]);
 
   const onSheetTouchStart = (event: React.TouchEvent) => {
     touchStartY.current = event.touches[0]?.clientY ?? null;
@@ -409,8 +461,26 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
             immersive
             bottomSheetHeight={isLg ? 0 : bottomSheetHeight}
             showStampPopups={!welcomeOpen}
+            lockCameraToUser={lockCameraToUser}
+            recenterNonce={recenterNonce}
             onPointSelect={selectPoint}
           />
+          <button
+            type="button"
+            onClick={recenterOnMe}
+            disabled={locating}
+            className="absolute z-[5] right-3 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-md text-[#27366D] flex items-center justify-center active:scale-95 transition disabled:opacity-70 lg:hidden"
+            style={{
+              bottom: Math.max(12, bottomSheetHeight + 12),
+            }}
+            aria-label="Centrar mi ubicación y reiniciar la ruta"
+          >
+            {locating ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <LocateFixed className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
       <div
@@ -531,8 +601,8 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         </div>
       </div>
 
-      <aside className="hidden lg:flex flex-col min-h-0 h-[min(70vh,560px)] rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 space-y-4">
+      <aside className="hidden lg:flex flex-col self-start rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden max-h-[min(70vh,560px)]">
+        <div className="overflow-y-auto overscroll-contain p-4 space-y-3">
           {welcomeOpen ? (
             <MapWelcomeFicha
               route={initialRoute}

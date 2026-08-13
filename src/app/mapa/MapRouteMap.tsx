@@ -247,6 +247,36 @@ function RouteMarker({
   );
 }
 
+function RecenterOnUser({
+  userLocation,
+  nonce,
+  bottomSheetHeight,
+}: {
+  userLocation: UserMapLocation | null;
+  nonce: number;
+  bottomSheetHeight: number;
+}) {
+  const map = useMap();
+  const lastNonceRef = useRef(0);
+
+  useEffect(() => {
+    if (!userLocation || nonce === 0 || nonce === lastNonceRef.current) return;
+    lastNonceRef.current = nonce;
+    const offsetY =
+      bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55 + 28) : 0;
+    const zoom = Math.max(map.getZoom(), 16);
+    leafletFlyToWithBottomBias(
+      map,
+      [userLocation.latitude, userLocation.longitude],
+      zoom,
+      offsetY,
+      0.55
+    );
+  }, [map, userLocation, nonce, bottomSheetHeight]);
+
+  return null;
+}
+
 export default function MapRouteMap({
   points,
   walkPath,
@@ -256,6 +286,8 @@ export default function MapRouteMap({
   immersive = false,
   bottomSheetHeight = 0,
   showStampPopups = true,
+  lockCameraToUser = false,
+  recenterNonce = 0,
 }: {
   points: MapRoutePoint[];
   walkPath?: Array<[number, number]>;
@@ -266,6 +298,9 @@ export default function MapRouteMap({
   bottomSheetHeight?: number;
   /** False while welcome sheet is open — stamp popups wait until Comenzar recorrido. */
   showStampPopups?: boolean;
+  /** After locate: keep the nearest hito selected but fly to the user. */
+  lockCameraToUser?: boolean;
+  recenterNonce?: number;
 }) {
   const polyline = useMemo(() => {
     if (walkPath && walkPath.length >= 2) return walkPath;
@@ -309,13 +344,18 @@ export default function MapRouteMap({
         <FitRouteBounds points={points} highlightedId={highlightedId} />
         <FocusHighlightedPoint
           points={points}
-          highlightedId={showStampPopups ? highlightedId : null}
+          highlightedId={lockCameraToUser ? null : showStampPopups ? highlightedId : null}
+          bottomSheetHeight={bottomSheetHeight}
+        />
+        <RecenterOnUser
+          userLocation={userLocation}
+          nonce={recenterNonce}
           bottomSheetHeight={bottomSheetHeight}
         />
         <FollowUserLocation
           userLocation={userLocation ?? null}
           bottomSheetHeight={bottomSheetHeight}
-          paused={Boolean(showStampPopups && highlightedId)}
+          paused={lockCameraToUser || Boolean(showStampPopups && highlightedId)}
         />
         <Polyline
           positions={polyline}

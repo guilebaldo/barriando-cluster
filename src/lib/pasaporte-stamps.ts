@@ -157,3 +157,41 @@ export async function countUserStamps(userId: string): Promise<number> {
     where: { userId, status: STAMP_STATUS_VALIDATED },
   });
 }
+
+function leaderFirstName(nombre: string | null, email: string | null): string {
+  const raw =
+    nombre?.trim() ||
+    email?.split("@")[0]?.replace(/[._-]+/g, " ").trim() ||
+    "Viajero";
+  const first = raw.split(/\s+/).find(Boolean) ?? "Viajero";
+  return first.toLocaleUpperCase("es-MX");
+}
+
+/** Primeros lugares del pasaporte por negocios distintos sellados. */
+export async function loadPassportLeaderNames(limit = 3): Promise<string[]> {
+  const groups = await prisma.stamp.groupBy({
+    by: ["userId", "restaurantId"],
+    where: { status: STAMP_STATUS_VALIDATED },
+  });
+  if (groups.length === 0) return [];
+
+  const uniqueByUser = new Map<string, number>();
+  for (const row of groups) {
+    uniqueByUser.set(row.userId, (uniqueByUser.get(row.userId) ?? 0) + 1);
+  }
+
+  const ranked = [...uniqueByUser.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, Math.max(1, limit));
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: ranked.map(([id]) => id) } },
+    select: { id: true, nombre: true, email: true },
+  });
+  const byId = new Map(users.map((u) => [u.id, u]));
+
+  return ranked.map(([id]) => {
+    const user = byId.get(id);
+    return leaderFirstName(user?.nombre ?? null, user?.email ?? null);
+  });
+}

@@ -15,6 +15,7 @@ import QrScanModal from "../components/QrScanModal";
 import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
 import PasaporteBookMobile from "./PasaporteBookMobile";
 import SellarClient from "./sellar/SellarClient";
+import PassportLeaderLine from "./PassportLeaderLine";
 import PassportNoticeToast, { type PassportNotice } from "./PassportNoticeToast";
 
 type RestaurantCard = {
@@ -53,6 +54,8 @@ interface PasaporteClientProps {
   tierId: "turista" | "poblano";
   isPoblanoComplete: boolean;
   progress: number;
+  /** Primeros lugares del llenado de sellos (solo nombres). */
+  leaderNames?: string[];
   /** Logueado + QR: confirmar sello aquí (sin navegar a /sellar). */
   pendingConfirm?: PendingConfirm | null;
   pendingInvalid?: boolean;
@@ -448,7 +451,7 @@ function PassportProgressTrack({
 
   return (
     <div
-      className="mt-5 flex w-full items-center gap-1 sm:gap-1.5 font-passport-mrz text-[10px] sm:text-xs font-bold tracking-[0.08em] sm:tracking-[0.12em] select-none"
+      className="flex w-full items-center gap-1 sm:gap-1.5 font-passport-mrz text-[10px] sm:text-xs font-bold tracking-[0.08em] sm:tracking-[0.12em] select-none"
       role="progressbar"
       aria-valuenow={animatedProgress}
       aria-valuemin={0}
@@ -509,6 +512,7 @@ function PasaporteInner({
   tierId,
   isPoblanoComplete,
   progress,
+  leaderNames = [],
   pendingConfirm = null,
   pendingInvalid = false,
 }: PasaporteClientProps) {
@@ -815,7 +819,11 @@ function PasaporteInner({
               </div>
             </div>
 
-            <div ref={previewProgressRef}>
+            <div ref={previewProgressRef} className="mt-5 space-y-1.5">
+              <PassportLeaderLine
+                names={leaderNames}
+                className="font-passport-mrz text-[10px] sm:text-xs font-bold tracking-[0.08em] sm:tracking-[0.12em] text-[#27366D] uppercase truncate"
+              />
               <PassportProgressTrack animatedProgress={displayStats.progress} tierId={displayTierId} />
             </div>
           </div>
@@ -991,6 +999,7 @@ function PasaporteInner({
             progress={progress}
             stampFlashId={stampFlashId}
             alreadyOnPassportRoster={alreadyOnPassportRoster}
+            leaderNames={leaderNames}
           />
         </div>
         <div
