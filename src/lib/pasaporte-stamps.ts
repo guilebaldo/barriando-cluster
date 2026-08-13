@@ -168,7 +168,7 @@ function leaderFirstName(nombre: string | null, email: string | null): string {
 }
 
 /** Primeros lugares del pasaporte por negocios distintos sellados. */
-export async function loadPassportLeaderNames(limit = 3): Promise<string[]> {
+export async function loadPassportLeaderNames(limit = 10): Promise<string[]> {
   const groups = await prisma.stamp.groupBy({
     by: ["userId", "restaurantId"],
     where: { status: STAMP_STATUS_VALIDATED },

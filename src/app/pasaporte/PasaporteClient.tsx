@@ -820,10 +820,7 @@ function PasaporteInner({
             </div>
 
             <div ref={previewProgressRef} className="mt-5 space-y-1.5">
-              <PassportLeaderLine
-                names={leaderNames}
-                className="font-passport-mrz text-[10px] sm:text-xs font-bold tracking-[0.08em] sm:tracking-[0.12em] text-[#27366D] uppercase truncate"
-              />
+              <PassportLeaderLine names={leaderNames} className="text-[11px] sm:text-sm" />
               <PassportProgressTrack animatedProgress={displayStats.progress} tierId={displayTierId} />
             </div>
           </div>

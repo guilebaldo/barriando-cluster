@@ -341,7 +341,7 @@ export default function PasaporteBookMobile({
   const renderCover = () => (
     <section className="relative isolate h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden">
       <PaperSecurityPattern />
-      <div className="relative z-10 h-1/2 min-h-0 flex flex-col border-b border-[#d9cdb3]/80 pb-2">
+      <div className="relative z-10 h-1/2 min-h-0 flex flex-col border-b border-[#d9cdb3]/80 pb-2 overflow-y-auto">
         <div className="flex items-start justify-between gap-3 shrink-0">
           <div>
             <p className="text-[9px] font-passport-mrz tracking-[0.35em] text-stone-500 uppercase">
@@ -423,10 +423,7 @@ export default function PasaporteBookMobile({
         </div>
 
         <div className="shrink-0 mt-auto pt-1 space-y-1">
-          <PassportLeaderLine
-            names={leaderNames}
-            className="font-passport-mrz text-[9px] font-bold tracking-[0.06em] text-[#27366D] uppercase truncate"
-          />
+          <PassportLeaderLine names={leaderNames} className="text-[10px]" />
           <PassportProgressTrack animatedProgress={progress} tierId={tierId} />
         </div>
       </div>

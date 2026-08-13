@@ -50,7 +50,7 @@ export default async function PasaportePage({
   }
 
   const participating = await getParticipatingRestaurantsAsync();
-  const leaderNamesPromise = loadPassportLeaderNames(3);
+  const leaderNamesPromise = loadPassportLeaderNames(10);
 
   // Guest stamp demo: Mediana + Gran Empresa AyB, scattered across the grid.
   const featuredPreviewStampIds = getFeaturedPassportPreviewIds(participating);

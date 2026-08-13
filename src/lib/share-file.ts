@@ -34,9 +34,22 @@ export async function dataUrlToFile(
   filename: string,
   mimeType: string
 ): Promise<File> {
-  const res = await fetch(dataUrl);
-  const blob = await res.blob();
-  return new File([blob], filename, { type: mimeType || blob.type || "application/octet-stream" });
+  const comma = dataUrl.indexOf(",");
+  if (comma < 0) {
+    throw new Error("invalid data url");
+  }
+  const header = dataUrl.slice(0, comma);
+  const payload = dataUrl.slice(comma + 1);
+  const mime =
+    mimeType ||
+    header.match(/data:([^;,]+)/i)?.[1]?.trim() ||
+    "application/octet-stream";
+  const binary = atob(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new File([bytes], filename, { type: mime });
 }
 
 function triggerAnchorDownload(file: File): void {
