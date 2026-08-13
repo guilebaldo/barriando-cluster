@@ -302,24 +302,6 @@ export default function PanelDashboard({
   }
 
   const stripeButtonLabel = "Domiciliar con tarjeta";
-  const renewActions =
-    !autoRenewal && hasBusinessEstablished && isBusiness && commercial ? (
-      <>
-        <MembershipPaymentOptions
-          plan={plan}
-          stripeConfigured={stripeConfigured}
-          disabled={pendingValidation}
-          onStripePay={() => handleStripePay(plan)}
-          onManualConfirm={handleManualPayment}
-          paymentDetails={paymentDetails}
-          showOxxo={plan !== "TURISTA"}
-          showTransfer={plan !== "TURISTA"}
-          stripeLabel="Renovar con tarjeta"
-        />
-        {payMsg ? <p className="text-xs text-slate-600">{payMsg}</p> : null}
-        {manualMsg ? <p className="text-xs text-slate-600">{manualMsg}</p> : null}
-      </>
-    ) : null;
 
   useEffect(() => {
     if (hasBusinessEstablished) {
@@ -743,7 +725,6 @@ export default function PanelDashboard({
         <EstablishmentQrDownload
           socioId={user.socioId}
           businessName={displayName ?? socioProfile?.businessName ?? ""}
-          renew={renewActions}
         />
       ),
     },
@@ -805,12 +786,7 @@ export default function PanelDashboard({
               Renovación automática activa. Próximo cargo: <strong>{nextChargeDate}</strong>.
             </div>
           )}
-          {!autoRenewal && hasBusinessEstablished && isBusiness && commercial ? (
-            <p className="text-xs text-slate-500 font-light leading-relaxed">
-              Para renovar, usa el botón <strong className="font-semibold text-slate-700">Renovar</strong>{" "}
-              junto al QR del establecimiento.
-            </p>
-          ) : !autoRenewal ? (
+          {!autoRenewal ? (
             <MembershipPaymentOptions
               plan={plan}
               stripeConfigured={stripeConfigured}
@@ -1237,7 +1213,6 @@ export default function PanelDashboard({
               <EstablishmentQrDownload
                 socioId={user.socioId}
                 businessName={displayName ?? socioProfile.businessName}
-                renew={renewActions}
               />
             </>
           )}
@@ -1369,12 +1344,7 @@ export default function PanelDashboard({
                 </div>
               )}
 
-              {!autoRenewal && hasBusinessEstablished && isBusiness && commercial ? (
-                <p className="text-xs text-slate-500 font-light leading-relaxed mb-4">
-                  Para renovar, usa el botón <strong className="font-semibold text-slate-700">Renovar</strong>{" "}
-                  junto al QR del establecimiento.
-                </p>
-              ) : !autoRenewal ? (
+              {!autoRenewal ? (
                 <MembershipPaymentOptions
                   plan={plan}
                   stripeConfigured={stripeConfigured}

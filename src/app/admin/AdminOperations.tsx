@@ -19,6 +19,7 @@ import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminEditDrawer from "./AdminEditDrawer";
 import AdminPagination from "./AdminPagination";
 import AdminWhatsAppButton from "./AdminWhatsAppButton";
+import AdminRenewButton from "./AdminRenewButton";
 import AdminNotificationBadge from "@/app/components/AdminNotificationBadge";
 import { playCuelume } from "./useAdminCuelume";
 import { resolveProfileWhatsApp } from "@/lib/whatsapp";
@@ -720,6 +721,12 @@ export default function AdminOperations({
                       socioId={row.socioId}
                       disabled={saving}
                     />
+                    <AdminRenewButton
+                      socioId={row.socioId}
+                      businessName={row.businessName}
+                      disabled={saving}
+                      variant="labeled"
+                    />
                     <button
                       type="button"
                       disabled={saving}
@@ -856,6 +863,11 @@ export default function AdminOperations({
                             category={row.categoria}
                             plan={row.plan}
                             socioId={row.socioId}
+                            disabled={saving}
+                          />
+                          <AdminRenewButton
+                            socioId={row.socioId}
+                            businessName={row.businessName}
                             disabled={saving}
                           />
                         </div>

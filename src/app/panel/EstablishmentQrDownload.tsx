@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Download, FileDown, QrCode, RefreshCw, Share2 } from "lucide-react";
+import { Download, FileDown, QrCode, Share2 } from "lucide-react";
 import { listaSocios } from "@/app/data/socios";
 import { buildSellarPath, restaurantSlug } from "@/lib/pasaporte";
 import { buildPassportTableDisplayPdfBlob } from "@/lib/passport-table-display-pdf";
@@ -15,18 +15,15 @@ import {
 type Props = {
   socioId: number | null;
   businessName: string;
-  /** Pago de renovación; se muestra junto a descargar / compartir, no en editar. */
-  renew?: ReactNode;
 };
 
-export default function EstablishmentQrDownload({ socioId, businessName, renew }: Props) {
+export default function EstablishmentQrDownload({ socioId, businessName }: Props) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pngLoading, setPngLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [shareCapable, setShareCapable] = useState(false);
-  const [renewOpen, setRenewOpen] = useState(false);
 
   const catalog = socioId != null ? listaSocios.find((s) => s.id === socioId) ?? null : null;
   const nameForSlug = catalog?.name?.trim() || businessName.trim();
@@ -142,33 +139,10 @@ export default function EstablishmentQrDownload({ socioId, businessName, renew }
       </p>
 
       {!slug ? (
-        <div className="space-y-4">
-          <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
-            Indica el nombre de tu negocio (o vincula un socio del catálogo) para generar el QR de
-            sello del Pasaporte. También puedes pedírselo al administrador en /admin.
-          </p>
-          {renew ? (
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => setRenewOpen((open) => !open)}
-                aria-expanded={renewOpen}
-                className="inline-flex items-center justify-center gap-2 border border-[#27366D] text-[#27366D] hover:bg-slate-50 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition self-start"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Renovar
-              </button>
-              {renewOpen ? (
-                <div className="pt-3 border-t border-slate-100 space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#27366D]">
-                    Renovar membresía
-                  </p>
-                  {renew}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
+          Indica el nombre de tu negocio (o vincula un socio del catálogo) para generar el QR de
+          sello del Pasaporte. También puedes pedírselo al administrador en /admin.
+        </p>
       ) : (
         <div className="flex flex-col sm:flex-row items-start gap-5">
           <div className="w-40 h-40 bg-white border border-slate-200 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
@@ -201,26 +175,7 @@ export default function EstablishmentQrDownload({ socioId, businessName, renew }
                 {shareCapable ? <Share2 className="w-4 h-4" /> : <FileDown className="w-4 h-4" />}
                 {pdfLabel}
               </button>
-              {renew ? (
-                <button
-                  type="button"
-                  onClick={() => setRenewOpen((open) => !open)}
-                  aria-expanded={renewOpen}
-                  className="inline-flex items-center justify-center gap-2 border border-[#27366D] text-[#27366D] hover:bg-slate-50 text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Renovar
-                </button>
-              ) : null}
             </div>
-            {renew && renewOpen ? (
-              <div className="pt-3 border-t border-slate-100 space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#27366D]">
-                  Renovar membresía
-                </p>
-                {renew}
-              </div>
-            ) : null}
             <p className="text-[10px] text-slate-500 font-light leading-relaxed">
               El PDF trae <strong>2 displays</strong> (4 QR: frente cream + dorso navy). Corta por la
               vertical y dobla por la horizontal (el doblez es el pico). En el pliego la cara de arriba

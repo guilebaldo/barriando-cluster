@@ -26,6 +26,8 @@ interface SocioProfileFormProps {
   onDelete?: () => void;
   deleteDisabled?: boolean;
   deleteLabel?: string;
+  /** Admin: guardar progreso aunque falten campos del alta completa. */
+  allowPartial?: boolean;
 }
 
 function profilesEqual(a: SocioProfileFormInitial, b: SocioProfileFormInitial): boolean {
@@ -65,6 +67,7 @@ export default function SocioProfileForm({
   onDelete,
   deleteDisabled = false,
   deleteLabel = "Eliminar",
+  allowPartial = false,
 }: SocioProfileFormProps) {
   const baseline = useStableProfile(initial, email);
   const [committed, setCommitted] = useState<SocioProfileFormInitial>(baseline);
@@ -93,13 +96,13 @@ export default function SocioProfileForm({
       setMsg("Debes aceptar el aviso de privacidad.");
       return;
     }
-    if (section !== "contact" && section !== "billing") {
+    if (!allowPartial && section !== "contact" && section !== "billing") {
       if (form.latitude == null || form.longitude == null) {
         setMsg("Confirma la ubicación en el mapa.");
         return;
       }
     }
-    if (section !== "contact" && section !== "business") {
+    if (!allowPartial && section !== "contact" && section !== "business") {
       if (!form.billingSameAddress) {
         const missingBilling =
           !form.billingStreet.trim() ||
@@ -146,7 +149,7 @@ export default function SocioProfileForm({
   }
 
   const formBody = (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} noValidate={allowPartial} className="space-y-6">
       <BusinessProfileFields
         form={form}
         set={set}
@@ -155,6 +158,7 @@ export default function SocioProfileForm({
         requirePrivacy={requirePrivacy}
         hideBusinessName={hideBusinessName}
         section={section}
+        allowPartial={allowPartial}
       />
 
       <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100">
@@ -182,7 +186,11 @@ export default function SocioProfileForm({
         ) : null}
       </div>
       <p className="text-[10px] text-slate-400">
-        {requireFiscal ? "* Campos obligatorios" : "Sin cuenta: solo nombre y web se persisten en roster"}
+        {allowPartial
+          ? "Puedes guardar el progreso aunque falten datos. El socio sí necesita la ficha completa en su panel."
+          : requireFiscal
+            ? "* Campos obligatorios"
+            : "Sin cuenta: solo nombre y web se persisten en roster"}
       </p>
     </form>
   );

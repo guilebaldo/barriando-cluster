@@ -38,6 +38,8 @@ type Props = {
   hideBusinessName?: boolean;
   /** Si se pasa, solo se muestra ese bloque (el resto sigue en el estado del form). */
   section?: "business" | "contact" | "billing";
+  /** Admin: no exigir HTML required ni asteriscos. */
+  allowPartial?: boolean;
 };
 
 function includeSection(
@@ -55,7 +57,10 @@ export default function BusinessProfileFields({
   requirePrivacy = false,
   hideBusinessName = false,
   section,
+  allowPartial = false,
 }: Props) {
+  const requireCore = !allowPartial;
+  const requireBilling = requireFiscal && !allowPartial;
   const categoryOptions = useMemo(
     () => categorySelectOptions(form.category),
     [form.category]
@@ -70,9 +75,9 @@ export default function BusinessProfileFields({
         </h3>
         <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={`${formFieldLabelClass}${hideBusinessName ? " sm:col-span-2" : ""}`}>
-            <span className={formFieldLegendClass}>Giro / categoría *</span>
+            <span className={formFieldLegendClass}>Giro / categoría{requireCore ? " *" : ""}</span>
             <select
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.category}
               onChange={(e) => set("category", e.target.value)}
@@ -88,9 +93,9 @@ export default function BusinessProfileFields({
           </label>
           {!hideBusinessName ? (
             <label className={formFieldLabelClass}>
-              <span className={formFieldLegendClass}>Nombre comercial *</span>
+              <span className={formFieldLegendClass}>Nombre comercial{requireCore ? " *" : ""}</span>
               <input
-                required
+                required={requireCore}
                 disabled={disabled}
                 value={form.businessName}
                 onChange={(e) => set("businessName", e.target.value)}
@@ -103,9 +108,9 @@ export default function BusinessProfileFields({
 
         <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Calle *</span>
+            <span className={formFieldLegendClass}>Calle{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.street}
               onChange={(e) => set("street", e.target.value)}
@@ -113,9 +118,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Número *</span>
+            <span className={formFieldLegendClass}>Número{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.streetNumber}
               onChange={(e) => set("streetNumber", e.target.value)}
@@ -123,9 +128,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Colonia *</span>
+            <span className={formFieldLegendClass}>Colonia{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.colonia}
               onChange={(e) => set("colonia", e.target.value)}
@@ -133,9 +138,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>C.P. *</span>
+            <span className={formFieldLegendClass}>C.P.{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.codigoPostal}
               onChange={(e) => set("codigoPostal", e.target.value)}
@@ -144,9 +149,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Municipio *</span>
+            <span className={formFieldLegendClass}>Municipio{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.municipio}
               onChange={(e) => set("municipio", e.target.value)}
@@ -154,9 +159,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Estado *</span>
+            <span className={formFieldLegendClass}>Estado{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.estado}
               onChange={(e) => set("estado", e.target.value)}
@@ -164,9 +169,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={`${formFieldLabelClass} sm:col-span-2`}>
-            <span className={formFieldLegendClass}>País *</span>
+            <span className={formFieldLegendClass}>País{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.pais}
               onChange={(e) => set("pais", e.target.value)}
@@ -176,11 +181,14 @@ export default function BusinessProfileFields({
         </div>
 
         <div>
-          <p className={`${formFieldLegendClass} mb-2`}>Ubicación en el mapa *</p>
+          <p className={`${formFieldLegendClass} mb-2`}>
+            Ubicación en el mapa{requireCore ? " *" : ""}
+          </p>
           <LeafletLocationPicker
             latitude={form.latitude}
             longitude={form.longitude}
             disabled={disabled}
+            autoGeolocate={!allowPartial}
             onChange={(lat, lng) => {
               set("latitude", lat);
               set("longitude", lng);
@@ -206,9 +214,9 @@ export default function BusinessProfileFields({
 
         <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Teléfono del negocio *</span>
+            <span className={formFieldLegendClass}>Teléfono del negocio{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.phone}
               onChange={(e) => set("phone", e.target.value)}
@@ -239,9 +247,9 @@ export default function BusinessProfileFields({
         </h3>
         <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Nombre *</span>
+            <span className={formFieldLegendClass}>Nombre{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.contactFirstName}
               onChange={(e) => set("contactFirstName", e.target.value)}
@@ -250,9 +258,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Apellido paterno *</span>
+            <span className={formFieldLegendClass}>Apellido paterno{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.contactLastNamePaternal}
               onChange={(e) => set("contactLastNamePaternal", e.target.value)}
@@ -270,9 +278,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Rol en el negocio *</span>
+            <span className={formFieldLegendClass}>Rol en el negocio{requireCore ? " *" : ""}</span>
             <select
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.contactRole}
               onChange={(e) => set("contactRole", e.target.value)}
@@ -287,9 +295,9 @@ export default function BusinessProfileFields({
             </select>
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Fecha de nacimiento *</span>
+            <span className={formFieldLegendClass}>Fecha de nacimiento{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               type="date"
               disabled={disabled}
               value={form.contactBirthDate}
@@ -298,9 +306,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>WhatsApp *</span>
+            <span className={formFieldLegendClass}>WhatsApp{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               disabled={disabled}
               value={form.contactWhatsapp}
               onChange={(e) => set("contactWhatsapp", e.target.value)}
@@ -309,9 +317,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={`${formFieldLabelClass} sm:col-span-2`}>
-            <span className={formFieldLegendClass}>Email *</span>
+            <span className={formFieldLegendClass}>Email{requireCore ? " *" : ""}</span>
             <input
-              required
+              required={requireCore}
               type="email"
               disabled={disabled}
               value={form.contactEmail}
@@ -332,10 +340,10 @@ export default function BusinessProfileFields({
         <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={`${formFieldLabelClass} sm:col-span-2`}>
             <span className={formFieldLegendClass}>
-              Razón social{requireFiscal ? " *" : ""}
+              Razón social{requireBilling ? " *" : ""}
             </span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.razonSocial}
               onChange={(e) => set("razonSocial", e.target.value)}
@@ -343,9 +351,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>RFC{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>RFC{requireBilling ? " *" : ""}</span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.rfc}
               onChange={(e) => set("rfc", e.target.value.toUpperCase())}
@@ -355,10 +363,10 @@ export default function BusinessProfileFields({
           </label>
           <label className={formFieldLabelClass}>
             <span className={formFieldLegendClass}>
-              Tipo de persona{requireFiscal ? " *" : ""}
+              Tipo de persona{requireBilling ? " *" : ""}
             </span>
             <select
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.personaTipo}
               onChange={(e) => set("personaTipo", e.target.value)}
@@ -403,9 +411,9 @@ export default function BusinessProfileFields({
         {!form.billingSameAddress ? (
         <div className="grid sm:grid-cols-2 gap-3 min-w-0">
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Calle{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>Calle{requireBilling ? " *" : ""}</span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.billingStreet}
               onChange={(e) => set("billingStreet", e.target.value)}
@@ -413,9 +421,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Número{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>Número{requireBilling ? " *" : ""}</span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.billingStreetNumber}
               onChange={(e) => set("billingStreetNumber", e.target.value)}
@@ -423,9 +431,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Colonia{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>Colonia{requireBilling ? " *" : ""}</span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.billingColonia}
               onChange={(e) => set("billingColonia", e.target.value)}
@@ -433,9 +441,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>C.P.{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>C.P.{requireBilling ? " *" : ""}</span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.billingCodigoPostal}
               onChange={(e) => set("billingCodigoPostal", e.target.value)}
@@ -444,9 +452,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Municipio{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>Municipio{requireBilling ? " *" : ""}</span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.billingMunicipio}
               onChange={(e) => set("billingMunicipio", e.target.value)}
@@ -454,9 +462,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Estado{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>Estado{requireBilling ? " *" : ""}</span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.billingEstado}
               onChange={(e) => set("billingEstado", e.target.value)}
@@ -464,9 +472,9 @@ export default function BusinessProfileFields({
             />
           </label>
           <label className={`${formFieldLabelClass} sm:col-span-2`}>
-            <span className={formFieldLegendClass}>País{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>País{requireBilling ? " *" : ""}</span>
             <input
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.billingPais}
               onChange={(e) => set("billingPais", e.target.value)}
@@ -478,9 +486,9 @@ export default function BusinessProfileFields({
 
         <div className="grid gap-3 min-w-0">
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Uso de CFDI{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>Uso de CFDI{requireBilling ? " *" : ""}</span>
             <select
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.usoCfdi}
               onChange={(e) => set("usoCfdi", e.target.value)}
@@ -495,9 +503,9 @@ export default function BusinessProfileFields({
             </select>
           </label>
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Régimen fiscal{requireFiscal ? " *" : ""}</span>
+            <span className={formFieldLegendClass}>Régimen fiscal{requireBilling ? " *" : ""}</span>
             <select
-              required={requireFiscal}
+              required={requireBilling}
               disabled={disabled}
               value={form.regimenFiscal}
               onChange={(e) => set("regimenFiscal", e.target.value)}
@@ -528,9 +536,9 @@ export default function BusinessProfileFields({
         </label>
         {!form.billingSameWhatsapp ? (
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>WhatsApp fiscal *</span>
+            <span className={formFieldLegendClass}>WhatsApp fiscal{requireBilling ? " *" : ""}</span>
             <input
-              required
+              required={requireBilling}
               disabled={disabled}
               value={form.billingWhatsapp}
               onChange={(e) => set("billingWhatsapp", e.target.value)}
@@ -555,9 +563,9 @@ export default function BusinessProfileFields({
         </label>
         {!form.billingSameEmail ? (
           <label className={formFieldLabelClass}>
-            <span className={formFieldLegendClass}>Email fiscal *</span>
+            <span className={formFieldLegendClass}>Email fiscal{requireBilling ? " *" : ""}</span>
             <input
-              required
+              required={requireBilling}
               type="email"
               disabled={disabled}
               value={form.billingEmail}

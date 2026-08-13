@@ -41,6 +41,10 @@ type Props = {
   onChange: (lat: number, lng: number) => void;
   disabled?: boolean;
   className?: string;
+  /** Si es false, no pide GPS ni fija coords al montar (útil en admin / hitos). */
+  autoGeolocate?: boolean;
+  showCoordinates?: boolean;
+  hint?: string;
 };
 
 export default function LeafletLocationPicker({
@@ -49,6 +53,9 @@ export default function LeafletLocationPicker({
   onChange,
   disabled = false,
   className = "",
+  autoGeolocate = true,
+  showCoordinates = true,
+  hint,
 }: Props) {
   const [ready, setReady] = useState(false);
   const [gpsError, setGpsError] = useState("");
@@ -63,6 +70,10 @@ export default function LeafletLocationPicker({
   useEffect(() => {
     if (latitude != null && longitude != null) {
       setCenter([latitude, longitude]);
+      return;
+    }
+    if (!autoGeolocate) {
+      setCenter(PUEBLA_CENTER);
       return;
     }
     if (!navigator.geolocation) {
@@ -134,8 +145,10 @@ export default function LeafletLocationPicker({
         </MapContainer>
       </div>
       <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">
-        Toca el mapa o arrastra el pin para confirmar la ubicación. Lat {markerPos[0].toFixed(5)}, Lng{" "}
-        {markerPos[1].toFixed(5)}.
+        {hint ??
+          (showCoordinates
+            ? `Toca el mapa o arrastra el pin para confirmar la ubicación. Lat ${markerPos[0].toFixed(5)}, Lng ${markerPos[1].toFixed(5)}.`
+            : "Toca el mapa o arrastra el pin para colocar el marcador.")}
       </p>
       {gpsError ? <p className="mt-1 text-[11px] text-amber-700">{gpsError}</p> : null}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   createMapMilestone,
@@ -13,15 +14,40 @@ import {
 import { Pencil, Plus, Trash2, ToggleLeft, ToggleRight, Upload } from "lucide-react";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 
+const LeafletLocationPicker = dynamic(() => import("@/app/panel/LeafletLocationPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-56 rounded-xl border border-slate-200 bg-slate-100 animate-pulse sm:col-span-2" />
+  ),
+});
+
+const PUEBLA_LAT = 19.043;
+const PUEBLA_LNG = -98.198;
+
+const SAVE_IDLE =
+  "inline-flex items-center bg-slate-100 text-slate-400 font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg cursor-not-allowed";
+const SAVE_READY =
+  "inline-flex items-center bg-[#27366D] hover:bg-[#1e2b58] text-white font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg";
+
+function googleMapsUrl(lat: number, lng: number) {
+  return `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+}
+
 const emptyForm = {
   name: "",
   description: "",
-  mapsUrl: "",
-  latitude: "",
-  longitude: "",
+  mapsUrl: googleMapsUrl(PUEBLA_LAT, PUEBLA_LNG),
+  latitude: String(PUEBLA_LAT),
+  longitude: String(PUEBLA_LNG),
   zone: "",
   businessId: "",
 };
+
+type HitoForm = typeof emptyForm;
+
+function formsEqual(a: HitoForm, b: HitoForm): boolean {
+  return (Object.keys(emptyForm) as (keyof HitoForm)[]).every((k) => a[k] === b[k]);
+}
 
 export default function AdminHitosSection({ milestones }: { milestones: MapMilestoneRow[] }) {
   const router = useRouter();
@@ -29,16 +55,17 @@ export default function AdminHitosSection({ milestones }: { milestones: MapMiles
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState<HitoForm>(emptyForm);
+  const [baseline, setBaseline] = useState<HitoForm>(emptyForm);
 
   function resetForm() {
     setForm(emptyForm);
+    setBaseline(emptyForm);
     setEditingId(null);
   }
 
   function openEdit(row: MapMilestoneRow) {
-    setEditingId(row.id);
-    setForm({
+    const next: HitoForm = {
       name: row.name,
       description: row.description ?? "",
       mapsUrl: row.mapsUrl,
@@ -46,6 +73,21 @@ export default function AdminHitosSection({ milestones }: { milestones: MapMiles
       longitude: String(row.longitude),
       zone: row.zone != null ? String(row.zone) : "",
       businessId: row.businessId != null ? String(row.businessId) : "",
+    };
+    setEditingId(row.id);
+    setForm(next);
+    setBaseline(next);
+  }
+
+  function handlePinChange(lat: number, lng: number) {
+    setForm((f) => {
+      const prevLat = Number(f.latitude);
+      const prevLng = Number(f.longitude);
+      const prevAuto =
+        Number.isFinite(prevLat) && Number.isFinite(prevLng) ? googleMapsUrl(prevLat, prevLng) : "";
+      const mapsUrl =
+        !f.mapsUrl.trim() || f.mapsUrl.trim() === prevAuto ? googleMapsUrl(lat, lng) : f.mapsUrl;
+      return { ...f, latitude: String(lat), longitude: String(lng), mapsUrl };
     });
   }
 
@@ -65,7 +107,15 @@ export default function AdminHitosSection({ milestones }: { milestones: MapMiles
     };
   }
 
+  const isDirty = useMemo(() => !formsEqual(form, baseline), [form, baseline]);
+  const lat = Number(form.latitude);
+  const lng = Number(form.longitude);
+  const coordsOk = Number.isFinite(lat) && Number.isFinite(lng);
+  const canSave =
+    isDirty && !busy && form.name.trim().length >= 2 && coordsOk && form.mapsUrl.trim().length > 0;
+
   async function handleSave() {
+    if (!canSave) return;
     setMsg("");
     setBusy(true);
     const payload = payloadFromForm();
@@ -168,27 +218,21 @@ export default function AdminHitosSection({ milestones }: { milestones: MapMiles
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
+          <div className="sm:col-span-2">
+            <LeafletLocationPicker
+              latitude={coordsOk ? lat : PUEBLA_LAT}
+              longitude={coordsOk ? lng : PUEBLA_LNG}
+              onChange={handlePinChange}
+              autoGeolocate={false}
+              showCoordinates={false}
+              hint="Toca el mapa o arrastra el pin para colocar el hito."
+            />
+          </div>
           <input
             className="border border-slate-200 rounded-lg p-2 sm:col-span-2"
-            placeholder="URL Google Maps"
+            placeholder="URL Google Maps (se llena al mover el pin)"
             value={form.mapsUrl}
             onChange={(e) => setForm((f) => ({ ...f, mapsUrl: e.target.value }))}
-          />
-          <input
-            className="border border-slate-200 rounded-lg p-2"
-            placeholder="Latitud"
-            type="number"
-            step="any"
-            value={form.latitude}
-            onChange={(e) => setForm((f) => ({ ...f, latitude: e.target.value }))}
-          />
-          <input
-            className="border border-slate-200 rounded-lg p-2"
-            placeholder="Longitud"
-            type="number"
-            step="any"
-            value={form.longitude}
-            onChange={(e) => setForm((f) => ({ ...f, longitude: e.target.value }))}
           />
           <input
             className="border border-slate-200 rounded-lg p-2"
@@ -205,14 +249,14 @@ export default function AdminHitosSection({ milestones }: { milestones: MapMiles
             onChange={(e) => setForm((f) => ({ ...f, businessId: e.target.value }))}
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            disabled={busy}
+            disabled={!canSave}
             onClick={() => void handleSave()}
-            className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg disabled:opacity-40"
+            className={canSave ? SAVE_READY : SAVE_IDLE}
           >
-            {editingId ? "Guardar cambios" : "Crear hito"}
+            {busy ? "Guardando..." : editingId ? "Guardar cambios" : "Crear hito"}
           </button>
           {editingId ? (
             <button
@@ -222,6 +266,9 @@ export default function AdminHitosSection({ milestones }: { milestones: MapMiles
             >
               Cancelar
             </button>
+          ) : null}
+          {isDirty && !busy ? (
+            <p className="text-[10px] text-amber-700">Tienes cambios sin guardar</p>
           ) : null}
         </div>
       </div>

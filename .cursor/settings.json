@@ -5,6 +5,9 @@
     },
     "vercel": {
       "enabled": true
+    },
+    "prisma": {
+      "enabled": true
     }
   }
 }

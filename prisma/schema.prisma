@@ -100,6 +100,8 @@ model Subscription {
   paymentMethod        String?
   manualPaymentNote    String?
   currentPeriodEnd     DateTime?
+  /** Periodo para el que ya se envió el recordatorio (5 días antes). Evita reenvíos diarios. */
+  renewalReminderPeriodEnd DateTime?
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 }

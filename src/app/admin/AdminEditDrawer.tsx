@@ -345,6 +345,7 @@ export default function AdminEditDrawer({
               email={linkedUser?.email ?? "sin-cuenta@barriando.local"}
               embedded
               requireFiscal={Boolean(linkedUser)}
+              allowPartial
               onSave={handleSaveProfile}
               onDelete={() => setConfirmDeleteOpen(true)}
               deleteDisabled={saving}
