@@ -38,6 +38,16 @@ export async function listPublishedAccessEvents(): Promise<AccessEventCard[]> {
   return rows.map(toEventCard);
 }
 
+export async function getPublishedAccessEventById(
+  eventId: string
+): Promise<AccessEventCard | null> {
+  const row = await prisma.accessEvent.findFirst({
+    where: { id: eventId, published: true },
+    include: { _count: { select: { tickets: true } } },
+  });
+  return row ? toEventCard(row) : null;
+}
+
 export async function listUserAccessTickets(userId: string): Promise<AccessTicketCard[]> {
   const rows = await prisma.accessTicket.findMany({
     where: { userId },

@@ -17,6 +17,7 @@ import {
   type AccessEventCard,
 } from "@/lib/access-events";
 import { startAccessTicketCheckout } from "@/app/pases/actions";
+import ShareAccessEventButton from "@/app/pases/ShareAccessEventButton";
 
 type CatalogView = "lista" | "calendario";
 
@@ -65,7 +66,9 @@ export default function PasesMarketplace({
 
   async function buy(eventId: string) {
     if (!signedIn) {
-      window.location.assign(`/login?callbackUrl=${encodeURIComponent("/pases")}`);
+      window.location.assign(
+        `/login?callbackUrl=${encodeURIComponent(`/pases/${eventId}`)}`
+      );
       return;
     }
     setBusy(true);
@@ -204,36 +207,45 @@ function EventRow({
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(event.id)}
-      className="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm hover:border-amber-300/80 transition"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#27366D] leading-snug truncate">{event.title}</p>
-          <p className="mt-1 text-[11px] text-slate-500 truncate">
-            {formatAccessWhen(event.startsAt, event.endsAt)}
-          </p>
-          <p className="mt-0.5 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
-            <MapPin className="w-3 h-3 shrink-0" />
-            {event.venue}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p className="text-xs font-bold text-amber-700">{formatAccessPriceMxn(event.priceCents)}</p>
-          {ended ? (
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Finalizado
-            </p>
-          ) : soldOut ? (
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Agotado
-            </p>
-          ) : null}
-        </div>
+    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm hover:border-amber-300/80 transition">
+      <div className="flex items-start gap-2">
+        <button
+          type="button"
+          onClick={() => onOpen(event.id)}
+          className="min-w-0 flex-1 text-left"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#27366D] leading-snug truncate">
+                {event.title}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-500 truncate">
+                {formatAccessWhen(event.startsAt, event.endsAt)}
+              </p>
+              <p className="mt-0.5 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
+                <MapPin className="w-3 h-3 shrink-0" />
+                {event.venue}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-xs font-bold text-amber-700">
+                {formatAccessPriceMxn(event.priceCents)}
+              </p>
+              {ended ? (
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Finalizado
+                </p>
+              ) : soldOut ? (
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Agotado
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </button>
+        <ShareAccessEventButton event={event} compact className="shrink-0 -mr-1 -mt-0.5" />
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -262,14 +274,34 @@ function CalendarView({
     return map;
   }, [events]);
 
-  const monthLabel = useMemo(
-    () =>
-      new Date(cursor.year, cursor.month, 1).toLocaleDateString("es-MX", {
+  const monthOptions = useMemo(() => {
+    const now = new Date();
+    let min = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    let max = new Date(now.getFullYear(), now.getMonth() + 10, 1);
+    const cursorMonth = new Date(cursor.year, cursor.month, 1);
+    if (cursorMonth < min) min = cursorMonth;
+    if (cursorMonth > max) max = cursorMonth;
+    for (const event of events) {
+      const d = new Date(event.startsAt);
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      if (start < min) min = start;
+      if (start > max) max = start;
+    }
+    const options: Array<{ value: string; label: string }> = [];
+    const walk = new Date(min.getFullYear(), min.getMonth(), 1);
+    while (walk <= max) {
+      const value = `${walk.getFullYear()}-${walk.getMonth()}`;
+      const label = walk.toLocaleDateString("es-MX", {
         month: "long",
         year: "numeric",
-      }),
-    [cursor.year, cursor.month]
-  );
+      });
+      options.push({ value, label });
+      walk.setMonth(walk.getMonth() + 1);
+    }
+    return options;
+  }, [events, cursor.year, cursor.month]);
+
+  const monthValue = `${cursor.year}-${cursor.month}`;
 
   const cells = useMemo(() => {
     const first = new Date(cursor.year, cursor.month, 1);
@@ -298,6 +330,12 @@ function CalendarView({
     });
   }
 
+  function onMonthSelect(value: string) {
+    const [y, m] = value.split("-").map(Number);
+    if (!Number.isFinite(y) || !Number.isFinite(m)) return;
+    setCursor({ year: y, month: m });
+  }
+
   if (events.length === 0) {
     return <EmptyCatalog />;
   }
@@ -314,7 +352,20 @@ function CalendarView({
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <p className="text-sm font-semibold text-[#27366D] capitalize font-sans">{monthLabel}</p>
+          <label className="min-w-0 flex-1">
+            <span className="sr-only">Mes</span>
+            <select
+              value={monthValue}
+              onChange={(e) => onMonthSelect(e.target.value)}
+              className="w-full max-w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center text-sm font-semibold capitalize text-[#27366D] font-sans focus:outline-none focus:border-[#27366D] focus:ring-2 focus:ring-[#27366D]/20"
+            >
+              {monthOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             type="button"
             onClick={() => shiftMonth(1)}
@@ -339,6 +390,7 @@ function CalendarView({
               return <span key={`empty-${i}`} className="aspect-square" />;
             }
             const count = eventsByDay.get(cell.key)?.length ?? 0;
+            const hasEvents = count > 0;
             const isSelected = selectedDay === cell.key;
             const isToday = cell.key === todayKey;
             return (
@@ -346,23 +398,32 @@ function CalendarView({
                 key={cell.key}
                 type="button"
                 onClick={() => setSelectedDay(cell.key)}
-                className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition ${
+                aria-label={
+                  hasEvents
+                    ? `${cell.day}: ${count} ${count === 1 ? "pase" : "pases"}`
+                    : String(cell.day)
+                }
+                className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition relative ${
                   isSelected
-                    ? "bg-[#27366D] text-white"
-                    : isToday
-                      ? "bg-amber-50 text-[#27366D] font-semibold"
-                      : "text-slate-700 hover:bg-slate-50"
+                    ? "bg-[#27366D] text-white shadow-sm"
+                    : hasEvents
+                      ? "bg-amber-100 text-[#27366D] font-bold ring-1 ring-amber-300/80 hover:bg-amber-200/80"
+                      : isToday
+                        ? "bg-slate-50 text-[#27366D] font-semibold ring-1 ring-slate-200"
+                        : "text-slate-700 hover:bg-slate-50"
                 }`}
               >
                 <span>{cell.day}</span>
-                {count > 0 ? (
+                {hasEvents ? (
                   <span
-                    className={`mt-0.5 h-1 w-1 rounded-full ${
-                      isSelected ? "bg-amber-300" : "bg-amber-500"
+                    className={`mt-0.5 min-w-[0.9rem] h-3.5 px-1 rounded-full text-[9px] font-bold leading-none inline-flex items-center justify-center ${
+                      isSelected ? "bg-amber-400 text-slate-950" : "bg-amber-500 text-white"
                     }`}
-                  />
+                  >
+                    {count}
+                  </span>
                 ) : (
-                  <span className="mt-0.5 h-1 w-1" />
+                  <span className="mt-0.5 h-3.5" />
                 )}
               </button>
             );
@@ -437,20 +498,23 @@ function EventDetail({
 
         {error ? <p className="mt-3 text-xs text-red-700">{error}</p> : null}
 
-        {canBuy ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onBuy}
-            className="mt-4 w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl transition"
-          >
-            {busy ? "Continuando…" : "Obtener pase"}
-          </button>
-        ) : (
-          <p className="mt-4 text-xs text-slate-500">
-            {ended ? "Este evento ya terminó." : "Ya no hay cupo."}
-          </p>
-        )}
+        <div className="mt-4 space-y-2">
+          {canBuy ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onBuy}
+              className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl transition"
+            >
+              {busy ? "Continuando…" : "Obtener pase"}
+            </button>
+          ) : (
+            <p className="text-xs text-slate-500">
+              {ended ? "Este evento ya terminó." : "Ya no hay cupo."}
+            </p>
+          )}
+          <ShareAccessEventButton event={event} />
+        </div>
       </div>
     </div>
   );

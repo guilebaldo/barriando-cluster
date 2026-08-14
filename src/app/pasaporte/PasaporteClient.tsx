@@ -9,10 +9,10 @@ import { Suspense } from "react";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
-import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
 import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
+import PaperSecurityPattern from "./PaperSecurityPattern";
 import PasaporteBookMobile from "./PasaporteBookMobile";
 import SellarClient from "./sellar/SellarClient";
 import PassportLeaderLine from "./PassportLeaderLine";
@@ -714,18 +714,7 @@ function PasaporteInner({
         )}
 
         <div className="relative isolate rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
-          <SecurityPatternBackground
-            opacity={isPreview ? 0.12 : 0.09}
-            density={isPreview ? 1.08 : 0.98}
-            className="text-stone-500"
-          />
-          <div
-            className="absolute inset-0 opacity-[0.22] pointer-events-none"
-            style={{
-              backgroundImage:
-                "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(160,120,60,0.06) 24px, rgba(160,120,60,0.06) 25px)",
-            }}
-          />
+          <PaperSecurityPattern />
 
           <div className="relative z-10">
           {/* Hoja de identificación */}

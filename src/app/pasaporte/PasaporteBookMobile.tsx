@@ -6,9 +6,9 @@ import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
-import SecurityPatternBackground from "@/components/ui/SecurityPatternBackground";
 import PassportLeaderLine from "./PassportLeaderLine";
 import PassportAdStamp, { stampPadCount } from "./PassportAdStamp";
+import PaperSecurityPattern from "./PaperSecurityPattern";
 
 type RestaurantCard = {
   id: number;
@@ -167,21 +167,6 @@ function StampCell({
         {restaurant.name}
       </p>
     </Link>
-  );
-}
-
-function PaperSecurityPattern() {
-  return (
-    <>
-      <SecurityPatternBackground opacity={0.09} density={0.98} className="text-stone-500" />
-      <div
-        className="absolute inset-0 z-0 opacity-[0.22] pointer-events-none"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(160,120,60,0.06) 24px, rgba(160,120,60,0.06) 25px)",
-        }}
-      />
-    </>
   );
 }
 

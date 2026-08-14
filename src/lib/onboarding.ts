@@ -170,8 +170,8 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
 
 /**
  * Tras autenticación (login sin callbackUrl profundo):
- * admin / socio de pago (negocio o vecino) → /barrid · turista → /map
- * (/panel se abre desde el engrane de Barrid)
+ * admin / socio de pago (negocio o vecino) → /panel · turista → /mapa
+ * (BarrID sigue en el hub mobile)
  */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
@@ -188,7 +188,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   const role = session.user.role;
 
   if (isAdminUser({ email, role })) {
-    redirect("/barrid");
+    redirect("/panel");
   }
 
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {

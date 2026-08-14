@@ -90,6 +90,7 @@ export async function createAccessEvent(
     revalidatePath("/admin");
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
+    revalidatePath(`/pases/${row.id}`);
     revalidatePath("/barrid");
     return { ok: true, id: row.id };
   } catch (error) {
@@ -147,6 +148,7 @@ export async function updateAccessEvent(
     revalidatePath("/admin");
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
+    revalidatePath(`/pases/${id}`);
     revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
@@ -172,6 +174,7 @@ export async function toggleAccessEventPublished(id: string): Promise<ActionResu
     revalidatePath("/admin");
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
+    revalidatePath(`/pases/${id}`);
     revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
@@ -197,6 +200,7 @@ export async function deleteAccessEvent(id: string): Promise<ActionResult> {
     revalidatePath("/admin");
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
+    revalidatePath(`/pases/${id}`);
     revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {

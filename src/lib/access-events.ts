@@ -60,3 +60,8 @@ export function accessEventHasEnded(startsAt: string, endsAt: string | null, now
 export function accessEventIsSoldOut(capacity: number | null, soldCount: number): boolean {
   return capacity != null && soldCount >= capacity;
 }
+
+/** Ruta pública compartible de un pase. */
+export function accessEventPublicPath(eventId: string): string {
+  return `/pases/${eventId}`;
+}

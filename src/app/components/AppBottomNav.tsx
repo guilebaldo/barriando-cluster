@@ -46,7 +46,8 @@ const TABS = [
       p === "/barrid" ||
       p.startsWith("/barrid/") ||
       p === "/pases" ||
-      p === "/pases/mios",
+      p === "/pases/mios" ||
+      (p.startsWith("/pases/") && !p.startsWith("/pases/verificar")),
   },
   {
     href: "/pasaporte",
