@@ -77,7 +77,7 @@ export default function AccessVerifyClient({
   if (phase === "error") {
     return (
       <div className="bg-white border border-red-200 rounded-xl p-6 shadow-sm space-y-3">
-        <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+        <h1 className="text-xl font-black uppercase tracking-wide text-slate-950 font-sans">
           No se pudo confirmar
         </h1>
         <p className="text-sm text-red-800">{error}</p>

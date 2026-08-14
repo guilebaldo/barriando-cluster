@@ -97,6 +97,10 @@
     font-family: var(--font-serif-monumental);
     letter-spacing: -0.02em;
   }
+
+  h1.font-sans, h2.font-sans, h3.font-sans {
+    font-family: var(--font-sans-premium);
+  }
 }
 
 /* ==========================================

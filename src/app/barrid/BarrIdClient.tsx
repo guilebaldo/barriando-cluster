@@ -12,7 +12,7 @@ import MisPasesSection from "./MisPasesSection";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import { formatPlanPriceMxn } from "@/lib/membresia";
-import type { AccessEventCard, AccessTicketCard } from "@/lib/access-events";
+import type { AccessEventCard } from "@/lib/access-events";
 
 type BarrIdClientProps = {
   user: {
@@ -36,7 +36,6 @@ type BarrIdClientProps = {
   /** Abrir ficha al montar (vuelta desde Mi cuenta). */
   initialSheetExpanded?: boolean;
   events: AccessEventCard[];
-  tickets: AccessTicketCard[];
   paseNotice?: "ok" | "cancelado" | null;
 };
 
@@ -87,7 +86,6 @@ function StatusCard({
   totalRestaurants,
   progress,
   canRedeemCoupons,
-  tickets,
 }: BarrIdClientProps) {
   return (
     <section className="bg-[#27366D] text-white rounded-2xl border border-[#1e2b58] relative px-6 sm:px-8 py-6 sm:py-8">
@@ -156,7 +154,7 @@ function StatusCard({
         ) : null}
       </dl>
 
-      <MisPasesSection tickets={tickets} />
+      <MisPasesSection />
       <MiCuentaLink />
     </section>
   );
@@ -462,7 +460,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                   </div>
                 </div>
 
-                <MisPasesSection tickets={props.tickets} />
+                <MisPasesSection compact />
 
                 <MiCuentaLink compact />
 

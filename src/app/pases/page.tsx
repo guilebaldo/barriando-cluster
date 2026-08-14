@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
@@ -25,11 +26,32 @@ export default async function PasesPage({
     <SiteShell>
       <Navbar />
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
-        <PasesMarketplace
-          events={events}
-          notice={params.pase === "cancelado" ? "cancelado" : null}
-          signedIn={Boolean(session)}
-        />
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-black uppercase tracking-wide text-slate-950 font-sans">
+              Pases
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 font-light">
+              Boletos y entradas a eventos del Centro Histórico.
+            </p>
+          </div>
+          {session ? (
+            <Link
+              href="/pases/mios"
+              className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
+            >
+              Mis pases
+            </Link>
+          ) : null}
+        </div>
+        <div className="mt-6">
+          <PasesMarketplace
+            events={events}
+            notice={params.pase === "cancelado" ? "cancelado" : null}
+            signedIn={Boolean(session)}
+            hideTitle
+          />
+        </div>
       </main>
       <Footer />
     </SiteShell>

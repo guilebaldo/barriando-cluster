@@ -103,7 +103,7 @@ export async function createAccessTicketCheckoutUrl(
           },
         },
       ],
-      success_url: `${appUrl}/barrid?ficha=1&pase=ok&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${appUrl}/pases/mios?pase=ok&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/pases?pase=cancelado`,
       metadata: {
         userId,

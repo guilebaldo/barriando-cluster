@@ -966,7 +966,7 @@ export default function PanelDashboard({
             Volver a BarrID
           </Link>
         ) : null}
-        <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+        <h1 className="text-2xl font-black uppercase tracking-wide text-slate-950 font-sans">
           {isTurista ? "Mi cuenta" : isVecino ? "Panel del vecino" : "Panel del socio"}
         </h1>
         {/* Turista/Vecino ya muestran nombre y plan en su ficha; no repetir aquí. */}

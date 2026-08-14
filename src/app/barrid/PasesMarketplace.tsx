@@ -15,10 +15,12 @@ export default function PasesMarketplace({
   events,
   notice,
   signedIn = true,
+  hideTitle = false,
 }: {
   events: AccessEventCard[];
   notice?: "ok" | "cancelado" | null;
   signedIn?: boolean;
+  hideTitle?: boolean;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -47,14 +49,18 @@ export default function PasesMarketplace({
 
   return (
     <section className="w-full h-full min-h-0 flex flex-col">
-      <div className="flex items-center gap-2 shrink-0 px-0.5">
-        <Ticket className="w-5 h-5 text-amber-500" />
-        <h2 className="text-[11px] font-bold uppercase tracking-widest text-amber-700">Pases</h2>
-      </div>
+      {hideTitle ? null : (
+        <div className="flex items-center gap-2 shrink-0 px-0.5">
+          <Ticket className="w-5 h-5 text-amber-500" />
+          <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700 font-sans">
+            Pases
+          </p>
+        </div>
+      )}
 
       {notice === "ok" ? (
         <p className="mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-          Tu pase ya está en tu BarrID. Ábrelo para mostrar el QR en la entrada.
+          Tu pase ya está listo. Ábrelo en Mis pases para mostrar el QR.
         </p>
       ) : null}
       {notice === "cancelado" ? (
@@ -177,7 +183,7 @@ function EventDetail({
 
       <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Pase</p>
-        <h3 className="mt-1 text-lg font-black font-serif-cluster uppercase tracking-wide text-[#27366D] leading-tight">
+        <h3 className="mt-1 text-lg font-black uppercase tracking-wide text-[#27366D] leading-tight font-sans">
           {event.title}
         </h3>
         <p className="mt-2 text-xs text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>

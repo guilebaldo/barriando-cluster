@@ -43,7 +43,10 @@ const TABS = [
     label: "Pases",
     icon: Ticket,
     match: (p: string) =>
-      p === "/barrid" || p.startsWith("/barrid/") || p === "/pases",
+      p === "/barrid" ||
+      p.startsWith("/barrid/") ||
+      p === "/pases" ||
+      p === "/pases/mios",
   },
   {
     href: "/pasaporte",

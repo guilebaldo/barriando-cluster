@@ -38,7 +38,7 @@ export default async function AccessVerifyPage({
         <Navbar />
         <main className="flex-1 max-w-lg mx-auto py-12 px-6 w-full">
           <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
-            <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+            <h1 className="text-xl font-black uppercase tracking-wide text-slate-950 font-sans">
               Validar pase
             </h1>
             <p className="text-sm text-slate-600">
@@ -89,7 +89,7 @@ export default async function AccessVerifyPage({
 function ErrorCard({ message }: { message: string }) {
   return (
     <div className="bg-white border border-red-200 rounded-xl p-6 shadow-sm space-y-3">
-      <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+      <h1 className="text-xl font-black uppercase tracking-wide text-slate-950 font-sans">
         No se pudo validar
       </h1>
       <p className="text-sm text-red-800">{message}</p>

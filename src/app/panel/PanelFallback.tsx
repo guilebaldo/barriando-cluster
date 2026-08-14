@@ -21,7 +21,7 @@ export default function PanelFallback({ nombre }: { nombre: string }) {
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm max-w-lg mx-auto text-center space-y-4">
-      <h1 className="text-xl font-black font-serif-cluster uppercase tracking-wide text-slate-950">
+      <h1 className="text-xl font-black uppercase tracking-wide text-slate-950 font-sans">
         Mi panel
       </h1>
       <p className="text-sm text-slate-600 font-light leading-relaxed">

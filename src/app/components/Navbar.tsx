@@ -51,7 +51,7 @@ function getNavLinks(isAuthenticated: boolean): NavLink[] {
   const pases: NavLink = {
     href: "/pases",
     label: "Pases",
-    isActive: (pathname) => pathname === "/pases",
+    isActive: (pathname) => pathname === "/pases" || pathname === "/pases/mios",
   };
   if (isAuthenticated) {
     return [

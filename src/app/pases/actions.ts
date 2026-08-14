@@ -37,7 +37,7 @@ export async function startAccessTicketCheckout(
     if (event.priceCents <= 0) {
       const result = await claimCourtesyTicket(session.id, eventId);
       if (!result.ok) return result;
-      return { ok: true, url: "/barrid?ficha=1&pase=ok" };
+      return { ok: true, url: "/pases/mios?pase=ok" };
     }
 
     return createAccessTicketCheckoutUrl(session.id, eventId);
@@ -80,6 +80,7 @@ async function claimCourtesyTicket(
       });
     });
     revalidatePath("/pases");
+    revalidatePath("/pases/mios");
     revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
