@@ -32,6 +32,7 @@ import type { MembershipPlan } from "@/generated/prisma/client";
 import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContentSection";
 import AdminOperations from "./AdminOperations";
 import AdminHitosSection from "./AdminHitosSection";
+import AdminPasesSection from "./AdminPasesSection";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 import AdminPagination from "./AdminPagination";
@@ -41,10 +42,11 @@ import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 import { computeAdminOpsStats, formatAdminTimestamp } from "@/lib/admin-ops";
+import type { AccessEventCard } from "@/lib/access-events";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
-type AdminTab = "operations" | "accounts" | "content" | "hitos";
+type AdminTab = "operations" | "accounts" | "content" | "hitos" | "pases";
 type ResolvedAction = "approved" | "rejected";
 type HealthStatus = "ok" | "pending" | "expired";
 
@@ -209,6 +211,7 @@ export default function AdminDashboard({
   catalogRows,
   membershipRows,
   milestones,
+  accessEvents,
   initialFocus,
 }: {
   users: AdminUserRow[];
@@ -217,6 +220,7 @@ export default function AdminDashboard({
   catalogRows: CatalogSocioRow[];
   membershipRows: CatalogMembershipRow[];
   milestones: MapMilestoneRow[];
+  accessEvents: AccessEventCard[];
   initialFocus?: "payments" | "linkages";
 }) {
   const router = useRouter();
@@ -540,6 +544,16 @@ export default function AdminDashboard({
         >
           Hitos ({milestones.length})
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("pases")}
+          data-cuelume-toggle=""
+          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+            tab === "pases" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          }`}
+        >
+          Pases ({accessEvents.length})
+        </button>
       </div>
 
       {tab === "content" ? (
@@ -549,6 +563,8 @@ export default function AdminDashboard({
         </div>
       ) : tab === "hitos" ? (
         <AdminHitosSection milestones={milestones} />
+      ) : tab === "pases" ? (
+        <AdminPasesSection events={accessEvents} />
       ) : tab === "operations" ? (
         <AdminOperations
           membershipRows={membershipRows}

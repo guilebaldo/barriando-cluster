@@ -7,9 +7,11 @@ import QRCode from "qrcode";
 import { BookOpen, ChevronRight, Gift, Map as MapIcon, Settings } from "lucide-react";
 import { createBenefitCredential } from "../panel/actions";
 import AddToHomeScreenModal from "./AddToHomeScreenModal";
+import PasesMarketplace from "./PasesMarketplace";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import { formatPlanPriceMxn } from "@/lib/membresia";
+import type { AccessEventCard, AccessTicketCard } from "@/lib/access-events";
 
 type BarrIdClientProps = {
   user: {
@@ -32,6 +34,9 @@ type BarrIdClientProps = {
   isFirstLoginUser?: boolean;
   /** Abrir ficha al montar (vuelta desde Mi cuenta). */
   initialSheetExpanded?: boolean;
+  events: AccessEventCard[];
+  tickets: AccessTicketCard[];
+  paseNotice?: "ok" | "cancelado" | null;
 };
 
 function formatCountdown(totalSeconds: number): string {
@@ -337,46 +342,25 @@ export default function BarrIdClient(props: BarrIdClientProps) {
     if (delta < -28) setSheetExpanded(false);
   }
 
-  const countdown =
-    expiresAtMs && !credError ? (
-      <p className="font-semibold tabular-nums text-[#27366D] text-sm" aria-live="polite">
-        Válido por {formatCountdown(secondsLeft)}
-      </p>
-    ) : loadingCred && qrDataUrl ? (
-      <p className="font-medium text-slate-500 text-sm">Actualizando…</p>
-    ) : null;
-
   return (
     <>
       <AddToHomeScreenModal userId={props.user.id} eligible={Boolean(props.isFirstLoginUser)} />
 
-      {/* —— Móvil: QR fijo + ficha azul casi fullscreen —— */}
+      {/* —— Móvil: Pases + ficha azul —— */}
       <div className="md:hidden relative h-full w-full overflow-hidden overscroll-none">
         <div
-          className={`absolute inset-0 flex flex-col items-center justify-center px-4 pointer-events-none ${
+          className={`absolute inset-0 flex flex-col px-4 pointer-events-none ${
             appShell
               ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
               : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
           }`}
         >
-          {/* Un poco más abajo en el hueco visible sobre la ficha */}
-          <div className="translate-y-5 sm:translate-y-6 pointer-events-auto">
-            {canRedeem ? (
-              <QrPanel
-                sizeClass="w-[min(72vw,20rem)] h-[min(72vw,20rem)]"
-                textSize="text-xs"
-                qrDataUrl={qrDataUrl}
-                loadingCred={loadingCred}
-                credError={credError}
-                countdown={countdown}
-                showHint
-              />
-            ) : (
-              <VecinoUpsellPanel
-                sizeClass="w-[min(72vw,20rem)] min-h-[min(72vw,20rem)]"
-                textSize="text-sm"
-              />
-            )}
+          <div className="flex-1 min-h-0 pointer-events-auto pt-2">
+            <PasesMarketplace
+              events={props.events}
+              tickets={props.tickets}
+              notice={props.paseNotice}
+            />
           </div>
         </div>
         <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
@@ -385,7 +369,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
             className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] transition-[max-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               sheetExpanded
                 ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)]"
-                : "max-h-[7.25rem]"
+                : "max-h-[6.25rem]"
             }`}
             onTouchStart={onSheetTouchStart}
             onTouchEnd={onSheetTouchEnd}
@@ -408,17 +392,46 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 onClick={() => setSheetExpanded(true)}
                 className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
               >
-                <p className="text-[11px] font-bold uppercase tracking-widest text-amber-300">
-                  Mi membresía
-                </p>
-                <p className="text-base font-semibold text-white truncate leading-tight mt-1">
-                  {props.user.nombre} · {props.planLabel}
+                <p className="text-base font-black font-serif-cluster uppercase tracking-wide text-white">
+                  BarrID
                 </p>
               </button>
             )}
 
             {sheetExpanded ? (
               <div className="overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5">
+                {canRedeem ? (
+                  <QrPanel
+                    sizeClass="w-[min(68vw,16rem)] h-[min(68vw,16rem)] mx-auto"
+                    textSize="text-xs"
+                    qrDataUrl={qrDataUrl}
+                    loadingCred={loadingCred}
+                    credError={credError}
+                    countdown={
+                      expiresAtMs && !credError ? (
+                        <p className="font-semibold tabular-nums text-amber-200 text-sm" aria-live="polite">
+                          Válido por {formatCountdown(secondsLeft)}
+                        </p>
+                      ) : loadingCred && qrDataUrl ? (
+                        <p className="font-medium text-slate-300 text-sm">Actualizando…</p>
+                      ) : null
+                    }
+                  />
+                ) : (
+                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-center space-y-3">
+                    <p className="text-sm font-semibold text-white">Membresía Vecino</p>
+                    <p className="text-xs text-slate-300 font-light leading-relaxed">
+                      Activa tu BarrID para canjear cupones en los negocios del barrio.
+                    </p>
+                    <PlanIntentCta
+                      plan="VECINO"
+                      className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
+                    >
+                      Ser Vecino · {formatPlanPriceMxn("VECINO")}
+                    </PlanIntentCta>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-200 shrink-0 border-[3px] border-amber-400/70">
                     {props.user.image ? (
@@ -447,48 +460,6 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between text-sm font-semibold text-slate-200">
-                    <span>Pasaporte</span>
-                    <span>
-                      {props.stampedCount}/{props.totalRestaurants}
-                    </span>
-                  </div>
-                  <div className="mt-2.5 h-3 rounded-full bg-white/20 overflow-hidden">
-                    <div
-                      className="h-full bg-amber-400 rounded-full"
-                      style={{ width: `${props.progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                <dl className="space-y-3 text-base border-t border-white/15 pt-5">
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-slate-300">Membresía</dt>
-                    <dd className="font-bold text-amber-300 text-right">{props.planLabel}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-slate-300">Estado</dt>
-                    <dd className="font-bold text-emerald-300 text-right">{props.statusLabel}</dd>
-                  </div>
-                  {canRedeem ? (
-                    <>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-slate-300">Cuota</dt>
-                        <dd className="font-bold text-white text-right">{props.priceLabel}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-slate-300">Vencimiento</dt>
-                        <dd className="font-bold text-white text-right">{props.expiryLabel}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-slate-300">Tipo de pago</dt>
-                        <dd className="font-bold text-white text-right">{props.renewalLabel}</dd>
-                      </div>
-                    </>
-                  ) : null}
-                </dl>
-
                 <MiCuentaLink compact />
 
                 <p className="pt-1 pb-2 text-center">
@@ -507,31 +478,38 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         </div>
       </div>
 
-      {/* —— Escritorio: dos columnas —— */}
+      {/* —— Escritorio: Pases + ficha —— */}
       <div className="hidden md:block max-w-5xl mx-auto w-full px-6 lg:px-8 py-10 lg:py-14">
         <div className="grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
-          {canRedeem ? (
-            <QrPanel
-              sizeClass="w-72 h-72 lg:w-80 lg:h-80"
-              textSize="text-sm"
-              qrDataUrl={qrDataUrl}
-              loadingCred={loadingCred}
-              credError={credError}
-              countdown={
-                expiresAtMs && !credError ? (
-                  <p className="mt-1 font-semibold tabular-nums text-[#27366D] text-base" aria-live="polite">
-                    Válido por {formatCountdown(secondsLeft)}
-                  </p>
-                ) : loadingCred && qrDataUrl ? (
-                  <p className="mt-1 font-medium text-slate-500 text-base">Actualizando…</p>
-                ) : null
-              }
-              showHint
+          <div className="min-h-[28rem]">
+            <PasesMarketplace
+              events={props.events}
+              tickets={props.tickets}
+              notice={props.paseNotice}
             />
-          ) : (
-            <VecinoUpsellPanel sizeClass="w-72 min-h-72 lg:w-80 lg:min-h-80" textSize="text-base" />
-          )}
+          </div>
           <div className="space-y-5">
+            {canRedeem ? (
+              <QrPanel
+                sizeClass="w-full max-w-xs h-72 mx-auto"
+                textSize="text-sm"
+                qrDataUrl={qrDataUrl}
+                loadingCred={loadingCred}
+                credError={credError}
+                countdown={
+                  expiresAtMs && !credError ? (
+                    <p className="mt-1 font-semibold tabular-nums text-[#27366D] text-base" aria-live="polite">
+                      Válido por {formatCountdown(secondsLeft)}
+                    </p>
+                  ) : loadingCred && qrDataUrl ? (
+                    <p className="mt-1 font-medium text-slate-500 text-base">Actualizando…</p>
+                  ) : null
+                }
+                showHint
+              />
+            ) : (
+              <VecinoUpsellPanel sizeClass="w-full min-h-64" textSize="text-base" />
+            )}
             <StatusCard {...props} />
             {canRedeem ? (
               <Link

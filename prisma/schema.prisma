@@ -74,6 +74,8 @@ model User {
   stamps                Stamp[]
   benefitRedemptionsAsBeneficiary BenefitRedemption[] @relation("BenefitBeneficiary")
   benefitRedemptionsAsProvider    BenefitRedemption[] @relation("BenefitProvider")
+  ticketOrders          TicketOrder[]
+  accessTickets         AccessTicket[]
 }
 
 model VerificationToken {
@@ -301,6 +303,64 @@ model CatalogSocioOverride {
   socioId   Int      @id
   website   String?
   updatedAt DateTime @updatedAt
+}
+
+// ======================
+// PASES / ACCESOS
+// ======================
+
+model AccessEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  venue       String
+  startsAt    DateTime
+  endsAt      DateTime?
+  /** Precio en centavos MXN. 0 = cortesía, sin Stripe. */
+  priceCents  Int
+  capacity    Int?
+  coverUrl    String?
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      TicketOrder[]
+  tickets     AccessTicket[]
+
+  @@index([published, startsAt])
+}
+
+model TicketOrder {
+  id                      String      @id @default(cuid())
+  userId                  String
+  user                    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId                 String
+  event                   AccessEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  stripeCheckoutSessionId String?     @unique
+  /** pending | paid | cancelled */
+  status                  String      @default("pending")
+  amountCents             Int
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+  tickets                 AccessTicket[]
+
+  @@index([userId])
+  @@index([eventId, status])
+}
+
+model AccessTicket {
+  id         String      @id @default(cuid())
+  orderId    String
+  order      TicketOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId    String
+  event      AccessEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  code       String      @unique @default(cuid())
+  redeemedAt DateTime?
+  createdAt  DateTime    @default(now())
+
+  @@index([userId])
+  @@index([eventId])
 }
 
 /** Roster de membresía pagada del catálogo (CSV / admin). Fuente de verdad para /socios y MAP. */

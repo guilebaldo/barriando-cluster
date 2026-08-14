@@ -9,6 +9,10 @@ import {
 import { isStripeLocalPaymentMethod } from "@/lib/stripe-local-payment";
 import { notifyPaymentCredited } from "@/lib/notify-payment-credited";
 import { revalidatePublicSocios } from "@/lib/revalidate-public-socios";
+import {
+  cancelAccessTicketCheckout,
+  fulfillAccessTicketCheckout,
+} from "@/lib/fulfill-access-ticket";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import type Stripe from "stripe";
 
@@ -189,7 +193,9 @@ export async function POST(request: NextRequest) {
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      if (isOneTimeManualSession(session) && session.metadata?.billingKind === "one_time_manual") {
+      if (session.metadata?.billingKind === "access_ticket") {
+        await fulfillAccessTicketCheckout(session);
+      } else if (isOneTimeManualSession(session) && session.metadata?.billingKind === "one_time_manual") {
         // OXXO: completed suele llegar unpaid; si ya viene paid, activa sin correo
         // (el recibo se manda en async_payment_succeeded).
         await fulfillOneTimeManualCheckout(session, { sendReceipt: false });
@@ -200,9 +206,16 @@ export async function POST(request: NextRequest) {
 
     if (event.type === "checkout.session.async_payment_succeeded") {
       const session = event.data.object as Stripe.Checkout.Session;
-      if (session.metadata?.billingKind === "one_time_manual") {
+      if (session.metadata?.billingKind === "access_ticket") {
+        await fulfillAccessTicketCheckout(session);
+      } else if (session.metadata?.billingKind === "one_time_manual") {
         await fulfillOneTimeManualCheckout(session, { sendReceipt: true });
       }
+    }
+
+    if (event.type === "checkout.session.expired") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      await cancelAccessTicketCheckout(session);
     }
 
     if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {

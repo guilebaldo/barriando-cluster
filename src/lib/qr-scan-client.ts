@@ -5,7 +5,8 @@ export function extractAppPathFromQr(raw: string): string | null {
     const url = raw.startsWith("http") ? new URL(raw) : new URL(raw, window.location.origin);
     if (
       url.pathname.startsWith("/pasaporte") ||
-      url.pathname.startsWith("/beneficios/verificar")
+      url.pathname.startsWith("/beneficios/verificar") ||
+      url.pathname.startsWith("/pases/verificar")
     ) {
       return `${url.pathname}${url.search}`;
     }
@@ -18,6 +19,9 @@ export function extractAppPathFromQr(raw: string): string | null {
 
   const beneficio = raw.match(/\/beneficios\/verificar\?[^\s"'<>]+/);
   if (beneficio) return beneficio[0];
+
+  const pase = raw.match(/\/pases\/verificar\?[^\s"'<>]+/);
+  if (pase) return pase[0];
 
   return null;
 }

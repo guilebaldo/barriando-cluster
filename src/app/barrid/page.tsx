@@ -17,6 +17,8 @@ import {
 } from "@/lib/panel-display";
 import { isFirstLoginAccount } from "@/lib/add-to-home-screen";
 import { syncStripeSubscriptionForUser } from "@/lib/stripe-sync";
+import { listPublishedAccessEvents, listUserAccessTickets } from "@/lib/access-marketplace";
+import { fulfillAccessTicketByCheckoutSessionId } from "@/lib/fulfill-access-ticket";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,8 @@ export default async function BarrIdPage({
     bienvenida?: string;
     success?: string;
     ficha?: string;
+    pase?: string;
+    session_id?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -79,6 +83,19 @@ export default async function BarrIdPage({
   const stampedCount = summaries.length;
   const progress = getPassportProgress(stampedCount, totalRestaurants);
 
+  if (params.pase === "ok" && params.session_id) {
+    try {
+      await fulfillAccessTicketByCheckoutSessionId(params.session_id);
+    } catch (error) {
+      console.error("[barrid] ticket checkout sync failed:", error);
+    }
+  }
+
+  const [events, tickets] = await Promise.all([
+    listPublishedAccessEvents(),
+    listUserAccessTickets(session.id),
+  ]);
+
   const expiryLabel = resolveMembershipExpiryLabel({
     status: subscription.status,
     currentPeriodEnd: subscription.currentPeriodEnd,
@@ -113,6 +130,9 @@ export default async function BarrIdPage({
           canRedeemCoupons={canRedeemCoupons}
           isFirstLoginUser={isFirstLoginAccount(user?.createdAt)}
           initialSheetExpanded={params.ficha === "1"}
+          events={events}
+          tickets={tickets}
+          paseNotice={params.pase === "ok" || params.pase === "cancelado" ? params.pase : null}
         />
       </main>
       <div className="hidden md:block shrink-0">
