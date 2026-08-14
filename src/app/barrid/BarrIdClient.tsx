@@ -108,7 +108,7 @@ function StatusCard({
         </div>
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">BarrID</p>
-          <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide truncate">
+          <h1 className="text-2xl font-black uppercase tracking-wide truncate font-sans">
             {user.nombre}
           </h1>
           <p className="text-sm text-slate-300 truncate">{user.email}</p>
@@ -392,7 +392,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 onClick={() => setSheetExpanded(true)}
                 className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
               >
-                <p className="text-base font-black font-serif-cluster uppercase tracking-wide text-white">
+                <p className="text-sm font-bold uppercase tracking-widest text-amber-300">
                   BarrID
                 </p>
               </button>
@@ -453,7 +453,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                     <p className="text-xs font-bold uppercase tracking-widest text-amber-300">
                       BarrID
                     </p>
-                    <h1 className="text-2xl font-black font-serif-cluster uppercase tracking-wide leading-tight">
+                    <h1 className="text-2xl font-black uppercase tracking-wide leading-tight font-sans">
                       {props.user.nombre}
                     </h1>
                     <p className="text-sm text-slate-300 truncate mt-1">{props.user.email}</p>
@@ -478,38 +478,31 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         </div>
       </div>
 
-      {/* —— Escritorio: Pases + ficha —— */}
+      {/* —— Escritorio: QR + ficha —— */}
       <div className="hidden md:block max-w-5xl mx-auto w-full px-6 lg:px-8 py-10 lg:py-14">
         <div className="grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
-          <div className="min-h-[28rem]">
-            <PasesMarketplace
-              events={props.events}
-              tickets={props.tickets}
-              notice={props.paseNotice}
+          {canRedeem ? (
+            <QrPanel
+              sizeClass="w-72 h-72 lg:w-80 lg:h-80"
+              textSize="text-sm"
+              qrDataUrl={qrDataUrl}
+              loadingCred={loadingCred}
+              credError={credError}
+              countdown={
+                expiresAtMs && !credError ? (
+                  <p className="mt-1 font-semibold tabular-nums text-[#27366D] text-base" aria-live="polite">
+                    Válido por {formatCountdown(secondsLeft)}
+                  </p>
+                ) : loadingCred && qrDataUrl ? (
+                  <p className="mt-1 font-medium text-slate-500 text-base">Actualizando…</p>
+                ) : null
+              }
+              showHint
             />
-          </div>
+          ) : (
+            <VecinoUpsellPanel sizeClass="w-72 min-h-72 lg:w-80 lg:min-h-80" textSize="text-base" />
+          )}
           <div className="space-y-5">
-            {canRedeem ? (
-              <QrPanel
-                sizeClass="w-full max-w-xs h-72 mx-auto"
-                textSize="text-sm"
-                qrDataUrl={qrDataUrl}
-                loadingCred={loadingCred}
-                credError={credError}
-                countdown={
-                  expiresAtMs && !credError ? (
-                    <p className="mt-1 font-semibold tabular-nums text-[#27366D] text-base" aria-live="polite">
-                      Válido por {formatCountdown(secondsLeft)}
-                    </p>
-                  ) : loadingCred && qrDataUrl ? (
-                    <p className="mt-1 font-medium text-slate-500 text-base">Actualizando…</p>
-                  ) : null
-                }
-                showHint
-              />
-            ) : (
-              <VecinoUpsellPanel sizeClass="w-full min-h-64" textSize="text-base" />
-            )}
             <StatusCard {...props} />
             {canRedeem ? (
               <Link

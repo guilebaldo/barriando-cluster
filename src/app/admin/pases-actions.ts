@@ -88,6 +88,7 @@ export async function createAccessEvent(
       },
     });
     revalidatePath("/admin");
+    revalidatePath("/pases");
     revalidatePath("/barrid");
     return { ok: true, id: row.id };
   } catch (error) {
@@ -143,6 +144,7 @@ export async function updateAccessEvent(
       },
     });
     revalidatePath("/admin");
+    revalidatePath("/pases");
     revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
@@ -166,6 +168,7 @@ export async function toggleAccessEventPublished(id: string): Promise<ActionResu
       data: { published: !row.published },
     });
     revalidatePath("/admin");
+    revalidatePath("/pases");
     revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
@@ -189,6 +192,7 @@ export async function deleteAccessEvent(id: string): Promise<ActionResult> {
     await prisma.ticketOrder.deleteMany({ where: { eventId: id } });
     await prisma.accessEvent.delete({ where: { id } });
     revalidatePath("/admin");
+    revalidatePath("/pases");
     revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {

@@ -46,12 +46,18 @@ const PASAPORTE_LINK: NavLink = {
     pathname.startsWith("/pasaporte/"),
 };
 
-/** Visitante: Inicio → Equipo → Socios → Pasaporte → MAPA. Logueado: app útil. */
+/** Visitante: Inicio → Equipo → Socios → Pases → Pasaporte → MAPA. Logueado: app útil. */
 function getNavLinks(isAuthenticated: boolean): NavLink[] {
+  const pases: NavLink = {
+    href: "/pases",
+    label: "Pases",
+    isActive: (pathname) => pathname === "/pases",
+  };
   if (isAuthenticated) {
     return [
       { href: "/mapa", label: "MAPA" },
       { href: "/cuponera?cupones=1", label: "Cuponera" },
+      pases,
       PASAPORTE_LINK,
     ];
   }
@@ -60,6 +66,7 @@ function getNavLinks(isAuthenticated: boolean): NavLink[] {
     { href: "/landing", label: "Inicio" },
     { href: "/equipo", label: "Equipo" },
     { href: "/cuponera", label: "Socios" },
+    pases,
     PASAPORTE_LINK,
     { href: "/mapa", label: "MAPA" },
   ];

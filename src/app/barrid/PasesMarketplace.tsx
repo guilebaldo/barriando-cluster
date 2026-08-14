@@ -27,10 +27,12 @@ export default function PasesMarketplace({
   events,
   tickets,
   notice,
+  signedIn = true,
 }: {
   events: AccessEventCard[];
   tickets: AccessTicketCard[];
   notice?: "ok" | "cancelado" | null;
+  signedIn?: boolean;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -60,6 +62,10 @@ export default function PasesMarketplace({
   );
 
   async function buy(eventId: string) {
+    if (!signedIn) {
+      window.location.assign(`/login?callbackUrl=${encodeURIComponent("/pases")}`);
+      return;
+    }
     setBusy(true);
     setError(null);
     const result = await startAccessTicketCheckout(eventId);

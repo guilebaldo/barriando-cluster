@@ -82,7 +82,7 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
       return;
     }
     resetForm();
-    setMsg(editingId ? "Pase actualizado." : "Pase creado. Publícalo para que aparezca en BarrID.");
+    setMsg(editingId ? "Pase actualizado." : "Pase creado. Publícalo para que aparezca en Pases.");
     router.refresh();
   }
 
@@ -186,7 +186,7 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
             {events.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  Sin pases. Crea el primero para publicarlo en BarrID.
+                  Sin pases. Crea el primero para publicarlo en Pases.
                 </td>
               </tr>
             ) : (

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { BookOpen, Camera, Gift, IdCard, Map as MapIcon } from "lucide-react";
+import { BookOpen, Camera, Gift, Map as MapIcon, Ticket } from "lucide-react";
 
 export const APP_TAB_BOTTOM =
   "calc(3.5rem + env(safe-area-inset-bottom, 0px))" as const;
@@ -40,9 +40,10 @@ const TABS = [
   },
   {
     href: "/barrid",
-    label: "BarrID",
-    icon: IdCard,
-    match: (p: string) => p === "/barrid" || p.startsWith("/barrid/"),
+    label: "Pases",
+    icon: Ticket,
+    match: (p: string) =>
+      p === "/barrid" || p.startsWith("/barrid/") || p === "/pases",
   },
   {
     href: "/pasaporte",
