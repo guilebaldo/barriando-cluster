@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import QRCode from "qrcode";
-import { BookOpen, ChevronRight, Gift, Map as MapIcon, Settings } from "lucide-react";
+import { BookOpen, ChevronRight, Gift, Map as MapIcon } from "lucide-react";
 import { createBenefitCredential } from "../panel/actions";
 import AddToHomeScreenModal from "./AddToHomeScreenModal";
 import PasesMarketplace from "./PasesMarketplace";
@@ -46,31 +46,64 @@ function formatCountdown(totalSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-/** Entrada a Panel / cuenta — al pie de la ficha, no como gear flotante. */
-function MiCuentaLink({ compact = false }: { compact?: boolean }) {
+/** Foto + nombre + correo = entrada a Mi cuenta. */
+function MiCuentaProfileLink({
+  user,
+  compact = false,
+}: {
+  user: BarrIdClientProps["user"];
+  compact?: boolean;
+}) {
+  const photoSize = compact ? 80 : 64;
   return (
     <Link
       href="/panel?from=barrid"
-      className={`mt-5 flex w-full items-center justify-between gap-3 rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/15 active:scale-[0.99] ${
-        compact ? "px-4 py-3.5" : "px-4 py-3"
+      className={`flex w-full items-center gap-4 rounded-xl text-left text-white transition hover:bg-white/10 active:scale-[0.99] ${
+        compact ? "-mx-1 px-1 py-1" : "px-1 py-1"
       }`}
     >
-      <span className="inline-flex items-center gap-2.5 min-w-0">
-        <Settings className={compact ? "w-5 h-5 shrink-0" : "w-4 h-4 shrink-0"} />
-        <span className="min-w-0">
-          <span
-            className={`block font-bold uppercase tracking-wider ${
-              compact ? "text-sm" : "text-xs"
+      <div
+        className={`rounded-full overflow-hidden bg-slate-200 shrink-0 ${
+          compact ? "w-20 h-20 border-[3px] border-amber-400/70" : "w-16 h-16 border-2 border-amber-400/40"
+        }`}
+      >
+        {user.image ? (
+          <Image
+            src={user.image}
+            alt={user.nombre}
+            width={photoSize}
+            height={photoSize}
+            className="w-full h-full object-cover"
+            unoptimized
+          />
+        ) : (
+          <div
+            className={`w-full h-full flex items-center justify-center bg-slate-300 text-[#27366D] font-bold ${
+              compact ? "text-2xl" : "text-lg"
             }`}
           >
-            Mi cuenta
-          </span>
-          <span className={`block text-slate-300 font-light ${compact ? "text-xs mt-0.5" : "text-[11px] mt-0.5"}`}>
-            Membresía, ficha y sesión
-          </span>
-        </span>
-      </span>
-      <ChevronRight className={compact ? "w-5 h-5 shrink-0 opacity-80" : "w-4 h-4 shrink-0 opacity-80"} />
+            {user.nombre.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p
+          className={`font-bold uppercase tracking-widest ${
+            compact ? "text-xs text-amber-300" : "text-[10px] text-amber-400"
+          }`}
+        >
+          BarrID
+        </p>
+        <h1
+          className={`font-black uppercase tracking-wide font-sans ${
+            compact ? "text-2xl leading-tight" : "text-2xl truncate"
+          }`}
+        >
+          {user.nombre}
+        </h1>
+        <p className={`text-slate-300 truncate ${compact ? "text-sm mt-1" : "text-sm"}`}>{user.email}</p>
+      </div>
+      <ChevronRight className="w-5 h-5 shrink-0 opacity-80" />
     </Link>
   );
 }
@@ -89,31 +122,7 @@ function StatusCard({
 }: BarrIdClientProps) {
   return (
     <section className="bg-[#27366D] text-white rounded-2xl border border-[#1e2b58] relative px-6 sm:px-8 py-6 sm:py-8">
-      <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 shrink-0 border-2 border-amber-400/40">
-          {user.image ? (
-            <Image
-              src={user.image}
-              alt={user.nombre}
-              width={64}
-              height={64}
-              className="w-full h-full object-cover"
-              unoptimized
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-slate-300 text-[#27366D] font-bold text-lg">
-              {user.nombre.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">BarrID</p>
-          <h1 className="text-2xl font-black uppercase tracking-wide truncate font-sans">
-            {user.nombre}
-          </h1>
-          <p className="text-sm text-slate-300 truncate">{user.email}</p>
-        </div>
-      </div>
+      <MiCuentaProfileLink user={user} />
 
       <div className="mt-5">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-200">
@@ -155,7 +164,6 @@ function StatusCard({
       </dl>
 
       <MisPasesSection />
-      <MiCuentaLink />
     </section>
   );
 }
@@ -432,37 +440,9 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                   </div>
                 )}
 
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-200 shrink-0 border-[3px] border-amber-400/70">
-                    {props.user.image ? (
-                      <Image
-                        src={props.user.image}
-                        alt={props.user.nombre}
-                        width={80}
-                        height={80}
-                        className="w-full h-full object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-300 text-[#27366D] font-bold text-2xl">
-                        {props.user.nombre.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-widest text-amber-300">
-                      BarrID
-                    </p>
-                    <h1 className="text-2xl font-black uppercase tracking-wide leading-tight font-sans">
-                      {props.user.nombre}
-                    </h1>
-                    <p className="text-sm text-slate-300 truncate mt-1">{props.user.email}</p>
-                  </div>
-                </div>
+                <MiCuentaProfileLink user={props.user} compact />
 
                 <MisPasesSection compact />
-
-                <MiCuentaLink compact />
 
                 <p className="pt-1 pb-2 text-center">
                   <a

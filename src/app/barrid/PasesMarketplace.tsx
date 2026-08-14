@@ -1,7 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Ticket, MapPin, ChevronLeft } from "lucide-react";
+import {
+  Ticket,
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  List,
+  CalendarDays,
+} from "lucide-react";
 import {
   accessEventHasEnded,
   accessEventIsSoldOut,
@@ -11,20 +18,45 @@ import {
 } from "@/lib/access-events";
 import { startAccessTicketCheckout } from "@/app/pases/actions";
 
+type CatalogView = "lista" | "calendario";
+
+const WEEKDAYS = ["L", "M", "M", "J", "V", "S", "D"] as const;
+
+function localDayKey(isoOrDate: string | Date): string {
+  const d = typeof isoOrDate === "string" ? new Date(isoOrDate) : isoOrDate;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function sortEventsChronological(events: AccessEventCard[]): AccessEventCard[] {
+  const upcoming: AccessEventCard[] = [];
+  const past: AccessEventCard[] = [];
+  for (const event of events) {
+    if (accessEventHasEnded(event.startsAt, event.endsAt)) past.push(event);
+    else upcoming.push(event);
+  }
+  upcoming.sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+  past.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+  return [...upcoming, ...past];
+}
+
 export default function PasesMarketplace({
   events,
   notice,
   signedIn = true,
-  hideTitle = false,
 }: {
   events: AccessEventCard[];
   notice?: "ok" | "cancelado" | null;
   signedIn?: boolean;
-  hideTitle?: boolean;
 }) {
+  const [view, setView] = useState<CatalogView>("lista");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const chronological = useMemo(() => sortEventsChronological(events), [events]);
 
   const selected = useMemo(
     () => events.find((event) => event.id === selectedId) ?? null,
@@ -49,22 +81,13 @@ export default function PasesMarketplace({
 
   return (
     <section className="w-full h-full min-h-0 flex flex-col">
-      {hideTitle ? null : (
-        <div className="flex items-center gap-2 shrink-0 px-0.5">
-          <Ticket className="w-5 h-5 text-amber-500" />
-          <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700 font-sans">
-            Pases
-          </p>
-        </div>
-      )}
-
       {notice === "ok" ? (
-        <p className="mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+        <p className="mb-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
           Tu pase ya está listo. Ábrelo en Mis pases para mostrar el QR.
         </p>
       ) : null}
       {notice === "cancelado" ? (
-        <p className="mt-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+        <p className="mb-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
           No se completó el pago. Puedes intentarlo de nuevo.
         </p>
       ) : null}
@@ -81,9 +104,61 @@ export default function PasesMarketplace({
           onBuy={() => void buy(selected.id)}
         />
       ) : (
-        <CatalogList events={events} onOpen={setSelectedId} />
+        <>
+          <ViewToggle view={view} onChange={setView} />
+          {view === "lista" ? (
+            <CatalogList events={chronological} onOpen={setSelectedId} />
+          ) : (
+            <CalendarView events={chronological} onOpen={setSelectedId} />
+          )}
+        </>
       )}
     </section>
+  );
+}
+
+function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: CatalogView;
+  onChange: (next: CatalogView) => void;
+}) {
+  return (
+    <div
+      className="shrink-0 inline-flex self-start rounded-lg border border-slate-200 bg-white p-0.5"
+      role="tablist"
+      aria-label="Vista de pases"
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={view === "lista"}
+        onClick={() => onChange("lista")}
+        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
+          view === "lista"
+            ? "bg-[#27366D] text-white"
+            : "text-slate-500 hover:text-[#27366D]"
+        }`}
+      >
+        <List className="w-3.5 h-3.5" />
+        Lista
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={view === "calendario"}
+        onClick={() => onChange("calendario")}
+        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
+          view === "calendario"
+            ? "bg-[#27366D] text-white"
+            : "text-slate-500 hover:text-[#27366D]"
+        }`}
+      >
+        <CalendarDays className="w-3.5 h-3.5" />
+        Calendario
+      </button>
+    </div>
   );
 }
 
@@ -95,60 +170,217 @@ function CatalogList({
   onOpen: (id: string) => void;
 }) {
   if (events.length === 0) {
-    return (
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-center text-center px-4">
-        <Ticket className="w-10 h-10 text-amber-400 mb-3" />
-        <p className="text-sm font-semibold text-[#27366D]">Aún no hay pases</p>
-        <p className="mt-1 text-xs text-slate-500 font-light leading-relaxed max-w-[16rem]">
-          Aquí aparecerán boletos y entradas a eventos del Centro Histórico.
-        </p>
-      </div>
-    );
+    return <EmptyCatalog />;
   }
 
   return (
     <div className="mt-3 flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2 pr-0.5">
-      {events.map((event) => {
-        const ended = accessEventHasEnded(event.startsAt, event.endsAt);
-        const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
-        return (
+      {events.map((event) => (
+        <EventRow key={event.id} event={event} onOpen={onOpen} />
+      ))}
+    </div>
+  );
+}
+
+function EmptyCatalog() {
+  return (
+    <div className="flex-1 min-h-0 flex flex-col items-center justify-center text-center px-4 py-10">
+      <Ticket className="w-10 h-10 text-amber-400 mb-3" />
+      <p className="text-sm font-semibold text-[#27366D]">Aún no hay pases</p>
+      <p className="mt-1 text-xs text-slate-500 font-light leading-relaxed max-w-[16rem]">
+        Aquí aparecerán boletos y entradas a eventos del Centro Histórico.
+      </p>
+    </div>
+  );
+}
+
+function EventRow({
+  event,
+  onOpen,
+}: {
+  event: AccessEventCard;
+  onOpen: (id: string) => void;
+}) {
+  const ended = accessEventHasEnded(event.startsAt, event.endsAt);
+  const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(event.id)}
+      className="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm hover:border-amber-300/80 transition"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[#27366D] leading-snug truncate">{event.title}</p>
+          <p className="mt-1 text-[11px] text-slate-500 truncate">
+            {formatAccessWhen(event.startsAt, event.endsAt)}
+          </p>
+          <p className="mt-0.5 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
+            <MapPin className="w-3 h-3 shrink-0" />
+            {event.venue}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-xs font-bold text-amber-700">{formatAccessPriceMxn(event.priceCents)}</p>
+          {ended ? (
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Finalizado
+            </p>
+          ) : soldOut ? (
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Agotado
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function CalendarView({
+  events,
+  onOpen,
+}: {
+  events: AccessEventCard[];
+  onOpen: (id: string) => void;
+}) {
+  const todayKey = localDayKey(new Date());
+  const [cursor, setCursor] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
+  });
+  const [selectedDay, setSelectedDay] = useState<string | null>(todayKey);
+
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, AccessEventCard[]>();
+    for (const event of events) {
+      const key = localDayKey(event.startsAt);
+      const list = map.get(key);
+      if (list) list.push(event);
+      else map.set(key, [event]);
+    }
+    return map;
+  }, [events]);
+
+  const monthLabel = useMemo(
+    () =>
+      new Date(cursor.year, cursor.month, 1).toLocaleDateString("es-MX", {
+        month: "long",
+        year: "numeric",
+      }),
+    [cursor.year, cursor.month]
+  );
+
+  const cells = useMemo(() => {
+    const first = new Date(cursor.year, cursor.month, 1);
+    const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate();
+    const mondayIndex = (first.getDay() + 6) % 7;
+    const total = Math.ceil((mondayIndex + daysInMonth) / 7) * 7;
+    const out: Array<{ key: string | null; day: number | null }> = [];
+    for (let i = 0; i < total; i++) {
+      const dayNum = i - mondayIndex + 1;
+      if (dayNum < 1 || dayNum > daysInMonth) {
+        out.push({ key: null, day: null });
+        continue;
+      }
+      const key = localDayKey(new Date(cursor.year, cursor.month, dayNum));
+      out.push({ key, day: dayNum });
+    }
+    return out;
+  }, [cursor.year, cursor.month]);
+
+  const dayEvents = selectedDay ? (eventsByDay.get(selectedDay) ?? []) : [];
+
+  function shiftMonth(delta: number) {
+    setCursor((prev) => {
+      const next = new Date(prev.year, prev.month + delta, 1);
+      return { year: next.getFullYear(), month: next.getMonth() };
+    });
+  }
+
+  if (events.length === 0) {
+    return <EmptyCatalog />;
+  }
+
+  return (
+    <div className="mt-3 flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-3 pr-0.5">
+      <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+        <div className="flex items-center justify-between gap-2 px-1">
           <button
-            key={event.id}
             type="button"
-            onClick={() => onOpen(event.id)}
-            className="w-full text-left rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm hover:border-amber-300/80 transition"
+            onClick={() => shiftMonth(-1)}
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-[#27366D]"
+            aria-label="Mes anterior"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[#27366D] leading-snug truncate">
-                  {event.title}
-                </p>
-                <p className="mt-1 text-[11px] text-slate-500 truncate">
-                  {formatAccessWhen(event.startsAt, event.endsAt)}
-                </p>
-                <p className="mt-0.5 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
-                  <MapPin className="w-3 h-3 shrink-0" />
-                  {event.venue}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p className="text-xs font-bold text-amber-700">
-                  {formatAccessPriceMxn(event.priceCents)}
-                </p>
-                {ended ? (
-                  <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Finalizado
-                  </p>
-                ) : soldOut ? (
-                  <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Agotado
-                  </p>
-                ) : null}
-              </div>
-            </div>
+            <ChevronLeft className="w-4 h-4" />
           </button>
-        );
-      })}
+          <p className="text-sm font-semibold text-[#27366D] capitalize font-sans">{monthLabel}</p>
+          <button
+            type="button"
+            onClick={() => shiftMonth(1)}
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-[#27366D]"
+            aria-label="Mes siguiente"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="mt-3 grid grid-cols-7 gap-1 text-center">
+          {WEEKDAYS.map((label, i) => (
+            <span
+              key={`${label}-${i}`}
+              className="text-[10px] font-bold uppercase tracking-wider text-slate-400 py-1"
+            >
+              {label}
+            </span>
+          ))}
+          {cells.map((cell, i) => {
+            if (!cell.key || cell.day == null) {
+              return <span key={`empty-${i}`} className="aspect-square" />;
+            }
+            const count = eventsByDay.get(cell.key)?.length ?? 0;
+            const isSelected = selectedDay === cell.key;
+            const isToday = cell.key === todayKey;
+            return (
+              <button
+                key={cell.key}
+                type="button"
+                onClick={() => setSelectedDay(cell.key)}
+                className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs transition ${
+                  isSelected
+                    ? "bg-[#27366D] text-white"
+                    : isToday
+                      ? "bg-amber-50 text-[#27366D] font-semibold"
+                      : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span>{cell.day}</span>
+                {count > 0 ? (
+                  <span
+                    className={`mt-0.5 h-1 w-1 rounded-full ${
+                      isSelected ? "bg-amber-300" : "bg-amber-500"
+                    }`}
+                  />
+                ) : (
+                  <span className="mt-0.5 h-1 w-1" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {selectedDay ? (
+        dayEvents.length > 0 ? (
+          <div className="space-y-2">
+            {dayEvents.map((event) => (
+              <EventRow key={event.id} event={event} onOpen={onOpen} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-xs text-slate-500 py-4">No hay pases este día.</p>
+        )
+      ) : null}
     </div>
   );
 }
@@ -171,14 +403,14 @@ function EventDetail({
   const canBuy = !ended && !soldOut;
 
   return (
-    <div className="mt-3 flex-1 min-h-0 overflow-y-auto overscroll-contain">
+    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
       <button
         type="button"
         onClick={onBack}
         className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-[#27366D]"
       >
         <ChevronLeft className="w-4 h-4" />
-        Pases
+        Volver
       </button>
 
       <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
