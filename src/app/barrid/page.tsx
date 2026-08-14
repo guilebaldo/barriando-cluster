@@ -129,7 +129,7 @@ export default async function BarrIdPage({
           progress={progress}
           canRedeemCoupons={canRedeemCoupons}
           isFirstLoginUser={isFirstLoginAccount(user?.createdAt)}
-          initialSheetExpanded={params.ficha === "1"}
+          initialSheetExpanded={params.ficha === "1" || params.pase === "ok"}
           events={events}
           tickets={tickets}
           paseNotice={params.pase === "ok" || params.pase === "cancelado" ? params.pase : null}

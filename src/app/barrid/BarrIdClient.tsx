@@ -8,6 +8,7 @@ import { BookOpen, ChevronRight, Gift, Map as MapIcon, Settings } from "lucide-r
 import { createBenefitCredential } from "../panel/actions";
 import AddToHomeScreenModal from "./AddToHomeScreenModal";
 import PasesMarketplace from "./PasesMarketplace";
+import MisPasesSection from "./MisPasesSection";
 import { useAppMobileShell } from "@/app/components/AppBottomNav";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import { formatPlanPriceMxn } from "@/lib/membresia";
@@ -86,6 +87,7 @@ function StatusCard({
   totalRestaurants,
   progress,
   canRedeemCoupons,
+  tickets,
 }: BarrIdClientProps) {
   return (
     <section className="bg-[#27366D] text-white rounded-2xl border border-[#1e2b58] relative px-6 sm:px-8 py-6 sm:py-8">
@@ -154,6 +156,7 @@ function StatusCard({
         ) : null}
       </dl>
 
+      <MisPasesSection tickets={tickets} />
       <MiCuentaLink />
     </section>
   );
@@ -358,7 +361,6 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           <div className="flex-1 min-h-0 pointer-events-auto pt-2">
             <PasesMarketplace
               events={props.events}
-              tickets={props.tickets}
               notice={props.paseNotice}
             />
           </div>
@@ -459,6 +461,8 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                     <p className="text-sm text-slate-300 truncate mt-1">{props.user.email}</p>
                   </div>
                 </div>
+
+                <MisPasesSection tickets={props.tickets} />
 
                 <MiCuentaLink compact />
 

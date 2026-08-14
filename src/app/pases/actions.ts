@@ -37,7 +37,7 @@ export async function startAccessTicketCheckout(
     if (event.priceCents <= 0) {
       const result = await claimCourtesyTicket(session.id, eventId);
       if (!result.ok) return result;
-      return { ok: true, url: "/pases?pase=ok" };
+      return { ok: true, url: "/barrid?ficha=1&pase=ok" };
     }
 
     return createAccessTicketCheckoutUrl(session.id, eventId);
