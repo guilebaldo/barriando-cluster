@@ -6,12 +6,14 @@ import { ArrowLeft, MapPin } from "lucide-react";
 import {
   accessEventHasEnded,
   accessEventIsSoldOut,
+  formatAccessEventDateParts,
   formatAccessPriceMxn,
   formatAccessWhen,
   type AccessEventCard,
 } from "@/lib/access-events";
 import { startAccessTicketCheckout } from "@/app/pases/actions";
 import ShareAccessEventButton from "./ShareAccessEventButton";
+import AccessEventMiniMap from "./AccessEventMiniMap";
 
 export default function PaseEventClient({
   event,
@@ -25,6 +27,7 @@ export default function PaseEventClient({
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
   const canBuy = !ended && !soldOut;
+  const { weekday, day, month } = formatAccessEventDateParts(event.startsAt);
 
   async function buy() {
     if (!signedIn) {
@@ -55,15 +58,37 @@ export default function PaseEventClient({
       </Link>
 
       <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Pase</p>
-        <h1 className="mt-1 text-2xl font-black uppercase tracking-wide text-[#27366D] leading-tight font-sans">
-          {event.title}
-        </h1>
-        <p className="mt-2 text-sm text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Pase</p>
+            <h1 className="mt-1 text-2xl font-black uppercase tracking-wide text-[#27366D] leading-tight font-sans">
+              {event.title}
+            </h1>
+          </div>
+          <div
+            className="shrink-0 w-[4.5rem] text-center rounded-xl bg-amber-50 border border-amber-200/80 px-1.5 py-2"
+            aria-label={`${weekday} ${day} de ${month}`}
+          >
+            <p className="text-[10px] font-semibold capitalize leading-tight text-amber-800/90">
+              {weekday}
+            </p>
+            <p className="mt-0.5 text-2xl font-black leading-none tabular-nums text-[#27366D] font-sans">
+              {day}
+            </p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+              {month}
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-3 text-sm text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>
         <p className="mt-1 text-sm text-slate-500 inline-flex items-center gap-1.5">
           <MapPin className="w-4 h-4" />
           {event.venue}
         </p>
+
+        <AccessEventMiniMap venue={event.venue} className="mt-4" />
+
         {event.description ? (
           <p className="mt-4 text-sm text-slate-600 font-light leading-relaxed">{event.description}</p>
         ) : null}

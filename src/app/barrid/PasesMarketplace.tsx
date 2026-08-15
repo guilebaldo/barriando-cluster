@@ -12,12 +12,15 @@ import {
 import {
   accessEventHasEnded,
   accessEventIsSoldOut,
+  formatAccessEventDateParts,
   formatAccessPriceMxn,
   formatAccessWhen,
+  groupAccessEventsByHorizon,
   type AccessEventCard,
 } from "@/lib/access-events";
 import { startAccessTicketCheckout } from "@/app/pases/actions";
 import ShareAccessEventButton from "@/app/pases/ShareAccessEventButton";
+import AccessEventMiniMap from "@/app/pases/AccessEventMiniMap";
 
 type CatalogView = "lista" | "calendario";
 
@@ -41,6 +44,22 @@ function sortEventsChronological(events: AccessEventCard[]): AccessEventCard[] {
   upcoming.sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
   past.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
   return [...upcoming, ...past];
+}
+
+function EventDateBadge({ startsAt }: { startsAt: string }) {
+  const { weekday, day, month } = formatAccessEventDateParts(startsAt);
+  return (
+    <div
+      className="shrink-0 w-[4.25rem] text-center rounded-xl bg-amber-50 border border-amber-200/80 px-1.5 py-2"
+      aria-label={`${weekday} ${day} de ${month}`}
+    >
+      <p className="text-[10px] font-semibold capitalize leading-tight text-amber-800/90">{weekday}</p>
+      <p className="mt-0.5 text-2xl font-black leading-none tabular-nums text-[#27366D] font-sans">
+        {day}
+      </p>
+      <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">{month}</p>
+    </div>
+  );
 }
 
 export default function PasesMarketplace({
@@ -172,14 +191,31 @@ function CatalogList({
   events: AccessEventCard[];
   onOpen: (id: string) => void;
 }) {
+  const groups = useMemo(() => groupAccessEventsByHorizon(events), [events]);
+
   if (events.length === 0) {
     return <EmptyCatalog />;
   }
 
   return (
-    <div className="mt-3 flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-2 pr-0.5">
-      {events.map((event) => (
-        <EventRow key={event.id} event={event} onOpen={onOpen} />
+    <div className="mt-3 flex-1 min-h-0 overflow-y-auto overscroll-contain space-y-5 pr-0.5">
+      {groups.map((group) => (
+        <section key={group.horizon} aria-labelledby={`pases-${group.horizon}`}>
+          <div className="sticky top-0 z-[1] -mx-0.5 px-0.5 py-1 bg-slate-50/95 backdrop-blur-sm">
+            <h3
+              id={`pases-${group.horizon}`}
+              className="text-[11px] font-bold uppercase tracking-widest text-amber-700 font-sans"
+            >
+              {group.label}
+            </h3>
+            <div className="mt-1.5 h-px bg-slate-200" />
+          </div>
+          <div className="mt-2 space-y-2">
+            {group.events.map((event) => (
+              <EventRow key={event.id} event={event} onOpen={onOpen} />
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );
@@ -206,44 +242,46 @@ function EventRow({
 }) {
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
+  const timeLabel = new Date(event.startsAt).toLocaleTimeString("es-MX", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm hover:border-amber-300/80 transition">
-      <div className="flex items-start gap-2">
+    <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm hover:border-amber-300/80 transition">
+      <div className="flex items-stretch gap-2.5">
         <button
           type="button"
           onClick={() => onOpen(event.id)}
-          className="min-w-0 flex-1 text-left"
+          className="min-w-0 flex-1 flex items-stretch gap-3 text-left"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-[#27366D] leading-snug truncate">
-                {event.title}
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500 truncate">
-                {formatAccessWhen(event.startsAt, event.endsAt)}
-              </p>
-              <p className="mt-0.5 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
-                <MapPin className="w-3 h-3 shrink-0" />
-                {event.venue}
-              </p>
-            </div>
-            <div className="shrink-0 text-right">
-              <p className="text-xs font-bold text-amber-700">
+          <div className="min-w-0 flex-1 py-0.5">
+            <p className="text-sm font-semibold text-[#27366D] leading-snug line-clamp-2">
+              {event.title}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
+              <MapPin className="w-3 h-3 shrink-0" />
+              {event.venue}
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="text-xs font-bold text-amber-700">
                 {formatAccessPriceMxn(event.priceCents)}
-              </p>
+              </span>
+              <span className="text-[11px] text-slate-400">{timeLabel}</span>
               {ended ? (
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Finalizado
-                </p>
+                </span>
               ) : soldOut ? (
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Agotado
-                </p>
+                </span>
               ) : null}
             </div>
           </div>
+          <EventDateBadge startsAt={event.startsAt} />
         </button>
-        <ShareAccessEventButton event={event} compact className="shrink-0 -mr-1 -mt-0.5" />
+        <ShareAccessEventButton event={event} compact className="shrink-0 self-start -mr-0.5" />
       </div>
     </div>
   );
@@ -475,15 +513,24 @@ function EventDetail({
       </button>
 
       <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Pase</p>
-        <h3 className="mt-1 text-lg font-black uppercase tracking-wide text-[#27366D] leading-tight font-sans">
-          {event.title}
-        </h3>
-        <p className="mt-2 text-xs text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Pase</p>
+            <h3 className="mt-1 text-lg font-black uppercase tracking-wide text-[#27366D] leading-tight font-sans">
+              {event.title}
+            </h3>
+          </div>
+          <EventDateBadge startsAt={event.startsAt} />
+        </div>
+
+        <p className="mt-3 text-xs text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>
         <p className="mt-1 text-xs text-slate-500 inline-flex items-center gap-1">
           <MapPin className="w-3.5 h-3.5" />
           {event.venue}
         </p>
+
+        <AccessEventMiniMap venue={event.venue} className="mt-3" />
+
         {event.description ? (
           <p className="mt-3 text-sm text-slate-600 font-light leading-relaxed">{event.description}</p>
         ) : null}
