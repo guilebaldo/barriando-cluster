@@ -12,10 +12,10 @@ import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
 import QrScanModal from "../components/QrScanModal";
 import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
-import PaperSecurityPattern from "./PaperSecurityPattern";
 import PasaporteBookMobile from "./PasaporteBookMobile";
 import SellarClient from "./sellar/SellarClient";
 import PassportLeaderLine from "./PassportLeaderLine";
+import PassportProgressBar from "./PassportProgressBar";
 import PassportAdStamp, { stampPadCount } from "./PassportAdStamp";
 import PassportNoticeToast, { type PassportNotice } from "./PassportNoticeToast";
 
@@ -51,7 +51,6 @@ interface PasaporteClientProps {
   totalStamps: number;
   uniqueStamped: number;
   totalRestaurants: number;
-  tierLabel: string;
   tierId: "turista" | "poblano";
   isPoblanoComplete: boolean;
   progress: number;
@@ -62,12 +61,9 @@ interface PasaporteClientProps {
   pendingInvalid?: boolean;
 }
 
-const MRZ_SLOTS = 20; // 10 a cada lado del porcentaje
 const STATS_ANIMATION_MS = 1600;
 
 const PREVIEW_NAME = "Ana García";
-const PREVIEW_TEMPORADA = "Chiles en Nogada";
-const PREVIEW_RANGO = "Turista";
 const PREVIEW_MAX_PROGRESS = 80;
 const PREVIEW_MS_PER_CHAR = 110;
 const PREVIEW_FIELD_GAP_MS = 650;
@@ -177,28 +173,20 @@ function stampTiltClass(id: number): string {
 
 type PreviewScrollState = {
   displayName: string;
-  displayTemporada: string;
-  displayRango: string;
   displayProgress: number;
   displayStamps: number;
   displayVisited: number;
   visibleStampIds: Set<number>;
   isTypingName: boolean;
-  isTypingTemporada: boolean;
-  isTypingRango: boolean;
 };
 
 const EMPTY_PREVIEW: PreviewScrollState = {
   displayName: "",
-  displayTemporada: "",
-  displayRango: "",
   displayProgress: 0,
   displayStamps: 0,
   displayVisited: 0,
   visibleStampIds: new Set(),
   isTypingName: false,
-  isTypingTemporada: false,
-  isTypingRango: false,
 };
 
 function useScrollPreviewDemo(
@@ -230,15 +218,11 @@ function useScrollPreviewDemo(
       visibleStampIdsRef.current = new Set(previewStampIds);
       setState({
         displayName: PREVIEW_NAME,
-        displayTemporada: PREVIEW_TEMPORADA,
-        displayRango: PREVIEW_RANGO,
         displayProgress: PREVIEW_MAX_PROGRESS,
         displayStamps: previewStampIds.length,
         displayVisited: Math.min(previewStampIds.length, totalRestaurants),
         visibleStampIds: new Set(previewStampIds),
         isTypingName: false,
-        isTypingTemporada: false,
-        isTypingRango: false,
       });
     };
 
@@ -252,19 +236,13 @@ function useScrollPreviewDemo(
       }
 
       const nameDuration = PREVIEW_NAME.length * PREVIEW_MS_PER_CHAR;
-      const tempStart = nameDuration + PREVIEW_FIELD_GAP_MS;
-      const tempDuration = PREVIEW_TEMPORADA.length * PREVIEW_MS_PER_CHAR;
-      const rangoStart = tempStart + tempDuration + PREVIEW_FIELD_GAP_MS;
-      const rangoDuration = PREVIEW_RANGO.length * PREVIEW_MS_PER_CHAR;
-      const statsStart = rangoStart + rangoDuration + PREVIEW_FIELD_GAP_MS;
+      const statsStart = nameDuration + PREVIEW_FIELD_GAP_MS;
       const sequenceEnd = statsStart + PREVIEW_STATS_DURATION_MS;
       const start = performance.now();
 
       const tick = (now: number) => {
         const elapsed = now - start;
         const name = typeByElapsed(elapsed, 0, PREVIEW_NAME);
-        const temporada = typeByElapsed(elapsed, tempStart, PREVIEW_TEMPORADA);
-        const rango = typeByElapsed(elapsed, rangoStart, PREVIEW_RANGO);
 
         let displayProgress = 0;
         let displayStamps = 0;
@@ -278,19 +256,11 @@ function useScrollPreviewDemo(
 
         setState({
           displayName: name,
-          displayTemporada: temporada,
-          displayRango: rango,
           displayProgress,
           displayStamps,
           displayVisited: Math.min(displayVisited, totalRestaurants),
           visibleStampIds: new Set(visibleStampIdsRef.current),
-          isTypingName: name.length < PREVIEW_NAME.length && elapsed < tempStart,
-          isTypingTemporada:
-            temporada.length < PREVIEW_TEMPORADA.length &&
-            elapsed >= tempStart &&
-            elapsed < rangoStart,
-          isTypingRango:
-            rango.length < PREVIEW_RANGO.length && elapsed >= rangoStart && elapsed < statsStart,
+          isTypingName: name.length < PREVIEW_NAME.length && elapsed < statsStart,
         });
 
         if (elapsed < sequenceEnd) {
@@ -427,65 +397,6 @@ function useAnimatedPassportStats(
   return animated;
 }
 
-function PassportProgressTrack({
-  animatedProgress,
-  tierId,
-}: {
-  animatedProgress: number;
-  tierId: "turista" | "poblano";
-}) {
-  const halfSlots = MRZ_SLOTS / 2;
-  const filledSlots = Math.round((animatedProgress / 100) * MRZ_SLOTS);
-  const filledColor = tierId === "poblano" ? "text-amber-700" : "text-[#27366D]";
-  const emptyColor = "text-stone-300/90";
-
-  function renderChevrons(startIndex: number, count: number) {
-    return Array.from({ length: count }).map((_, offset) => {
-      const index = startIndex + offset;
-      return (
-        <span key={index} className={index < filledSlots ? filledColor : emptyColor}>
-          {"<"}
-        </span>
-      );
-    });
-  }
-
-  return (
-    <div
-      className="flex w-full items-center gap-1 sm:gap-1.5 font-passport-mrz text-[10px] sm:text-xs font-bold tracking-[0.08em] sm:tracking-[0.12em] select-none"
-      role="progressbar"
-      aria-valuenow={animatedProgress}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-label={`Progreso del pasaporte: ${animatedProgress}%`}
-    >
-      <span
-        className={`shrink-0 ${tierId === "turista" ? "text-[#27366D]" : "text-stone-500"}`}
-      >
-        TURISTA
-      </span>
-      <span className="flex min-w-0 flex-1 items-center justify-end gap-px text-[12px] sm:text-sm leading-none" aria-hidden>
-        {renderChevrons(0, halfSlots)}
-      </span>
-      <span
-        className={`shrink-0 tabular-nums px-0.5 ${
-          tierId === "poblano" ? "text-amber-700" : "text-[#27366D]"
-        }`}
-      >
-        {animatedProgress}%
-      </span>
-      <span className="flex min-w-0 flex-1 items-center justify-start gap-px text-[12px] sm:text-sm leading-none" aria-hidden>
-        {renderChevrons(halfSlots, halfSlots)}
-      </span>
-      <span
-        className={`shrink-0 ${tierId === "poblano" ? "text-amber-700" : "text-stone-500"}`}
-      >
-        POBLANO
-      </span>
-    </div>
-  );
-}
-
 function getInitials(name: string): string {
   return name
     .split(/\s+/)
@@ -509,7 +420,6 @@ function PasaporteInner({
   totalStamps,
   uniqueStamped,
   totalRestaurants,
-  tierLabel,
   tierId,
   isPoblanoComplete,
   progress,
@@ -521,7 +431,6 @@ function PasaporteInner({
   const searchParams = useSearchParams();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const previewFieldsRef = useRef<HTMLDivElement>(null);
-  const previewProgressRef = useRef<HTMLDivElement>(null);
   const previewStampsRef = useRef<HTMLDivElement>(null);
   const [showPoblanoCelebration, setShowPoblanoCelebration] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -576,8 +485,6 @@ function PasaporteInner({
   );
 
   const displayName = isPreview ? previewScroll.displayName : userName;
-  const displayTemporada = isPreview ? previewScroll.displayTemporada : "Chiles en Nogada";
-  const displayRango = isPreview ? previewScroll.displayRango : tierLabel.toUpperCase();
   const displayTierId = isPreview ? "turista" : tierId;
   const displayStats = isPreview
     ? {
@@ -714,8 +621,6 @@ function PasaporteInner({
         )}
 
         <div className="relative isolate rounded-xl sm:rounded-2xl border border-[#c9b896] bg-[#faf6ef] shadow-[0_12px_40px_rgba(80,55,20,0.14)] overflow-hidden">
-          <PaperSecurityPattern />
-
           <div className="relative z-10">
           {/* Hoja de identificación */}
           <div className="px-4 sm:px-8 pt-5 sm:pt-7 pb-6 border-b border-[#d9cdb3]">
@@ -758,36 +663,11 @@ function PasaporteInner({
                 ref={previewFieldsRef}
                 className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_6.75rem] sm:grid-cols-[minmax(0,1fr)_7.5rem] gap-x-5 gap-y-2.5 pt-0.5 items-start"
               >
-                <div className="space-y-2.5">
-                  <div>
-                    <p className="passport-label">Nombre</p>
-                    <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words min-h-[1.35em]">
-                      <TypewriterValue text={displayName} isTyping={isPreview && previewScroll.isTypingName} />
-                    </p>
-                  </div>
-                  <div>
-                    <p className="passport-label">Temporada</p>
-                    <p className="passport-value text-[11px] sm:text-xs mt-0.5 min-h-[1.1em]">
-                      <TypewriterValue
-                        text={displayTemporada}
-                        isTyping={isPreview && previewScroll.isTypingTemporada}
-                      />
-                    </p>
-                  </div>
-                  <div>
-                    <p className="passport-label">Rango</p>
-                    <p
-                      className={`passport-value text-[11px] sm:text-xs mt-0.5 flex items-center gap-1.5 min-h-[1.1em] ${
-                        displayTierId === "poblano" ? "text-amber-900" : ""
-                      }`}
-                    >
-                      {displayTierId === "poblano" && <span aria-hidden>★</span>}
-                      <TypewriterValue
-                        text={displayRango}
-                        isTyping={isPreview && previewScroll.isTypingRango}
-                      />
-                    </p>
-                  </div>
+                <div>
+                  <p className="passport-label">Nombre</p>
+                  <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words min-h-[1.35em]">
+                    <TypewriterValue text={displayName} isTyping={isPreview && previewScroll.isTypingName} />
+                  </p>
                 </div>
 
                 <div className="space-y-2.5 pt-0.5 pl-3 border-l border-[#d9cdb3]/70">
@@ -801,17 +681,16 @@ function PasaporteInner({
                       {displayStats.visited}/{totalRestaurants}
                     </p>
                   </div>
-                  <div>
-                    <p className="passport-label">Progreso</p>
-                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">{displayStats.progress}%</p>
-                  </div>
                 </div>
               </div>
             </div>
 
-            <div ref={previewProgressRef} className="mt-5 space-y-1.5">
+            <div className="mt-5 space-y-2">
+              <PassportProgressBar
+                progress={displayStats.progress}
+                tierId={displayTierId}
+              />
               <PassportLeaderLine names={leaderNames} className="text-[11px] sm:text-sm" />
-              <PassportProgressTrack animatedProgress={displayStats.progress} tierId={displayTierId} />
             </div>
           </div>
 
@@ -984,7 +863,6 @@ function PasaporteInner({
             totalStamps={totalStamps}
             uniqueStamped={uniqueStamped}
             totalRestaurants={totalRestaurants}
-            tierLabel={tierLabel}
             tierId={tierId}
             progress={progress}
             stampFlashId={stampFlashId}

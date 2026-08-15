@@ -120,7 +120,6 @@ export default async function PasaportePage({
       totalStamps={totalStamps}
       uniqueStamped={uniqueStampedCount}
       totalRestaurants={restaurants.length}
-      tierLabel={rank.label}
       tierId={rank.id}
       isPoblanoComplete={rank.isComplete}
       progress={progress}

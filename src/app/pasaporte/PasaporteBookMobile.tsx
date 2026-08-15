@@ -8,7 +8,7 @@ import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
 import PassportLeaderLine from "./PassportLeaderLine";
 import PassportAdStamp, { stampPadCount } from "./PassportAdStamp";
-import PaperSecurityPattern from "./PaperSecurityPattern";
+import PassportProgressBar from "./PassportProgressBar";
 
 type RestaurantCard = {
   id: number;
@@ -24,7 +24,6 @@ const COVER_STAMP_COUNT = 4;
 /** Páginas siguientes: 2×4 (= 4 arriba + 4 abajo) */
 const PAGE_STAMP_COUNT = 8;
 const SWIPE_THRESHOLD_PX = 52;
-const MRZ_SLOTS = 20;
 
 function stampTiltClass(id: number): string {
   const tilts = [
@@ -55,67 +54,6 @@ function chunk<T>(items: T[], size: number): T[][] {
     out.push(items.slice(i, i + size));
   }
   return out.length > 0 ? out : [[]];
-}
-
-function PassportProgressTrack({
-  animatedProgress,
-  tierId,
-}: {
-  animatedProgress: number;
-  tierId: "turista" | "poblano";
-}) {
-  const halfSlots = MRZ_SLOTS / 2;
-  const filledSlots = Math.round((animatedProgress / 100) * MRZ_SLOTS);
-  const filledColor = tierId === "poblano" ? "text-amber-700" : "text-[#27366D]";
-  const emptyColor = "text-stone-300/90";
-
-  function renderChevrons(startIndex: number, count: number) {
-    return Array.from({ length: count }).map((_, offset) => {
-      const index = startIndex + offset;
-      return (
-        <span key={index} className={index < filledSlots ? filledColor : emptyColor}>
-          {"<"}
-        </span>
-      );
-    });
-  }
-
-  return (
-    <div
-      className="mt-0 flex w-full items-center gap-1 font-passport-mrz text-[9px] font-bold tracking-[0.06em] select-none"
-      role="progressbar"
-      aria-valuenow={animatedProgress}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-label={`Progreso del pasaporte: ${animatedProgress}%`}
-    >
-      <span className={`shrink-0 ${tierId === "turista" ? "text-[#27366D]" : "text-stone-500"}`}>
-        TURISTA
-      </span>
-      <span
-        className="flex min-w-0 flex-1 items-center justify-end gap-px text-[11px] leading-none"
-        aria-hidden
-      >
-        {renderChevrons(0, halfSlots)}
-      </span>
-      <span
-        className={`shrink-0 tabular-nums px-0.5 ${
-          tierId === "poblano" ? "text-amber-700" : "text-[#27366D]"
-        }`}
-      >
-        {animatedProgress}%
-      </span>
-      <span
-        className="flex min-w-0 flex-1 items-center justify-start gap-px text-[11px] leading-none"
-        aria-hidden
-      >
-        {renderChevrons(halfSlots, halfSlots)}
-      </span>
-      <span className={`shrink-0 ${tierId === "poblano" ? "text-amber-700" : "text-stone-500"}`}>
-        POBLANO
-      </span>
-    </div>
-  );
 }
 
 function StampCell({
@@ -178,7 +116,6 @@ export default function PasaporteBookMobile({
   totalStamps,
   uniqueStamped,
   totalRestaurants,
-  tierLabel,
   tierId,
   progress,
   stampFlashId,
@@ -192,7 +129,6 @@ export default function PasaporteBookMobile({
   totalStamps: number;
   uniqueStamped: number;
   totalRestaurants: number;
-  tierLabel: string;
   tierId: "turista" | "poblano";
   progress: number;
   stampFlashId: number | null;
@@ -326,7 +262,6 @@ export default function PasaporteBookMobile({
   /* —— Portada: 50% identidad / 50% 4 sellos —— */
   const renderCover = () => (
     <section className="relative isolate h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden">
-      <PaperSecurityPattern />
       <div className="relative z-10 h-1/2 min-h-0 flex flex-col border-b border-[#d9cdb3]/80 pb-2 overflow-y-auto">
         <div className="flex items-start justify-between gap-3 shrink-0">
           <div>
@@ -366,28 +301,11 @@ export default function PasaporteBookMobile({
           </div>
 
           <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_5rem] gap-x-2.5 gap-y-1.5 content-start pt-0.5">
-            <div className="space-y-1.5">
-              <div>
-                <p className="passport-label">Nombre</p>
-                <p className="passport-value text-[13px] leading-snug mt-0.5 break-words">
-                  {userName}
-                </p>
-              </div>
-              <div>
-                <p className="passport-label">Temporada</p>
-                <p className="passport-value text-[11px] mt-0.5">Chiles en Nogada</p>
-              </div>
-              <div>
-                <p className="passport-label">Rango</p>
-                <p
-                  className={`passport-value text-[11px] mt-0.5 flex items-center gap-1 ${
-                    tierId === "poblano" ? "text-amber-900" : ""
-                  }`}
-                >
-                  {tierId === "poblano" && <span aria-hidden>★</span>}
-                  {tierLabel.toUpperCase()}
-                </p>
-              </div>
+            <div>
+              <p className="passport-label">Nombre</p>
+              <p className="passport-value text-[13px] leading-snug mt-0.5 break-words">
+                {userName}
+              </p>
             </div>
             <div className="space-y-1.5 pl-2 border-l border-[#d9cdb3]/70">
               <div>
@@ -400,17 +318,13 @@ export default function PasaporteBookMobile({
                   {uniqueStamped}/{totalRestaurants}
                 </p>
               </div>
-              <div>
-                <p className="passport-label">Progreso</p>
-                <p className="passport-value text-[11px] mt-0.5">{progress}%</p>
-              </div>
             </div>
           </div>
         </div>
 
-        <div className="shrink-0 mt-auto pt-1 space-y-1">
+        <div className="shrink-0 mt-auto pt-1.5 space-y-1">
+          <PassportProgressBar progress={progress} tierId={tierId} />
           <PassportLeaderLine names={leaderNames} className="text-[10px]" />
-          <PassportProgressTrack animatedProgress={progress} tierId={tierId} />
         </div>
       </div>
 
@@ -467,7 +381,6 @@ export default function PasaporteBookMobile({
       <section
         className={`relative isolate h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden`}
       >
-        <PaperSecurityPattern />
         <div className="relative z-10 shrink-0 flex items-center justify-between border-b border-[#d9cdb3]/70 pb-2 mb-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Sellos</p>
           <p className="text-[10px] font-passport-mrz text-stone-400 tabular-nums">
