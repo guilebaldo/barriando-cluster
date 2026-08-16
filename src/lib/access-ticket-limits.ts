@@ -1,27 +1,24 @@
 import { prisma } from "@/lib/prisma";
 
-/** Máximo de boletos de acceso por cuenta de usuario. */
-export const MAX_ACCESS_TICKETS_PER_USER = 2;
+/** Máximo de boletos de acceso por usuario y evento. */
+export const MAX_ACCESS_TICKETS_PER_EVENT = 2;
 
-export async function countUserAccessTickets(userId: string): Promise<number> {
-  return prisma.accessTicket.count({ where: { userId } });
+export async function countUserAccessTicketsForEvent(
+  userId: string,
+  eventId: string
+): Promise<number> {
+  return prisma.accessTicket.count({ where: { userId, eventId } });
 }
 
 export async function assertUserCanAcquireAccessTicket(
   userId: string,
   eventId: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const [owned, forEvent] = await Promise.all([
-    prisma.accessTicket.count({ where: { userId } }),
-    prisma.accessTicket.count({ where: { userId, eventId } }),
-  ]);
-  if (forEvent > 0) {
-    return { ok: false, error: "Ya tienes un pase para este evento." };
-  }
-  if (owned >= MAX_ACCESS_TICKETS_PER_USER) {
+  const forEvent = await prisma.accessTicket.count({ where: { userId, eventId } });
+  if (forEvent >= MAX_ACCESS_TICKETS_PER_EVENT) {
     return {
       ok: false,
-      error: `Solo puedes tener hasta ${MAX_ACCESS_TICKETS_PER_USER} pases por cuenta.`,
+      error: `Solo puedes tener hasta ${MAX_ACCESS_TICKETS_PER_EVENT} pases por evento.`,
     };
   }
   return { ok: true };

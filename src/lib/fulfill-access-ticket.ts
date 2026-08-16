@@ -46,24 +46,14 @@ export async function fulfillAccessTicketCheckout(session: Stripe.Checkout.Sessi
       return;
     }
 
-    const userOwned = await tx.accessTicket.count({ where: { userId } });
-    const { MAX_ACCESS_TICKETS_PER_USER } = await import("@/lib/access-ticket-limits");
-    if (order.tickets.length === 0 && userOwned >= MAX_ACCESS_TICKETS_PER_USER) {
+    const { MAX_ACCESS_TICKETS_PER_EVENT } = await import("@/lib/access-ticket-limits");
+    const forEvent = await tx.accessTicket.count({ where: { userId, eventId } });
+    if (order.tickets.length === 0 && forEvent >= MAX_ACCESS_TICKETS_PER_EVENT) {
       await tx.ticketOrder.update({
         where: { id: orderId },
         data: { status: "cancelled", stripeCheckoutSessionId: sessionId },
       });
-      console.warn("[stripe] access ticket: límite pases/cuenta", orderId, userId);
-      return;
-    }
-
-    const already = await tx.accessTicket.count({ where: { userId, eventId } });
-    if (order.tickets.length === 0 && already > 0) {
-      await tx.ticketOrder.update({
-        where: { id: orderId },
-        data: { status: "cancelled", stripeCheckoutSessionId: sessionId },
-      });
-      console.warn("[stripe] access ticket: ya tiene boleto del evento", orderId);
+      console.warn("[stripe] access ticket: límite pases/evento", orderId, userId, eventId);
       return;
     }
 

@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type PointerEvent, type TouchEvent } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import QRCode from "qrcode";
-import { Ticket } from "lucide-react";
-import { createAccessTicketCredential } from "@/app/pases/actions";
+import { Ticket, Trash2 } from "lucide-react";
+import {
+  createAccessTicketCredential,
+  deleteAccessTicket,
+} from "@/app/pases/actions";
 import { formatAccessWhen, type AccessTicketCard } from "@/lib/access-events";
 
 const SWIPE_OFFSET = 72;
@@ -22,17 +26,28 @@ function wrapIndex(index: number, length: number): number {
   return ((index % length) + length) % length;
 }
 
-/**
- * Mis pases: con máx. 2 boletos, el swipe horizontal (como planes) encaja bien —
- * un QR grande por tarjeta y deslizar entre ellos.
- */
+function stopDragProps() {
+  return {
+    onPointerDown: (e: PointerEvent) => {
+      e.stopPropagation();
+    },
+    onTouchStart: (e: TouchEvent) => {
+      e.stopPropagation();
+    },
+  };
+}
+
+/** Mis pases: swipe horizontal entre boletos (máx. 2 por evento). */
 export default function MisPasesList({ tickets }: { tickets: AccessTicketCard[] }) {
   const [[page, direction], setPage] = useState([0, 0]);
   const ticketsKey = tickets.map((t) => t.id).join(",");
 
   useEffect(() => {
-    setPage([0, 0]);
-  }, [ticketsKey]);
+    setPage(([p]) => {
+      if (tickets.length === 0) return [0, 0];
+      return [wrapIndex(p, tickets.length), 0];
+    });
+  }, [ticketsKey, tickets.length]);
 
   if (tickets.length === 0) {
     return (
@@ -134,7 +149,7 @@ export default function MisPasesList({ tickets }: { tickets: AccessTicketCard[] 
               {index + 1} / {tickets.length}
             </p>
           </div>
-          <p className="text-[11px] text-slate-400">Desliza para ver el otro pase</p>
+          <p className="text-[11px] text-slate-400">Desliza para ver otro pase</p>
         </div>
       ) : null}
     </div>
@@ -142,12 +157,16 @@ export default function MisPasesList({ tickets }: { tickets: AccessTicketCard[] 
 }
 
 function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
+  const router = useRouter();
+  const stopDrag = stopDragProps();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(!ticket.redeemedAt);
   const [error, setError] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [expiresAtMs, setExpiresAtMs] = useState<number | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (ticket.redeemedAt) {
@@ -203,6 +222,23 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
     setRefreshKey((key) => key + 1);
   }, [expiresAtMs, loading, secondsLeft]);
 
+  async function onDelete() {
+    if (deleting || ticket.redeemedAt) return;
+    const ok = window.confirm(
+      `¿Borrar el pase de “${ticket.event.title}”? Podrás obtener otro si aún hay cupo.`
+    );
+    if (!ok) return;
+    setDeleting(true);
+    setDeleteError(null);
+    const result = await deleteAccessTicket(ticket.id);
+    if (!result.ok) {
+      setDeleteError(result.error);
+      setDeleting(false);
+      return;
+    }
+    router.refresh();
+  }
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center select-none">
       <p className="text-sm font-semibold text-[#27366D] leading-snug font-sans">{ticket.event.title}</p>
@@ -236,6 +272,21 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
           <p className="mt-1 text-[11px] text-slate-500">Muéstralo en la entrada. Un solo uso.</p>
         </>
       )}
+
+      {!ticket.redeemedAt ? (
+        <div className="mt-4" {...stopDrag}>
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={() => void onDelete()}
+            className="inline-flex w-full items-center justify-center gap-2 border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-60 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-xl transition"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {deleting ? "Borrando…" : "Borrar pase"}
+          </button>
+          {deleteError ? <p className="mt-2 text-xs text-red-700">{deleteError}</p> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

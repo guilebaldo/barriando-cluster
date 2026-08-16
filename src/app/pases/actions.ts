@@ -71,14 +71,10 @@ async function claimCourtesyTicket(
       if (close.getTime() < Date.now()) {
         throw new Error("ENDED");
       }
-      const { MAX_ACCESS_TICKETS_PER_USER } = await import("@/lib/access-ticket-limits");
-      const owned = await tx.accessTicket.count({ where: { userId } });
-      if (owned >= MAX_ACCESS_TICKETS_PER_USER) {
-        throw new Error("USER_LIMIT");
-      }
-      const already = await tx.accessTicket.count({ where: { userId, eventId } });
-      if (already > 0) {
-        throw new Error("ALREADY");
+      const { MAX_ACCESS_TICKETS_PER_EVENT } = await import("@/lib/access-ticket-limits");
+      const forEvent = await tx.accessTicket.count({ where: { userId, eventId } });
+      if (forEvent >= MAX_ACCESS_TICKETS_PER_EVENT) {
+        throw new Error("EVENT_LIMIT");
       }
       const sold = await tx.accessTicket.count({ where: { eventId } });
       if (event.capacity != null && sold >= event.capacity) {
@@ -107,11 +103,8 @@ async function claimCourtesyTicket(
     if (error instanceof Error && error.message === "ENDED") {
       return { ok: false, error: "Este evento ya terminó." };
     }
-    if (error instanceof Error && error.message === "USER_LIMIT") {
-      return { ok: false, error: "Solo puedes tener hasta 2 pases por cuenta." };
-    }
-    if (error instanceof Error && error.message === "ALREADY") {
-      return { ok: false, error: "Ya tienes un pase para este evento." };
+    if (error instanceof Error && error.message === "EVENT_LIMIT") {
+      return { ok: false, error: "Solo puedes tener hasta 2 pases por evento." };
     }
     return { ok: false, error: "No se pudo obtener el pase." };
   }
@@ -248,5 +241,44 @@ export async function confirmAccessTicketRedemption(
       return { ok: false, error: "Inicia sesión para validar el pase." };
     }
     return { ok: false, error: "No se pudo confirmar el pase." };
+  }
+}
+
+/** Elimina un pase propio (libera cupo del evento para esa cuenta). */
+export async function deleteAccessTicket(
+  ticketId: string
+): Promise<PaseActionResult> {
+  try {
+    const session = await requireSession();
+    const limited = await rateLimit({
+      bucketKey: `pase-delete:user:${session.id}`,
+      limit: 20,
+      windowSeconds: 60 * 10,
+    });
+    if (!limited.ok) {
+      return { ok: false, error: "Demasiados intentos. Espera un momento." };
+    }
+
+    const ticket = await prisma.accessTicket.findUnique({
+      where: { id: ticketId },
+      select: { id: true, userId: true, redeemedAt: true },
+    });
+    if (!ticket || ticket.userId !== session.id) {
+      return { ok: false, error: "No encontramos ese pase." };
+    }
+    if (ticket.redeemedAt) {
+      return { ok: false, error: "No puedes borrar un pase que ya fue usado." };
+    }
+
+    await prisma.accessTicket.delete({ where: { id: ticket.id } });
+    revalidatePath("/pases");
+    revalidatePath("/pases/mios");
+    revalidatePath("/barrid");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    return { ok: false, error: "No se pudo borrar el pase." };
   }
 }
