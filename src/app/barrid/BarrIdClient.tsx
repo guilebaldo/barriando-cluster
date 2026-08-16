@@ -37,6 +37,11 @@ type BarrIdClientProps = {
   initialSheetExpanded?: boolean;
   events: AccessEventCard[];
   paseNotice?: "ok" | "cancelado" | null;
+  /**
+   * home: móvil = pases + BarrID; escritorio lo pinta la página /pases.
+   * credential: destino del nombre de usuario (QR / ficha de cuenta).
+   */
+  variant?: "home" | "credential";
 };
 
 function formatCountdown(totalSeconds: number): string {
@@ -259,8 +264,13 @@ export default function BarrIdClient(props: BarrIdClientProps) {
   const touchStartY = useRef<number | null>(null);
   const appShell = useAppMobileShell();
   const canRedeem = props.canRedeemCoupons;
+  const variant = props.variant ?? "credential";
+  const showMobilePases = variant === "home";
+  const showDesktopCredential = variant === "credential";
 
-  const [sheetExpanded, setSheetExpanded] = useState(Boolean(props.initialSheetExpanded));
+  const [sheetExpanded, setSheetExpanded] = useState(
+    () => Boolean(props.initialSheetExpanded) || variant === "credential"
+  );
   const [eventDetailOpen, setEventDetailOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [credError, setCredError] = useState<string | null>(null);
@@ -360,171 +370,178 @@ export default function BarrIdClient(props: BarrIdClientProps) {
     <>
       <AddToHomeScreenModal userId={props.user.id} eligible={Boolean(props.isFirstLoginUser)} />
 
-      {/* —— Móvil: Pases + ficha azul —— */}
+      {/* —— Móvil —— */}
       <div className="md:hidden relative h-full w-full overflow-hidden overscroll-none">
-        <div
-          className={`absolute inset-0 flex flex-col px-4 pointer-events-none ${
-            eventDetailOpen
-              ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-3"
-              : appShell
-                ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
-                : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
-          }`}
-        >
-          <div className="flex-1 min-h-0 pointer-events-auto pt-2">
-            <PasesMarketplace
-              events={props.events}
-              notice={props.paseNotice}
-              onEventDetailChange={setEventDetailOpen}
-            />
-          </div>
-        </div>
-        {!eventDetailOpen ? (
-        <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
+        {showMobilePases ? (
           <div
-            ref={sheetRef}
-            className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] transition-[max-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              sheetExpanded
-                ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)]"
-                : "max-h-[6.25rem]"
+            className={`absolute inset-0 flex flex-col px-4 pointer-events-none ${
+              eventDetailOpen
+                ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-3"
+                : appShell
+                  ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
+                  : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
             }`}
-            onTouchStart={onSheetTouchStart}
-            onTouchEnd={onSheetTouchEnd}
           >
-            <button
-              type="button"
-              onClick={() => setSheetExpanded((v) => !v)}
-              className={`w-full flex justify-center touch-manipulation shrink-0 ${
-                sheetExpanded ? "pt-3 pb-2 border-b border-white/15" : "pt-3 pb-2"
-              }`}
-              aria-expanded={sheetExpanded}
-              aria-label={sheetExpanded ? "Ocultar ficha" : "Mostrar ficha"}
-            >
-              <span className="w-12 h-1.5 rounded-full bg-white/45" />
-            </button>
+            <div className="flex-1 min-h-0 pointer-events-auto pt-2">
+              <PasesMarketplace
+                events={props.events}
+                notice={props.paseNotice}
+                onEventDetailChange={setEventDetailOpen}
+              />
+            </div>
+          </div>
+        ) : null}
 
-            {!sheetExpanded && (
+        {(!eventDetailOpen || !showMobilePases) ? (
+          <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
+            <div
+              ref={sheetRef}
+              className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] transition-[max-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                sheetExpanded
+                  ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)]"
+                  : "max-h-[6.25rem]"
+              }`}
+              onTouchStart={onSheetTouchStart}
+              onTouchEnd={onSheetTouchEnd}
+            >
               <button
                 type="button"
-                onClick={() => setSheetExpanded(true)}
-                className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
+                onClick={() => setSheetExpanded((v) => !v)}
+                className={`w-full flex justify-center touch-manipulation shrink-0 ${
+                  sheetExpanded ? "pt-3 pb-2 border-b border-white/15" : "pt-3 pb-2"
+                }`}
+                aria-expanded={sheetExpanded}
+                aria-label={sheetExpanded ? "Ocultar ficha" : "Mostrar ficha"}
               >
-                <p className="text-sm font-bold tracking-widest text-amber-300">
-                  BarrID
-                </p>
+                <span className="w-12 h-1.5 rounded-full bg-white/45" />
               </button>
-            )}
 
-            {sheetExpanded ? (
-              <div className="overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5">
-                {canRedeem ? (
-                  <QrPanel
-                    sizeClass="w-[min(68vw,16rem)] h-[min(68vw,16rem)] mx-auto"
-                    textSize="text-xs"
-                    qrDataUrl={qrDataUrl}
-                    loadingCred={loadingCred}
-                    credError={credError}
-                    countdown={
-                      expiresAtMs && !credError ? (
-                        <p className="font-semibold tabular-nums text-amber-200 text-sm" aria-live="polite">
-                          Válido por {formatCountdown(secondsLeft)}
-                        </p>
-                      ) : loadingCred && qrDataUrl ? (
-                        <p className="font-medium text-slate-300 text-sm">Actualizando…</p>
-                      ) : null
-                    }
-                  />
-                ) : (
-                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-center space-y-3">
-                    <p className="text-sm font-semibold text-white">Membresía Vecino</p>
-                    <p className="text-xs text-slate-300 font-light leading-relaxed">
-                      Contrata Vecino para canjear cupones en los negocios del barrio con tu
-                      BarrID.
-                    </p>
-                    <PlanIntentCta
-                      plan="VECINO"
-                      className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
+              {!sheetExpanded && (
+                <button
+                  type="button"
+                  onClick={() => setSheetExpanded(true)}
+                  className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
+                >
+                  <p className="text-sm font-bold tracking-widest text-amber-300">BarrID</p>
+                </button>
+              )}
+
+              {sheetExpanded ? (
+                <div className="overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5">
+                  {canRedeem ? (
+                    <QrPanel
+                      sizeClass="w-[min(68vw,16rem)] h-[min(68vw,16rem)] mx-auto"
+                      textSize="text-xs"
+                      qrDataUrl={qrDataUrl}
+                      loadingCred={loadingCred}
+                      credError={credError}
+                      countdown={
+                        expiresAtMs && !credError ? (
+                          <p className="font-semibold tabular-nums text-amber-200 text-sm" aria-live="polite">
+                            Válido por {formatCountdown(secondsLeft)}
+                          </p>
+                        ) : loadingCred && qrDataUrl ? (
+                          <p className="font-medium text-slate-300 text-sm">Actualizando…</p>
+                        ) : null
+                      }
+                    />
+                  ) : (
+                    <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-center space-y-3">
+                      <p className="text-sm font-semibold text-white">Membresía Vecino</p>
+                      <p className="text-xs text-slate-300 font-light leading-relaxed">
+                        Contrata Vecino para canjear cupones en los negocios del barrio con tu BarrID.
+                      </p>
+                      <PlanIntentCta
+                        plan="VECINO"
+                        className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
+                      >
+                        Ser Vecino · {formatPlanPriceMxn("VECINO")}
+                      </PlanIntentCta>
+                    </div>
+                  )}
+
+                  <MiCuentaProfileLink user={props.user} compact />
+                  <MisPasesSection compact />
+
+                  <p className="pt-1 pb-2 text-center">
+                    <a
+                      href="https://guilebaldo.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[9px] tracking-wide text-white/30 hover:text-white/50 transition"
                     >
-                      Ser Vecino · {formatPlanPriceMxn("VECINO")}
-                    </PlanIntentCta>
-                  </div>
-                )}
-
-                <MiCuentaProfileLink user={props.user} compact />
-
-                <MisPasesSection compact />
-
-                <p className="pt-1 pb-2 text-center">
-                  <a
-                    href="https://guilebaldo.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[9px] tracking-wide text-white/30 hover:text-white/50 transition"
-                  >
-                    Powered by GURU Software Studio
-                  </a>
-                </p>
-              </div>
-            ) : null}
+                      Powered by GURU Software Studio
+                    </a>
+                  </p>
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
         ) : null}
       </div>
 
-      {/* —— Escritorio: QR + ficha —— */}
-      <div className="hidden md:block max-w-5xl mx-auto w-full px-6 lg:px-8 py-10 lg:py-14">
-        <div className="grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
-          {canRedeem ? (
-            <QrPanel
-              sizeClass="w-72 h-72 lg:w-80 lg:h-80"
-              textSize="text-sm"
-              qrDataUrl={qrDataUrl}
-              loadingCred={loadingCred}
-              credError={credError}
-              countdown={
-                expiresAtMs && !credError ? (
-                  <p className="mt-1 font-semibold tabular-nums text-[#27366D] text-base" aria-live="polite">
-                    Válido por {formatCountdown(secondsLeft)}
-                  </p>
-                ) : loadingCred && qrDataUrl ? (
-                  <p className="mt-1 font-medium text-slate-500 text-base">Actualizando…</p>
-                ) : null
-              }
-              showHint
-            />
-          ) : (
-            <VecinoUpsellPanel sizeClass="w-72 min-h-72 lg:w-80 lg:min-h-80" textSize="text-base" />
-          )}
-          <div className="space-y-5">
-            <StatusCard {...props} />
+      {/* —— Escritorio: solo credencial BarrID (los pases viven en /pases) —— */}
+      {showDesktopCredential ? (
+        <div className="hidden md:block max-w-5xl mx-auto w-full px-6 lg:px-8 py-10 lg:py-14">
+          <div className="grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-8 lg:gap-12 items-start">
             {canRedeem ? (
+              <QrPanel
+                sizeClass="w-72 h-72 lg:w-80 lg:h-80"
+                textSize="text-sm"
+                qrDataUrl={qrDataUrl}
+                loadingCred={loadingCred}
+                credError={credError}
+                countdown={
+                  expiresAtMs && !credError ? (
+                    <p className="mt-1 font-semibold tabular-nums text-[#27366D] text-base" aria-live="polite">
+                      Válido por {formatCountdown(secondsLeft)}
+                    </p>
+                  ) : loadingCred && qrDataUrl ? (
+                    <p className="mt-1 font-medium text-slate-500 text-base">Actualizando…</p>
+                  ) : null
+                }
+                showHint
+              />
+            ) : (
+              <VecinoUpsellPanel sizeClass="w-72 min-h-72 lg:w-80 lg:min-h-80" textSize="text-base" />
+            )}
+            <div className="space-y-5">
+              <StatusCard {...props} />
+              {canRedeem ? (
+                <Link
+                  href="/cuponera?cupones=1"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
+                >
+                  <Gift className="w-5 h-5" />
+                  Mis Cupones
+                </Link>
+              ) : null}
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href="/pasaporte"
+                  className="inline-flex items-center justify-center gap-2 border border-[#27366D]/20 text-[#27366D] font-bold text-xs uppercase tracking-wider px-4 py-3.5 rounded-xl hover:bg-slate-50 transition"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  Pasaporte
+                </Link>
+                <Link
+                  href="/mapa"
+                  className="inline-flex items-center justify-center gap-2 border border-[#27366D]/20 text-[#27366D] font-bold text-xs uppercase tracking-wider px-4 py-3.5 rounded-xl hover:bg-slate-50 transition"
+                >
+                  <MapIcon className="w-4 h-4" />
+                  MAPA
+                </Link>
+              </div>
               <Link
-                href="/cuponera?cupones=1"
-                className="w-full inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm uppercase tracking-wider px-6 py-4 rounded-xl transition shadow-sm"
+                href="/pases"
+                className="inline-flex w-full items-center justify-center gap-2 border border-[#27366D]/20 text-[#27366D] font-bold text-xs uppercase tracking-wider px-4 py-3.5 rounded-xl hover:bg-slate-50 transition"
               >
-                <Gift className="w-5 h-5" />
-                Mis Cupones
-              </Link>
-            ) : null}
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                href="/pasaporte"
-                className="inline-flex items-center justify-center gap-2 border border-[#27366D]/20 text-[#27366D] font-bold text-xs uppercase tracking-wider px-4 py-3.5 rounded-xl hover:bg-slate-50 transition"
-              >
-                <BookOpen className="w-4 h-4" />
-                Pasaporte
-              </Link>
-              <Link
-                href="/mapa"
-                className="inline-flex items-center justify-center gap-2 border border-[#27366D]/20 text-[#27366D] font-bold text-xs uppercase tracking-wider px-4 py-3.5 rounded-xl hover:bg-slate-50 transition"
-              >
-                <MapIcon className="w-4 h-4" />
-                MAPA
+                Ver pases
               </Link>
             </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </>
   );
 }

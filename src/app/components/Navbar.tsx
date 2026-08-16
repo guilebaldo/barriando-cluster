@@ -47,11 +47,9 @@ const PASAPORTE_LINK: NavLink = {
 /** Visitante: Inicio → Equipo → Socios → Pases → Pasaporte → MAPA. Logueado: app útil. */
 function getNavLinks(isAuthenticated: boolean): NavLink[] {
   const pases: NavLink = {
-    href: isAuthenticated ? "/barrid" : "/pases",
+    href: "/pases",
     label: "Pases",
     isActive: (pathname) =>
-      pathname === "/barrid" ||
-      pathname.startsWith("/barrid/") ||
       pathname === "/pases" ||
       pathname === "/pases/mios" ||
       (pathname.startsWith("/pases/") && !pathname.startsWith("/pases/verificar")),

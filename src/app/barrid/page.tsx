@@ -113,6 +113,7 @@ export default async function BarrIdPage({
       <Navbar />
       <main className="flex-1 min-h-0 relative overflow-hidden md:overflow-visible md:h-auto">
         <BarrIdClient
+          variant="credential"
           user={{
             id: session.id,
             nombre: user?.nombre?.trim() || session.nombre || "Socio",
@@ -129,7 +130,7 @@ export default async function BarrIdPage({
           progress={progress}
           canRedeemCoupons={canRedeemCoupons}
           isFirstLoginUser={isFirstLoginAccount(user?.createdAt)}
-          initialSheetExpanded={params.ficha === "1"}
+          initialSheetExpanded
           events={events}
           paseNotice={params.pase === "cancelado" ? params.pase : null}
         />
