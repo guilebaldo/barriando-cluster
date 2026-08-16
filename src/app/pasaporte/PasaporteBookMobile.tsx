@@ -300,14 +300,14 @@ export default function PasaporteBookMobile({
             )}
           </div>
 
-          <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_5rem] gap-x-2.5 gap-y-1.5 content-start pt-0.5">
+          <div className="flex-1 min-w-0 space-y-1.5 content-start pt-0.5">
             <div>
               <p className="passport-label">Nombre</p>
               <p className="passport-value text-[13px] leading-snug mt-0.5 break-words">
                 {userName}
               </p>
             </div>
-            <div className="space-y-1.5 pl-2 border-l border-[#d9cdb3]/70">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
               <div>
                 <p className="passport-label">Sellos</p>
                 <p className="passport-value text-[11px] mt-0.5">{totalStamps}</p>

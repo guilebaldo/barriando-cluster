@@ -661,7 +661,7 @@ function PasaporteInner({
 
               <div
                 ref={previewFieldsRef}
-                className="flex-1 min-w-0 grid grid-cols-[minmax(0,1fr)_6.75rem] sm:grid-cols-[minmax(0,1fr)_7.5rem] gap-x-5 gap-y-2.5 pt-0.5 items-start"
+                className="flex-1 min-w-0 space-y-2.5 pt-0.5"
               >
                 <div>
                   <p className="passport-label">Nombre</p>
@@ -669,8 +669,7 @@ function PasaporteInner({
                     <TypewriterValue text={displayName} isTyping={isPreview && previewScroll.isTypingName} />
                   </p>
                 </div>
-
-                <div className="space-y-2.5 pt-0.5 pl-3 border-l border-[#d9cdb3]/70">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                   <div>
                     <p className="passport-label">Sellos</p>
                     <p className="passport-value text-[11px] sm:text-xs mt-0.5">{displayStats.stamps}</p>
