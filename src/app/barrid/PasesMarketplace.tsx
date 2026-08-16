@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Ticket,
   MapPin,
@@ -66,10 +66,13 @@ export default function PasesMarketplace({
   events,
   notice,
   signedIn = true,
+  onEventDetailChange,
 }: {
   events: AccessEventCard[];
   notice?: "ok" | "cancelado" | null;
   signedIn?: boolean;
+  /** En /barrid: avisa cuando hay ficha de evento abierta (para ocultar BarrID). */
+  onEventDetailChange?: (open: boolean) => void;
 }) {
   const [view, setView] = useState<CatalogView>("lista");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -82,6 +85,11 @@ export default function PasesMarketplace({
     () => events.find((event) => event.id === selectedId) ?? null,
     [events, selectedId]
   );
+
+  useEffect(() => {
+    onEventDetailChange?.(selectedId != null);
+    return () => onEventDetailChange?.(false);
+  }, [selectedId, onEventDetailChange]);
 
   async function buy(eventId: string) {
     if (!signedIn) {
@@ -501,7 +509,7 @@ function EventDetail({
   const canBuy = !ended && !soldOut;
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-6">
       <button
         type="button"
         onClick={onBack}

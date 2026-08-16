@@ -261,12 +261,17 @@ export default function BarrIdClient(props: BarrIdClientProps) {
   const canRedeem = props.canRedeemCoupons;
 
   const [sheetExpanded, setSheetExpanded] = useState(Boolean(props.initialSheetExpanded));
+  const [eventDetailOpen, setEventDetailOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [credError, setCredError] = useState<string | null>(null);
   const [loadingCred, setLoadingCred] = useState(canRedeem);
   const [expiresAtMs, setExpiresAtMs] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (eventDetailOpen) setSheetExpanded(false);
+  }, [eventDetailOpen]);
 
   useEffect(() => {
     if (!canRedeem) {
@@ -359,18 +364,22 @@ export default function BarrIdClient(props: BarrIdClientProps) {
       <div className="md:hidden relative h-full w-full overflow-hidden overscroll-none">
         <div
           className={`absolute inset-0 flex flex-col px-4 pointer-events-none ${
-            appShell
-              ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
-              : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
+            eventDetailOpen
+              ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-3"
+              : appShell
+                ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
+                : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
           }`}
         >
           <div className="flex-1 min-h-0 pointer-events-auto pt-2">
             <PasesMarketplace
               events={props.events}
               notice={props.paseNotice}
+              onEventDetailChange={setEventDetailOpen}
             />
           </div>
         </div>
+        {!eventDetailOpen ? (
         <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
           <div
             ref={sheetRef}
@@ -459,6 +468,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
             ) : null}
           </div>
         </div>
+        ) : null}
       </div>
 
       {/* —— Escritorio: QR + ficha —— */}
