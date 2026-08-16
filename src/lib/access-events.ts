@@ -72,19 +72,24 @@ export function accessEventPublicPath(eventId: string): string {
   return `/pases/${eventId}`;
 }
 
-/** Día de la semana completo + número grande + mes abreviado (lista). */
+/** Día de la semana + número + mes abreviado + hora (lista / ficha). */
 export function formatAccessEventDateParts(startsAt: string): {
   weekday: string;
   day: number;
   month: string;
+  time: string;
 } {
   const d = new Date(startsAt);
   const weekdayRaw = d.toLocaleDateString("es-MX", { weekday: "long" });
   const monthRaw = d.toLocaleDateString("es-MX", { month: "short" }).replace(/\./g, "");
+  const time = d
+    .toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
+    .replace(/\./g, "");
   return {
     weekday: capitalizeEs(weekdayRaw),
     day: d.getDate(),
     month: capitalizeEs(monthRaw),
+    time,
   };
 }
 

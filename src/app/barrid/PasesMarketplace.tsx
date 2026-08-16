@@ -47,17 +47,20 @@ function sortEventsChronological(events: AccessEventCard[]): AccessEventCard[] {
 }
 
 function EventDateBadge({ startsAt }: { startsAt: string }) {
-  const { weekday, day, month } = formatAccessEventDateParts(startsAt);
+  const { weekday, day, month, time } = formatAccessEventDateParts(startsAt);
   return (
     <div
-      className="shrink-0 w-[4.25rem] text-center rounded-xl bg-amber-50 border border-amber-200/80 px-1.5 py-2"
-      aria-label={`${weekday} ${day} de ${month}`}
+      className="shrink-0 w-[4.5rem] text-center rounded-xl bg-amber-50 border border-amber-200/80 px-1.5 py-2"
+      aria-label={`${weekday} ${day} de ${month}, ${time}`}
     >
       <p className="text-[10px] font-semibold capitalize leading-tight text-amber-800/90">{weekday}</p>
       <p className="mt-0.5 text-2xl font-black leading-none tabular-nums text-[#27366D] font-sans">
         {day}
       </p>
       <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">{month}</p>
+      <p className="mt-1 text-[10px] font-semibold tabular-nums leading-tight text-[#27366D]/80">
+        {time}
+      </p>
     </div>
   );
 }
@@ -250,10 +253,6 @@ function EventRow({
 }) {
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
-  const timeLabel = new Date(event.startsAt).toLocaleTimeString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm hover:border-amber-300/80 transition">
@@ -275,7 +274,6 @@ function EventRow({
               <span className="text-xs font-bold text-amber-700">
                 {formatAccessPriceMxn(event.priceCents)}
               </span>
-              <span className="text-[11px] text-slate-400">{timeLabel}</span>
               {ended ? (
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Finalizado

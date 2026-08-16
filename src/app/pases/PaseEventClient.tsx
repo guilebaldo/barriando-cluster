@@ -27,7 +27,7 @@ export default function PaseEventClient({
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
   const canBuy = !ended && !soldOut;
-  const { weekday, day, month } = formatAccessEventDateParts(event.startsAt);
+  const { weekday, day, month, time } = formatAccessEventDateParts(event.startsAt);
 
   async function buy() {
     if (!signedIn) {
@@ -67,7 +67,7 @@ export default function PaseEventClient({
           </div>
           <div
             className="shrink-0 w-[4.5rem] text-center rounded-xl bg-amber-50 border border-amber-200/80 px-1.5 py-2"
-            aria-label={`${weekday} ${day} de ${month}`}
+            aria-label={`${weekday} ${day} de ${month}, ${time}`}
           >
             <p className="text-[10px] font-semibold capitalize leading-tight text-amber-800/90">
               {weekday}
@@ -77,6 +77,9 @@ export default function PaseEventClient({
             </p>
             <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
               {month}
+            </p>
+            <p className="mt-1 text-[10px] font-semibold tabular-nums leading-tight text-[#27366D]/80">
+              {time}
             </p>
           </div>
         </div>
