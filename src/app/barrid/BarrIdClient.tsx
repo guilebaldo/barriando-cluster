@@ -429,7 +429,8 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                   <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-center space-y-3">
                     <p className="text-sm font-semibold text-white">Membresía Vecino</p>
                     <p className="text-xs text-slate-300 font-light leading-relaxed">
-                      Activa tu BarrID para canjear cupones en los negocios del barrio.
+                      Contrata Vecino para canjear cupones en los negocios del barrio con tu
+                      BarrID.
                     </p>
                     <PlanIntentCta
                       plan="VECINO"

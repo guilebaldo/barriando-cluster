@@ -7,8 +7,6 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { isAdminUser } from "@/lib/admin";
-import { isTuristaPlan } from "@/lib/membresia";
-import type { MembershipPlan } from "@/generated/prisma/client";
 import { resolvePostAuthHomePath } from "@/lib/post-auth-home";
 import { ONBOARDING_CONTINUE_PATH } from "@/lib/plan-routing";
 import { GoogleSignInButton } from "@/app/components/GoogleSignInButton";
@@ -49,9 +47,11 @@ const PASAPORTE_LINK: NavLink = {
 /** Visitante: Inicio → Equipo → Socios → Pases → Pasaporte → MAPA. Logueado: app útil. */
 function getNavLinks(isAuthenticated: boolean): NavLink[] {
   const pases: NavLink = {
-    href: "/pases",
+    href: isAuthenticated ? "/barrid" : "/pases",
     label: "Pases",
     isActive: (pathname) =>
+      pathname === "/barrid" ||
+      pathname.startsWith("/barrid/") ||
       pathname === "/pases" ||
       pathname === "/pases/mios" ||
       (pathname.startsWith("/pases/") && !pathname.startsWith("/pases/verificar")),
@@ -198,10 +198,8 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     email: session?.user?.email,
     role: session?.user?.role,
   });
-  const plan = (session?.user?.plan ?? "TURISTA") as MembershipPlan;
-  const isTurista = isTuristaPlan(plan);
-  // Desktop turista: nombre → BarrID (upsell Vecino). Resto → panel de cuenta.
-  const profileHref = isTurista ? "/barrid" : "/panel";
+  // Nombre → BarrID (ficha con Mi cuenta, Mis pases, upsell Vecino). Panel queda en Mi cuenta.
+  const profileHref = "/barrid";
   const panelHref = "/panel";
 
   useEffect(() => {

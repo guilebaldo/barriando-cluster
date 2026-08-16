@@ -170,8 +170,8 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
 
 /**
  * Tras autenticación (login sin callbackUrl profundo):
- * admin / socio → /pases · pendientes de pago → /panel
- * (BarrID sigue en el hub / ficha)
+ * admin / socio → /barrid · pendientes de pago → /panel
+ * (BarrID: lista de pases + ficha de cuenta para todos los planes)
  */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
@@ -188,7 +188,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   const role = session.user.role;
 
   if (isAdminUser({ email, role })) {
-    redirect("/pases");
+    redirect("/barrid");
   }
 
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {

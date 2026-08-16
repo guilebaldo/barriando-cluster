@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import SiteShell from "../components/SiteShell";
@@ -20,26 +20,23 @@ export default async function PasesPage({
 }) {
   const params = await searchParams;
   const session = await getSession();
+
+  // Con sesión, la lista vive en /barrid junto a la ficha BarrID (todos los planes).
+  if (session) {
+    const q = params.pase === "cancelado" ? "?pase=cancelado" : "";
+    redirect(`/barrid${q}`);
+  }
+
   const events = await listPublishedAccessEvents();
 
   return (
     <SiteShell>
       <Navbar />
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
-        {session ? (
-          <div className="mb-4 flex justify-end">
-            <Link
-              href="/pases/mios"
-              className="text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
-            >
-              Mis pases
-            </Link>
-          </div>
-        ) : null}
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-8 md:py-12">
         <PasesMarketplace
           events={events}
           notice={params.pase === "cancelado" ? "cancelado" : null}
-          signedIn={Boolean(session)}
+          signedIn={false}
         />
       </main>
       <Footer />

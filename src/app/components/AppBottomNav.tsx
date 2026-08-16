@@ -39,15 +39,15 @@ const TABS = [
     primary: true as const,
   },
   {
-    href: "/pases",
+    href: "/barrid",
     label: "Pases",
     icon: Ticket,
     match: (p: string) =>
+      p === "/barrid" ||
+      p.startsWith("/barrid/") ||
       p === "/pases" ||
       p === "/pases/mios" ||
-      (p.startsWith("/pases/") && !p.startsWith("/pases/verificar")) ||
-      p === "/barrid" ||
-      p.startsWith("/barrid/"),
+      (p.startsWith("/pases/") && !p.startsWith("/pases/verificar")),
   },
   {
     href: "/pasaporte",

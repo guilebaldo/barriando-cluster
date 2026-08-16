@@ -21,7 +21,8 @@ export type PostAuthHomeUser = {
  * Default destination after login (or visiting /entrar while signed in).
  * Deep-link callbackUrls (sellar, cupones, etc.) override this elsewhere.
  *
- * Destino general (también PWA / standalone vía `/`) → /pases
+ * Destino general (también PWA / standalone vía `/`) → /barrid
+ *   (lista de pases + ficha BarrID: cuenta, mis pases, logout vía Mi cuenta, upsell Vecino)
  * Transferencia o OXXO en espera → /panel (mensaje de espera)
  * Soft unpaid (eligió plan sin checkout) → /panel (no atrapar en pago; CTAs retoman)
  * Plan de pago con checkout iniciado sin acceso → /certificacion/pago
@@ -29,7 +30,7 @@ export type PostAuthHomeUser = {
  * El flujo explícito a pago vive en select-plan / continueOnboardingAfterAuth.
  */
 export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
-  if (isAdminUser(user)) return "/pases";
+  if (isAdminUser(user)) return "/barrid";
 
   const { plan, subscriptionStatus: status, paymentMethod, stripeSubscriptionId } = user;
 
@@ -52,7 +53,7 @@ export function resolvePostAuthHomePath(user: PostAuthHomeUser): string {
     return "/certificacion/pago";
   }
 
-  return "/pases";
+  return "/barrid";
 }
 
 /** Same as home, with optional pago=exitoso for paid plan success hops. */
@@ -61,8 +62,8 @@ export function resolvePostAuthHomePathAfterPayment(user: PostAuthHomeUser): str
   if (home === "/panel" && hasCommercialAccess(user.plan, user.subscriptionStatus)) {
     return "/panel?pago=exitoso";
   }
-  if (home === "/pases" && hasCommercialAccess(user.plan, user.subscriptionStatus)) {
-    return "/pases?pago=exitoso";
+  if (home === "/barrid" && hasCommercialAccess(user.plan, user.subscriptionStatus)) {
+    return "/barrid?pago=exitoso";
   }
   return home;
 }

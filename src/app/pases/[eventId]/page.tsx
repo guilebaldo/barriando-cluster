@@ -38,7 +38,7 @@ export default async function PaseEventPage({ params }: PageProps) {
     return (
       <SiteShell>
         <Navbar />
-        <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+        <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-8 md:py-12">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm text-center space-y-3">
             <h1 className="text-xl font-black uppercase tracking-wide text-slate-950 font-sans">
               Pase no encontrado
@@ -47,7 +47,7 @@ export default async function PaseEventPage({ params }: PageProps) {
               Ese enlace ya no está disponible o el evento no está publicado.
             </p>
             <Link
-              href="/pases"
+              href={session ? "/barrid" : "/pases"}
               className="inline-flex text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
             >
               Ver pases
@@ -62,7 +62,7 @@ export default async function PaseEventPage({ params }: PageProps) {
   return (
     <SiteShell>
       <Navbar />
-      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-8 md:py-12">
         <PaseEventClient event={event} signedIn={Boolean(session)} />
       </main>
       <Footer />
