@@ -34,6 +34,10 @@ export async function startAccessTicketCheckout(
       return { ok: false, error: "Ese pase no está disponible." };
     }
 
+    const { assertUserCanAcquireAccessTicket } = await import("@/lib/access-ticket-limits");
+    const canBuy = await assertUserCanAcquireAccessTicket(session.id, eventId);
+    if (!canBuy.ok) return canBuy;
+
     if (event.priceCents <= 0) {
       const result = await claimCourtesyTicket(session.id, eventId);
       if (!result.ok) return result;
@@ -54,6 +58,10 @@ async function claimCourtesyTicket(
   eventId: string
 ): Promise<PaseActionResult> {
   try {
+    const { assertUserCanAcquireAccessTicket } = await import("@/lib/access-ticket-limits");
+    const canBuy = await assertUserCanAcquireAccessTicket(userId, eventId);
+    if (!canBuy.ok) return canBuy;
+
     await prisma.$transaction(async (tx) => {
       const event = await tx.accessEvent.findUnique({ where: { id: eventId } });
       if (!event || !event.published || event.priceCents > 0) {
@@ -62,6 +70,15 @@ async function claimCourtesyTicket(
       const close = event.endsAt ?? event.startsAt;
       if (close.getTime() < Date.now()) {
         throw new Error("ENDED");
+      }
+      const { MAX_ACCESS_TICKETS_PER_USER } = await import("@/lib/access-ticket-limits");
+      const owned = await tx.accessTicket.count({ where: { userId } });
+      if (owned >= MAX_ACCESS_TICKETS_PER_USER) {
+        throw new Error("USER_LIMIT");
+      }
+      const already = await tx.accessTicket.count({ where: { userId, eventId } });
+      if (already > 0) {
+        throw new Error("ALREADY");
       }
       const sold = await tx.accessTicket.count({ where: { eventId } });
       if (event.capacity != null && sold >= event.capacity) {
@@ -89,6 +106,12 @@ async function claimCourtesyTicket(
     }
     if (error instanceof Error && error.message === "ENDED") {
       return { ok: false, error: "Este evento ya terminó." };
+    }
+    if (error instanceof Error && error.message === "USER_LIMIT") {
+      return { ok: false, error: "Solo puedes tener hasta 2 pases por cuenta." };
+    }
+    if (error instanceof Error && error.message === "ALREADY") {
+      return { ok: false, error: "Ya tienes un pase para este evento." };
     }
     return { ok: false, error: "No se pudo obtener el pase." };
   }

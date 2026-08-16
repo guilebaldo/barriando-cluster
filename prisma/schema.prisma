@@ -314,6 +314,8 @@ model AccessEvent {
   title       String
   description String   @default("")
   venue       String
+  latitude    Float?
+  longitude   Float?
   startsAt    DateTime
   endsAt      DateTime?
   /** Precio en centavos MXN. 0 = cortesía, sin Stripe. */

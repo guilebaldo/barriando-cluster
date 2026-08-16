@@ -3,6 +3,8 @@ export type AccessEventCard = {
   title: string;
   description: string;
   venue: string;
+  latitude: number | null;
+  longitude: number | null;
   startsAt: string;
   endsAt: string | null;
   priceCents: number;
@@ -34,21 +36,25 @@ export function formatAccessPriceMxn(priceCents: number): string {
 
 export function formatAccessWhen(startsAt: string, endsAt: string | null): string {
   const start = new Date(startsAt);
-  const startLabel = start.toLocaleString("es-MX", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const startLabel = start
+    .toLocaleString("es-MX", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(/\./g, "");
   if (!endsAt) return startLabel;
   const end = new Date(endsAt);
   const sameDay = start.toDateString() === end.toDateString();
-  const endLabel = end.toLocaleString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-    ...(sameDay ? {} : { day: "numeric", month: "short" }),
-  });
+  const endLabel = end
+    .toLocaleString("es-MX", {
+      hour: "2-digit",
+      minute: "2-digit",
+      ...(sameDay ? {} : { day: "numeric", month: "short" }),
+    })
+    .replace(/\./g, "");
   return `${startLabel} – ${endLabel}`;
 }
 
@@ -74,11 +80,11 @@ export function formatAccessEventDateParts(startsAt: string): {
 } {
   const d = new Date(startsAt);
   const weekdayRaw = d.toLocaleDateString("es-MX", { weekday: "long" });
-  const monthRaw = d.toLocaleDateString("es-MX", { month: "short" }).replace(/\.$/, "");
+  const monthRaw = d.toLocaleDateString("es-MX", { month: "short" }).replace(/\./g, "");
   return {
     weekday: capitalizeEs(weekdayRaw),
     day: d.getDate(),
-    month: `${capitalizeEs(monthRaw)}.`,
+    month: capitalizeEs(monthRaw),
   };
 }
 

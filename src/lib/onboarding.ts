@@ -170,8 +170,8 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
 
 /**
  * Tras autenticación (login sin callbackUrl profundo):
- * admin / socio de pago (negocio o vecino) → /panel · turista → /mapa
- * (BarrID sigue en el hub mobile)
+ * admin / socio → /pases · pendientes de pago → /panel
+ * (BarrID sigue en el hub / ficha)
  */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
@@ -188,7 +188,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
   const role = session.user.role;
 
   if (isAdminUser({ email, role })) {
-    redirect("/panel");
+    redirect("/pases");
   }
 
   if (sub && hasCommercialAccess(sub.plan, sub.status)) {

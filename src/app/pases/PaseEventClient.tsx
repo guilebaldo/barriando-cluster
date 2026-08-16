@@ -87,7 +87,12 @@ export default function PaseEventClient({
           {event.venue}
         </p>
 
-        <AccessEventMiniMap venue={event.venue} className="mt-4" />
+        <AccessEventMiniMap
+          venue={event.venue}
+          latitude={event.latitude}
+          longitude={event.longitude}
+          className="mt-4"
+        />
 
         {event.description ? (
           <p className="mt-4 text-sm text-slate-600 font-light leading-relaxed">{event.description}</p>

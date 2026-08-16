@@ -88,7 +88,7 @@ function MiCuentaProfileLink({
       </div>
       <div className="min-w-0 flex-1">
         <p
-          className={`font-bold uppercase tracking-widest ${
+          className={`font-bold tracking-widest ${
             compact ? "text-xs text-amber-300" : "text-[10px] text-amber-400"
           }`}
         >
@@ -400,7 +400,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
                 onClick={() => setSheetExpanded(true)}
                 className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
               >
-                <p className="text-sm font-bold uppercase tracking-widest text-amber-300">
+                <p className="text-sm font-bold tracking-widest text-amber-300">
                   BarrID
                 </p>
               </button>

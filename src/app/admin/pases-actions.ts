@@ -14,6 +14,8 @@ const accessEventSchema = z.object({
   title: z.string().trim().min(1, "Falta el título.").max(160),
   description: z.string().trim().max(2000).optional().default(""),
   venue: z.string().trim().min(1, "Falta el lugar.").max(200),
+  latitude: z.number().finite().nullable().optional(),
+  longitude: z.number().finite().nullable().optional(),
   startsAt: z.string().trim().min(1, "Falta la fecha de inicio."),
   endsAt: z.string().nullable().optional(),
   priceMxn: z.string().trim().min(1, "Falta el precio."),
@@ -74,12 +76,19 @@ export async function createAccessEvent(
     if (parsed.data.capacity?.trim() && capacity == null) {
       return { ok: false, error: "El cupo debe ser un número entero." };
     }
+    const latitude = parsed.data.latitude ?? null;
+    const longitude = parsed.data.longitude ?? null;
+    if ((latitude == null) !== (longitude == null)) {
+      return { ok: false, error: "Marca el lugar en el mapa (latitud y longitud juntas)." };
+    }
 
     const row = await prisma.accessEvent.create({
       data: {
         title: parsed.data.title,
         description: parsed.data.description,
         venue: parsed.data.venue,
+        latitude,
+        longitude,
         startsAt,
         endsAt,
         priceCents,
@@ -131,6 +140,11 @@ export async function updateAccessEvent(
     if (parsed.data.capacity?.trim() && capacity == null) {
       return { ok: false, error: "El cupo debe ser un número entero." };
     }
+    const latitude = parsed.data.latitude ?? null;
+    const longitude = parsed.data.longitude ?? null;
+    if ((latitude == null) !== (longitude == null)) {
+      return { ok: false, error: "Marca el lugar en el mapa (latitud y longitud juntas)." };
+    }
 
     await prisma.accessEvent.update({
       where: { id },
@@ -138,6 +152,8 @@ export async function updateAccessEvent(
         title: parsed.data.title,
         description: parsed.data.description,
         venue: parsed.data.venue,
+        latitude,
+        longitude,
         startsAt,
         endsAt,
         priceCents,

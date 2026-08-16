@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import {
@@ -16,10 +17,21 @@ import {
 } from "@/lib/access-events";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 
+const LeafletLocationPicker = dynamic(() => import("@/app/panel/LeafletLocationPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-56 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-500">
+      Cargando mapa…
+    </div>
+  ),
+});
+
 const emptyForm = {
   title: "",
   description: "",
   venue: "",
+  latitude: null as number | null,
+  longitude: null as number | null,
   startsAt: "",
   endsAt: "",
   priceMxn: "0",
@@ -53,6 +65,8 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
       title: row.title,
       description: row.description,
       venue: row.venue,
+      latitude: row.latitude,
+      longitude: row.longitude,
       startsAt: toDatetimeLocal(row.startsAt),
       endsAt: toDatetimeLocal(row.endsAt),
       priceMxn: (row.priceCents / 100).toString(),
@@ -66,6 +80,8 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
       title: form.title,
       description: form.description,
       venue: form.venue,
+      latitude: form.latitude,
+      longitude: form.longitude,
       startsAt: form.startsAt,
       endsAt: form.endsAt.trim() || null,
       priceMxn: form.priceMxn,
@@ -121,10 +137,24 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
           />
           <input
             className="border border-slate-200 rounded-lg p-2 sm:col-span-2"
-            placeholder="Lugar"
+            placeholder="Lugar (nombre visible)"
             value={form.venue}
             onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))}
           />
+          <div className="sm:col-span-2 space-y-2">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Ubicación en el mapa
+            </p>
+            <LeafletLocationPicker
+              latitude={form.latitude}
+              longitude={form.longitude}
+              onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+              autoGeolocate={false}
+              showCoordinates
+              hint="Toca el mapa para colocar el marcador del evento."
+              className="h-56 rounded-xl overflow-hidden border border-slate-200"
+            />
+          </div>
           <label className="space-y-1">
             <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Inicio
@@ -196,6 +226,7 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
                     <p className="font-medium text-slate-900">{row.title}</p>
                     <p className="text-slate-500 mt-0.5">
                       {row.venue} · {formatAccessWhen(row.startsAt, row.endsAt)}
+                      {row.latitude != null && row.longitude != null ? " · mapa" : ""}
                     </p>
                   </td>
                   <td className="px-4 py-3">{formatAccessPriceMxn(row.priceCents)}</td>

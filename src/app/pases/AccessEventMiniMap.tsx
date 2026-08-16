@@ -2,17 +2,35 @@
 
 import { MapPin } from "lucide-react";
 
-/** Mapa embebido por dirección del venue (sin lat/lng en el evento). */
+/** Mapa miniatura: coords del admin si existen; si no, búsqueda por venue. */
 export default function AccessEventMiniMap({
   venue,
+  latitude = null,
+  longitude = null,
   className = "",
 }: {
   venue: string;
+  latitude?: number | null;
+  longitude?: number | null;
   className?: string;
 }) {
-  const query = encodeURIComponent(`${venue}, Centro Histórico, Puebla, México`);
-  const embedSrc = `https://maps.google.com/maps?q=${query}&z=16&hl=es&output=embed`;
-  const openSrc = `https://www.google.com/maps/search/?api=1&query=${query}`;
+  const hasCoords =
+    latitude != null &&
+    longitude != null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
+
+  const embedSrc = hasCoords
+    ? `https://maps.google.com/maps?q=${latitude},${longitude}&z=16&hl=es&output=embed`
+    : `https://maps.google.com/maps?q=${encodeURIComponent(
+        `${venue}, Centro Histórico, Puebla, México`
+      )}&z=16&hl=es&output=embed`;
+
+  const openSrc = hasCoords
+    ? `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        `${venue}, Centro Histórico, Puebla, México`
+      )}`;
 
   return (
     <div className={className}>

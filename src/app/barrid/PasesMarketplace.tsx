@@ -281,7 +281,6 @@ function EventRow({
           </div>
           <EventDateBadge startsAt={event.startsAt} />
         </button>
-        <ShareAccessEventButton event={event} compact className="shrink-0 self-start -mr-0.5" />
       </div>
     </div>
   );
@@ -529,7 +528,12 @@ function EventDetail({
           {event.venue}
         </p>
 
-        <AccessEventMiniMap venue={event.venue} className="mt-3" />
+        <AccessEventMiniMap
+          venue={event.venue}
+          latitude={event.latitude}
+          longitude={event.longitude}
+          className="mt-3"
+        />
 
         {event.description ? (
           <p className="mt-3 text-sm text-slate-600 font-light leading-relaxed">{event.description}</p>

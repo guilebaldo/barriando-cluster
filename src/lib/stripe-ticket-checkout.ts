@@ -36,6 +36,10 @@ export async function createAccessTicketCheckoutUrl(
     return { ok: false, error: "Ya no hay cupo para este pase." };
   }
 
+  const { assertUserCanAcquireAccessTicket } = await import("@/lib/access-ticket-limits");
+  const canBuy = await assertUserCanAcquireAccessTicket(userId, eventId);
+  if (!canBuy.ok) return canBuy;
+
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },

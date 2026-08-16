@@ -7,6 +7,8 @@ function toEventCard(
     title: string;
     description: string;
     venue: string;
+    latitude: number | null;
+    longitude: number | null;
     startsAt: Date;
     endsAt: Date | null;
     priceCents: number;
@@ -20,6 +22,8 @@ function toEventCard(
     title: row.title,
     description: row.description,
     venue: row.venue,
+    latitude: row.latitude,
+    longitude: row.longitude,
     startsAt: row.startsAt.toISOString(),
     endsAt: row.endsAt?.toISOString() ?? null,
     priceCents: row.priceCents,
