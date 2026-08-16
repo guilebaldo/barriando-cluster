@@ -283,6 +283,9 @@ export default function BarrIdClient(props: BarrIdClientProps) {
     if (eventDetailOpen) setSheetExpanded(false);
   }, [eventDetailOpen]);
 
+  /** Con detalle de evento: BarrID sigue visible pero colapsado (peek). */
+  const sheetCollapsedForDetail = eventDetailOpen && showMobilePases;
+
   useEffect(() => {
     if (!canRedeem) {
       setLoadingCred(false);
@@ -375,11 +378,9 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         {showMobilePases ? (
           <div
             className={`absolute inset-0 flex flex-col px-4 pointer-events-none ${
-              eventDetailOpen
-                ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-3"
-                : appShell
-                  ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
-                  : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
+              appShell
+                ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
+                : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
             }`}
           >
             <div className="flex-1 min-h-0 pointer-events-auto pt-2">
@@ -392,92 +393,100 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           </div>
         ) : null}
 
-        {(!eventDetailOpen || !showMobilePases) ? (
-          <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
-            <div
-              ref={sheetRef}
-              className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] transition-[max-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                sheetExpanded
-                  ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)]"
-                  : "max-h-[6.25rem]"
+        <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
+          <div
+            ref={sheetRef}
+            className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] transition-[max-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              sheetExpanded && !sheetCollapsedForDetail
+                ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)]"
+                : "max-h-[6.25rem]"
+            }`}
+            onTouchStart={sheetCollapsedForDetail ? undefined : onSheetTouchStart}
+            onTouchEnd={sheetCollapsedForDetail ? undefined : onSheetTouchEnd}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                if (sheetCollapsedForDetail) return;
+                setSheetExpanded((v) => !v);
+              }}
+              className={`w-full flex justify-center touch-manipulation shrink-0 ${
+                sheetExpanded && !sheetCollapsedForDetail
+                  ? "pt-3 pb-2 border-b border-white/15"
+                  : "pt-3 pb-2"
               }`}
-              onTouchStart={onSheetTouchStart}
-              onTouchEnd={onSheetTouchEnd}
+              aria-expanded={sheetExpanded && !sheetCollapsedForDetail}
+              aria-label={
+                sheetExpanded && !sheetCollapsedForDetail ? "Ocultar ficha" : "Mostrar ficha"
+              }
             >
+              <span className="w-12 h-1.5 rounded-full bg-white/45" />
+            </button>
+
+            {!(sheetExpanded && !sheetCollapsedForDetail) && (
               <button
                 type="button"
-                onClick={() => setSheetExpanded((v) => !v)}
-                className={`w-full flex justify-center touch-manipulation shrink-0 ${
-                  sheetExpanded ? "pt-3 pb-2 border-b border-white/15" : "pt-3 pb-2"
-                }`}
-                aria-expanded={sheetExpanded}
-                aria-label={sheetExpanded ? "Ocultar ficha" : "Mostrar ficha"}
+                onClick={() => {
+                  if (sheetCollapsedForDetail) return;
+                  setSheetExpanded(true);
+                }}
+                className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
               >
-                <span className="w-12 h-1.5 rounded-full bg-white/45" />
+                <p className="text-sm font-bold tracking-widest text-amber-300">BarrID</p>
               </button>
+            )}
 
-              {!sheetExpanded && (
-                <button
-                  type="button"
-                  onClick={() => setSheetExpanded(true)}
-                  className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
-                >
-                  <p className="text-sm font-bold tracking-widest text-amber-300">BarrID</p>
-                </button>
-              )}
-
-              {sheetExpanded ? (
-                <div className="overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5">
-                  {canRedeem ? (
-                    <QrPanel
-                      sizeClass="w-[min(68vw,16rem)] h-[min(68vw,16rem)] mx-auto"
-                      textSize="text-xs"
-                      qrDataUrl={qrDataUrl}
-                      loadingCred={loadingCred}
-                      credError={credError}
-                      countdown={
-                        expiresAtMs && !credError ? (
-                          <p className="font-semibold tabular-nums text-amber-200 text-sm" aria-live="polite">
-                            Válido por {formatCountdown(secondsLeft)}
-                          </p>
-                        ) : loadingCred && qrDataUrl ? (
-                          <p className="font-medium text-slate-300 text-sm">Actualizando…</p>
-                        ) : null
-                      }
-                    />
-                  ) : (
-                    <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-center space-y-3">
-                      <p className="text-sm font-semibold text-white">Membresía Vecino</p>
-                      <p className="text-xs text-slate-300 font-light leading-relaxed">
-                        Contrata Vecino para canjear cupones en los negocios del barrio con tu BarrID.
-                      </p>
-                      <PlanIntentCta
-                        plan="VECINO"
-                        className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
-                      >
-                        Ser Vecino · {formatPlanPriceMxn("VECINO")}
-                      </PlanIntentCta>
-                    </div>
-                  )}
-
-                  <MiCuentaProfileLink user={props.user} compact />
-                  <MisPasesSection compact />
-
-                  <p className="pt-1 pb-2 text-center">
-                    <a
-                      href="https://guilebaldo.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[9px] tracking-wide text-white/30 hover:text-white/50 transition"
+            {sheetExpanded && !sheetCollapsedForDetail ? (
+              <div className="overflow-y-auto overscroll-contain touch-pan-y px-5 pt-5 pb-5 space-y-5">
+                {canRedeem ? (
+                  <QrPanel
+                    sizeClass="w-[min(68vw,16rem)] h-[min(68vw,16rem)] mx-auto"
+                    textSize="text-xs"
+                    qrDataUrl={qrDataUrl}
+                    loadingCred={loadingCred}
+                    credError={credError}
+                    countdown={
+                      expiresAtMs && !credError ? (
+                        <p className="font-semibold tabular-nums text-amber-200 text-sm" aria-live="polite">
+                          Válido por {formatCountdown(secondsLeft)}
+                        </p>
+                      ) : loadingCred && qrDataUrl ? (
+                        <p className="font-medium text-slate-300 text-sm">Actualizando…</p>
+                      ) : null
+                    }
+                  />
+                ) : (
+                  <div className="rounded-2xl bg-white/10 border border-white/15 p-4 text-center space-y-3">
+                    <p className="text-sm font-semibold text-white">Membresía Vecino</p>
+                    <p className="text-xs text-slate-300 font-light leading-relaxed">
+                      Contrata Vecino para canjear cupones en los negocios del barrio con tu BarrID.
+                    </p>
+                    <PlanIntentCta
+                      plan="VECINO"
+                      className="inline-flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-lg transition"
                     >
-                      Powered by GURU Software Studio
-                    </a>
-                  </p>
-                </div>
-              ) : null}
-            </div>
+                      Ser Vecino · {formatPlanPriceMxn("VECINO")}
+                    </PlanIntentCta>
+                  </div>
+                )}
+
+                <MiCuentaProfileLink user={props.user} compact />
+                <MisPasesSection compact />
+
+                <p className="pt-1 pb-2 text-center">
+                  <a
+                    href="https://guilebaldo.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[9px] tracking-wide text-white/30 hover:text-white/50 transition"
+                  >
+                    Powered by GURU Software Studio
+                  </a>
+                </p>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </div>
       </div>
 
       {/* —— Escritorio: solo credencial BarrID (los pases viven en /pases) —— */}
