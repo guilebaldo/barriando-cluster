@@ -3,7 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Pencil, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { ChevronLeft, Pencil, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import {
   createAccessEvent,
   updateAccessEvent,
@@ -54,10 +54,18 @@ export default function AdminPasesSection({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [mobileFormOpen, setMobileFormOpen] = useState(false);
 
   function resetForm() {
     setForm(emptyForm);
     setEditingId(null);
+    setMobileFormOpen(false);
+  }
+
+  function startNew() {
+    setForm(emptyForm);
+    setEditingId(null);
+    setMobileFormOpen(true);
   }
 
   function applyHost(hostId: string) {
@@ -84,6 +92,7 @@ export default function AdminPasesSection({
       (h) => h.name.trim().toLocaleLowerCase("es-MX") === row.venue.trim().toLocaleLowerCase("es-MX")
     );
     setEditingId(row.id);
+    setMobileFormOpen(true);
     setForm({
       title: row.title,
       description: row.description,
@@ -126,25 +135,7 @@ export default function AdminPasesSection({
     router.refresh();
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-sm font-bold text-[#27366D] uppercase tracking-widest">Pases</h2>
-        <button
-          type="button"
-          onClick={resetForm}
-          className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-amber-700 hover:text-amber-600"
-        >
-          <Plus className="w-3.5 h-3.5" /> Nuevo
-        </button>
-      </div>
-
-      {msg ? (
-        <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-          {msg}
-        </p>
-      ) : null}
-
+  const formCard = (
       <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
         <div className="grid sm:grid-cols-2 gap-3 text-xs">
           <input
@@ -233,14 +224,158 @@ export default function AdminPasesSection({
             onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
           />
         </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void handleSave()}
+            className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider min-h-11 px-4 py-2 rounded-lg"
+          >
+            {editingId ? "Guardar cambios" : "Crear pase"}
+          </button>
+          {mobileFormOpen ? (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-700 min-h-11 px-3"
+            >
+              Cancelar
+            </button>
+          ) : null}
+        </div>
+      </div>
+  );
+
+  function EventActions({ row, labeled }: { row: AccessEventCard; labeled?: boolean }) {
+    const btn =
+      labeled
+        ? "inline-flex items-center justify-center gap-1.5 min-h-11 rounded-lg px-3 text-[11px] font-bold uppercase tracking-wider"
+        : "p-1.5 rounded-lg hover:bg-slate-100";
+    return (
+      <div className={labeled ? "grid grid-cols-3 gap-2" : "inline-flex gap-1"}>
         <button
           type="button"
-          onClick={() => void handleSave()}
-          className="bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg"
+          title="Editar"
+          onClick={() => openEdit(row)}
+          className={labeled ? `${btn} bg-slate-100 text-[#27366D]` : btn}
         >
-          {editingId ? "Guardar cambios" : "Crear pase"}
+          <Pencil className="w-3.5 h-3.5" />
+          {labeled ? "Editar" : null}
+        </button>
+        <button
+          type="button"
+          title="Publicar/ocultar"
+          onClick={async () => {
+            await toggleAccessEventPublished(row.id);
+            router.refresh();
+          }}
+          className={labeled ? `${btn} bg-slate-100 text-slate-700` : btn}
+        >
+          {row.published ? (
+            <ToggleRight className="w-3.5 h-3.5 text-emerald-600" />
+          ) : (
+            <ToggleLeft className="w-3.5 h-3.5 text-slate-400" />
+          )}
+          {labeled ? (row.published ? "Ocultar" : "Publicar") : null}
+        </button>
+        <button
+          type="button"
+          title="Eliminar"
+          disabled={busy}
+          onClick={() => setDeleteId(row.id)}
+          className={
+            labeled
+              ? `${btn} bg-red-50 text-red-600`
+              : "p-1.5 rounded-lg hover:bg-red-50 text-red-600"
+          }
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          {labeled ? "Borrar" : null}
         </button>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-sm font-bold text-[#27366D] uppercase tracking-widest">
+          <span className="md:hidden">
+            {mobileFormOpen ? (editingId ? "Editar pase" : "Nuevo pase") : "Pases"}
+          </span>
+          <span className="hidden md:inline">Pases</span>
+        </h2>
+        <div className="flex items-center gap-2">
+          {mobileFormOpen ? (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="md:hidden inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-600 min-h-11"
+            >
+              <ChevronLeft className="w-4 h-4" /> Lista
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={startNew}
+              className="md:hidden inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-amber-700 min-h-11"
+            >
+              <Plus className="w-3.5 h-3.5" /> Nuevo
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={resetForm}
+            className="hidden md:inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-amber-700 hover:text-amber-600"
+          >
+            <Plus className="w-3.5 h-3.5" /> Nuevo
+          </button>
+        </div>
+      </div>
+
+      {msg ? (
+        <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+          {msg}
+        </p>
+      ) : null}
+
+      <div className="md:hidden space-y-3">
+        {mobileFormOpen ? (
+          formCard
+        ) : events.length === 0 ? (
+          <p className="text-sm text-slate-500 bg-white border border-slate-200 rounded-xl px-4 py-8 text-center">
+            Sin pases. Crea el primero para publicarlo en Pases.
+          </p>
+        ) : (
+          events.map((row) => (
+            <article key={row.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 leading-snug">{row.title}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {row.venue} · {formatAccessWhen(row.startsAt, row.endsAt)}
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {formatAccessPriceMxn(row.priceCents)}
+                    {" · "}
+                    {row.capacity != null ? `${row.soldCount}/${row.capacity}` : `${row.soldCount} vendidos`}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                    row.published ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {row.published ? "Publicado" : "Borrador"}
+                </span>
+              </div>
+              <EventActions row={row} labeled />
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="hidden md:block space-y-4">
+        {formCard}
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <table className="w-full text-xs">
@@ -284,46 +419,14 @@ export default function AdminPasesSection({
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="inline-flex gap-1">
-                      <button
-                        type="button"
-                        title="Editar"
-                        onClick={() => openEdit(row)}
-                        className="p-1.5 rounded-lg hover:bg-slate-100"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Publicar/ocultar"
-                        onClick={async () => {
-                          await toggleAccessEventPublished(row.id);
-                          router.refresh();
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-slate-100"
-                      >
-                        {row.published ? (
-                          <ToggleRight className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <ToggleLeft className="w-3.5 h-3.5 text-slate-400" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        title="Eliminar"
-                        disabled={busy}
-                        onClick={() => setDeleteId(row.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-600"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    <EventActions row={row} />
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
+      </div>
       </div>
 
       <AdminConfirmDialog

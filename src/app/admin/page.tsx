@@ -16,11 +16,13 @@ import {
 import { listAccessEventsForAdmin, listAccessEventHosts } from "./pases-actions";
 import { expireMembershipsAfterGraceIfNeeded } from "@/lib/subscription-lifecycle";
 import { reconcilePaidBusinessesIntoRoster } from "@/lib/publish-business";
+import { getAdminOverviewStats } from "@/lib/admin-overview";
+import { resolveAdminSection } from "@/lib/admin-section";
 
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ focus?: string }>;
+  searchParams: Promise<{ focus?: string; seccion?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -32,8 +34,9 @@ export default async function AdminPage({
   const params = await searchParams;
   const focus =
     params.focus === "payments" || params.focus === "linkages" ? params.focus : undefined;
+  const initialTab = resolveAdminSection(params.seccion, focus);
 
-  const [users, testimonials, homePromos, catalogRows, membershipRows, milestones, accessEvents, eventHosts] =
+  const [users, testimonials, homePromos, catalogRows, membershipRows, milestones, accessEvents, eventHosts, overview] =
     await Promise.all([
       listAdminUsers(),
       listTestimonials(),
@@ -43,6 +46,7 @@ export default async function AdminPage({
       listMapMilestones(),
       listAccessEventsForAdmin(),
       listAccessEventHosts(),
+      getAdminOverviewStats(),
     ]);
 
   return (
@@ -58,6 +62,8 @@ export default async function AdminPage({
           milestones={milestones}
           accessEvents={accessEvents}
           eventHosts={eventHosts}
+          overview={overview}
+          initialTab={initialTab}
           initialFocus={focus}
         />
       </main>

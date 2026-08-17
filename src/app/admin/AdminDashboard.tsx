@@ -33,21 +33,22 @@ import { AdminTestimonialsSection, AdminHomePromosSection } from "./AdminContent
 import AdminOperations from "./AdminOperations";
 import AdminHitosSection from "./AdminHitosSection";
 import AdminPasesSection from "./AdminPasesSection";
+import AdminOverview from "./AdminOverview";
+import AdminNav from "./AdminNav";
 import AdminEstablishmentQrButton from "./AdminEstablishmentQrButton";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 import AdminPagination from "./AdminPagination";
 import AdminWhatsAppButton from "./AdminWhatsAppButton";
-import AdminNotificationBadge from "@/app/components/AdminNotificationBadge";
 import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 import { computeAdminOpsStats, formatAdminTimestamp } from "@/lib/admin-ops";
 import type { AccessEventCard } from "@/lib/access-events";
 import type { AccessEventHostOption } from "./pases-actions";
+import type { AdminOverviewStats } from "@/lib/admin-overview";
+import { adminUrlWithSection, type AdminTab } from "@/lib/admin-section";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
-
-type AdminTab = "operations" | "accounts" | "content" | "hitos" | "pases";
 type ResolvedAction = "approved" | "rejected";
 type HealthStatus = "ok" | "pending" | "expired";
 
@@ -214,6 +215,8 @@ export default function AdminDashboard({
   milestones,
   accessEvents,
   eventHosts,
+  overview,
+  initialTab,
   initialFocus,
 }: {
   users: AdminUserRow[];
@@ -224,12 +227,19 @@ export default function AdminDashboard({
   milestones: MapMilestoneRow[];
   accessEvents: AccessEventCard[];
   eventHosts: AccessEventHostOption[];
+  overview: AdminOverviewStats;
+  initialTab: AdminTab;
   initialFocus?: "payments" | "linkages";
 }) {
   const router = useRouter();
   useAdminCuelume();
   const initialOpsFilter = initialFocus ?? "all";
-  const [tab, setTab] = useState<AdminTab>("operations");
+  const [tab, setTab] = useState<AdminTab>(initialTab);
+
+  function openTab(next: AdminTab) {
+    setTab(next);
+    window.history.replaceState(null, "", adminUrlWithSection(next, initialFocus));
+  }
   const [query, setQuery] = useState("");
   const [msg, setMsg] = useState("");
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -486,80 +496,24 @@ export default function AdminDashboard({
         <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl p-4 text-xs">{msg}</div>
       )}
 
-      <div className="flex flex-wrap gap-2 min-w-0">
-        <button
-          type="button"
-          onClick={() => setTab("operations")}
-          data-cuelume-toggle=""
-          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "operations" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Operaciones ({membershipRows.length})
-          <AdminNotificationBadge
-            count={pendingOpsTotal}
-            ring={false}
-            title={
-              [
-                opsStats.pendingPayments > 0
-                  ? opsStats.pendingPayments === 1
-                    ? "1 pago por validar"
-                    : `${opsStats.pendingPayments} pagos por validar`
-                  : null,
-                opsStats.pendingLinkages > 0
-                  ? opsStats.pendingLinkages === 1
-                    ? "1 vinculación pendiente"
-                    : `${opsStats.pendingLinkages} vinculaciones pendientes`
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(" · ") || undefined
-            }
+      <div className="md:flex md:items-start md:gap-6">
+        <div className="md:sticky md:top-24 space-y-3 mb-4 md:mb-0">
+          <AdminNav
+            activeId={tab}
+            onSelect={openTab}
+            pendingOps={pendingOpsTotal}
+            counts={{
+              operations: membershipRows.length,
+              accounts: users.length,
+              hitos: milestones.length,
+              pases: accessEvents.length,
+            }}
           />
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("accounts")}
-          data-cuelume-toggle=""
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "accounts" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Cuentas ({users.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("content")}
-          data-cuelume-toggle=""
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "content" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Contenido Home
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("hitos")}
-          data-cuelume-toggle=""
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "hitos" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Hitos ({milestones.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("pases")}
-          data-cuelume-toggle=""
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
-            tab === "pases" ? "bg-[#27366D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-          }`}
-        >
-          Pases ({accessEvents.length})
-        </button>
-      </div>
-
-      {tab === "content" ? (
+        </div>
+        <div className="min-w-0 flex-1">
+      {tab === "overview" ? (
+        <AdminOverview stats={overview} pendingOps={pendingOpsTotal} onOpen={openTab} />
+      ) : tab === "content" ? (
         <div className="space-y-10">
           <AdminTestimonialsSection testimonials={testimonials} />
           <AdminHomePromosSection promos={homePromos} />
@@ -699,6 +653,8 @@ export default function AdminDashboard({
           })();
         }}
       />
+        </div>
+      </div>
     </div>
   );
 }
