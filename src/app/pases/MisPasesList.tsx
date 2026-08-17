@@ -10,6 +10,7 @@ import {
   deleteAccessTicket,
 } from "@/app/pases/actions";
 import { formatAccessWhen, type AccessTicketCard } from "@/lib/access-events";
+import { isBarrioPassEventTitle } from "@/lib/barriopass";
 
 const SWIPE_OFFSET = 72;
 const SWIPE_VELOCITY = 450;
@@ -157,6 +158,7 @@ export default function MisPasesList({ tickets }: { tickets: AccessTicketCard[] 
 }
 
 function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
+  const barrioPass = isBarrioPassEventTitle(ticket.event.title);
   const router = useRouter();
   const stopDrag = stopDragProps();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -243,7 +245,9 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center select-none">
       <p className="text-sm font-semibold text-[#27366D] leading-snug font-sans">{ticket.event.title}</p>
       <p className="mt-1 text-[11px] text-slate-500">
-        {formatAccessWhen(ticket.event.startsAt, ticket.event.endsAt)} · {ticket.event.venue}
+        {barrioPass
+          ? "Válido 9 días desde el primer uso · Centro Histórico de Puebla"
+          : `${formatAccessWhen(ticket.event.startsAt, ticket.event.endsAt)} · ${ticket.event.venue}`}
       </p>
       {ticket.redeemedAt ? (
         <p className="mt-3 text-sm text-slate-500">Este pase ya fue usado en la entrada.</p>
@@ -269,7 +273,11 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
               Válido por {formatCountdown(secondsLeft)}
             </p>
           ) : null}
-          <p className="mt-1 text-[11px] text-slate-500">Muéstralo en la entrada. Un solo uso.</p>
+          <p className="mt-1 text-[11px] text-slate-500">
+            {barrioPass
+              ? "Muéstralo en cada atracción. Una admisión por sede."
+              : "Muéstralo en la entrada. Un solo uso."}
+          </p>
         </>
       )}
 

@@ -44,7 +44,7 @@ const PASAPORTE_LINK: NavLink = {
     pathname.startsWith("/pasaporte/"),
 };
 
-/** Visitante: Inicio → Equipo → Socios → Pases → Pasaporte → MAPA. Logueado: app útil. */
+/** Visitante: Inicio → Equipo → Socios → BarrioPASS → Pases → Pasaporte → MAPA. */
 function getNavLinks(isAuthenticated: boolean): NavLink[] {
   const pases: NavLink = {
     href: "/pases",
@@ -54,23 +54,30 @@ function getNavLinks(isAuthenticated: boolean): NavLink[] {
       pathname === "/pases/mios" ||
       (pathname.startsWith("/pases/") && !pathname.startsWith("/pases/verificar")),
   };
+  const barrioPass: NavLink = {
+    href: "/barriopass",
+    label: "BarrioPASS",
+    isActive: (pathname) => pathname === "/barriopass" || pathname.startsWith("/barriopass"),
+  };
   if (isAuthenticated) {
     return [
       { href: "/mapa", label: "MAPA" },
       { href: "/cuponera?cupones=1", label: "Cuponera" },
+      barrioPass,
       pases,
       PASAPORTE_LINK,
     ];
   }
 
-  return [
-    { href: "/landing", label: "Inicio" },
-    { href: "/equipo", label: "Equipo" },
-    { href: "/cuponera", label: "Socios" },
-    pases,
-    PASAPORTE_LINK,
-    { href: "/mapa", label: "MAPA" },
-  ];
+    return [
+      { href: "/landing", label: "Inicio" },
+      { href: "/equipo", label: "Equipo" },
+      { href: "/cuponera", label: "Socios" },
+      barrioPass,
+      pases,
+      PASAPORTE_LINK,
+      { href: "/mapa", label: "MAPA" },
+    ];
 }
 
 function isNavActive(pathname: string, link: NavLink) {

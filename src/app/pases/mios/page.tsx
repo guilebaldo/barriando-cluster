@@ -52,7 +52,8 @@ export default async function MisPasesPage({
           Mis pases
         </h1>
         <p className="mt-1 text-sm text-slate-500 font-light">
-          Muestra el QR en la entrada. Cada pase es de un solo uso.
+          Muestra el QR en la entrada. Los pases de evento son de un solo uso;
+          BarrioPASS cubre varias atracciones.
         </p>
         {params.pase === "ok" ? (
           <p className="mt-4 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">

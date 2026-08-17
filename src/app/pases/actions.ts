@@ -12,6 +12,7 @@ import {
   signAccessTicketToken,
   verifyAccessTicketToken,
 } from "@/lib/access-ticket-credential";
+import { isBarrioPassEventTitle } from "@/lib/barriopass";
 
 export type PaseActionResult = { ok: true } | { ok: false; error: string };
 
@@ -121,16 +122,18 @@ export async function createAccessTicketCredential(
     const session = await requireSession();
     const ticket = await prisma.accessTicket.findUnique({
       where: { id: ticketId },
-      include: { event: { select: { startsAt: true, endsAt: true } } },
+      include: { event: { select: { startsAt: true, endsAt: true, title: true } } },
     });
     if (!ticket || ticket.userId !== session.id) {
       return { ok: false, error: "No encontramos ese pase." };
     }
-    if (ticket.redeemedAt) {
+    if (ticket.redeemedAt && !isBarrioPassEventTitle(ticket.event.title)) {
       return { ok: false, error: "Este pase ya fue usado." };
     }
 
-    const expiresInSeconds = accessTicketTtlSeconds(ticket.event.endsAt, ticket.event.startsAt);
+    const expiresInSeconds = isBarrioPassEventTitle(ticket.event.title)
+      ? 15 * 60
+      : accessTicketTtlSeconds(ticket.event.endsAt, ticket.event.startsAt);
     const token = await signAccessTicketToken({
       userId: session.id,
       ticketId: ticket.id,
@@ -183,6 +186,12 @@ export async function loadAccessVerifyPayload(token: string): Promise<AccessVeri
     if (!ticket || ticket.code !== parsed.code || ticket.userId !== parsed.userId) {
       return { ok: false, error: "El pase no coincide con el código." };
     }
+    if (
+      isBarrioPassEventTitle(ticket.event.title) &&
+      Date.now() - ticket.createdAt.getTime() > 365 * 24 * 60 * 60 * 1000
+    ) {
+      return { ok: false, error: "Este BarrioPASS ya caducó." };
+    }
     return {
       ok: true,
       data: {
@@ -218,19 +227,28 @@ export async function confirmAccessTicketRedemption(
       where: { id: parsed.ticketId },
       include: {
         user: { select: { nombre: true, email: true } },
+        event: { select: { title: true } },
       },
     });
     if (!ticket || ticket.code !== parsed.code || ticket.userId !== parsed.userId) {
       return { ok: false, error: "El pase no coincide con el código." };
     }
-    if (ticket.redeemedAt) {
+    if (
+      isBarrioPassEventTitle(ticket.event.title) &&
+      Date.now() - ticket.createdAt.getTime() > 365 * 24 * 60 * 60 * 1000
+    ) {
+      return { ok: false, error: "Este BarrioPASS ya caducó." };
+    }
+    if (ticket.redeemedAt && !isBarrioPassEventTitle(ticket.event.title)) {
       return { ok: false, error: "Este pase ya fue usado." };
     }
 
-    await prisma.accessTicket.update({
-      where: { id: ticket.id },
-      data: { redeemedAt: new Date() },
-    });
+    if (!isBarrioPassEventTitle(ticket.event.title)) {
+      await prisma.accessTicket.update({
+        where: { id: ticket.id },
+        data: { redeemedAt: new Date() },
+      });
+    }
 
     return {
       ok: true,

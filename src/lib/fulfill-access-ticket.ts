@@ -46,9 +46,18 @@ export async function fulfillAccessTicketCheckout(session: Stripe.Checkout.Sessi
       return;
     }
 
+    const ticketQty = Math.max(
+      1,
+      Math.min(10, Number.parseInt(session.metadata?.ticketQty ?? "1", 10) || 1)
+    );
+    const isBarrioPass = session.metadata?.productKind === "barriopass";
     const { MAX_ACCESS_TICKETS_PER_EVENT } = await import("@/lib/access-ticket-limits");
+    const { BARRIOPASS_MAX_TICKETS_PER_USER } = await import("@/lib/barriopass");
+    const maxTickets = isBarrioPass
+      ? BARRIOPASS_MAX_TICKETS_PER_USER
+      : MAX_ACCESS_TICKETS_PER_EVENT;
     const forEvent = await tx.accessTicket.count({ where: { userId, eventId } });
-    if (order.tickets.length === 0 && forEvent >= MAX_ACCESS_TICKETS_PER_EVENT) {
+    if (order.tickets.length === 0 && forEvent + ticketQty > maxTickets) {
       await tx.ticketOrder.update({
         where: { id: orderId },
         data: { status: "cancelled", stripeCheckoutSessionId: sessionId },
@@ -67,13 +76,11 @@ export async function fulfillAccessTicketCheckout(session: Stripe.Checkout.Sessi
     });
 
     if (order.tickets.length === 0) {
-      await tx.accessTicket.create({
-        data: {
-          orderId,
-          userId,
-          eventId,
-        },
-      });
+      for (let i = 0; i < ticketQty; i += 1) {
+        await tx.accessTicket.create({
+          data: { orderId, userId, eventId },
+        });
+      }
     }
   });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Ticket,
   MapPin,
@@ -123,6 +124,7 @@ export default function PasesMarketplace({
         />
       ) : (
         <>
+          <BarrioPassPromo />
           <ViewToggle view={view} onChange={setView} />
           {view === "lista" ? (
             <CatalogList events={chronological} onOpen={setSelectedId} />
@@ -132,6 +134,25 @@ export default function PasesMarketplace({
         </>
       )}
     </section>
+  );
+}
+
+function BarrioPassPromo() {
+  return (
+    <Link
+      href="/barriopass"
+      className="shrink-0 mb-3 block rounded-2xl border border-[#1e2b58] bg-[#27366D] px-4 py-3.5 text-white hover:bg-[#1e2b58] transition"
+    >
+      <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
+        BarrioPASS
+      </p>
+      <p className="mt-0.5 text-sm font-black uppercase tracking-wide font-serif-cluster">
+        5 museos. Un solo pago. Hasta 46% menos.
+      </p>
+      <p className="mt-1 text-[11px] text-slate-200 font-light">
+        Amparo, Barroco y tres más. Desde $199. Comprar ahora →
+      </p>
+    </Link>
   );
 }
 

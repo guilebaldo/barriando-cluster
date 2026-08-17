@@ -166,6 +166,34 @@ export default function HomePage({ liveStats, homePromo, carouselSocios }: HomeP
         </div>
       </section>
 
+      {/* 2b. BARRIOPASS */}
+      <section className="py-20 px-6 bg-[#27366D] text-white border-y border-[#1e2b58]">
+        <div className="max-w-5xl mx-auto text-center">
+          <Reveal>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-400">
+              BarrioPASS
+            </p>
+            <h2 className="mt-3 text-3xl md:text-5xl font-black font-serif-cluster uppercase tracking-wide leading-tight text-amber-50">
+              Las mejores atracciones.
+              <br />
+              Un solo pago.
+            </h2>
+          </Reveal>
+          <Reveal delay={80}>
+            <p className="mt-6 text-sm md:text-lg text-slate-200 max-w-2xl mx-auto font-light leading-relaxed">
+              Museo Amparo, el Barroco y tres paradas más del Centro Histórico. Hasta 46%
+              menos que taquilla. Válido 9 días desde la primera visita.
+            </p>
+            <Link
+              href="/barriopass"
+              className="inline-flex items-center gap-2 mt-10 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-lg transition"
+            >
+              Comprar BarrioPASS <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
       {/* 3. FESTIVIDADES */}
       <section className="py-20 px-6 bg-slate-50 border-y border-slate-200">
         <div className="max-w-6xl mx-auto text-center">

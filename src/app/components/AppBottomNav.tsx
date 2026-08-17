@@ -45,6 +45,8 @@ const TABS = [
     match: (p: string) =>
       p === "/pases" ||
       p === "/pases/mios" ||
+      p === "/barriopass" ||
+      p.startsWith("/barriopass") ||
       (p.startsWith("/pases/") && !p.startsWith("/pases/verificar")) ||
       p === "/barrid" ||
       p.startsWith("/barrid/"),

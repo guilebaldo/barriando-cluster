@@ -6,6 +6,8 @@ import SiteShell from "@/app/components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
 import { getPublishedAccessEventById } from "@/lib/access-marketplace";
 import { formatAccessWhen } from "@/lib/access-events";
+import { isBarrioPassEventTitle } from "@/lib/barriopass";
+import { redirect } from "next/navigation";
 import PaseEventClient from "../PaseEventClient";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +35,11 @@ export default async function PaseEventPage({ params }: PageProps) {
   const { eventId } = await params;
   const session = await getSession();
   const event = await getPublishedAccessEventById(eventId);
+
+  if (event && isBarrioPassEventTitle(event.title)) {
+    const sku = event.title.includes("C3") ? "c3" : "classic";
+    redirect(`/barriopass?sku=${sku}`);
+  }
 
   if (!event) {
     return (
