@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import type { AccessEventCard, AccessTicketCard } from "@/lib/access-events";
+import type {
+  AccessEventCard,
+  AccessEventHolder,
+  AccessTicketCard,
+  AdminAccessEventCard,
+} from "@/lib/access-events";
 
 function toEventCard(
   row: {
@@ -39,7 +44,9 @@ export async function listPublishedAccessEvents(): Promise<AccessEventCard[]> {
     orderBy: { startsAt: "asc" },
     include: { _count: { select: { tickets: true } } },
   });
-  return rows.map(toEventCard);
+  return rows
+    .filter((row) => !row.title.startsWith("BarrioPASS"))
+    .map(toEventCard);
 }
 
 export async function getPublishedAccessEventById(
@@ -74,10 +81,62 @@ export async function listUserAccessTickets(userId: string): Promise<AccessTicke
   }));
 }
 
-export async function listAdminAccessEvents(): Promise<AccessEventCard[]> {
+function holderDisplayName(nombre: string | null, email: string | null): string {
+  return nombre?.trim() || email?.trim() || "Sin nombre";
+}
+
+function toAdminEventCard(
+  row: {
+    id: string;
+    title: string;
+    description: string;
+    venue: string;
+    latitude: number | null;
+    longitude: number | null;
+    startsAt: Date;
+    endsAt: Date | null;
+    priceCents: number;
+    capacity: number | null;
+    published: boolean;
+    _count: { tickets: number };
+    tickets: Array<{
+      redeemedAt: Date | null;
+      user: { id: string; nombre: string | null; email: string | null };
+    }>;
+  }
+): AdminAccessEventCard {
+  const byUser = new Map<string, AccessEventHolder>();
+  for (const ticket of row.tickets) {
+    const existing = byUser.get(ticket.user.id);
+    if (existing) {
+      existing.ticketCount += 1;
+      if (ticket.redeemedAt) existing.redeemedCount += 1;
+      continue;
+    }
+    byUser.set(ticket.user.id, {
+      userId: ticket.user.id,
+      name: holderDisplayName(ticket.user.nombre, ticket.user.email),
+      email: ticket.user.email,
+      ticketCount: 1,
+      redeemedCount: ticket.redeemedAt ? 1 : 0,
+    });
+  }
+  const holders = [...byUser.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));
+  return { ...toEventCard(row), holders };
+}
+
+export async function listAdminAccessEvents(): Promise<AdminAccessEventCard[]> {
   const rows = await prisma.accessEvent.findMany({
     orderBy: { startsAt: "desc" },
-    include: { _count: { select: { tickets: true } } },
+    include: {
+      _count: { select: { tickets: true } },
+      tickets: {
+        select: {
+          redeemedAt: true,
+          user: { select: { id: true, nombre: true, email: true } },
+        },
+      },
+    },
   });
-  return rows.map(toEventCard);
+  return rows.map(toAdminEventCard);
 }

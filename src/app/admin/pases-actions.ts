@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
 import { listAdminAccessEvents } from "@/lib/access-marketplace";
-import type { AccessEventCard } from "@/lib/access-events";
+import type { AdminAccessEventCard } from "@/lib/access-events";
 import { parseMexicoCityLocalInput } from "@/lib/mexico-city-time";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 
@@ -55,7 +55,7 @@ async function requireAdmin() {
   return session;
 }
 
-export async function listAccessEventsForAdmin(): Promise<AccessEventCard[]> {
+export async function listAccessEventsForAdmin(): Promise<AdminAccessEventCard[]> {
   await requireAdmin();
   return listAdminAccessEvents();
 }

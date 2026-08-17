@@ -15,6 +15,18 @@ export type AccessEventCard = {
   published: boolean;
 };
 
+export type AccessEventHolder = {
+  userId: string;
+  name: string;
+  email: string | null;
+  ticketCount: number;
+  redeemedCount: number;
+};
+
+export type AdminAccessEventCard = AccessEventCard & {
+  holders: AccessEventHolder[];
+};
+
 export type AccessTicketCard = {
   id: string;
   code: string;
