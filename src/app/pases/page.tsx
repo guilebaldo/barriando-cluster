@@ -33,7 +33,7 @@ export const metadata = {
 export default async function PasesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pase?: string; session_id?: string }>;
+  searchParams: Promise<{ pase?: string; session_id?: string; ficha?: string }>;
 }) {
   const params = await searchParams;
   const session = await getSession();
@@ -140,6 +140,7 @@ export default async function PasesPage({
           progress={progress}
           canRedeemCoupons={canRedeemCoupons}
           isFirstLoginUser={isFirstLoginAccount(user?.createdAt)}
+          initialSheetExpanded={params.ficha === "1"}
           events={events}
           paseNotice={params.pase === "cancelado" ? params.pase : null}
         />

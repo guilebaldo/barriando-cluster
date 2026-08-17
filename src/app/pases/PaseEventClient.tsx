@@ -49,7 +49,7 @@ export default function PaseEventClient({
   return (
     <div>
       <Link
-        href={signedIn ? "/barrid" : "/pases"}
+        href="/pases"
         className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
       >
         <ArrowLeft className="w-3.5 h-3.5" />

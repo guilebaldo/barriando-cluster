@@ -131,7 +131,7 @@ export default function PanelMobile({
         <div className="flex items-center gap-2 px-3 py-3">
           {showBackToBarrId ? (
             <Link
-              href="/barrid?ficha=1"
+              href="/pases?ficha=1"
               className="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition touch-manipulation"
               aria-label="Volver a BarrID"
             >

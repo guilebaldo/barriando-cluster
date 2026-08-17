@@ -265,7 +265,6 @@ export default function BarrIdClient(props: BarrIdClientProps) {
   const appShell = useAppMobileShell();
   const canRedeem = props.canRedeemCoupons;
   const variant = props.variant ?? "credential";
-  const showMobilePases = variant === "home";
   const showDesktopCredential = variant === "credential";
 
   const [sheetExpanded, setSheetExpanded] = useState(
@@ -372,27 +371,25 @@ export default function BarrIdClient(props: BarrIdClientProps) {
 
       {/* —— Móvil —— */}
       <div className="md:hidden relative h-full w-full overflow-hidden overscroll-none">
-        {showMobilePases ? (
-          <div
-            className={`absolute inset-0 flex flex-col px-4 pointer-events-none ${
-              eventDetailOpen
-                ? appShell
-                  ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-3"
-                  : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-6"
-                : appShell
-                  ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
-                  : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
-            }`}
-          >
-            <div className="flex-1 min-h-0 pointer-events-auto pt-2">
-              <PasesMarketplace
-                events={props.events}
-                notice={props.paseNotice}
-                onEventDetailChange={setEventDetailOpen}
-              />
-            </div>
+        <div
+          className={`absolute inset-0 flex flex-col px-4 pointer-events-none ${
+            eventDetailOpen
+              ? appShell
+                ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-3"
+                : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-6"
+              : appShell
+                ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
+                : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
+          }`}
+        >
+          <div className="flex-1 min-h-0 pointer-events-auto pt-2">
+            <PasesMarketplace
+              events={props.events}
+              notice={props.paseNotice}
+              onEventDetailChange={setEventDetailOpen}
+            />
           </div>
-        ) : null}
+        </div>
 
         {!eventDetailOpen ? (
         <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">

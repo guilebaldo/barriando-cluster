@@ -47,7 +47,7 @@ export default async function PaseEventPage({ params }: PageProps) {
               Ese enlace ya no está disponible o el evento no está publicado.
             </p>
             <Link
-              href={session ? "/barrid" : "/pases"}
+              href="/pases"
               className="inline-flex text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
             >
               Ver pases
