@@ -45,7 +45,7 @@ export default function AccessEventMiniMapInner({
   );
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-[16/10]">
+    <div className="relative z-0 isolate overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-[16/10]">
       <MapContainer
         center={center}
         zoom={16}
@@ -54,7 +54,8 @@ export default function AccessEventMiniMapInner({
         doubleClickZoom={false}
         zoomControl={false}
         attributionControl={false}
-        className="h-full w-full"
+        className="h-full w-full !z-0"
+        style={{ zIndex: 0 }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'

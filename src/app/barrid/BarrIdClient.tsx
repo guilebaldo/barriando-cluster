@@ -283,9 +283,6 @@ export default function BarrIdClient(props: BarrIdClientProps) {
     if (eventDetailOpen) setSheetExpanded(false);
   }, [eventDetailOpen]);
 
-  /** Con detalle de evento: BarrID sigue visible pero colapsado (peek). */
-  const sheetCollapsedForDetail = eventDetailOpen && showMobilePases;
-
   useEffect(() => {
     if (!canRedeem) {
       setLoadingCred(false);
@@ -378,9 +375,13 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         {showMobilePases ? (
           <div
             className={`absolute inset-0 flex flex-col px-4 pointer-events-none ${
-              appShell
-                ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
-                : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
+              eventDetailOpen
+                ? appShell
+                  ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-3"
+                  : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-6"
+                : appShell
+                  ? "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-[8.5rem]"
+                  : "pt-[max(0.5rem,env(safe-area-inset-top,0px))] pb-28"
             }`}
           >
             <div className="flex-1 min-h-0 pointer-events-auto pt-2">
@@ -393,15 +394,14 @@ export default function BarrIdClient(props: BarrIdClientProps) {
           </div>
         ) : null}
 
+        {!eventDetailOpen ? (
         <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
           <div
             ref={sheetRef}
-            className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain transition-[max-height,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] transition-[max-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               sheetExpanded
-                ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)] shadow-[0_-16px_48px_rgba(15,23,42,0.45)]"
-                : sheetCollapsedForDetail
-                  ? "max-h-[6.25rem] shadow-none"
-                  : "max-h-[6.25rem] shadow-[0_-16px_48px_rgba(15,23,42,0.45)]"
+                ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)]"
+                : "max-h-[6.25rem]"
             }`}
             onTouchStart={onSheetTouchStart}
             onTouchEnd={onSheetTouchEnd}
@@ -479,6 +479,7 @@ export default function BarrIdClient(props: BarrIdClientProps) {
             ) : null}
           </div>
         </div>
+        ) : null}
       </div>
 
       {/* —— Escritorio: solo credencial BarrID (los pases viven en /pases) —— */}

@@ -492,7 +492,7 @@ function EventDetail({
   const canBuy = !ended && !soldOut;
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-8">
+    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4">
       <button
         type="button"
         onClick={onBack}
