@@ -23,15 +23,27 @@ import { useAppMobileShell } from "@/app/components/AppBottomNav";
 function describeGeoError(err: GeolocationPositionError): string {
   switch (err.code) {
     case err.PERMISSION_DENIED:
-      return "Bloqueaste el permiso de ubicación. Actívalo en Ajustes del navegador o de la app e intenta de nuevo.";
+      return "El navegador bloqueó la ubicación. En el candado (o ícono de sitio) de la barra de dirección, permite Ubicación para barriando.org y vuelve a intentar.";
     case err.POSITION_UNAVAILABLE:
-      return "No se pudo obtener tu posición. Revisa que el GPS / Ubicación del celular esté encendido en Ajustes.";
+      return "No se pudo obtener tu posición. En escritorio suele basarse en Wi‑Fi: revisa que la ubicación del sistema esté activa e intenta de nuevo.";
     case err.TIMEOUT:
-      return "Se agotó el tiempo esperando el GPS. Enciende la ubicación en Ajustes y vuelve a intentar.";
+      return "Se agotó el tiempo esperando la ubicación. Revisa el permiso del navegador e intenta de nuevo.";
     default:
-      return "No se pudo usar tu ubicación. Revisa que el GPS esté activo e intenta de nuevo.";
+      return "No se pudo usar tu ubicación. Revisa el permiso del navegador e intenta de nuevo.";
   }
 }
+
+const GEO_OPTIONS_FAST: PositionOptions = {
+  enableHighAccuracy: false,
+  timeout: 10_000,
+  maximumAge: 60_000,
+};
+
+const GEO_OPTIONS_PRECISE: PositionOptions = {
+  enableHighAccuracy: true,
+  timeout: 12_000,
+  maximumAge: 5_000,
+};
 
 const MapRouteMap = dynamic(() => import("./MapRouteMap"), {
   ssr: false,
@@ -190,26 +202,46 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGeoDetail(null);
-        setGeoModalOpen(false);
-        applyInitialRouteFromLocation({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-          speed:
-            typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
-              ? pos.coords.speed
-              : null,
-        });
-      },
-      (err) => {
+    setLocating(true);
+    setGeoDetail(null);
+
+    const onSuccess = (pos: GeolocationPosition) => {
+      setLocating(false);
+      setGeoDetail(null);
+      setGeoModalOpen(false);
+      applyInitialRouteFromLocation({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        speed:
+          typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
+            ? pos.coords.speed
+            : null,
+      });
+      setWelcomeOpen(false);
+      setSheetExpanded(true);
+      setLockCameraToUser(true);
+      setRecenterNonce((n) => n + 1);
+    };
+
+    const tryPrecise = () => {
+      navigator.geolocation.getCurrentPosition(onSuccess, (err) => {
+        setLocating(false);
         setGeoDetail(describeGeoError(err));
         setGeoModalOpen(true);
-      },
-      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 30_000 }
-    );
+      }, GEO_OPTIONS_PRECISE);
+    };
+
+    // Primero Wi‑Fi / IP (mejor en desktop); si falla por timeout/unavailable, precisión alta.
+    navigator.geolocation.getCurrentPosition(onSuccess, (err) => {
+      if (err.code === err.PERMISSION_DENIED) {
+        setLocating(false);
+        setGeoDetail(describeGeoError(err));
+        setGeoModalOpen(true);
+        return;
+      }
+      tryPrecise();
+    }, GEO_OPTIONS_FAST);
   }, [applyInitialRouteFromLocation]);
 
   useEffect(() => {
@@ -244,11 +276,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       setGeoModalOpen(true);
     };
 
-    navigator.geolocation.getCurrentPosition(onSuccess, onError, {
-      enableHighAccuracy: true,
-      timeout: 12_000,
-      maximumAge: 30_000,
-    });
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, GEO_OPTIONS_FAST);
 
     const watchId = navigator.geolocation.watchPosition(onSuccess, () => {}, {
       enableHighAccuracy: true,
@@ -323,42 +351,50 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
       return;
     }
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false);
-        setGeoDetail(null);
-        setGeoModalOpen(false);
-        const location: UserMapLocation = {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-          speed:
-            typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
-              ? pos.coords.speed
-              : null,
-        };
-        applyLocationUpdate(location);
-        const reordered = buildWalkingItinerary(location, initialRoute);
-        setRoute(reordered);
-        const start = reordered.points[0];
-        if (start) {
-          setSelectedId(start.id);
-          setCardIndex(0);
-        }
-        setWelcomeOpen(false);
-        setSheetExpanded(true);
-        setLockCameraToUser(true);
-        setRecenterNonce((n) => n + 1);
-        hasAutoRoutedRef.current = true;
-        bodyScrollRef.current?.scrollTo({ top: 0 });
-      },
-      (err) => {
-        setLocating(false);
-        setGeoDetail(describeGeoError(err));
-        setGeoModalOpen(true);
-      },
-      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 5_000 }
-    );
+    setGeoDetail(null);
+
+    const finishOk = (pos: GeolocationPosition) => {
+      setLocating(false);
+      setGeoDetail(null);
+      setGeoModalOpen(false);
+      const location: UserMapLocation = {
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        speed:
+          typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
+            ? pos.coords.speed
+            : null,
+      };
+      applyLocationUpdate(location);
+      const reordered = buildWalkingItinerary(location, initialRoute);
+      setRoute(reordered);
+      const start = reordered.points[0];
+      if (start) {
+        setSelectedId(start.id);
+        setCardIndex(0);
+      }
+      setWelcomeOpen(false);
+      setSheetExpanded(true);
+      setLockCameraToUser(true);
+      setRecenterNonce((n) => n + 1);
+      hasAutoRoutedRef.current = true;
+      bodyScrollRef.current?.scrollTo({ top: 0 });
+    };
+
+    const fail = (err: GeolocationPositionError) => {
+      setLocating(false);
+      setGeoDetail(describeGeoError(err));
+      setGeoModalOpen(true);
+    };
+
+    navigator.geolocation.getCurrentPosition(finishOk, (err) => {
+      if (err.code === err.PERMISSION_DENIED) {
+        fail(err);
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(finishOk, fail, GEO_OPTIONS_PRECISE);
+    }, GEO_OPTIONS_FAST);
   }, [applyLocationUpdate, initialRoute]);
 
   const onSheetTouchStart = (event: React.TouchEvent) => {
@@ -469,9 +505,9 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
             type="button"
             onClick={recenterOnMe}
             disabled={locating}
-            className="absolute z-[5] right-3 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-md text-[#27366D] flex items-center justify-center active:scale-95 transition disabled:opacity-70 lg:hidden"
+            className="absolute z-[5] right-3 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-md text-[#27366D] flex items-center justify-center active:scale-95 transition disabled:opacity-70"
             style={{
-              bottom: Math.max(12, bottomSheetHeight + 12),
+              bottom: isLg ? 12 : Math.max(12, bottomSheetHeight + 12),
             }}
             aria-label="Centrar mi ubicación y reiniciar la ruta"
           >
@@ -628,6 +664,7 @@ function MapRouteViewInner({ route: initialRoute }: { route: MapRouteResult }) {
         open={geoModalOpen}
         onClose={() => setGeoModalOpen(false)}
         onRetry={requestGeolocation}
+        retrying={locating}
         detail={geoDetail}
       />
     </div>

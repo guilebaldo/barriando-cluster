@@ -1,33 +1,39 @@
 "use client";
 
-import { MapPin, X } from "lucide-react";
+import { Loader2, MapPin, X } from "lucide-react";
 
 export default function MapGeoModal({
   open,
   onClose,
   onRetry,
   detail,
+  retrying = false,
 }: {
   open: boolean;
   onClose: () => void;
   onRetry: () => void;
   /** Mensaje concreto (p. ej. GPS apagado en Ajustes). */
   detail?: string | null;
+  retrying?: boolean;
 }) {
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 app-modal-hub-pad bg-black/45 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 app-modal-hub-pad bg-black/45 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="map-geo-title"
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition"
+          disabled={retrying}
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition disabled:opacity-40"
           aria-label="Cerrar"
         >
           <X className="w-5 h-5" />
@@ -44,7 +50,15 @@ export default function MapGeoModal({
           Permite el acceso a tu ubicación para ver tu posición en el mapa y ordenar la ruta desde el hito más
           cercano a ti.
         </p>
-        {detail ? (
+        {retrying ? (
+          <p
+            className="mt-3 text-sm font-medium text-[#27366D] bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 leading-snug inline-flex items-center gap-2"
+            role="status"
+          >
+            <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+            Buscando tu ubicación…
+          </p>
+        ) : detail ? (
           <p
             className="mt-3 text-sm font-medium text-amber-800 bg-amber-50 border border-amber-200/80 rounded-xl px-3 py-2.5 leading-snug"
             role="status"
@@ -57,14 +71,23 @@ export default function MapGeoModal({
           <button
             type="button"
             onClick={onRetry}
-            className="w-full bg-[#27366D] hover:bg-[#1e2b58] text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl transition active:scale-[0.98]"
+            disabled={retrying}
+            className="w-full bg-[#27366D] hover:bg-[#1e2b58] disabled:opacity-70 text-white text-xs font-bold uppercase tracking-wider py-3.5 rounded-xl transition active:scale-[0.98] inline-flex items-center justify-center gap-2"
           >
-            Reintentar ubicación
+            {retrying ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Localizando…
+              </>
+            ) : (
+              "Reintentar ubicación"
+            )}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="w-full text-slate-500 hover:text-slate-700 text-xs font-semibold py-2 transition"
+            disabled={retrying}
+            className="w-full text-slate-500 hover:text-slate-700 text-xs font-semibold py-2 transition disabled:opacity-40"
           >
             Continuar sin GPS
           </button>
