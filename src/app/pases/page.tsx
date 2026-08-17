@@ -108,20 +108,12 @@ export default async function PasesPage({
         <div className="hidden md:block max-w-3xl mx-auto w-full px-6 lg:px-8 py-10 lg:py-14">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h1 className="text-2xl font-black tracking-wide text-slate-950 font-sans">Pases</h1>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/barriopass"
-                className="text-[11px] font-bold uppercase tracking-wider text-amber-700 hover:text-amber-600"
-              >
-                BarrioPASS
-              </Link>
-              <Link
-                href="/pases/mios"
-                className="text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
-              >
-                Mis pases
-              </Link>
-            </div>
+            <Link
+              href="/pases/mios"
+              className="text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
+            >
+              Mis pases
+            </Link>
           </div>
           <PasesMarketplace
             events={events}

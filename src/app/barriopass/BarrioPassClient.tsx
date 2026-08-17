@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   BARRIOPASS_ACTIVATE_WITHIN_DAYS,
   BARRIOPASS_ATTRACTIONS,
@@ -14,7 +13,6 @@ import {
   formatMxn,
   type BarrioPassSku,
 } from "@/lib/barriopass";
-import { startBarrioPassCheckout } from "./actions";
 
 const QTY = Array.from({ length: BARRIOPASS_MAX_TICKETS_PER_ORDER + 1 }, (_, i) => i);
 
@@ -86,7 +84,6 @@ function QtySelect({
 }
 
 export default function BarrioPassClient({
-  signedIn,
   initialSku,
   notice,
 }: {
@@ -97,8 +94,6 @@ export default function BarrioPassClient({
   const [sku, setSku] = useState<BarrioPassSku>(initialSku);
   const [adultQty, setAdultQty] = useState(1);
   const [childQty, setChildQty] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const product = BARRIOPASS_SKUS[sku];
   const quote = useMemo(
@@ -107,7 +102,6 @@ export default function BarrioPassClient({
   );
 
   function capQty(nextAdult: number, nextChild: number, changed: "adult" | "child") {
-    setError(null);
     let adult = nextAdult;
     let child = nextChild;
     if (adult + child > BARRIOPASS_MAX_TICKETS_PER_ORDER) {
@@ -121,28 +115,6 @@ export default function BarrioPassClient({
     }
     setAdultQty(adult);
     setChildQty(child);
-  }
-
-  async function buy() {
-    if (quote.tickets < 1) {
-      setError("Elige al menos un boleto.");
-      return;
-    }
-    if (!signedIn) {
-      window.location.assign(
-        `/login?callbackUrl=${encodeURIComponent(`/barriopass?sku=${sku}`)}`
-      );
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    const result = await startBarrioPassCheckout({ sku, adultQty, childQty });
-    if (!result.ok) {
-      setError(result.error);
-      setBusy(false);
-      return;
-    }
-    window.location.assign(result.url);
   }
 
   const included = BARRIOPASS_ATTRACTIONS.filter((a) => a.included);
@@ -398,23 +370,17 @@ export default function BarrioPassClient({
               </div>
             </dl>
 
-            {error ? <p className="mt-3 text-xs text-red-700">{error}</p> : null}
-
             <button
               type="button"
-              disabled={busy || quote.tickets < 1}
-              onClick={() => void buy()}
-              className="mt-4 w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl transition"
+              disabled
+              aria-disabled="true"
+              className="mt-4 w-full bg-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl opacity-50 cursor-not-allowed"
             >
-              {busy ? "Continuando…" : signedIn ? "Comprar ahora" : "Entrar y comprar"}
+              Comprar ahora
             </button>
             <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
-              Compra con confianza. Máximo {BARRIOPASS_MAX_TICKETS_PER_ORDER} boletos
-              por orden. El pase aparece en{" "}
-              <Link href="/pases/mios" className="text-[#27366D] font-semibold hover:underline">
-                Mis pases
-              </Link>
-              .
+              La venta aún no está abierta. BarrioPASS se puede consultar aquí;
+              las compras se habilitarán más adelante.
             </p>
           </div>
         </aside>
