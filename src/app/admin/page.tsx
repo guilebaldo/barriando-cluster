@@ -13,7 +13,7 @@ import {
   listCatalogMemberships,
   listMapMilestones,
 } from "./actions";
-import { listAccessEventsForAdmin } from "./pases-actions";
+import { listAccessEventsForAdmin, listAccessEventHosts } from "./pases-actions";
 import { expireMembershipsAfterGraceIfNeeded } from "@/lib/subscription-lifecycle";
 import { reconcilePaidBusinessesIntoRoster } from "@/lib/publish-business";
 
@@ -33,7 +33,7 @@ export default async function AdminPage({
   const focus =
     params.focus === "payments" || params.focus === "linkages" ? params.focus : undefined;
 
-  const [users, testimonials, homePromos, catalogRows, membershipRows, milestones, accessEvents] =
+  const [users, testimonials, homePromos, catalogRows, membershipRows, milestones, accessEvents, eventHosts] =
     await Promise.all([
       listAdminUsers(),
       listTestimonials(),
@@ -42,6 +42,7 @@ export default async function AdminPage({
       listCatalogMemberships(),
       listMapMilestones(),
       listAccessEventsForAdmin(),
+      listAccessEventHosts(),
     ]);
 
   return (
@@ -56,6 +57,7 @@ export default async function AdminPage({
           membershipRows={membershipRows}
           milestones={milestones}
           accessEvents={accessEvents}
+          eventHosts={eventHosts}
           initialFocus={focus}
         />
       </main>

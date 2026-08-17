@@ -12,7 +12,6 @@ import {
 import {
   accessEventHasEnded,
   accessEventIsSoldOut,
-  formatAccessEventDateParts,
   formatAccessPriceMxn,
   formatAccessWhen,
   groupAccessEventsByHorizon,
@@ -21,6 +20,7 @@ import {
 import { startAccessTicketCheckout } from "@/app/pases/actions";
 import ShareAccessEventButton from "@/app/pases/ShareAccessEventButton";
 import AccessEventMiniMap from "@/app/pases/AccessEventMiniMap";
+import AccessEventDateBadge from "@/app/pases/AccessEventDateBadge";
 
 type CatalogView = "lista" | "calendario";
 
@@ -47,22 +47,7 @@ function sortEventsChronological(events: AccessEventCard[]): AccessEventCard[] {
 }
 
 function EventDateBadge({ startsAt }: { startsAt: string }) {
-  const { weekday, day, month, time } = formatAccessEventDateParts(startsAt);
-  return (
-    <div
-      className="shrink-0 w-[4.5rem] text-center rounded-xl bg-amber-50 border border-amber-200/80 px-1.5 py-2"
-      aria-label={`${weekday} ${day} de ${month}, ${time}`}
-    >
-      <p className="text-[10px] font-semibold capitalize leading-tight text-amber-800/90">{weekday}</p>
-      <p className="mt-0.5 text-2xl font-black leading-none tabular-nums text-[#27366D] font-sans">
-        {day}
-      </p>
-      <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">{month}</p>
-      <p className="mt-1 text-[10px] font-semibold tabular-nums leading-tight text-[#27366D]/80">
-        {time}
-      </p>
-    </div>
-  );
+  return <AccessEventDateBadge startsAt={startsAt} />;
 }
 
 export default function PasesMarketplace({
@@ -507,7 +492,7 @@ function EventDetail({
   const canBuy = !ended && !soldOut;
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-6">
+    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-8">
       <button
         type="button"
         onClick={onBack}

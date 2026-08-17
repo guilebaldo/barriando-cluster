@@ -9,12 +9,14 @@ import {
   updateAccessEvent,
   toggleAccessEventPublished,
   deleteAccessEvent,
+  type AccessEventHostOption,
 } from "./pases-actions";
 import {
   formatAccessPriceMxn,
   formatAccessWhen,
   type AccessEventCard,
 } from "@/lib/access-events";
+import { formatMexicoCityLocalInput } from "@/lib/mexico-city-time";
 import AdminConfirmDialog from "./AdminConfirmDialog";
 
 const LeafletLocationPicker = dynamic(() => import("@/app/panel/LeafletLocationPicker"), {
@@ -30,6 +32,7 @@ const emptyForm = {
   title: "",
   description: "",
   venue: "",
+  hostId: "" as string,
   latitude: null as number | null,
   longitude: null as number | null,
   startsAt: "",
@@ -38,15 +41,13 @@ const emptyForm = {
   capacity: "",
 };
 
-function toDatetimeLocal(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-export default function AdminPasesSection({ events }: { events: AccessEventCard[] }) {
+export default function AdminPasesSection({
+  events,
+  hosts,
+}: {
+  events: AccessEventCard[];
+  hosts: AccessEventHostOption[];
+}) {
   const router = useRouter();
   const [msg, setMsg] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -59,16 +60,39 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
     setEditingId(null);
   }
 
+  function applyHost(hostId: string) {
+    if (!hostId) {
+      setForm((f) => ({ ...f, hostId: "" }));
+      return;
+    }
+    const host = hosts.find((h) => String(h.id) === hostId);
+    if (!host) {
+      setForm((f) => ({ ...f, hostId }));
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      hostId,
+      venue: host.name,
+      latitude: host.latitude,
+      longitude: host.longitude,
+    }));
+  }
+
   function openEdit(row: AccessEventCard) {
+    const matched = hosts.find(
+      (h) => h.name.trim().toLocaleLowerCase("es-MX") === row.venue.trim().toLocaleLowerCase("es-MX")
+    );
     setEditingId(row.id);
     setForm({
       title: row.title,
       description: row.description,
       venue: row.venue,
+      hostId: matched ? String(matched.id) : "",
       latitude: row.latitude,
       longitude: row.longitude,
-      startsAt: toDatetimeLocal(row.startsAt),
-      endsAt: toDatetimeLocal(row.endsAt),
+      startsAt: formatMexicoCityLocalInput(row.startsAt),
+      endsAt: formatMexicoCityLocalInput(row.endsAt),
       priceMxn: (row.priceCents / 100).toString(),
       capacity: row.capacity != null ? String(row.capacity) : "",
     });
@@ -135,11 +159,24 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
           />
+          <select
+            className="border border-slate-200 rounded-lg p-2 sm:col-span-2 bg-white"
+            value={form.hostId}
+            onChange={(e) => applyHost(e.target.value)}
+          >
+            <option value="">Otro / escribir lugar</option>
+            {hosts.map((host) => (
+              <option key={host.id} value={host.id}>
+                {host.name}
+                {host.category ? ` · ${host.category}` : ""}
+              </option>
+            ))}
+          </select>
           <input
             className="border border-slate-200 rounded-lg p-2 sm:col-span-2"
             placeholder="Lugar (nombre visible)"
             value={form.venue}
-            onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))}
+            onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value, hostId: "" }))}
           />
           <div className="sm:col-span-2 space-y-2">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -151,14 +188,18 @@ export default function AdminPasesSection({ events }: { events: AccessEventCard[
               onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
               autoGeolocate={false}
               showCoordinates
-              hint="Toca el mapa para colocar el marcador del evento."
+              hint={
+                form.hostId
+                  ? "Pin del socio. Ajústalo si el evento es en otro punto del local."
+                  : "Toca el mapa para colocar el marcador del evento."
+              }
               className="h-56 rounded-xl overflow-hidden border border-slate-200"
             />
           </div>
           <label className="space-y-1">
-            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              Inicio
-            </span>
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                Inicio (hora de Puebla)
+              </span>
             <input
               className="border border-slate-200 rounded-lg p-2 w-full"
               type="datetime-local"

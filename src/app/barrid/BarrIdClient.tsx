@@ -396,44 +396,47 @@ export default function BarrIdClient(props: BarrIdClientProps) {
         <div className="absolute inset-x-0 bottom-0 z-20 pointer-events-none">
           <div
             ref={sheetRef}
-            className={`pointer-events-auto mx-auto w-full bg-[#27366D] text-white flex flex-col rounded-t-3xl overscroll-contain shadow-[0_-16px_48px_rgba(15,23,42,0.45)] transition-[max-height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`mx-auto w-full text-white flex flex-col rounded-t-3xl overscroll-contain transition-[max-height,background-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               sheetExpanded && !sheetCollapsedForDetail
-                ? "max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)]"
-                : "max-h-[6.25rem]"
+                ? "pointer-events-auto bg-[#27366D] max-h-[calc(100dvh-max(0.75rem,env(safe-area-inset-top,0px))-0.5rem)] shadow-[0_-16px_48px_rgba(15,23,42,0.45)]"
+                : sheetCollapsedForDetail
+                  ? "bg-transparent max-h-[6.25rem] shadow-[0_-18px_40px_rgba(15,23,42,0.28)]"
+                  : "pointer-events-auto bg-[#27366D] max-h-[6.25rem] shadow-[0_-16px_48px_rgba(15,23,42,0.45)]"
             }`}
             onTouchStart={sheetCollapsedForDetail ? undefined : onSheetTouchStart}
             onTouchEnd={sheetCollapsedForDetail ? undefined : onSheetTouchEnd}
           >
+            {sheetCollapsedForDetail ? (
+              <div className="flex flex-col items-center pt-3 pointer-events-none">
+                <span className="w-12 h-1.5 rounded-full bg-white/70 shadow-sm" />
+                <p className="mt-2 mb-3 px-3 py-1 rounded-full text-sm font-bold tracking-widest text-amber-300 drop-shadow-[0_1px_8px_rgba(15,23,42,0.55)]">
+                  BarrID
+                </p>
+              </div>
+            ) : (
+              <>
             <button
               type="button"
-              onClick={() => {
-                if (sheetCollapsedForDetail) return;
-                setSheetExpanded((v) => !v);
-              }}
-              className={`w-full flex justify-center touch-manipulation shrink-0 ${
-                sheetExpanded && !sheetCollapsedForDetail
-                  ? "pt-3 pb-2 border-b border-white/15"
-                  : "pt-3 pb-2"
+              onClick={() => setSheetExpanded((v) => !v)}
+              className={`w-full flex justify-center touch-manipulation shrink-0 pointer-events-auto ${
+                sheetExpanded ? "pt-3 pb-2 border-b border-white/15" : "pt-3 pb-2"
               }`}
-              aria-expanded={sheetExpanded && !sheetCollapsedForDetail}
-              aria-label={
-                sheetExpanded && !sheetCollapsedForDetail ? "Ocultar ficha" : "Mostrar ficha"
-              }
+              aria-expanded={sheetExpanded}
+              aria-label={sheetExpanded ? "Ocultar ficha" : "Mostrar ficha"}
             >
               <span className="w-12 h-1.5 rounded-full bg-white/45" />
             </button>
 
-            {!(sheetExpanded && !sheetCollapsedForDetail) && (
+            {!sheetExpanded && (
               <button
                 type="button"
-                onClick={() => {
-                  if (sheetCollapsedForDetail) return;
-                  setSheetExpanded(true);
-                }}
-                className="w-full px-5 pb-4 text-center touch-manipulation shrink-0"
+                onClick={() => setSheetExpanded(true)}
+                className="w-full px-5 pb-4 text-center touch-manipulation shrink-0 pointer-events-auto"
               >
                 <p className="text-sm font-bold tracking-widest text-amber-300">BarrID</p>
               </button>
+            )}
+              </>
             )}
 
             {sheetExpanded && !sheetCollapsedForDetail ? (

@@ -1,3 +1,5 @@
+import { formatMexicoCityWhen, mexicoCityDateParts } from "@/lib/mexico-city-time";
+
 export type AccessEventCard = {
   id: string;
   title: string;
@@ -35,27 +37,7 @@ export function formatAccessPriceMxn(priceCents: number): string {
 }
 
 export function formatAccessWhen(startsAt: string, endsAt: string | null): string {
-  const start = new Date(startsAt);
-  const startLabel = start
-    .toLocaleString("es-MX", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-    .replace(/\./g, "");
-  if (!endsAt) return startLabel;
-  const end = new Date(endsAt);
-  const sameDay = start.toDateString() === end.toDateString();
-  const endLabel = end
-    .toLocaleString("es-MX", {
-      hour: "2-digit",
-      minute: "2-digit",
-      ...(sameDay ? {} : { day: "numeric", month: "short" }),
-    })
-    .replace(/\./g, "");
-  return `${startLabel} – ${endLabel}`;
+  return formatMexicoCityWhen(startsAt, endsAt);
 }
 
 export function accessEventHasEnded(startsAt: string, endsAt: string | null, now = Date.now()): boolean {
@@ -72,30 +54,15 @@ export function accessEventPublicPath(eventId: string): string {
   return `/pases/${eventId}`;
 }
 
-/** Día de la semana + número + mes abreviado + hora (lista / ficha). */
+/** Día corto + número + mes abreviado + hora (hora de Puebla). */
 export function formatAccessEventDateParts(startsAt: string): {
   weekday: string;
+  weekdayShort: string;
   day: number;
   month: string;
   time: string;
 } {
-  const d = new Date(startsAt);
-  const weekdayRaw = d.toLocaleDateString("es-MX", { weekday: "long" });
-  const monthRaw = d.toLocaleDateString("es-MX", { month: "short" }).replace(/\./g, "");
-  const time = d
-    .toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })
-    .replace(/\./g, "");
-  return {
-    weekday: capitalizeEs(weekdayRaw),
-    day: d.getDate(),
-    month: capitalizeEs(monthRaw),
-    time,
-  };
-}
-
-function capitalizeEs(value: string): string {
-  if (!value) return value;
-  return value.charAt(0).toLocaleUpperCase("es-MX") + value.slice(1);
+  return mexicoCityDateParts(new Date(startsAt));
 }
 
 export type AccessEventHorizon = "hoy" | "7d" | "30d" | "1y" | "despues" | "finalizados";

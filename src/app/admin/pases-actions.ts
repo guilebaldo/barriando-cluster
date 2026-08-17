@@ -7,8 +7,18 @@ import { requireSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
 import { listAdminAccessEvents } from "@/lib/access-marketplace";
 import type { AccessEventCard } from "@/lib/access-events";
+import { parseMexicoCityLocalInput } from "@/lib/mexico-city-time";
+import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type AccessEventHostOption = {
+  id: number;
+  name: string;
+  category: string;
+  latitude: number | null;
+  longitude: number | null;
+};
 
 const accessEventSchema = z.object({
   title: z.string().trim().min(1, "Falta el título.").max(160),
@@ -50,6 +60,24 @@ export async function listAccessEventsForAdmin(): Promise<AccessEventCard[]> {
   return listAdminAccessEvents();
 }
 
+export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
+  await requireAdmin();
+  const { getPublicSociosList } = await import("@/lib/public-socios");
+  const socios = await getPublicSociosList();
+  return socios
+    .map((socio) => {
+      const coord = resolveSocioMapCoord(socio);
+      return {
+        id: socio.id,
+        name: socio.name,
+        category: socio.categoria,
+        latitude: coord?.lat ?? null,
+        longitude: coord?.lng ?? null,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
+}
+
 export async function createAccessEvent(
   input: z.infer<typeof accessEventSchema>
 ): Promise<ActionResult & { id?: string }> {
@@ -63,13 +91,13 @@ export async function createAccessEvent(
     if (priceCents == null) {
       return { ok: false, error: "El precio no es válido." };
     }
-    const startsAt = new Date(parsed.data.startsAt);
-    if (!Number.isFinite(startsAt.getTime())) {
+    const startsAt = parseMexicoCityLocalInput(parsed.data.startsAt);
+    if (!startsAt) {
       return { ok: false, error: "La fecha de inicio no es válida." };
     }
     const endsAtRaw = parsed.data.endsAt?.trim();
-    const endsAt = endsAtRaw ? new Date(endsAtRaw) : null;
-    if (endsAt && !Number.isFinite(endsAt.getTime())) {
+    const endsAt = endsAtRaw ? parseMexicoCityLocalInput(endsAtRaw) : null;
+    if (endsAtRaw && !endsAt) {
       return { ok: false, error: "La fecha de cierre no es válida." };
     }
     const capacity = parseOptionalInt(parsed.data.capacity);
@@ -127,13 +155,13 @@ export async function updateAccessEvent(
     if (priceCents == null) {
       return { ok: false, error: "El precio no es válido." };
     }
-    const startsAt = new Date(parsed.data.startsAt);
-    if (!Number.isFinite(startsAt.getTime())) {
+    const startsAt = parseMexicoCityLocalInput(parsed.data.startsAt);
+    if (!startsAt) {
       return { ok: false, error: "La fecha de inicio no es válida." };
     }
     const endsAtRaw = parsed.data.endsAt?.trim();
-    const endsAt = endsAtRaw ? new Date(endsAtRaw) : null;
-    if (endsAt && !Number.isFinite(endsAt.getTime())) {
+    const endsAt = endsAtRaw ? parseMexicoCityLocalInput(endsAtRaw) : null;
+    if (endsAtRaw && !endsAt) {
       return { ok: false, error: "La fecha de cierre no es válida." };
     }
     const capacity = parseOptionalInt(parsed.data.capacity);

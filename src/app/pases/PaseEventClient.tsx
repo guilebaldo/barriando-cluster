@@ -6,7 +6,6 @@ import { ArrowLeft, MapPin } from "lucide-react";
 import {
   accessEventHasEnded,
   accessEventIsSoldOut,
-  formatAccessEventDateParts,
   formatAccessPriceMxn,
   formatAccessWhen,
   type AccessEventCard,
@@ -14,6 +13,7 @@ import {
 import { startAccessTicketCheckout } from "@/app/pases/actions";
 import ShareAccessEventButton from "./ShareAccessEventButton";
 import AccessEventMiniMap from "./AccessEventMiniMap";
+import AccessEventDateBadge from "./AccessEventDateBadge";
 
 export default function PaseEventClient({
   event,
@@ -27,7 +27,6 @@ export default function PaseEventClient({
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
   const canBuy = !ended && !soldOut;
-  const { weekday, day, month, time } = formatAccessEventDateParts(event.startsAt);
 
   async function buy() {
     if (!signedIn) {
@@ -65,23 +64,7 @@ export default function PaseEventClient({
               {event.title}
             </h1>
           </div>
-          <div
-            className="shrink-0 w-[4.5rem] text-center rounded-xl bg-amber-50 border border-amber-200/80 px-1.5 py-2"
-            aria-label={`${weekday} ${day} de ${month}, ${time}`}
-          >
-            <p className="text-[10px] font-semibold capitalize leading-tight text-amber-800/90">
-              {weekday}
-            </p>
-            <p className="mt-0.5 text-2xl font-black leading-none tabular-nums text-[#27366D] font-sans">
-              {day}
-            </p>
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
-              {month}
-            </p>
-            <p className="mt-1 text-[10px] font-semibold tabular-nums leading-tight text-[#27366D]/80">
-              {time}
-            </p>
-          </div>
+          <AccessEventDateBadge startsAt={event.startsAt} />
         </div>
 
         <p className="mt-3 text-sm text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>

@@ -43,6 +43,7 @@ import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 import { computeAdminOpsStats, formatAdminTimestamp } from "@/lib/admin-ops";
 import type { AccessEventCard } from "@/lib/access-events";
+import type { AccessEventHostOption } from "./pases-actions";
 
 const PLANS: MembershipPlan[] = ["TURISTA", "VECINO", "NEGOCIO_FAMILIAR", "MEDIANA_EMPRESA", "GRAN_EMPRESA"];
 
@@ -212,6 +213,7 @@ export default function AdminDashboard({
   membershipRows,
   milestones,
   accessEvents,
+  eventHosts,
   initialFocus,
 }: {
   users: AdminUserRow[];
@@ -221,6 +223,7 @@ export default function AdminDashboard({
   membershipRows: CatalogMembershipRow[];
   milestones: MapMilestoneRow[];
   accessEvents: AccessEventCard[];
+  eventHosts: AccessEventHostOption[];
   initialFocus?: "payments" | "linkages";
 }) {
   const router = useRouter();
@@ -564,7 +567,7 @@ export default function AdminDashboard({
       ) : tab === "hitos" ? (
         <AdminHitosSection milestones={milestones} />
       ) : tab === "pases" ? (
-        <AdminPasesSection events={accessEvents} />
+        <AdminPasesSection events={accessEvents} hosts={eventHosts} />
       ) : tab === "operations" ? (
         <AdminOperations
           membershipRows={membershipRows}
