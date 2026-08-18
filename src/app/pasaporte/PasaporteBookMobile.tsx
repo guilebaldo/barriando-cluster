@@ -146,6 +146,12 @@ export default function PasaporteBookMobile({
   const trackRef = useRef<HTMLDivElement | null>(null);
   const pageIndexRef = useRef(0);
   const [pageIndex, setPageIndex] = useState(0);
+  const wheelAccRef = useRef(0);
+  const wheelLockRef = useRef(false);
+  const wheelLockTimer = useRef(0);
+  const mouseStartY = useRef<number | null>(null);
+  const mouseDragging = useRef(false);
+  const suppressClickRef = useRef(false);
 
   const coverStamps = useMemo(
     () => restaurants.slice(0, COVER_STAMP_COUNT),
@@ -184,6 +190,49 @@ export default function PasaporteBookMobile({
     },
     [applyTrack]
   );
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (wheelLockRef.current) return;
+      const dy =
+        e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 16 : e.deltaY;
+      wheelAccRef.current += dy;
+      const page = pageIndexRef.current;
+      const count = pageCountRef.current;
+      if (wheelAccRef.current > 56 && page < count - 1) {
+        wheelAccRef.current = 0;
+        wheelLockRef.current = true;
+        settle(page + 1);
+        window.clearTimeout(wheelLockTimer.current);
+        wheelLockTimer.current = window.setTimeout(() => {
+          wheelLockRef.current = false;
+        }, 520);
+      } else if (wheelAccRef.current < -56 && page > 0) {
+        wheelAccRef.current = 0;
+        wheelLockRef.current = true;
+        settle(page - 1);
+        window.clearTimeout(wheelLockTimer.current);
+        wheelLockTimer.current = window.setTimeout(() => {
+          wheelLockRef.current = false;
+        }, 520);
+      } else if (
+        (wheelAccRef.current > 56 && page >= count - 1) ||
+        (wheelAccRef.current < -56 && page <= 0)
+      ) {
+        wheelAccRef.current = 0;
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      window.clearTimeout(wheelLockTimer.current);
+    };
+  }, [settle]);
 
   useEffect(() => {
     if (stampFlashId == null) return;
@@ -261,6 +310,52 @@ export default function PasaporteBookMobile({
     }
   };
 
+  const onMousePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    mouseStartY.current = e.clientY;
+    mouseDragging.current = false;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    applyTrack(pageIndexRef.current, 0, false);
+  };
+
+  const onMousePointerMove = (e: React.PointerEvent) => {
+    if (mouseStartY.current == null || e.pointerType !== "mouse") return;
+    const dy = e.clientY - mouseStartY.current;
+    if (!mouseDragging.current && Math.abs(dy) < 10) return;
+    mouseDragging.current = true;
+    const page = pageIndexRef.current;
+    const atStart = page === 0 && dy > 0;
+    const atEnd = page >= pageCountRef.current - 1 && dy < 0;
+    if (atStart || atEnd) return;
+    const height = viewportRef.current?.clientHeight ?? 700;
+    applyTrack(page, Math.max(-height, Math.min(height, dy)), false);
+  };
+
+  const onMousePointerUp = (e: React.PointerEvent) => {
+    if (mouseStartY.current == null || e.pointerType !== "mouse") return;
+    const dy = mouseStartY.current - e.clientY;
+    const dragged = mouseDragging.current;
+    mouseStartY.current = null;
+    mouseDragging.current = false;
+    if (!dragged) {
+      settle(pageIndexRef.current);
+      return;
+    }
+    suppressClickRef.current = true;
+    const page = pageIndexRef.current;
+    const count = pageCountRef.current;
+    if (dy > SWIPE_THRESHOLD_PX && page < count - 1) settle(page + 1);
+    else if (dy < -SWIPE_THRESHOLD_PX && page > 0) settle(page - 1);
+    else settle(page);
+  };
+
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (!suppressClickRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    suppressClickRef.current = false;
+  };
+
   /* —— Portada: 50% identidad / 50% 4 sellos —— */
   const renderCover = () => (
     <section className="relative isolate h-full w-full flex flex-col bg-[#faf6ef] px-4 pt-2 pb-3 overflow-hidden">
@@ -329,7 +424,7 @@ export default function PasaporteBookMobile({
 
       <div className="relative z-10 h-1/2 min-h-0 flex flex-col pt-2">
         <p className="text-[9px] text-center text-stone-400/80 font-light tracking-wide mb-1.5 shrink-0">
-          Desliza hacia arriba para pasar la hoja
+          Desliza para pasar la hoja
         </p>
         <div className="flex-1 min-h-0 grid grid-cols-2 grid-rows-2 gap-2 place-items-center overflow-hidden">
           {coverStamps.map((restaurant) => {
@@ -438,6 +533,11 @@ export default function PasaporteBookMobile({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onTouchCancel={() => settle(pageIndexRef.current)}
+        onPointerDown={onMousePointerDown}
+        onPointerMove={onMousePointerMove}
+        onPointerUp={onMousePointerUp}
+        onPointerCancel={onMousePointerUp}
+        onClickCapture={onClickCapture}
       >
         <div
           ref={trackRef}

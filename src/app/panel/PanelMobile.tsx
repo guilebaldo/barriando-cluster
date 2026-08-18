@@ -108,7 +108,9 @@ export default function PanelMobile({
               <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300/90">
                 Mi cuenta
               </p>
-              <h1 className="text-base font-bold truncate leading-tight">{active.title}</h1>
+              <h1 className="text-[17px] font-semibold tracking-tight leading-tight truncate">
+                {active.title}
+              </h1>
             </div>
           </div>
         </header>
@@ -126,12 +128,17 @@ export default function PanelMobile({
     <div className={shellClass}>
       <header className="shrink-0 z-30 bg-[#27366D] text-white safe-area-top border-b border-[#1e2b58]">
         <div className="flex items-center gap-2 px-3 py-3">
-          <span className="w-10" aria-hidden />
+          <Link
+            href="/pasaporte"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition touch-manipulation"
+            aria-label="Volver al Pasaporte"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300/90">
+            <h1 className="text-[17px] font-semibold tracking-tight leading-tight">
               Mi cuenta
-            </p>
-            <h1 className="text-base font-bold truncate leading-tight">Ajustes</h1>
+            </h1>
           </div>
           <button
             type="button"
