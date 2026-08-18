@@ -313,9 +313,14 @@ model AccessEvent {
   id          String   @id @default(cuid())
   title       String
   description String   @default("")
+  /** Dirección visible del evento (independiente del socio anfitrión). */
   venue       String
   latitude    Float?
   longitude   Float?
+  /** Socio del directorio que organiza (id de catálogo). No amarra dirección ni pin. */
+  hostId      Int?
+  /** Correo del responsable; recibe aviso al venderse un pase. */
+  hostEmail   String?
   startsAt    DateTime
   endsAt      DateTime?
   /** Precio en centavos MXN. 0 = cortesía, sin Stripe. */

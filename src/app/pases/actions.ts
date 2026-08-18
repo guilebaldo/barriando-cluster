@@ -95,6 +95,13 @@ async function claimCourtesyTicket(
     });
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
+    const { notifyHostAccessTicketSold } = await import("@/lib/notify-access-ticket-sold");
+    await notifyHostAccessTicketSold({
+      eventId,
+      qty: 1,
+      amountCents: 0,
+      buyerUserId: userId,
+    });
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "SOLD_OUT") {

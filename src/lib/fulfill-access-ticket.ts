@@ -14,6 +14,8 @@ export async function fulfillAccessTicketCheckout(session: Stripe.Checkout.Sessi
   }
 
   const sessionId = session.id;
+  let issuedQty = 0;
+  let issuedAmount = 0;
 
   await prisma.$transaction(async (tx) => {
     const order = await tx.ticketOrder.findUnique({
@@ -81,8 +83,20 @@ export async function fulfillAccessTicketCheckout(session: Stripe.Checkout.Sessi
           data: { orderId, userId, eventId },
         });
       }
+      issuedQty = ticketQty;
+      issuedAmount = session.amount_total ?? order.amountCents;
     }
   });
+
+  if (issuedQty > 0) {
+    const { notifyHostAccessTicketSold } = await import("@/lib/notify-access-ticket-sold");
+    await notifyHostAccessTicketSold({
+      eventId,
+      qty: issuedQty,
+      amountCents: issuedAmount,
+      buyerUserId: userId,
+    });
+  }
 }
 
 export async function cancelAccessTicketCheckout(session: Stripe.Checkout.Session) {

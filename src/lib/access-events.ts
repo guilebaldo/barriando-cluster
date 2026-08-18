@@ -7,6 +7,8 @@ export type AccessEventCard = {
   venue: string;
   latitude: number | null;
   longitude: number | null;
+  hostId: number | null;
+  hostEmail: string | null;
   startsAt: string;
   endsAt: string | null;
   priceCents: number;

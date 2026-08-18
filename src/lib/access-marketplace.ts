@@ -15,6 +15,8 @@ function toEventCard(
     venue: string;
     latitude: number | null;
     longitude: number | null;
+    hostId: number | null;
+    hostEmail: string | null;
     startsAt: Date;
     endsAt: Date | null;
     priceCents: number;
@@ -30,6 +32,8 @@ function toEventCard(
     venue: row.venue,
     latitude: row.latitude,
     longitude: row.longitude,
+    hostId: row.hostId,
+    hostEmail: row.hostEmail,
     startsAt: row.startsAt.toISOString(),
     endsAt: row.endsAt?.toISOString() ?? null,
     priceCents: row.priceCents,

@@ -21,6 +21,7 @@ import { startAccessTicketCheckout } from "@/app/pases/actions";
 import ShareAccessEventButton from "@/app/pases/ShareAccessEventButton";
 import AccessEventMiniMap from "@/app/pases/AccessEventMiniMap";
 import AccessEventDateBadge from "@/app/pases/AccessEventDateBadge";
+import AccessEventDescription from "@/app/pases/AccessEventDescription";
 
 type CatalogView = "lista" | "calendario";
 
@@ -527,7 +528,7 @@ function EventDetail({
         />
 
         {event.description ? (
-          <p className="mt-3 text-sm text-slate-600 font-light leading-relaxed">{event.description}</p>
+          <AccessEventDescription html={event.description} className="mt-3" />
         ) : null}
         <div className="mt-3 flex items-center justify-between text-xs">
           <span className="font-bold text-amber-700">{formatAccessPriceMxn(event.priceCents)}</span>

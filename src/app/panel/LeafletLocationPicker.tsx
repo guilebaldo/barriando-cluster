@@ -45,6 +45,8 @@ type Props = {
   autoGeolocate?: boolean;
   showCoordinates?: boolean;
   hint?: string;
+  /** Default false: el scroll de la página no debe hacer zoom al mapa. */
+  scrollWheelZoom?: boolean;
 };
 
 export default function LeafletLocationPicker({
@@ -56,6 +58,7 @@ export default function LeafletLocationPicker({
   autoGeolocate = true,
   showCoordinates = true,
   hint,
+  scrollWheelZoom = false,
 }: Props) {
   const [ready, setReady] = useState(false);
   const [gpsError, setGpsError] = useState("");
@@ -113,14 +116,14 @@ export default function LeafletLocationPicker({
   return (
     <div className={className}>
       <div
-        className={`relative z-0 isolate h-56 rounded-xl overflow-hidden border border-slate-200 ${
+        className={`relative z-0 isolate h-full min-h-56 rounded-xl overflow-hidden border border-slate-200 ${
           disabled ? "opacity-60 pointer-events-none" : ""
         }`}
       >
         <MapContainer
           center={center}
           zoom={16}
-          scrollWheelZoom={!disabled}
+          scrollWheelZoom={!disabled && scrollWheelZoom}
           className="h-full w-full !z-0"
           style={{ zIndex: 0 }}
         >

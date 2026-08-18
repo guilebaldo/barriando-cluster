@@ -14,6 +14,7 @@ import { startAccessTicketCheckout } from "@/app/pases/actions";
 import ShareAccessEventButton from "./ShareAccessEventButton";
 import AccessEventMiniMap from "./AccessEventMiniMap";
 import AccessEventDateBadge from "./AccessEventDateBadge";
+import AccessEventDescription from "./AccessEventDescription";
 
 export default function PaseEventClient({
   event,
@@ -81,7 +82,7 @@ export default function PaseEventClient({
         />
 
         {event.description ? (
-          <p className="mt-4 text-sm text-slate-600 font-light leading-relaxed">{event.description}</p>
+          <AccessEventDescription html={event.description} className="mt-4" />
         ) : null}
         <div className="mt-4 flex items-center justify-between text-sm">
           <span className="font-bold text-amber-700">{formatAccessPriceMxn(event.priceCents)}</span>

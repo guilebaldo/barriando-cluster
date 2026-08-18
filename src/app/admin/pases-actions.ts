@@ -9,6 +9,7 @@ import { listAdminAccessEvents, getAdminAccessEventById } from "@/lib/access-mar
 import type { AccessEventCard, AdminAccessEventDetail } from "@/lib/access-events";
 import { parseMexicoCityLocalInput } from "@/lib/mexico-city-time";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
+import { sanitizeAccessDescription } from "@/lib/access-description";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -18,12 +19,15 @@ export type AccessEventHostOption = {
   category: string;
   latitude: number | null;
   longitude: number | null;
+  email: string | null;
 };
 
 const accessEventSchema = z.object({
   title: z.string().trim().min(1, "Falta el título.").max(160),
-  description: z.string().trim().max(2000).optional().default(""),
-  venue: z.string().trim().min(1, "Falta el lugar.").max(200),
+  description: z.string().max(8000).optional().default(""),
+  venue: z.string().trim().min(1, "Falta la dirección.").max(240),
+  hostId: z.string().nullable().optional(),
+  hostEmail: z.string().trim().max(200).optional().default(""),
   latitude: z.number().finite().nullable().optional(),
   longitude: z.number().finite().nullable().optional(),
   startsAt: z.string().trim().min(1, "Falta la fecha de inicio."),
@@ -45,6 +49,20 @@ function parseOptionalInt(raw: string | null | undefined): number | null {
   const n = Number(raw.trim());
   if (!Number.isInteger(n) || n < 1) return null;
   return n;
+}
+
+function parseOptionalHostId(raw: string | null | undefined): number | null {
+  if (!raw?.trim()) return null;
+  const n = Number(raw.trim());
+  if (!Number.isInteger(n) || n === 0) return null;
+  return n;
+}
+
+function parseOptionalEmail(raw: string | null | undefined): string | null {
+  const value = raw?.trim().toLowerCase() ?? "";
+  if (!value) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return null;
+  return value;
 }
 
 function revalidatePasePaths(eventId: string) {
@@ -80,6 +98,19 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
   await requireAdmin();
   const { getPublicSociosList } = await import("@/lib/public-socios");
   const socios = await getPublicSociosList();
+  const socioIds = socios.map((socio) => socio.id);
+  const users =
+    socioIds.length > 0
+      ? await prisma.user.findMany({
+          where: { socioId: { in: socioIds } },
+          select: { socioId: true, email: true },
+        })
+      : [];
+  const emailBySocioId = new Map(
+    users
+      .filter((user) => user.socioId != null && user.email)
+      .map((user) => [user.socioId as number, user.email as string])
+  );
   return socios
     .map((socio) => {
       const coord = resolveSocioMapCoord(socio);
@@ -89,6 +120,7 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
         category: socio.categoria,
         latitude: coord?.lat ?? null,
         longitude: coord?.lng ?? null,
+        email: emailBySocioId.get(socio.id) ?? null,
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
@@ -125,12 +157,18 @@ export async function createAccessEvent(
     if ((latitude == null) !== (longitude == null)) {
       return { ok: false, error: "Marca el lugar en el mapa (latitud y longitud juntas)." };
     }
+    const hostEmailRaw = parsed.data.hostEmail?.trim() ?? "";
+    if (hostEmailRaw && !parseOptionalEmail(hostEmailRaw)) {
+      return { ok: false, error: "El correo del responsable no es válido." };
+    }
 
     const row = await prisma.accessEvent.create({
       data: {
         title: parsed.data.title,
-        description: parsed.data.description,
+        description: sanitizeAccessDescription(parsed.data.description ?? ""),
         venue: parsed.data.venue,
+        hostId: parseOptionalHostId(parsed.data.hostId),
+        hostEmail: parseOptionalEmail(hostEmailRaw),
         latitude,
         longitude,
         startsAt,
@@ -185,13 +223,19 @@ export async function updateAccessEvent(
     if ((latitude == null) !== (longitude == null)) {
       return { ok: false, error: "Marca el lugar en el mapa (latitud y longitud juntas)." };
     }
+    const hostEmailRaw = parsed.data.hostEmail?.trim() ?? "";
+    if (hostEmailRaw && !parseOptionalEmail(hostEmailRaw)) {
+      return { ok: false, error: "El correo del responsable no es válido." };
+    }
 
     await prisma.accessEvent.update({
       where: { id },
       data: {
         title: parsed.data.title,
-        description: parsed.data.description,
+        description: sanitizeAccessDescription(parsed.data.description ?? ""),
         venue: parsed.data.venue,
+        hostId: parseOptionalHostId(parsed.data.hostId),
+        hostEmail: parseOptionalEmail(hostEmailRaw),
         latitude,
         longitude,
         startsAt,

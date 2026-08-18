@@ -9,11 +9,12 @@ import {
 } from "./pases-actions";
 import type { AccessEventCard } from "@/lib/access-events";
 import { formatMexicoCityLocalInput } from "@/lib/mexico-city-time";
+import AdminPaseDescriptionEditor from "./AdminPaseDescriptionEditor";
 
 const LeafletLocationPicker = dynamic(() => import("@/app/panel/LeafletLocationPicker"), {
   ssr: false,
   loading: () => (
-    <div className="h-56 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-500">
+    <div className="h-56 lg:h-full min-h-[22rem] rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-500">
       Cargando mapa…
     </div>
   ),
@@ -29,6 +30,7 @@ const emptyForm = {
   description: "",
   venue: "",
   hostId: "" as string,
+  hostEmail: "",
   latitude: null as number | null,
   longitude: null as number | null,
   startsAt: "",
@@ -46,15 +48,13 @@ function priceIsValid(raw: string): boolean {
   return Number.isFinite(pesos) && pesos >= 0;
 }
 
-function formFromEvent(event: AccessEventCard, hosts: AccessEventHostOption[]) {
-  const matched = hosts.find(
-    (h) => h.name.trim().toLocaleLowerCase("es-MX") === event.venue.trim().toLocaleLowerCase("es-MX")
-  );
+function formFromEvent(event: AccessEventCard) {
   return {
     title: event.title,
     description: event.description,
     venue: event.venue,
-    hostId: matched ? String(matched.id) : "",
+    hostId: event.hostId != null ? String(event.hostId) : "",
+    hostEmail: event.hostEmail ?? "",
     latitude: event.latitude,
     longitude: event.longitude,
     startsAt: formatMexicoCityLocalInput(event.startsAt),
@@ -75,7 +75,7 @@ export default function AdminPaseEventForm({
   onCancel?: () => void;
   onSaved?: (id: string) => void;
 }) {
-  const [form, setForm] = useState(() => (event ? formFromEvent(event, hosts) : emptyForm));
+  const [form, setForm] = useState(() => (event ? formFromEvent(event) : emptyForm));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [okMsg, setOkMsg] = useState("");
@@ -103,9 +103,7 @@ export default function AdminPaseEventForm({
     setForm((f) => ({
       ...f,
       hostId,
-      venue: host.name,
-      latitude: host.latitude,
-      longitude: host.longitude,
+      hostEmail: host.email ?? f.hostEmail,
     }));
   }
 
@@ -118,6 +116,8 @@ export default function AdminPaseEventForm({
       title: form.title,
       description: form.description,
       venue: form.venue,
+      hostId: form.hostId || null,
+      hostEmail: form.hostEmail,
       latitude: form.latitude,
       longitude: form.longitude,
       startsAt: form.startsAt,
@@ -146,6 +146,141 @@ export default function AdminPaseEventForm({
     onSaved?.(result.id ?? "");
   }
 
+  const fields = (
+    <div className="grid sm:grid-cols-2 gap-3 text-xs">
+      <input
+        className="border border-slate-200 rounded-lg p-2 sm:col-span-2"
+        placeholder="Título del evento"
+        value={form.title}
+        onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+      />
+      <AdminPaseDescriptionEditor
+        value={form.description}
+        onChange={(description) => setForm((f) => ({ ...f, description }))}
+      />
+      <label className="space-y-1 sm:col-span-2">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Organizador
+        </span>
+        <select
+          className="border border-slate-200 rounded-lg p-2 w-full bg-white"
+          value={form.hostId}
+          onChange={(e) => applyHost(e.target.value)}
+        >
+          <option value="">Sin socio / otro</option>
+          {hosts.map((host) => (
+            <option key={host.id} value={host.id}>
+              {host.name}
+              {host.category ? ` · ${host.category}` : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="space-y-1 sm:col-span-2">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Correo del responsable
+        </span>
+        <input
+          className="border border-slate-200 rounded-lg p-2 w-full"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          placeholder="avisos@negocio.mx"
+          value={form.hostEmail}
+          onChange={(e) => setForm((f) => ({ ...f, hostEmail: e.target.value }))}
+        />
+        <span className="block text-[10px] text-slate-400">
+          Recibe un aviso cada vez que alguien obtiene un pase. Al elegir un socio se sugiere el
+          correo de su cuenta; puedes cambiarlo.
+        </span>
+      </label>
+      <label className="space-y-1 sm:col-span-2">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Dirección
+        </span>
+        <input
+          className="border border-slate-200 rounded-lg p-2 w-full"
+          placeholder="Calle, colonia o punto de encuentro"
+          value={form.venue}
+          onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))}
+        />
+      </label>
+      <label className="space-y-1">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Inicio (hora de Puebla)
+        </span>
+        <input
+          className="border border-slate-200 rounded-lg p-2 w-full"
+          type="datetime-local"
+          value={form.startsAt}
+          onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
+        />
+      </label>
+      <label className="space-y-1">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Cierre (opcional)
+        </span>
+        <input
+          className="border border-slate-200 rounded-lg p-2 w-full"
+          type="datetime-local"
+          value={form.endsAt}
+          onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
+        />
+      </label>
+      <label className="space-y-1">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Monto en pesos
+        </span>
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            $
+          </span>
+          <input
+            className="border border-slate-200 rounded-lg p-2 w-full pl-7 pr-12"
+            placeholder="0.00"
+            inputMode="decimal"
+            value={form.priceMxn}
+            onChange={(e) => setForm((f) => ({ ...f, priceMxn: e.target.value }))}
+          />
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+            MXN
+          </span>
+        </div>
+        <span className="block text-[10px] text-slate-400">0.00 = cortesía, sin cobro.</span>
+      </label>
+      <label className="space-y-1">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Cupo (opcional)
+        </span>
+        <input
+          className="border border-slate-200 rounded-lg p-2 w-full"
+          placeholder="Vacío = sin límite"
+          inputMode="numeric"
+          value={form.capacity}
+          onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
+        />
+      </label>
+    </div>
+  );
+
+  const map = (
+    <div className="space-y-2 h-full lg:sticky lg:top-4">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        Ubicación en el mapa
+      </p>
+      <LeafletLocationPicker
+        latitude={form.latitude}
+        longitude={form.longitude}
+        onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+        autoGeolocate={false}
+        showCoordinates
+        scrollWheelZoom={false}
+        hint="Toca el mapa o arrastra el pin. El marcador no se mueve al elegir un socio."
+        className="h-56 lg:h-[28rem] rounded-xl overflow-hidden"
+      />
+    </div>
+  );
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -157,112 +292,12 @@ export default function AdminPaseEventForm({
       {msg ? (
         <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{msg}</p>
       ) : null}
-      <div className="grid sm:grid-cols-2 gap-3 text-xs">
-        <input
-          className="border border-slate-200 rounded-lg p-2 sm:col-span-2"
-          placeholder="Título del evento"
-          value={form.title}
-          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-        />
-        <textarea
-          className="border border-slate-200 rounded-lg p-2 sm:col-span-2 min-h-[80px]"
-          placeholder="Descripción breve"
-          value={form.description}
-          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-        />
-        <select
-          className="border border-slate-200 rounded-lg p-2 sm:col-span-2 bg-white"
-          value={form.hostId}
-          onChange={(e) => applyHost(e.target.value)}
-        >
-          <option value="">Otro / escribir lugar</option>
-          {hosts.map((host) => (
-            <option key={host.id} value={host.id}>
-              {host.name}
-              {host.category ? ` · ${host.category}` : ""}
-            </option>
-          ))}
-        </select>
-        <input
-          className="border border-slate-200 rounded-lg p-2 sm:col-span-2"
-          placeholder="Lugar (nombre visible)"
-          value={form.venue}
-          onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value, hostId: "" }))}
-        />
-        <div className="sm:col-span-2 space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Ubicación en el mapa
-          </p>
-          <LeafletLocationPicker
-            latitude={form.latitude}
-            longitude={form.longitude}
-            onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
-            autoGeolocate={false}
-            showCoordinates
-            hint={
-              form.hostId
-                ? "Pin del socio. Ajústalo si el evento es en otro punto del local."
-                : "Toca el mapa para colocar el marcador del evento."
-            }
-            className="h-56 rounded-xl overflow-hidden border border-slate-200"
-          />
-        </div>
-        <label className="space-y-1">
-          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Inicio (hora de Puebla)
-          </span>
-          <input
-            className="border border-slate-200 rounded-lg p-2 w-full"
-            type="datetime-local"
-            value={form.startsAt}
-            onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Cierre (opcional)
-          </span>
-          <input
-            className="border border-slate-200 rounded-lg p-2 w-full"
-            type="datetime-local"
-            value={form.endsAt}
-            onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
-          />
-        </label>
-        <label className="space-y-1">
-          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Monto en pesos
-          </span>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              $
-            </span>
-            <input
-              className="border border-slate-200 rounded-lg p-2 w-full pl-7 pr-12"
-              placeholder="0.00"
-              inputMode="decimal"
-              value={form.priceMxn}
-              onChange={(e) => setForm((f) => ({ ...f, priceMxn: e.target.value }))}
-            />
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-              MXN
-            </span>
-          </div>
-          <span className="block text-[10px] text-slate-400">0.00 = cortesía, sin cobro.</span>
-        </label>
-        <label className="space-y-1">
-          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-            Cupo (opcional)
-          </span>
-          <input
-            className="border border-slate-200 rounded-lg p-2 w-full"
-            placeholder="Vacío = sin límite"
-            inputMode="numeric"
-            value={form.capacity}
-            onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
-          />
-        </label>
+
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+        {fields}
+        {map}
       </div>
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
