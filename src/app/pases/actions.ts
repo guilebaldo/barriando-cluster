@@ -261,7 +261,7 @@ export async function confirmAccessTicketRedemption(
   }
 }
 
-/** Elimina un pase propio (libera cupo del evento para esa cuenta). */
+/** Elimina un pase propio, usado o no (libera cupo del evento para esa cuenta). */
 export async function deleteAccessTicket(
   ticketId: string
 ): Promise<PaseActionResult> {
@@ -278,13 +278,10 @@ export async function deleteAccessTicket(
 
     const ticket = await prisma.accessTicket.findUnique({
       where: { id: ticketId },
-      select: { id: true, userId: true, redeemedAt: true },
+      select: { id: true, userId: true },
     });
     if (!ticket || ticket.userId !== session.id) {
       return { ok: false, error: "No encontramos ese pase." };
-    }
-    if (ticket.redeemedAt) {
-      return { ok: false, error: "No puedes borrar un pase que ya fue usado." };
     }
 
     await prisma.accessTicket.delete({ where: { id: ticket.id } });

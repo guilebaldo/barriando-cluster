@@ -159,10 +159,11 @@ export default function MisPasesList({ tickets }: { tickets: AccessTicketCard[] 
 
 function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
   const barrioPass = isBarrioPassEventTitle(ticket.event.title);
+  const used = Boolean(ticket.redeemedAt);
   const router = useRouter();
   const stopDrag = stopDragProps();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(!ticket.redeemedAt);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [expiresAtMs, setExpiresAtMs] = useState<number | null>(null);
@@ -171,15 +172,31 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ticket.redeemedAt) {
-      setLoading(false);
-      setQrDataUrl(null);
-      return;
-    }
     let cancelled = false;
     (async () => {
       setLoading(true);
       setError(null);
+      if (used) {
+        try {
+          const url = await QRCode.toDataURL(`barriando:usado:${ticket.id}`, {
+            width: 420,
+            margin: 1,
+            errorCorrectionLevel: "M",
+            color: { dark: "#94a3b8", light: "#f1f5f9" },
+          });
+          if (cancelled) return;
+          setQrDataUrl(url);
+          setExpiresAtMs(null);
+          setSecondsLeft(0);
+          setLoading(false);
+        } catch {
+          if (!cancelled) {
+            setError("No se pudo dibujar el QR.");
+            setLoading(false);
+          }
+        }
+        return;
+      }
       const result = await createAccessTicketCredential(ticket.id);
       if (cancelled) return;
       if (!result.ok) {
@@ -208,7 +225,7 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
     return () => {
       cancelled = true;
     };
-  }, [ticket.id, ticket.redeemedAt, refreshKey]);
+  }, [ticket.id, used, refreshKey]);
 
   useEffect(() => {
     if (!expiresAtMs) return;
@@ -225,9 +242,11 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
   }, [expiresAtMs, loading, secondsLeft]);
 
   async function onDelete() {
-    if (deleting || ticket.redeemedAt) return;
+    if (deleting) return;
     const ok = window.confirm(
-      `¿Borrar el pase de “${ticket.event.title}”? Podrás obtener otro si aún hay cupo.`
+      used
+        ? `¿Borrar el pase usado de “${ticket.event.title}”? Ya no aparecerá en Mis pases.`
+        : `¿Borrar el pase de “${ticket.event.title}”? Podrás obtener otro si aún hay cupo.`
     );
     if (!ok) return;
     setDeleting(true);
@@ -242,59 +261,76 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm text-center select-none">
-      <p className="text-sm font-semibold text-[#27366D] leading-snug font-sans">{ticket.event.title}</p>
+    <div
+      className={`rounded-2xl border p-4 shadow-sm text-center select-none ${
+        used ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-white"
+      }`}
+    >
+      <p className={`text-sm font-semibold leading-snug font-sans ${used ? "text-slate-500" : "text-[#27366D]"}`}>
+        {ticket.event.title}
+      </p>
       <p className="mt-1 text-[11px] text-slate-500">
         {barrioPass
           ? "Válido 9 días desde el primer uso · Centro Histórico de Puebla"
           : `${formatAccessWhen(ticket.event.startsAt, ticket.event.endsAt)} · ${ticket.event.venue}`}
       </p>
-      {ticket.redeemedAt ? (
-        <p className="mt-3 text-sm text-slate-500">Este pase ya fue usado en la entrada.</p>
-      ) : (
-        <>
-          <div className="mt-3 mx-auto w-[min(56vw,14rem)] h-[min(56vw,14rem)] bg-white border border-slate-100 rounded-xl flex items-center justify-center overflow-hidden">
-            {loading && !qrDataUrl ? (
-              <p className="text-xs text-slate-400">Generando…</p>
-            ) : null}
-            {error ? <p className="text-xs text-red-700 px-3">{error}</p> : null}
-            {qrDataUrl && !error ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={qrDataUrl}
-                alt={`QR de ${ticket.event.title}`}
-                className={`w-full h-full object-contain p-2 ${loading ? "opacity-40" : "opacity-100"}`}
-                draggable={false}
-              />
-            ) : null}
+      <div
+        className={`relative mt-3 mx-auto w-[min(56vw,14rem)] h-[min(56vw,14rem)] border rounded-xl flex items-center justify-center overflow-hidden ${
+          used ? "bg-slate-100 border-slate-200" : "bg-white border-slate-100"
+        }`}
+      >
+        {loading && !qrDataUrl ? (
+          <p className="text-xs text-slate-400">Generando…</p>
+        ) : null}
+        {error ? <p className="text-xs text-red-700 px-3">{error}</p> : null}
+        {qrDataUrl && !error ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={qrDataUrl}
+            alt={used ? `QR usado de ${ticket.event.title}` : `QR de ${ticket.event.title}`}
+            className={`w-full h-full object-contain p-2 ${
+              loading ? "opacity-40" : used ? "opacity-80" : "opacity-100"
+            }`}
+            draggable={false}
+          />
+        ) : null}
+        {used && qrDataUrl && !error ? (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="-rotate-[18deg] rounded-md border-2 border-slate-400 bg-white/85 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-slate-500 shadow-sm">
+              Usado
+            </span>
           </div>
-          {expiresAtMs && !error ? (
-            <p className="mt-2 text-xs font-semibold tabular-nums text-[#27366D]">
-              Válido por {formatCountdown(secondsLeft)}
-            </p>
-          ) : null}
-          <p className="mt-1 text-[11px] text-slate-500">
-            {barrioPass
-              ? "Muéstralo en cada atracción. Una admisión por sede."
-              : "Muéstralo en la entrada. Un solo uso."}
-          </p>
-        </>
-      )}
-
-      {!ticket.redeemedAt ? (
-        <div className="mt-4" {...stopDrag}>
-          <button
-            type="button"
-            disabled={deleting}
-            onClick={() => void onDelete()}
-            className="inline-flex w-full items-center justify-center gap-2 border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-60 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-xl transition"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            {deleting ? "Borrando…" : "Borrar pase"}
-          </button>
-          {deleteError ? <p className="mt-2 text-xs text-red-700">{deleteError}</p> : null}
-        </div>
+        ) : null}
+      </div>
+      {used ? (
+        <p className="mt-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+          Ya fue usado en la entrada
+        </p>
+      ) : expiresAtMs && !error ? (
+        <p className="mt-2 text-xs font-semibold tabular-nums text-[#27366D]">
+          Válido por {formatCountdown(secondsLeft)}
+        </p>
       ) : null}
+      <p className="mt-1 text-[11px] text-slate-500">
+        {used
+          ? "Este QR ya no es válido. Puedes borrarlo de tu lista."
+          : barrioPass
+            ? "Muéstralo en cada atracción. Una admisión por sede."
+            : "Muéstralo en la entrada. Un solo uso."}
+      </p>
+
+      <div className="mt-4" {...stopDrag}>
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={() => void onDelete()}
+          className="inline-flex w-full items-center justify-center gap-2 border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-60 font-bold text-[11px] uppercase tracking-wider px-4 py-2.5 rounded-xl transition"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          {deleting ? "Borrando…" : "Borrar pase"}
+        </button>
+        {deleteError ? <p className="mt-2 text-xs text-red-700">{deleteError}</p> : null}
+      </div>
     </div>
   );
 }
