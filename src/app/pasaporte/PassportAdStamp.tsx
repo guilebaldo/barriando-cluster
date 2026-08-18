@@ -27,7 +27,7 @@ export default function PassportAdStamp({
         </span>
       </div>
       <p className={`font-medium text-stone-400 leading-tight uppercase tracking-wide ${nameClass}`}>
-        Tu logo aquí
+        Tu Marca Aquí
       </p>
     </PlanIntentCta>
   );

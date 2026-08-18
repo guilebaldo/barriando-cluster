@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Alias legacy del start_url PWA anterior.
- * La entrada unificada es `/`.
+ * La entrada unificada es `/` (sesión) o `/pases` (icono standalone).
  */
 export default function InicioPage() {
   redirect("/");

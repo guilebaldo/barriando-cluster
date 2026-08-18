@@ -151,7 +151,7 @@ export async function resolvePlanSelectionPath(plan: MembershipPlan): Promise<st
 
   if (isTuristaPlan(plan)) {
     await ensureTuristaSubscription(session.user.id);
-    return "/mapa";
+    return "/pases";
   }
 
   if (isPaidMembershipPlan(plan)) {
@@ -170,8 +170,8 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
 
 /**
  * Tras autenticación (login sin callbackUrl profundo):
- * admin / socio → /pases · pendientes de pago → /panel
- * BarrID / Mi cuenta queda en el nombre de usuario → /panel
+ * home móvil → /pases · pendientes de pago → /panel
+ * Mi cuenta queda en el nombre de usuario → /panel
  */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();
@@ -210,7 +210,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
 
   if (pending && isTuristaPlan(pending)) {
     await ensureTuristaSubscription(session.user.id);
-    redirect("/mapa");
+    redirect("/pases");
   }
 
   // Exploró paywall sin iniciar pago → vuelve a Turista (no atrapar en certificación).
@@ -219,7 +219,7 @@ export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan 
 
   if (!sub || isTuristaPlan(sub.plan)) {
     await ensureTuristaSubscription(session.user.id);
-    redirect("/mapa");
+    redirect("/pases");
   }
 
   if (sub && isPaidMembershipPlan(sub.plan) && !hasCommercialAccess(sub.plan, sub.status)) {

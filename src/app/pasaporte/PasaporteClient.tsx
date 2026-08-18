@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
+import { hiResAvatarUrl } from "@/lib/avatar-image";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
 import PasaporteInfoCard from "../components/PasaporteInfoCard";
@@ -417,12 +418,14 @@ function PassportPhotoFrame({
   initials: string;
 }) {
   if (userImage) {
+    const src = hiResAvatarUrl(userImage) ?? userImage;
     return (
       <Image
-        src={userImage}
+        src={src}
         alt={alt}
-        width={96}
-        height={120}
+        width={240}
+        height={300}
+        sizes="(min-width: 640px) 96px, 88px"
         className="w-full h-full object-cover"
         unoptimized
       />

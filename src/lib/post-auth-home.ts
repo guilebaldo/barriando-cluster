@@ -21,7 +21,7 @@ export type PostAuthHomeUser = {
  * Default destination after login (or visiting /entrar while signed in).
  * Deep-link callbackUrls (sellar, cupones, etc.) override this elsewhere.
  *
- * Destino general (también PWA / standalone vía `/`) → /pases (catálogo de eventos)
+ * Destino general (también PWA / standalone vía `/` o start_url `/pases`) → /pases
  * BarrID / Mi cuenta → nombre de usuario en navbar → /panel
  * Transferencia o OXXO en espera → /panel (mensaje de espera)
  * Soft unpaid (eligió plan sin checkout) → /panel (no atrapar en pago; CTAs retoman)

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getSociosHrefForRestaurant } from "@/lib/pasaporte";
+import { hiResAvatarUrl } from "@/lib/avatar-image";
 import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
 import PassportLeaderLine from "./PassportLeaderLine";
@@ -286,10 +287,11 @@ export default function PasaporteBookMobile({
           photo={
             userImage ? (
               <Image
-                src={userImage}
+                src={hiResAvatarUrl(userImage) ?? userImage}
                 alt={userName}
-                width={96}
-                height={120}
+                width={240}
+                height={300}
+                sizes="84px"
                 className="w-full h-full object-cover"
                 unoptimized
               />
