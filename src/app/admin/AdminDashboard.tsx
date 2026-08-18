@@ -43,7 +43,7 @@ import { resolveMembershipExpiryLabel } from "@/lib/panel-display";
 import { resolveProfileWhatsApp } from "@/lib/whatsapp";
 import { playCuelume, useAdminCuelume } from "./useAdminCuelume";
 import { computeAdminOpsStats, formatAdminTimestamp } from "@/lib/admin-ops";
-import type { AdminAccessEventCard } from "@/lib/access-events";
+import type { AccessEventCard } from "@/lib/access-events";
 import type { AccessEventHostOption } from "./pases-actions";
 import type { AdminOverviewStats } from "@/lib/admin-overview";
 import { adminUrlWithSection, type AdminTab } from "@/lib/admin-section";
@@ -225,7 +225,7 @@ export default function AdminDashboard({
   catalogRows: CatalogSocioRow[];
   membershipRows: CatalogMembershipRow[];
   milestones: MapMilestoneRow[];
-  accessEvents: AdminAccessEventCard[];
+  accessEvents: AccessEventCard[];
   eventHosts: AccessEventHostOption[];
   overview: AdminOverviewStats;
   initialTab: AdminTab;

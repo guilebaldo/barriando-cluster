@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import type {
   AccessEventCard,
-  AccessEventHolder,
   AccessTicketCard,
-  AdminAccessEventCard,
+  AdminAccessEventDetail,
+  AdminAccessTicketRow,
 } from "@/lib/access-events";
+import { accessTicketAttendance } from "@/lib/access-events";
 
 function toEventCard(
   row: {
@@ -85,58 +86,43 @@ function holderDisplayName(nombre: string | null, email: string | null): string 
   return nombre?.trim() || email?.trim() || "Sin nombre";
 }
 
-function toAdminEventCard(
-  row: {
-    id: string;
-    title: string;
-    description: string;
-    venue: string;
-    latitude: number | null;
-    longitude: number | null;
-    startsAt: Date;
-    endsAt: Date | null;
-    priceCents: number;
-    capacity: number | null;
-    published: boolean;
-    _count: { tickets: number };
-    tickets: Array<{
-      redeemedAt: Date | null;
-      user: { id: string; nombre: string | null; email: string | null };
-    }>;
-  }
-): AdminAccessEventCard {
-  const byUser = new Map<string, AccessEventHolder>();
-  for (const ticket of row.tickets) {
-    const existing = byUser.get(ticket.user.id);
-    if (existing) {
-      existing.ticketCount += 1;
-      if (ticket.redeemedAt) existing.redeemedCount += 1;
-      continue;
-    }
-    byUser.set(ticket.user.id, {
-      userId: ticket.user.id,
-      name: holderDisplayName(ticket.user.nombre, ticket.user.email),
-      email: ticket.user.email,
-      ticketCount: 1,
-      redeemedCount: ticket.redeemedAt ? 1 : 0,
-    });
-  }
-  const holders = [...byUser.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));
-  return { ...toEventCard(row), holders };
-}
-
-export async function listAdminAccessEvents(): Promise<AdminAccessEventCard[]> {
+export async function listAdminAccessEvents(): Promise<AccessEventCard[]> {
   const rows = await prisma.accessEvent.findMany({
     orderBy: { startsAt: "desc" },
+    include: { _count: { select: { tickets: true } } },
+  });
+  return rows.map(toEventCard);
+}
+
+export async function getAdminAccessEventById(
+  eventId: string
+): Promise<AdminAccessEventDetail | null> {
+  const row = await prisma.accessEvent.findUnique({
+    where: { id: eventId },
     include: {
       _count: { select: { tickets: true } },
       tickets: {
+        orderBy: { createdAt: "asc" },
         select: {
+          id: true,
           redeemedAt: true,
           user: { select: { id: true, nombre: true, email: true } },
         },
       },
     },
   });
-  return rows.map(toAdminEventCard);
+  if (!row) return null;
+  const event = toEventCard(row);
+  const tickets: AdminAccessTicketRow[] = row.tickets.map((ticket) => ({
+    id: ticket.id,
+    userId: ticket.user.id,
+    name: holderDisplayName(ticket.user.nombre, ticket.user.email),
+    email: ticket.user.email,
+    redeemedAt: ticket.redeemedAt?.toISOString() ?? null,
+    status: accessTicketAttendance(
+      ticket.redeemedAt?.toISOString() ?? null,
+      event.startsAt
+    ),
+  }));
+  return { ...event, tickets };
 }

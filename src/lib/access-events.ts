@@ -15,16 +15,39 @@ export type AccessEventCard = {
   published: boolean;
 };
 
-export type AccessEventHolder = {
+export type AccessAttendanceStatus = "on_time" | "late" | "no_show";
+
+export const ACCESS_ATTENDANCE_LABEL: Record<AccessAttendanceStatus, string> = {
+  on_time: "A tiempo",
+  late: "Tarde",
+  no_show: "No llegó",
+};
+
+export const ACCESS_ATTENDANCE_COLOR: Record<AccessAttendanceStatus, string> = {
+  on_time: "#059669",
+  late: "#d97706",
+  no_show: "#94a3b8",
+};
+
+export function accessTicketAttendance(
+  redeemedAt: string | null,
+  startsAt: string
+): AccessAttendanceStatus {
+  if (!redeemedAt) return "no_show";
+  return new Date(redeemedAt).getTime() <= new Date(startsAt).getTime() ? "on_time" : "late";
+}
+
+export type AdminAccessTicketRow = {
+  id: string;
   userId: string;
   name: string;
   email: string | null;
-  ticketCount: number;
-  redeemedCount: number;
+  redeemedAt: string | null;
+  status: AccessAttendanceStatus;
 };
 
-export type AdminAccessEventCard = AccessEventCard & {
-  holders: AccessEventHolder[];
+export type AdminAccessEventDetail = AccessEventCard & {
+  tickets: AdminAccessTicketRow[];
 };
 
 export type AccessTicketCard = {
@@ -50,6 +73,11 @@ export function formatAccessPriceMxn(priceCents: number): string {
 
 export function formatAccessWhen(startsAt: string, endsAt: string | null): string {
   return formatMexicoCityWhen(startsAt, endsAt);
+}
+
+export function formatAccessScanTime(iso: string): string {
+  const parts = mexicoCityDateParts(new Date(iso));
+  return `${parts.day} ${parts.month} ${parts.time}`;
 }
 
 export function accessEventHasEnded(startsAt: string, endsAt: string | null, now = Date.now()): boolean {

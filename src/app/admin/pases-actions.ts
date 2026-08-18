@@ -5,8 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
-import { listAdminAccessEvents } from "@/lib/access-marketplace";
-import type { AdminAccessEventCard } from "@/lib/access-events";
+import { listAdminAccessEvents, getAdminAccessEventById } from "@/lib/access-marketplace";
+import type { AccessEventCard, AdminAccessEventDetail } from "@/lib/access-events";
 import { parseMexicoCityLocalInput } from "@/lib/mexico-city-time";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 
@@ -47,6 +47,15 @@ function parseOptionalInt(raw: string | null | undefined): number | null {
   return n;
 }
 
+function revalidatePasePaths(eventId: string) {
+  revalidatePath("/admin");
+  revalidatePath(`/admin/pases/${eventId}`);
+  revalidatePath("/pases");
+  revalidatePath("/pases/mios");
+  revalidatePath(`/pases/${eventId}`);
+  revalidatePath("/barrid");
+}
+
 async function requireAdmin() {
   const session = await requireSession();
   if (!isAdminUser(session)) {
@@ -55,9 +64,16 @@ async function requireAdmin() {
   return session;
 }
 
-export async function listAccessEventsForAdmin(): Promise<AdminAccessEventCard[]> {
+export async function listAccessEventsForAdmin(): Promise<AccessEventCard[]> {
   await requireAdmin();
   return listAdminAccessEvents();
+}
+
+export async function getAccessEventForAdmin(
+  eventId: string
+): Promise<AdminAccessEventDetail | null> {
+  await requireAdmin();
+  return getAdminAccessEventById(eventId);
 }
 
 export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
@@ -124,10 +140,7 @@ export async function createAccessEvent(
         published: Boolean(parsed.data.published),
       },
     });
-    revalidatePath("/admin");
-    revalidatePath("/pases");
-    revalidatePath("/pases/mios");
-    revalidatePath(`/pases/${row.id}`);
+    revalidatePasePaths(row.id);
     return { ok: true, id: row.id };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -188,10 +201,7 @@ export async function updateAccessEvent(
         published: Boolean(parsed.data.published),
       },
     });
-    revalidatePath("/admin");
-    revalidatePath("/pases");
-    revalidatePath("/pases/mios");
-    revalidatePath(`/pases/${id}`);
+    revalidatePasePaths(id);
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -213,10 +223,7 @@ export async function toggleAccessEventPublished(id: string): Promise<ActionResu
       where: { id },
       data: { published: !row.published },
     });
-    revalidatePath("/admin");
-    revalidatePath("/pases");
-    revalidatePath("/pases/mios");
-    revalidatePath(`/pases/${id}`);
+    revalidatePasePaths(id);
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -238,10 +245,7 @@ export async function deleteAccessEvent(id: string): Promise<ActionResult> {
     }
     await prisma.ticketOrder.deleteMany({ where: { eventId: id } });
     await prisma.accessEvent.delete({ where: { id } });
-    revalidatePath("/admin");
-    revalidatePath("/pases");
-    revalidatePath("/pases/mios");
-    revalidatePath(`/pases/${id}`);
+    revalidatePasePaths(id);
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
