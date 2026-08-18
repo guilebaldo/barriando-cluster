@@ -48,6 +48,22 @@ function priceIsValid(raw: string): boolean {
   return Number.isFinite(pesos) && pesos >= 0;
 }
 
+function formsEqual(a: typeof emptyForm, b: typeof emptyForm): boolean {
+  return (
+    a.title === b.title &&
+    a.description === b.description &&
+    a.venue === b.venue &&
+    a.hostId === b.hostId &&
+    a.hostEmail === b.hostEmail &&
+    a.latitude === b.latitude &&
+    a.longitude === b.longitude &&
+    a.startsAt === b.startsAt &&
+    a.endsAt === b.endsAt &&
+    a.priceMxn === b.priceMxn &&
+    a.capacity === b.capacity
+  );
+}
+
 function formFromEvent(event: AccessEventCard) {
   return {
     title: event.title,
@@ -76,18 +92,21 @@ export default function AdminPaseEventForm({
   onSaved?: (id: string) => void;
 }) {
   const [form, setForm] = useState(() => (event ? formFromEvent(event) : emptyForm));
+  const [baseline, setBaseline] = useState(() => (event ? formFromEvent(event) : emptyForm));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [okMsg, setOkMsg] = useState("");
 
+  const isDirty = useMemo(() => !formsEqual(form, baseline), [form, baseline]);
   const canSave = useMemo(
     () =>
+      isDirty &&
       !busy &&
       form.title.trim().length > 0 &&
       form.venue.trim().length > 0 &&
       form.startsAt.trim().length > 0 &&
       priceIsValid(form.priceMxn),
-    [busy, form.title, form.venue, form.startsAt, form.priceMxn]
+    [isDirty, busy, form.title, form.venue, form.startsAt, form.priceMxn]
   );
 
   function applyHost(hostId: string) {
@@ -134,6 +153,7 @@ export default function AdminPaseEventForm({
         return;
       }
       onSaved?.(event.id);
+      setBaseline(form);
       setOkMsg("Pase actualizado.");
       return;
     }
@@ -294,8 +314,8 @@ export default function AdminPaseEventForm({
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        {fields}
-        {map}
+        <div className="order-2 lg:order-1">{map}</div>
+        <div className="order-1 lg:order-2">{fields}</div>
       </div>
 
       <div className="flex flex-wrap gap-2">

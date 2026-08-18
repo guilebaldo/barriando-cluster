@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
 import { listAdminAccessEvents, getAdminAccessEventById } from "@/lib/access-marketplace";
 import type { AccessEventCard, AdminAccessEventDetail } from "@/lib/access-events";
+import { BARRIANDO_PASE_HOST_EMAIL, BARRIANDO_PASE_HOST_ID, BARRIANDO_PASE_HOST_NAME } from "@/lib/access-events";
 import { parseMexicoCityLocalInput } from "@/lib/mexico-city-time";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 import { sanitizeAccessDescription } from "@/lib/access-description";
@@ -54,7 +55,9 @@ function parseOptionalInt(raw: string | null | undefined): number | null {
 function parseOptionalHostId(raw: string | null | undefined): number | null {
   if (!raw?.trim()) return null;
   const n = Number(raw.trim());
-  if (!Number.isInteger(n) || n === 0) return null;
+  if (!Number.isInteger(n)) return null;
+  if (n === BARRIANDO_PASE_HOST_ID) return n;
+  if (n < 1) return null;
   return n;
 }
 
@@ -111,7 +114,7 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
       .filter((user) => user.socioId != null && user.email)
       .map((user) => [user.socioId as number, user.email as string])
   );
-  return socios
+  const sociosRows = socios
     .map((socio) => {
       const coord = resolveSocioMapCoord(socio);
       return {
@@ -124,6 +127,17 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
+  return [
+    {
+      id: BARRIANDO_PASE_HOST_ID,
+      name: BARRIANDO_PASE_HOST_NAME,
+      category: "Clúster",
+      latitude: null,
+      longitude: null,
+      email: BARRIANDO_PASE_HOST_EMAIL,
+    },
+    ...sociosRows,
+  ];
 }
 
 export async function createAccessEvent(

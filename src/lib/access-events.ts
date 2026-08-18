@@ -17,6 +17,11 @@ export type AccessEventCard = {
   published: boolean;
 };
 
+/** Organizador sintético: el Clúster (no es un socio del directorio). */
+export const BARRIANDO_PASE_HOST_ID = -1;
+export const BARRIANDO_PASE_HOST_EMAIL = "clusterturistico.pue@gmail.com";
+export const BARRIANDO_PASE_HOST_NAME = "Barriando";
+
 export type AccessAttendanceStatus = "on_time" | "late" | "no_show";
 
 export const ACCESS_ATTENDANCE_LABEL: Record<AccessAttendanceStatus, string> = {
