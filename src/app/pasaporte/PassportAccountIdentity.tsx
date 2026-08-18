@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Settings } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 export default function PassportAccountIdentity({
   photo,
@@ -22,7 +22,7 @@ export default function PassportAccountIdentity({
   return (
     <Link
       href="/panel"
-      className={`flex items-start min-w-0 group ${className}`.trim()}
+      className={`flex items-center min-w-0 rounded-xl border border-[#c9b896]/70 bg-white/50 pl-2 py-2 pr-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] transition hover:bg-white/80 active:scale-[0.99] active:bg-[#f3eee4]/80 ${className}`.trim()}
       aria-label="Abrir configuración"
     >
       <span className={`relative shrink-0 ${photoClassName}`}>
@@ -30,22 +30,20 @@ export default function PassportAccountIdentity({
           {photo}
         </span>
       </span>
-      <span className="flex-1 min-w-0 space-y-1.5 pt-0.5 sm:space-y-2.5">
+      <span className="flex-1 min-w-0 space-y-1.5 pt-0.5 sm:space-y-2">
         <span className="block">
-          <span className="flex items-center justify-between gap-2">
-            <span className="passport-label">Nombre</span>
-            <Settings
-              className="h-3.5 w-3.5 text-stone-400 group-hover:text-stone-500"
-              strokeWidth={1.75}
-              aria-hidden
-            />
-          </span>
+          <span className="passport-label">Nombre</span>
           <span className={`passport-value mt-0.5 block break-words ${nameClassName}`}>
             {name}
           </span>
         </span>
         {children}
       </span>
+      <ChevronRight
+        className="w-4 h-4 sm:w-5 sm:h-5 text-stone-400 shrink-0"
+        strokeWidth={1.75}
+        aria-hidden
+      />
     </Link>
   );
 }
