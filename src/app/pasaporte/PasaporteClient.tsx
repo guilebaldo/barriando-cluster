@@ -15,6 +15,7 @@ import AddToHomeScreenModal from "../barrid/AddToHomeScreenModal";
 import PasaporteBookMobile from "./PasaporteBookMobile";
 import SellarClient from "./sellar/SellarClient";
 import PassportLeaderLine from "./PassportLeaderLine";
+import PassportAccountIdentity from "./PassportAccountIdentity";
 import PassportProgressBar from "./PassportProgressBar";
 import PassportAdStamp, { stampPadCount } from "./PassportAdStamp";
 import PassportNoticeToast, { type PassportNotice } from "./PassportNoticeToast";
@@ -667,20 +668,41 @@ function PasaporteInner({
               </p>
             </div>
 
-            <div className="mt-4 flex gap-4 sm:gap-5">
-              {isAuthenticated ? (
-                <Link
-                  href="/panel"
-                  className="shrink-0 w-[5.5rem] h-[7rem] sm:w-24 sm:h-[7.5rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner"
-                  aria-label="Abrir Mi cuenta"
-                >
+            {isAuthenticated ? (
+              <PassportAccountIdentity
+                className="mt-4 gap-4 sm:gap-5"
+                photoClassName="w-[5.5rem] h-[7rem] sm:w-24 sm:h-[7.5rem]"
+                name={displayName}
+                nameClassName="text-sm sm:text-base leading-snug min-h-[1.35em]"
+                photo={
                   <PassportPhotoFrame
                     userImage={userImage}
                     alt={userName}
                     initials={getInitials(displayName)}
                   />
-                </Link>
-              ) : (
+                }
+              >
+                <span className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  <span>
+                    <span className="passport-label">Sellos</span>
+                    <span className="passport-value text-[11px] sm:text-xs mt-0.5 block">
+                      {displayStats.stamps}
+                    </span>
+                  </span>
+                  <span>
+                    <span className="passport-label">Visitados</span>
+                    <span className="passport-value text-[11px] sm:text-xs mt-0.5 block">
+                      {displayStats.visited}/{totalRestaurants}
+                    </span>
+                  </span>
+                </span>
+                <PassportProgressBar
+                  progress={displayStats.progress}
+                  tierId={displayTierId}
+                />
+              </PassportAccountIdentity>
+            ) : (
+              <div className="mt-4 flex gap-4 sm:gap-5">
                 <div className="shrink-0 w-[5.5rem] h-[7rem] sm:w-24 sm:h-[7.5rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner">
                   <PassportPhotoFrame
                     userImage={userImage}
@@ -688,45 +710,36 @@ function PasaporteInner({
                     initials={getInitials(displayName)}
                   />
                 </div>
-              )}
 
-              <div
-                ref={previewFieldsRef}
-                className="flex-1 min-w-0 space-y-2.5 pt-0.5"
-              >
-                <div>
-                  <p className="passport-label">Nombre</p>
-                  {isAuthenticated ? (
-                    <Link
-                      href="/panel"
-                      className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words min-h-[1.35em] block hover:text-[#27366D]"
-                    >
-                      {displayName}
-                    </Link>
-                  ) : (
+                <div
+                  ref={previewFieldsRef}
+                  className="flex-1 min-w-0 space-y-2.5 pt-0.5"
+                >
+                  <div>
+                    <p className="passport-label">Nombre</p>
                     <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words min-h-[1.35em]">
                       <TypewriterValue text={displayName} isTyping={isPreview && previewScroll.isTypingName} />
                     </p>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  <div>
-                    <p className="passport-label">Sellos</p>
-                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">{displayStats.stamps}</p>
                   </div>
-                  <div>
-                    <p className="passport-label">Visitados</p>
-                    <p className="passport-value text-[11px] sm:text-xs mt-0.5">
-                      {displayStats.visited}/{totalRestaurants}
-                    </p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    <div>
+                      <p className="passport-label">Sellos</p>
+                      <p className="passport-value text-[11px] sm:text-xs mt-0.5">{displayStats.stamps}</p>
+                    </div>
+                    <div>
+                      <p className="passport-label">Visitados</p>
+                      <p className="passport-value text-[11px] sm:text-xs mt-0.5">
+                        {displayStats.visited}/{totalRestaurants}
+                      </p>
+                    </div>
                   </div>
+                  <PassportProgressBar
+                    progress={displayStats.progress}
+                    tierId={displayTierId}
+                  />
                 </div>
-                <PassportProgressBar
-                  progress={displayStats.progress}
-                  tierId={displayTierId}
-                />
               </div>
-            </div>
+            )}
 
             <div className="mt-5">
               <PassportLeaderLine names={leaderNames} className="text-[11px] sm:text-sm" />

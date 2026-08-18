@@ -8,6 +8,7 @@ import PlanIntentCta from "@/app/components/PlanIntentCta";
 import SeasonalStampBadge from "@/app/components/SeasonalStampBadge";
 import PassportLeaderLine from "./PassportLeaderLine";
 import PassportAdStamp, { stampPadCount } from "./PassportAdStamp";
+import PassportAccountIdentity from "./PassportAccountIdentity";
 import PassportProgressBar from "./PassportProgressBar";
 
 type RestaurantCard = {
@@ -277,13 +278,13 @@ export default function PasaporteBookMobile({
           </p>
         </div>
 
-        <div className="mt-3 flex gap-3 min-h-0 flex-1 items-start">
-          <Link
-            href="/panel"
-            className="shrink-0 w-[5.25rem] h-[6.6rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner"
-            aria-label="Abrir Mi cuenta"
-          >
-            {userImage ? (
+        <PassportAccountIdentity
+          className="mt-3 gap-3 min-h-0 flex-1"
+          photoClassName="w-[5.25rem] h-[6.6rem]"
+          name={userName}
+          nameClassName="text-[13px] leading-snug"
+          photo={
+            userImage ? (
               <Image
                 src={userImage}
                 alt={userName}
@@ -301,34 +302,23 @@ export default function PasaporteBookMobile({
                   Foto
                 </span>
               </div>
-            )}
-          </Link>
-
-          <div className="flex-1 min-w-0 space-y-1.5 pt-0.5">
-            <div>
-              <p className="passport-label">Nombre</p>
-              <Link
-                href="/panel"
-                className="passport-value text-[13px] leading-snug mt-0.5 break-words block hover:text-[#27366D]"
-              >
-                {userName}
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-              <div>
-                <p className="passport-label">Sellos</p>
-                <p className="passport-value text-[11px] mt-0.5">{totalStamps}</p>
-              </div>
-              <div>
-                <p className="passport-label">Visitados</p>
-                <p className="passport-value text-[11px] mt-0.5">
-                  {uniqueStamped}/{totalRestaurants}
-                </p>
-              </div>
-            </div>
-            <PassportProgressBar progress={progress} tierId={tierId} />
-          </div>
-        </div>
+            )
+          }
+        >
+          <span className="grid grid-cols-2 gap-x-3 gap-y-1">
+            <span>
+              <span className="passport-label">Sellos</span>
+              <span className="passport-value text-[11px] mt-0.5 block">{totalStamps}</span>
+            </span>
+            <span>
+              <span className="passport-label">Visitados</span>
+              <span className="passport-value text-[11px] mt-0.5 block">
+                {uniqueStamped}/{totalRestaurants}
+              </span>
+            </span>
+          </span>
+          <PassportProgressBar progress={progress} tierId={tierId} />
+        </PassportAccountIdentity>
 
         <div className="shrink-0 pt-1.5">
           <PassportLeaderLine names={leaderNames} className="text-[10px]" />
