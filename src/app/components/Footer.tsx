@@ -67,7 +67,7 @@ const FOOTER_COLUMNS = [
       { href: "/pases", label: "Pases" },
       { href: "/barriopass", label: "BarrioPASS" },
       { href: "/pasaporte", label: "Pasaporte" },
-      { href: "/barrid", label: "BarrID" },
+      { href: "/panel", label: "Mi cuenta" },
       { href: "/planes", label: "Planes" },
       { href: "/pipopetl", label: "PIPOPETL" },
     ],

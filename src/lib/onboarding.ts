@@ -171,7 +171,7 @@ export async function selectMembershipPlanForUser(plan: MembershipPlan) {
 /**
  * Tras autenticación (login sin callbackUrl profundo):
  * admin / socio → /pases · pendientes de pago → /panel
- * BarrID (credencial) queda en el nombre de usuario → /barrid
+ * BarrID / Mi cuenta queda en el nombre de usuario → /panel
  */
 export async function continueOnboardingAfterAuth(explicitPlan?: MembershipPlan | null) {
   const session = await auth();

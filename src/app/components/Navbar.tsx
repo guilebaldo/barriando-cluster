@@ -196,8 +196,8 @@ function UserMenu({ mobile = false }: { mobile?: boolean }) {
     email: session?.user?.email,
     role: session?.user?.role,
   });
-  // Nombre → BarrID (ficha con Mi cuenta, Mis pases, upsell Vecino). Panel queda en Mi cuenta.
-  const profileHref = "/barrid";
+  // Nombre → Mi cuenta.
+  const profileHref = "/panel";
   const panelHref = "/panel";
 
   useEffect(() => {

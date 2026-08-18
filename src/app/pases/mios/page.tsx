@@ -42,11 +42,11 @@ export default async function MisPasesPage({
       <Navbar />
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-8 md:py-12">
         <Link
-          href="/pases?ficha=1"
+          href="/pases"
           className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          Volver a BarrID
+          Volver a Pases
         </Link>
         <h1 className="mt-3 text-2xl font-black uppercase tracking-wide text-slate-950 font-sans">
           Mis pases

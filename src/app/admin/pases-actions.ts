@@ -128,7 +128,6 @@ export async function createAccessEvent(
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
     revalidatePath(`/pases/${row.id}`);
-    revalidatePath("/barrid");
     return { ok: true, id: row.id };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -193,7 +192,6 @@ export async function updateAccessEvent(
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
     revalidatePath(`/pases/${id}`);
-    revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -219,7 +217,6 @@ export async function toggleAccessEventPublished(id: string): Promise<ActionResu
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
     revalidatePath(`/pases/${id}`);
-    revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
@@ -245,7 +242,6 @@ export async function deleteAccessEvent(id: string): Promise<ActionResult> {
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
     revalidatePath(`/pases/${id}`);
-    revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

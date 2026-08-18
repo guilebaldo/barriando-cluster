@@ -22,7 +22,7 @@ export type PostAuthHomeUser = {
  * Deep-link callbackUrls (sellar, cupones, etc.) override this elsewhere.
  *
  * Destino general (también PWA / standalone vía `/`) → /pases (catálogo de eventos)
- * BarrID (credencial / cuenta) → nombre de usuario en navbar → /barrid
+ * BarrID / Mi cuenta → nombre de usuario en navbar → /panel
  * Transferencia o OXXO en espera → /panel (mensaje de espera)
  * Soft unpaid (eligió plan sin checkout) → /panel (no atrapar en pago; CTAs retoman)
  * Plan de pago con checkout iniciado sin acceso → /certificacion/pago

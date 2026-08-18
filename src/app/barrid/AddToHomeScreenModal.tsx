@@ -16,7 +16,7 @@ import {
 type Props = {
   userId: string;
   eligible: boolean;
-  /** Copy variant: BarrID membership vs first passport use. */
+  /** Copy variant: app install vs first passport use. */
   purpose?: "barrid" | "pasaporte";
 };
 
@@ -108,7 +108,7 @@ export default function AddToHomeScreenModal({
       </>
     ) : (
       <>
-        Instala el acceso directo para abrir tu BarrID como una app. El marcador se guardará como{" "}
+        Instala el acceso directo para abrir Barriando como una app. El marcador se guardará como{" "}
         <span className="font-semibold text-[#27366D]">BarriApp</span>.
       </>
     );

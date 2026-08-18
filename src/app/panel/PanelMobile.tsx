@@ -37,8 +37,6 @@ type Props = {
   };
   planLabel: string;
   statusLabel?: string;
-  /** Turista no tiene BarrID; el resto vuelve a /barrid */
-  showBackToBarrId: boolean;
   notices?: ReactNode;
   rows: PanelMobileRow[];
   /** Pie discreto (p. ej. eliminar cuenta Turista) */
@@ -58,14 +56,13 @@ const shellClass =
   "panel-mobile-shell flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden overscroll-none bg-[#27366D] text-slate-900";
 
 /**
- * Panel mobile: mismo candado de viewport que MAPA/BarrID (100dvh + scroll interno)
+ * Panel mobile: mismo candado de viewport que MAPA (100dvh + scroll interno)
  * para que el hub no se desacomode en standalone.
  */
 export default function PanelMobile({
   user,
   planLabel,
   statusLabel,
-  showBackToBarrId,
   notices,
   rows,
   footer,
@@ -129,20 +126,10 @@ export default function PanelMobile({
     <div className={shellClass}>
       <header className="shrink-0 z-30 bg-[#27366D] text-white safe-area-top border-b border-[#1e2b58]">
         <div className="flex items-center gap-2 px-3 py-3">
-          {showBackToBarrId ? (
-            <Link
-              href="/pases?ficha=1"
-              className="inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white/10 transition touch-manipulation"
-              aria-label="Volver a BarrID"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          ) : (
-            <span className="w-10" aria-hidden />
-          )}
+          <span className="w-10" aria-hidden />
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-bold uppercase tracking-widest text-amber-300/90">
-              {showBackToBarrId ? "Volver a BarrID" : "Mi cuenta"}
+              Mi cuenta
             </p>
             <h1 className="text-base font-bold truncate leading-tight">Ajustes</h1>
           </div>

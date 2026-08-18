@@ -121,8 +121,8 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
         a: (
           <>
             Tras iniciar sesión, el sistema te lleva a tu espacio: MAPA o Pasaporte (turista),{" "}
-            <Link href="/barrid">BarrID</Link> (vecino) o <Link href="/panel">panel</Link> (negocio).
-            También puedes abrir el menú de tu cuenta en la barra superior.
+            <Link href="/pases">Pases</Link> o <Link href="/panel">Mi cuenta</Link>{" "}
+            (vecino y negocio). También puedes abrir el menú de tu cuenta en la barra superior.
           </>
         ),
       },
@@ -165,8 +165,9 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
         a: (
           <>
             BarrID es la <strong>credencial digital de vecino</strong> (y de negocios para validar
-            canjes). Se muestra como QR en <Link href="/barrid">/barrid</Link> para canjear cupones
-            en el mostrador del comercio participante.
+            canjes). El QR para canjear cupones se muestra en la{" "}
+            <Link href="/cuponera?cupones=1">Cuponera</Link> al activar una oferta. Tu cuenta y
+            membresía están en <Link href="/panel">Mi cuenta</Link>.
           </>
         ),
       },
@@ -190,8 +191,7 @@ const SECTIONS: { title: string; items: FaqItem[] }[] = [
         a: (
           <>
             Necesitas membresía activa (por ejemplo Vecino). En la ficha del negocio elige activar el
-            cupón y muestra tu <strong>BarrID</strong> (o el QR de credencial). El negocio valida el
-            canje en su cuenta.
+            cupón y muestra el QR de la Cuponera. El negocio valida el canje en su cuenta.
           </>
         ),
       },

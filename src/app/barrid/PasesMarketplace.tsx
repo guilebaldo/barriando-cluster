@@ -59,7 +59,7 @@ export default function PasesMarketplace({
   events: AccessEventCard[];
   notice?: "ok" | "cancelado" | null;
   signedIn?: boolean;
-  /** En /barrid: avisa cuando hay ficha de evento abierta (para ocultar BarrID). */
+  /** Cuando hay ficha de evento abierta (p. ej. para ajustar chrome). */
   onEventDetailChange?: (open: boolean) => void;
 }) {
   const [view, setView] = useState<CatalogView>("lista");

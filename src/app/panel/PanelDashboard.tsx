@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
@@ -52,7 +51,6 @@ import {
   Sparkles,
   Shield,
   ArrowUpCircle,
-  ArrowLeft,
   X,
   LogOut,
   Link2,
@@ -859,7 +857,6 @@ export default function PanelDashboard({
           user={{ nombre: user.nombre, email: user.email, image: user.image }}
           planLabel={getPlanLabel(plan)}
           statusLabel={isTurista ? undefined : getSubscriptionStatusLabel(status)}
-          showBackToBarrId={!isTurista}
           notices={mobileNotices}
           rows={mobileRows}
           initialSection={explicitSection}
@@ -957,15 +954,6 @@ export default function PanelDashboard({
       )}
 
       <div>
-        {!isTurista ? (
-          <Link
-            href="/barrid"
-            className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600 mb-2"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Volver a BarrID
-          </Link>
-        ) : null}
         <h1 className="text-2xl font-black uppercase tracking-wide text-slate-950 font-sans">
           {isTurista ? "Mi cuenta" : isVecino ? "Panel del vecino" : "Panel del socio"}
         </h1>

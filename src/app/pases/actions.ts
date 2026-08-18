@@ -95,7 +95,6 @@ async function claimCourtesyTicket(
     });
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
-    revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "SOLD_OUT") {
@@ -291,7 +290,6 @@ export async function deleteAccessTicket(
     await prisma.accessTicket.delete({ where: { id: ticket.id } });
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
-    revalidatePath("/barrid");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

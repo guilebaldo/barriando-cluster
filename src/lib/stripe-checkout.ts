@@ -65,7 +65,7 @@ export async function createStripeCheckoutUrl(
     });
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
-    const successPath = "/barrid?pago=exitoso&bienvenida=1";
+    const successPath = "/panel?pago=exitoso&bienvenida=1";
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",

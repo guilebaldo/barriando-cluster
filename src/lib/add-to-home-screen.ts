@@ -1,6 +1,6 @@
 const STORAGE_PREFIX = "barriando.a2hs.dismissed.";
 
-/** Ventana tras el alta: cubre login → pago → primera visita a /barrid. */
+/** Ventana tras el alta: cubre login → pago → primera visita a Pases o Mi cuenta. */
 export const FIRST_LOGIN_WINDOW_MS = 72 * 60 * 60 * 1000;
 
 export type BeforeInstallPromptEvent = Event & {

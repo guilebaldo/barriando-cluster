@@ -406,6 +406,35 @@ function getInitials(name: string): string {
     .join("");
 }
 
+function PassportPhotoFrame({
+  userImage,
+  alt,
+  initials,
+}: {
+  userImage: string | null;
+  alt: string;
+  initials: string;
+}) {
+  if (userImage) {
+    return (
+      <Image
+        src={userImage}
+        alt={alt}
+        width={96}
+        height={120}
+        className="w-full h-full object-cover"
+        unoptimized
+      />
+    );
+  }
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center text-stone-500 bg-gradient-to-b from-[#f0ebe3] to-[#e4ddd0]">
+      <span className="text-2xl font-serif-cluster text-[#5c3d1e]/70">{initials || "?"}</span>
+      <span className="text-[8px] font-passport-mrz tracking-widest mt-1 uppercase">Foto</span>
+    </div>
+  );
+}
+
 function PasaporteInner({
   userName,
   userImage,
@@ -639,25 +668,27 @@ function PasaporteInner({
             </div>
 
             <div className="mt-4 flex gap-4 sm:gap-5">
-              <div className="shrink-0 w-[5.5rem] h-[7rem] sm:w-24 sm:h-[7.5rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner">
-                {userImage ? (
-                  <Image
-                    src={userImage}
+              {isAuthenticated ? (
+                <Link
+                  href="/panel"
+                  className="shrink-0 w-[5.5rem] h-[7rem] sm:w-24 sm:h-[7.5rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner"
+                  aria-label="Abrir Mi cuenta"
+                >
+                  <PassportPhotoFrame
+                    userImage={userImage}
                     alt={userName}
-                    width={96}
-                    height={120}
-                    className="w-full h-full object-cover"
-                    unoptimized
+                    initials={getInitials(displayName)}
                   />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-stone-500 bg-gradient-to-b from-[#f0ebe3] to-[#e4ddd0]">
-                    <span className="text-2xl font-serif-cluster text-[#5c3d1e]/70">
-                      {getInitials(displayName) || "?"}
-                    </span>
-                    <span className="text-[8px] font-passport-mrz tracking-widest mt-1 uppercase">Foto</span>
-                  </div>
-                )}
-              </div>
+                </Link>
+              ) : (
+                <div className="shrink-0 w-[5.5rem] h-[7rem] sm:w-24 sm:h-[7.5rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner">
+                  <PassportPhotoFrame
+                    userImage={userImage}
+                    alt={userName}
+                    initials={getInitials(displayName)}
+                  />
+                </div>
+              )}
 
               <div
                 ref={previewFieldsRef}
@@ -665,9 +696,18 @@ function PasaporteInner({
               >
                 <div>
                   <p className="passport-label">Nombre</p>
-                  <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words min-h-[1.35em]">
-                    <TypewriterValue text={displayName} isTyping={isPreview && previewScroll.isTypingName} />
-                  </p>
+                  {isAuthenticated ? (
+                    <Link
+                      href="/panel"
+                      className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words min-h-[1.35em] block hover:text-[#27366D]"
+                    >
+                      {displayName}
+                    </Link>
+                  ) : (
+                    <p className="passport-value text-sm sm:text-base leading-snug mt-0.5 break-words min-h-[1.35em]">
+                      <TypewriterValue text={displayName} isTyping={isPreview && previewScroll.isTypingName} />
+                    </p>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                   <div>

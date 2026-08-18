@@ -240,7 +240,7 @@ export default function SocioBenefitForm({
                 <span>
                   <span className="font-medium">Instrucciones por escrito</span>
                   <span className="block text-xs text-slate-500 font-light mt-0.5">
-                    Describes cómo canjearlo y el socio usa el botón hacia BarrID si hace falta.
+                    Describes cómo canjearlo; el vecino ve el detalle en la Cuponera.
                   </span>
                 </span>
               </label>
