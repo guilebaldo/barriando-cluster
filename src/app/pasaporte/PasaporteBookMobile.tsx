@@ -277,8 +277,8 @@ export default function PasaporteBookMobile({
           </p>
         </div>
 
-        <div className="mt-3 flex gap-3 min-h-0 flex-1">
-          <div className="shrink-0 w-[5.25rem] h-[6.6rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner self-start">
+        <div className="mt-3 flex gap-3 min-h-0 flex-1 items-start">
+          <div className="shrink-0 w-[5.25rem] h-[6.6rem] border-2 border-[#b8a88a] bg-[#ede6d8] overflow-hidden shadow-inner">
             {userImage ? (
               <Image
                 src={userImage}
@@ -300,7 +300,7 @@ export default function PasaporteBookMobile({
             )}
           </div>
 
-          <div className="flex-1 min-w-0 space-y-1.5 content-start pt-0.5">
+          <div className="flex-1 min-w-0 space-y-1.5 pt-0.5">
             <div>
               <p className="passport-label">Nombre</p>
               <p className="passport-value text-[13px] leading-snug mt-0.5 break-words">
@@ -319,11 +319,11 @@ export default function PasaporteBookMobile({
                 </p>
               </div>
             </div>
+            <PassportProgressBar progress={progress} tierId={tierId} />
           </div>
         </div>
 
-        <div className="shrink-0 mt-auto pt-1.5 space-y-1">
-          <PassportProgressBar progress={progress} tierId={tierId} />
+        <div className="shrink-0 pt-1.5">
           <PassportLeaderLine names={leaderNames} className="text-[10px]" />
         </div>
       </div>

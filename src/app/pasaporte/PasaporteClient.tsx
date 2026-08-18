@@ -681,14 +681,14 @@ function PasaporteInner({
                     </p>
                   </div>
                 </div>
+                <PassportProgressBar
+                  progress={displayStats.progress}
+                  tierId={displayTierId}
+                />
               </div>
             </div>
 
-            <div className="mt-5 space-y-2">
-              <PassportProgressBar
-                progress={displayStats.progress}
-                tierId={displayTierId}
-              />
+            <div className="mt-5">
               <PassportLeaderLine names={leaderNames} className="text-[11px] sm:text-sm" />
             </div>
           </div>
