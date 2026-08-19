@@ -23,6 +23,7 @@ import { toBusinessProfileFormInitial } from "@/lib/business-address";
 import { sociosCoords } from "@/app/data/socios-coords";
 import { playCuelume } from "./useAdminCuelume";
 import AdminConfirmDialog from "./AdminConfirmDialog";
+import AdminSocioMapMarkerEditor from "./AdminSocioMapMarkerEditor";
 import type { MembershipPlan } from "@/generated/prisma/client";
 
 type DrawerTab = "negocio" | "beneficio" | "membresia";
@@ -88,8 +89,10 @@ export default function AdminEditDrawer({
   const profileInitial = useMemo((): SocioProfileFormInitial => {
     const p = linkedUser?.profile;
     const curated = row?.socioId != null ? sociosCoords[row.socioId] : undefined;
-    const latitude = p?.latitude ?? curated?.lat ?? null;
-    const longitude = p?.longitude ?? curated?.lng ?? null;
+    const latitude =
+      p?.latitude ?? row?.mapLatitude ?? curated?.lat ?? null;
+    const longitude =
+      p?.longitude ?? row?.mapLongitude ?? curated?.lng ?? null;
     return toBusinessProfileFormInitial(
       {
         businessName: p?.businessName || row?.businessName || catalog?.name || "",
@@ -327,8 +330,8 @@ export default function AdminEditDrawer({
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-5 py-4">
           {!linkedUser && tab === "negocio" ? (
             <p className="mb-4 text-[11px] text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
-              Sin cuenta vinculada: se guardan nombre y sitio web en el roster. Ubicación y CFDI se
-              guardan cuando el dueño tenga cuenta vinculada.
+              Sin cuenta vinculada: el marcador del mapa se guarda arriba. Nombre y sitio web se
+              persisten en el roster; la ficha fiscal completa requiere cuenta del negocio.
             </p>
           ) : null}
 
@@ -339,17 +342,26 @@ export default function AdminEditDrawer({
           ) : null}
 
           {tab === "negocio" ? (
-            <SocioProfileForm
-              key={`profile-${row.socioId}-${linkedUser?.id ?? "none"}`}
-              initial={profileInitial}
-              email={linkedUser?.email ?? "sin-cuenta@barriando.local"}
-              embedded
-              requireFiscal={Boolean(linkedUser)}
-              allowPartial
-              onSave={handleSaveProfile}
-              onDelete={() => setConfirmDeleteOpen(true)}
-              deleteDisabled={saving}
-            />
+            <>
+              <AdminSocioMapMarkerEditor
+                key={`map-${row.socioId}-${row.mapLatitude ?? "x"}-${row.mapLongitude ?? "y"}`}
+                socioId={row.socioId}
+                initialLatitude={row.mapLatitude ?? profileInitial.latitude}
+                initialLongitude={row.mapLongitude ?? profileInitial.longitude}
+                onMessage={setMsg}
+              />
+              <SocioProfileForm
+                key={`profile-${row.socioId}-${linkedUser?.id ?? "none"}`}
+                initial={profileInitial}
+                email={linkedUser?.email ?? "sin-cuenta@barriando.local"}
+                embedded
+                requireFiscal={Boolean(linkedUser)}
+                allowPartial
+                onSave={handleSaveProfile}
+                onDelete={() => setConfirmDeleteOpen(true)}
+                deleteDisabled={saving}
+              />
+            </>
           ) : null}
 
           {tab === "beneficio" ? (

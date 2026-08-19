@@ -1122,6 +1122,9 @@ export type CatalogMembershipRow = {
   monthsPastDue: number;
   foto: string;
   categoria: string;
+  /** Pin persistido en Business (admin / alta manual). */
+  mapLatitude: number | null;
+  mapLongitude: number | null;
   offersBenefit: boolean;
   benefitTitle: string;
   benefitDescription: string;
@@ -1171,6 +1174,14 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
       if (cat) categoryBySocioId.set(u.socioId, cat);
     }
 
+    const businesses = await prisma.business.findMany({
+      where: { id: { in: rows.map((r) => r.socioId) } },
+      select: { id: true, latitude: true, longitude: true },
+    });
+    const coordsBySocioId = new Map(
+      businesses.map((b) => [b.id, { lat: b.latitude, lng: b.longitude }] as const)
+    );
+
     return rows
       .map((row) => {
         const catalog = listaSocios.find((s) => s.id === row.socioId);
@@ -1181,6 +1192,15 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
           row.category?.trim() ||
           categoryBySocioId.get(row.socioId) ||
           "";
+        const bizCoords = coordsBySocioId.get(row.socioId);
+        const mapLatitude =
+          typeof bizCoords?.lat === "number" && Number.isFinite(bizCoords.lat)
+            ? bizCoords.lat
+            : null;
+        const mapLongitude =
+          typeof bizCoords?.lng === "number" && Number.isFinite(bizCoords.lng)
+            ? bizCoords.lng
+            : null;
         return {
           socioId: row.socioId,
           businessName:
@@ -1198,6 +1218,8 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
           monthsPastDue: row.monthsPastDue ?? 0,
           foto: catalog?.foto ?? "",
           categoria,
+          mapLatitude,
+          mapLongitude,
           offersBenefit: Boolean(row.offersBenefit),
           benefitTitle: row.benefitTitle ?? "",
           benefitDescription: row.benefitDescription ?? "",
@@ -1744,8 +1766,8 @@ export async function adminUpdateBusinessProfile(
       return {
         ok: true,
         warning: hasCoords
-          ? "Ubicación guardada en el roster. Facturación requiere cuenta vinculada."
-          : "Nombre y sitio web guardados en roster. Ubicación y facturación requieren cuenta vinculada.",
+          ? "Ubicación guardada en el mapa. Facturación completa requiere cuenta vinculada."
+          : "Nombre y sitio web guardados en roster. Mueve el pin arriba para ubicarlo en el mapa.",
       };
     }
 
@@ -1846,6 +1868,87 @@ export async function adminUpdateBusinessProfile(
     }
     console.error("[admin] adminUpdateBusinessProfile failed:", error);
     return { ok: false, error: "No se pudo guardar el perfil del negocio." };
+  }
+}
+
+const catalogMapMarkerSchema = z.object({
+  socioId: z.number().int().positive(),
+  latitude: z.number().finite().min(-90).max(90),
+  longitude: z.number().finite().min(-180).max(180),
+});
+
+/** Solo el pin del mapa: no exige cuenta vinculada ni ficha completa. */
+export async function updateCatalogSocioMapMarker(
+  input: z.infer<typeof catalogMapMarkerSchema>
+): Promise<ActionResult> {
+  try {
+    const session = await requireSession();
+    if (!isAdminUser(session)) return { ok: false, error: "No autorizado." };
+
+    const parsed = catalogMapMarkerSchema.safeParse(input);
+    if (!parsed.success) {
+      return { ok: false, error: parsed.error.issues[0]?.message ?? "Coordenadas inválidas." };
+    }
+
+    const { socioId, latitude, longitude } = parsed.data;
+    const catalog = listaSocios.find((s) => s.id === socioId);
+    const existing = await prisma.catalogMembership.findUnique({ where: { socioId } });
+    if (!catalog && !existing) {
+      return { ok: false, error: "Socio del catálogo no encontrado." };
+    }
+
+    const businessName =
+      existing?.businessName?.trim() || catalog?.name || `Socio #${socioId}`;
+    const category =
+      existing?.category?.trim() || catalog?.categoria || null;
+
+    const override = await prisma.catalogSocioOverride.findUnique({
+      where: { socioId },
+      select: { website: true },
+    });
+    const website =
+      override?.website?.trim() || catalog?.url || null;
+
+    await prisma.business.upsert({
+      where: { id: socioId },
+      create: {
+        id: socioId,
+        name: businessName,
+        category,
+        website,
+        latitude,
+        longitude,
+      },
+      update: {
+        name: businessName,
+        category,
+        latitude,
+        longitude,
+      },
+    });
+
+    const linked = await prisma.user.findFirst({
+      where: { socioId },
+      select: { id: true, socioProfile: { select: { userId: true } } },
+    });
+    if (linked?.socioProfile) {
+      await prisma.socioProfile.update({
+        where: { userId: linked.id },
+        data: { latitude, longitude },
+      });
+    }
+
+    revalidatePath("/admin");
+    revalidatePublicSocios();
+    revalidatePath("/mapa");
+    revalidatePath("/cuponera");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") {
+      return { ok: false, error: "Debes iniciar sesión." };
+    }
+    console.error("[admin] updateCatalogSocioMapMarker failed:", error);
+    return { ok: false, error: "No se pudo guardar el marcador." };
   }
 }
 
