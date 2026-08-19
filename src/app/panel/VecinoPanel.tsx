@@ -206,7 +206,8 @@ export default function VecinoPanel({
             onStripePay={() => void handleStripePay(subscription.plan)}
             onManualConfirm={handleManualPayment}
             paymentDetails={paymentDetails}
-            showTransfer={!paidActive}
+            showOxxo
+            showTransfer
             stripeLabel="Domiciliar con tarjeta"
           />
         )}
