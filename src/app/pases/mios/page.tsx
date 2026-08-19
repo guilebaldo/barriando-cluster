@@ -7,7 +7,6 @@ import SiteShell from "@/app/components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
 import { listUserAccessTickets } from "@/lib/access-marketplace";
 import { fulfillAccessTicketByCheckoutSessionId } from "@/lib/fulfill-access-ticket";
-import { isAppleWalletConfigured } from "@/lib/apple-wallet-config";
 import MisPasesList from "../MisPasesList";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +36,6 @@ export default async function MisPasesPage({
   }
 
   const tickets = await listUserAccessTickets(session.id);
-  const walletReady = isAppleWalletConfigured();
 
   return (
     <SiteShell>
@@ -63,7 +61,7 @@ export default async function MisPasesPage({
           </p>
         ) : null}
         <div className="mt-6">
-          <MisPasesList tickets={tickets} walletReady={walletReady} />
+          <MisPasesList tickets={tickets} />
         </div>
       </main>
       <Footer />
