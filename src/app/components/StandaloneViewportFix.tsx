@@ -41,6 +41,11 @@ export default function StandaloneViewportFix() {
     };
 
     const onFocusOut = (event: FocusEvent) => {
+      const from = event.target;
+      if (from instanceof HTMLElement && from.closest(".admin-touch-forms")) {
+        return;
+      }
+
       const next = event.relatedTarget;
       if (
         next instanceof HTMLElement &&
