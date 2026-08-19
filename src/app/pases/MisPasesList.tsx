@@ -40,7 +40,13 @@ function stopDragProps() {
 }
 
 /** Mis pases: swipe horizontal entre boletos (máx. 2 por evento). */
-export default function MisPasesList({ tickets }: { tickets: AccessTicketCard[] }) {
+export default function MisPasesList({
+  tickets,
+  walletReady,
+}: {
+  tickets: AccessTicketCard[];
+  walletReady: boolean;
+}) {
   const [[page, direction], setPage] = useState([0, 0]);
   const ticketsKey = tickets.map((t) => t.id).join(",");
 
@@ -124,7 +130,7 @@ export default function MisPasesList({ tickets }: { tickets: AccessTicketCard[] 
             className="relative z-10 w-full cursor-grab active:cursor-grabbing"
             style={{ touchAction: "pan-x" }}
           >
-            <TicketQrCard ticket={active} />
+            <TicketQrCard ticket={active} walletReady={walletReady} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -158,7 +164,13 @@ export default function MisPasesList({ tickets }: { tickets: AccessTicketCard[] 
   );
 }
 
-function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
+function TicketQrCard({
+  ticket,
+  walletReady,
+}: {
+  ticket: AccessTicketCard;
+  walletReady: boolean;
+}) {
   const barrioPass = isBarrioPassEventTitle(ticket.event.title);
   const used = Boolean(ticket.redeemedAt);
   const router = useRouter();
@@ -321,7 +333,7 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
       </p>
 
       <div className="mt-4 space-y-2" {...stopDrag}>
-        <TicketSaveButtons ticket={ticket} />
+        <TicketSaveButtons ticket={ticket} walletReady={walletReady} />
         <button
           type="button"
           disabled={deleting}
