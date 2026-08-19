@@ -8,6 +8,7 @@ export type AccessEventCard = {
   latitude: number | null;
   longitude: number | null;
   hostId: number | null;
+  venueId: number | null;
   hostEmail: string | null;
   startsAt: string;
   endsAt: string | null;
@@ -21,6 +22,10 @@ export type AccessEventCard = {
 export const BARRIANDO_PASE_HOST_ID = -1;
 export const BARRIANDO_PASE_HOST_EMAIL = "clusterturistico.pue@gmail.com";
 export const BARRIANDO_PASE_HOST_NAME = "Barriando";
+/** Pin / texto por defecto si la sede es el Clúster. */
+export const BARRIANDO_PASE_VENUE_NAME = "Centro Histórico de Puebla";
+export const BARRIANDO_PASE_VENUE_LAT = 19.043;
+export const BARRIANDO_PASE_VENUE_LNG = -98.198;
 
 export type AccessAttendanceStatus = "on_time" | "late" | "no_show";
 
@@ -65,6 +70,8 @@ export type AccessTicketCard = {
   event: {
     title: string;
     venue: string;
+    latitude: number | null;
+    longitude: number | null;
     startsAt: string;
     endsAt: string | null;
   };

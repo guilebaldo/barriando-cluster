@@ -16,6 +16,7 @@ function toEventCard(
     latitude: number | null;
     longitude: number | null;
     hostId: number | null;
+    venueId: number | null;
     hostEmail: string | null;
     startsAt: Date;
     endsAt: Date | null;
@@ -33,6 +34,7 @@ function toEventCard(
     latitude: row.latitude,
     longitude: row.longitude,
     hostId: row.hostId,
+    venueId: row.venueId,
     hostEmail: row.hostEmail,
     startsAt: row.startsAt.toISOString(),
     endsAt: row.endsAt?.toISOString() ?? null,
@@ -64,12 +66,42 @@ export async function getPublishedAccessEventById(
   return row ? toEventCard(row) : null;
 }
 
+export async function getOwnedAccessTicketForSave(userId: string, ticketId: string) {
+  return prisma.accessTicket.findFirst({
+    where: { id: ticketId, userId },
+    select: {
+      id: true,
+      code: true,
+      userId: true,
+      event: {
+        select: {
+          title: true,
+          venue: true,
+          latitude: true,
+          longitude: true,
+          startsAt: true,
+          endsAt: true,
+        },
+      },
+    },
+  });
+}
+
 export async function listUserAccessTickets(userId: string): Promise<AccessTicketCard[]> {
   const rows = await prisma.accessTicket.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
     include: {
-      event: { select: { title: true, venue: true, startsAt: true, endsAt: true } },
+      event: {
+        select: {
+          title: true,
+          venue: true,
+          latitude: true,
+          longitude: true,
+          startsAt: true,
+          endsAt: true,
+        },
+      },
     },
   });
   return rows.map((row) => ({
@@ -80,6 +112,8 @@ export async function listUserAccessTickets(userId: string): Promise<AccessTicke
     event: {
       title: row.event.title,
       venue: row.event.venue,
+      latitude: row.event.latitude,
+      longitude: row.event.longitude,
       startsAt: row.event.startsAt.toISOString(),
       endsAt: row.event.endsAt?.toISOString() ?? null,
     },

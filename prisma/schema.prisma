@@ -313,12 +313,14 @@ model AccessEvent {
   id          String   @id @default(cuid())
   title       String
   description String   @default("")
-  /** Dirección visible del evento (independiente del socio anfitrión). */
+  /** Dirección visible del evento (se puede ajustar a mano). */
   venue       String
   latitude    Float?
   longitude   Float?
-  /** Socio del directorio que organiza (id de catálogo). No amarra dirección ni pin. */
+  /** Socio que organiza / anfitrión (id de catálogo). No amarra dirección ni pin. */
   hostId      Int?
+  /** Socio de la sede: dirección y pin dados de alta. Puede ser el organizador u otro. */
+  venueId     Int?
   /** Correo del responsable; recibe aviso al venderse un pase. */
   hostEmail   String?
   startsAt    DateTime

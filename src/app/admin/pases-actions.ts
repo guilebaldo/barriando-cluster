@@ -7,10 +7,11 @@ import { requireSession } from "@/lib/auth-utils";
 import { isAdminUser } from "@/lib/admin";
 import { listAdminAccessEvents, getAdminAccessEventById } from "@/lib/access-marketplace";
 import type { AccessEventCard, AdminAccessEventDetail } from "@/lib/access-events";
-import { BARRIANDO_PASE_HOST_EMAIL, BARRIANDO_PASE_HOST_ID, BARRIANDO_PASE_HOST_NAME } from "@/lib/access-events";
+import { BARRIANDO_PASE_HOST_EMAIL, BARRIANDO_PASE_HOST_ID, BARRIANDO_PASE_HOST_NAME, BARRIANDO_PASE_VENUE_LAT, BARRIANDO_PASE_VENUE_LNG, BARRIANDO_PASE_VENUE_NAME } from "@/lib/access-events";
 import { parseMexicoCityLocalInput } from "@/lib/mexico-city-time";
 import { resolveSocioMapCoord } from "@/lib/socio-map-coords";
 import { sanitizeAccessDescription } from "@/lib/access-description";
+import { composeBusinessAddress } from "@/lib/business-address";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -21,6 +22,8 @@ export type AccessEventHostOption = {
   latitude: number | null;
   longitude: number | null;
   email: string | null;
+  /** Dirección comercial dada de alta (calle), si existe. */
+  address: string | null;
 };
 
 const accessEventSchema = z.object({
@@ -28,6 +31,7 @@ const accessEventSchema = z.object({
   description: z.string().max(8000).optional().default(""),
   venue: z.string().trim().min(1, "Falta la dirección.").max(240),
   hostId: z.string().nullable().optional(),
+  venueId: z.string().nullable().optional(),
   hostEmail: z.string().trim().max(200).optional().default(""),
   latitude: z.number().finite().nullable().optional(),
   longitude: z.number().finite().nullable().optional(),
@@ -52,7 +56,7 @@ function parseOptionalInt(raw: string | null | undefined): number | null {
   return n;
 }
 
-function parseOptionalHostId(raw: string | null | undefined): number | null {
+function parseOptionalCatalogId(raw: string | null | undefined): number | null {
   if (!raw?.trim()) return null;
   const n = Number(raw.trim());
   if (!Number.isInteger(n)) return null;
@@ -106,14 +110,43 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
     socioIds.length > 0
       ? await prisma.user.findMany({
           where: { socioId: { in: socioIds } },
-          select: { socioId: true, email: true },
+          select: {
+            socioId: true,
+            email: true,
+            socioProfile: {
+              select: {
+                address: true,
+                street: true,
+                streetNumber: true,
+                colonia: true,
+                codigoPostal: true,
+                municipio: true,
+                estado: true,
+              },
+            },
+          },
         })
       : [];
-  const emailBySocioId = new Map(
-    users
-      .filter((user) => user.socioId != null && user.email)
-      .map((user) => [user.socioId as number, user.email as string])
-  );
+  const emailBySocioId = new Map<number, string>();
+  const addressBySocioId = new Map<number, string>();
+  for (const user of users) {
+    if (user.socioId == null) continue;
+    if (user.email && !emailBySocioId.has(user.socioId)) {
+      emailBySocioId.set(user.socioId, user.email);
+    }
+    const composed = composeBusinessAddress({
+      street: user.socioProfile?.street ?? undefined,
+      streetNumber: user.socioProfile?.streetNumber ?? undefined,
+      colonia: user.socioProfile?.colonia ?? undefined,
+      codigoPostal: user.socioProfile?.codigoPostal ?? undefined,
+      municipio: user.socioProfile?.municipio ?? undefined,
+      estado: user.socioProfile?.estado ?? undefined,
+    });
+    const address = user.socioProfile?.address?.trim() || composed || "";
+    if (address && !addressBySocioId.has(user.socioId)) {
+      addressBySocioId.set(user.socioId, address);
+    }
+  }
   const sociosRows = socios
     .map((socio) => {
       const coord = resolveSocioMapCoord(socio);
@@ -124,6 +157,7 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
         latitude: coord?.lat ?? null,
         longitude: coord?.lng ?? null,
         email: emailBySocioId.get(socio.id) ?? null,
+        address: addressBySocioId.get(socio.id) ?? null,
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
@@ -132,9 +166,10 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
       id: BARRIANDO_PASE_HOST_ID,
       name: BARRIANDO_PASE_HOST_NAME,
       category: "Clúster",
-      latitude: null,
-      longitude: null,
+      latitude: BARRIANDO_PASE_VENUE_LAT,
+      longitude: BARRIANDO_PASE_VENUE_LNG,
       email: BARRIANDO_PASE_HOST_EMAIL,
+      address: BARRIANDO_PASE_VENUE_NAME,
     },
     ...sociosRows,
   ];
@@ -181,7 +216,8 @@ export async function createAccessEvent(
         title: parsed.data.title,
         description: sanitizeAccessDescription(parsed.data.description ?? ""),
         venue: parsed.data.venue,
-        hostId: parseOptionalHostId(parsed.data.hostId),
+        hostId: parseOptionalCatalogId(parsed.data.hostId),
+        venueId: parseOptionalCatalogId(parsed.data.venueId),
         hostEmail: parseOptionalEmail(hostEmailRaw),
         latitude,
         longitude,
@@ -248,7 +284,8 @@ export async function updateAccessEvent(
         title: parsed.data.title,
         description: sanitizeAccessDescription(parsed.data.description ?? ""),
         venue: parsed.data.venue,
-        hostId: parseOptionalHostId(parsed.data.hostId),
+        hostId: parseOptionalCatalogId(parsed.data.hostId),
+        venueId: parseOptionalCatalogId(parsed.data.venueId),
         hostEmail: parseOptionalEmail(hostEmailRaw),
         latitude,
         longitude,

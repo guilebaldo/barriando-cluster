@@ -30,6 +30,7 @@ const emptyForm = {
   description: "",
   venue: "",
   hostId: "" as string,
+  venueId: "" as string,
   hostEmail: "",
   latitude: null as number | null,
   longitude: null as number | null,
@@ -54,6 +55,7 @@ function formsEqual(a: typeof emptyForm, b: typeof emptyForm): boolean {
     a.description === b.description &&
     a.venue === b.venue &&
     a.hostId === b.hostId &&
+    a.venueId === b.venueId &&
     a.hostEmail === b.hostEmail &&
     a.latitude === b.latitude &&
     a.longitude === b.longitude &&
@@ -70,6 +72,7 @@ function formFromEvent(event: AccessEventCard) {
     description: event.description,
     venue: event.venue,
     hostId: event.hostId != null ? String(event.hostId) : "",
+    venueId: event.venueId != null ? String(event.venueId) : "",
     hostEmail: event.hostEmail ?? "",
     latitude: event.latitude,
     longitude: event.longitude,
@@ -126,6 +129,25 @@ export default function AdminPaseEventForm({
     }));
   }
 
+  function applySede(venueId: string) {
+    if (!venueId) {
+      setForm((f) => ({ ...f, venueId: "" }));
+      return;
+    }
+    const sede = hosts.find((h) => String(h.id) === venueId);
+    if (!sede) {
+      setForm((f) => ({ ...f, venueId }));
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      venueId,
+      venue: sede.address?.trim() || sede.name,
+      latitude: sede.latitude != null && sede.longitude != null ? sede.latitude : f.latitude,
+      longitude: sede.latitude != null && sede.longitude != null ? sede.longitude : f.longitude,
+    }));
+  }
+
   async function handleSave() {
     if (!canSave) return;
     setMsg("");
@@ -136,6 +158,7 @@ export default function AdminPaseEventForm({
       description: form.description,
       venue: form.venue,
       hostId: form.hostId || null,
+      venueId: form.venueId || null,
       hostEmail: form.hostEmail,
       latitude: form.latitude,
       longitude: form.longitude,
@@ -180,7 +203,7 @@ export default function AdminPaseEventForm({
       />
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          Organizador
+          Organizador / anfitrión
         </span>
         <select
           className="border border-slate-200 rounded-lg p-2 w-full bg-white"
@@ -195,6 +218,40 @@ export default function AdminPaseEventForm({
             </option>
           ))}
         </select>
+        <span className="block text-[10px] text-slate-400">
+          Quién convoca el evento. No mueve la dirección ni el pin.
+        </span>
+      </label>
+      <label className="space-y-1 sm:col-span-2">
+        <span className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Sede
+          {form.hostId ? (
+            <button
+              type="button"
+              onClick={() => applySede(form.hostId)}
+              className="font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-700"
+            >
+              Usar la del organizador
+            </button>
+          ) : null}
+        </span>
+        <select
+          className="border border-slate-200 rounded-lg p-2 w-full bg-white"
+          value={form.venueId}
+          onChange={(e) => applySede(e.target.value)}
+        >
+          <option value="">Otra / escribir dirección</option>
+          {hosts.map((host) => (
+            <option key={host.id} value={host.id}>
+              {host.name}
+              {host.category ? ` · ${host.category}` : ""}
+            </option>
+          ))}
+        </select>
+        <span className="block text-[10px] text-slate-400">
+          El negocio donde ocurre: el mismo del organizador u otro socio. Rellena la
+          dirección y el pin dados de alta; puedes ajustarlos.
+        </span>
       </label>
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -295,7 +352,7 @@ export default function AdminPaseEventForm({
         autoGeolocate={false}
         showCoordinates
         scrollWheelZoom={false}
-        hint="Toca el mapa o arrastra el pin. El marcador no se mueve al elegir un socio."
+        hint="Al elegir sede se coloca el pin del negocio; puedes moverlo. El organizador no mueve el mapa."
         className="h-56 lg:h-[28rem] rounded-xl overflow-hidden"
       />
     </div>

@@ -73,6 +73,12 @@ export default function LeafletLocationPicker({
   useEffect(() => {
     if (latitude != null && longitude != null) {
       setCenter([latitude, longitude]);
+    }
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    if (latitude != null && longitude != null) {
+      setCenter([latitude, longitude]);
       return;
     }
     if (!autoGeolocate) {

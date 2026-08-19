@@ -11,6 +11,7 @@ import {
 } from "@/app/pases/actions";
 import { formatAccessWhen, type AccessTicketCard } from "@/lib/access-events";
 import { isBarrioPassEventTitle } from "@/lib/barriopass";
+import TicketSaveButtons from "./TicketSaveButtons";
 
 const SWIPE_OFFSET = 72;
 const SWIPE_VELOCITY = 450;
@@ -319,7 +320,8 @@ function TicketQrCard({ ticket }: { ticket: AccessTicketCard }) {
             : "Muéstralo en la entrada. Un solo uso."}
       </p>
 
-      <div className="mt-4" {...stopDrag}>
+      <div className="mt-4 space-y-2" {...stopDrag}>
+        <TicketSaveButtons ticket={ticket} />
         <button
           type="button"
           disabled={deleting}
