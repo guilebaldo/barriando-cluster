@@ -8,10 +8,13 @@ import {
   ChevronRight,
   List,
   CalendarDays,
+  Users,
 } from "lucide-react";
 import {
   accessEventHasEnded,
   accessEventIsSoldOut,
+  formatAccessGoingLabel,
+  formatAccessHostByline,
   formatAccessPriceMxn,
   formatAccessWhen,
   groupAccessEventsByHorizon,
@@ -239,6 +242,8 @@ function EventRow({
 }) {
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
+  const byline = formatAccessHostByline(event.hostName);
+  const going = formatAccessGoingLabel(event.soldCount, { ended });
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm hover:border-amber-300/80 transition">
@@ -252,6 +257,9 @@ function EventRow({
             <p className="text-sm font-semibold text-[#27366D] leading-snug line-clamp-2">
               {event.title}
             </p>
+            {byline ? (
+              <p className="mt-0.5 text-[11px] text-slate-500 truncate">{byline}</p>
+            ) : null}
             <p className="mt-1 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
               <MapPin className="w-3 h-3 shrink-0" />
               {event.venue}
@@ -260,6 +268,12 @@ function EventRow({
               <span className="text-xs font-bold text-amber-700">
                 {formatAccessPriceMxn(event.priceCents)}
               </span>
+              {going ? (
+                <span className="text-[11px] text-slate-500 inline-flex items-center gap-1">
+                  <Users className="w-3 h-3 shrink-0" />
+                  {going}
+                </span>
+              ) : null}
               {ended ? (
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Finalizado
@@ -491,6 +505,11 @@ function EventDetail({
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
   const canBuy = !ended && !soldOut;
+  const byline = formatAccessHostByline(event.hostName);
+  const going = formatAccessGoingLabel(event.soldCount, {
+    ended,
+    capacity: event.capacity,
+  });
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4">
@@ -510,6 +529,7 @@ function EventDetail({
             <h3 className="mt-1 text-lg font-black uppercase tracking-wide text-[#27366D] leading-tight font-sans">
               {event.title}
             </h3>
+            {byline ? <p className="mt-1 text-xs text-slate-500">{byline}</p> : null}
           </div>
           <EventDateBadge startsAt={event.startsAt} />
         </div>
@@ -532,11 +552,7 @@ function EventDetail({
         ) : null}
         <div className="mt-3 flex items-center justify-between text-xs">
           <span className="font-bold text-amber-700">{formatAccessPriceMxn(event.priceCents)}</span>
-          {event.capacity != null ? (
-            <span className="text-slate-500">
-              {event.soldCount}/{event.capacity} ocupados
-            </span>
-          ) : null}
+          {going ? <span className="text-slate-500">{going}</span> : null}
         </div>
 
         {error ? <p className="mt-3 text-xs text-red-700">{error}</p> : null}

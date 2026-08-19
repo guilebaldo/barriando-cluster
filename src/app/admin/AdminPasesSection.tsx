@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Plus } from "lucide-react";
 import { toggleAccessEventPublished, type AccessEventHostOption } from "./pases-actions";
-import { formatAccessWhen, type AccessEventCard } from "@/lib/access-events";
+import { formatAccessHostByline, formatAccessWhen, type AccessEventCard } from "@/lib/access-events";
 import AdminPaseEventForm from "./AdminPaseEventForm";
 
 function PublishSwitch({
@@ -142,6 +142,11 @@ export default function AdminPasesSection({
                 className="w-full text-left min-w-0"
               >
                 <p className="font-semibold text-slate-900 leading-snug">{row.title}</p>
+                {formatAccessHostByline(row.hostName) ? (
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {formatAccessHostByline(row.hostName)}
+                  </p>
+                ) : null}
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   {row.venue} · {formatAccessWhen(row.startsAt, row.endsAt)}
                 </p>
@@ -210,6 +215,9 @@ export default function AdminPasesSection({
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-900">{row.title}</p>
+                      {formatAccessHostByline(row.hostName) ? (
+                        <p className="text-slate-500 mt-0.5">{formatAccessHostByline(row.hostName)}</p>
+                      ) : null}
                       <p className="text-slate-500 mt-0.5">
                         {row.venue} · {formatAccessWhen(row.startsAt, row.endsAt)}
                       </p>

@@ -24,7 +24,8 @@ export default function ShareAccessEventButton({
     e.stopPropagation();
     const url = `${window.location.origin}${accessEventPublicPath(event.id)}`;
     const when = formatAccessWhen(event.startsAt, event.endsAt);
-    const text = `${event.title} · ${when} · ${event.venue}`;
+    const byline = event.hostName?.trim() ? ` por ${event.hostName.trim()}` : "";
+    const text = `${event.title}${byline} · ${when} · ${event.venue}`;
 
     try {
       if (typeof navigator.share === "function") {

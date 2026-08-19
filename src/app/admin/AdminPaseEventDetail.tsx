@@ -11,6 +11,8 @@ import {
 import {
   ACCESS_ATTENDANCE_COLOR,
   ACCESS_ATTENDANCE_LABEL,
+  formatAccessGoingLabel,
+  formatAccessHostByline,
   formatAccessScanTime,
   formatAccessWhen,
   type AdminAccessEventDetail,
@@ -58,7 +60,14 @@ export default function AdminPaseEventDetail({
             {event.title}
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            {event.venue} · {formatAccessWhen(event.startsAt, event.endsAt)}
+            {[
+              formatAccessHostByline(event.hostName),
+              event.venue,
+              formatAccessWhen(event.startsAt, event.endsAt),
+              formatAccessGoingLabel(event.soldCount, { capacity: event.capacity }),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </div>
         <button

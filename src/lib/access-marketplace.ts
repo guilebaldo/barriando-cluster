@@ -5,7 +5,12 @@ import type {
   AdminAccessEventDetail,
   AdminAccessTicketRow,
 } from "@/lib/access-events";
-import { accessTicketAttendance } from "@/lib/access-events";
+import {
+  accessTicketAttendance,
+  BARRIANDO_PASE_HOST_ID,
+  BARRIANDO_PASE_HOST_NAME,
+} from "@/lib/access-events";
+import { listaSocios } from "@/app/data/socios";
 
 function toEventCard(
   row: {
@@ -42,7 +47,25 @@ function toEventCard(
     capacity: row.capacity,
     soldCount: row._count.tickets,
     published: row.published,
+    hostName: null,
   };
+}
+
+async function attachHostNames(cards: AccessEventCard[]): Promise<AccessEventCard[]> {
+  const names = new Map<number, string>();
+  names.set(BARRIANDO_PASE_HOST_ID, BARRIANDO_PASE_HOST_NAME);
+  for (const socio of listaSocios) names.set(socio.id, socio.name);
+  try {
+    const { getPublicSociosList } = await import("@/lib/public-socios");
+    const publicList = await getPublicSociosList();
+    for (const socio of publicList) names.set(socio.id, socio.name);
+  } catch {
+    // El catálogo estático alcanza si el roster no carga.
+  }
+  return cards.map((card) => ({
+    ...card,
+    hostName: card.hostId != null ? names.get(card.hostId) ?? null : null,
+  }));
 }
 
 export async function listPublishedAccessEvents(): Promise<AccessEventCard[]> {
@@ -51,9 +74,9 @@ export async function listPublishedAccessEvents(): Promise<AccessEventCard[]> {
     orderBy: { startsAt: "asc" },
     include: { _count: { select: { tickets: true } } },
   });
-  return rows
-    .filter((row) => !row.title.startsWith("BarrioPASS"))
-    .map(toEventCard);
+  return attachHostNames(
+    rows.filter((row) => !row.title.startsWith("BarrioPASS")).map(toEventCard)
+  );
 }
 
 export async function getPublishedAccessEventById(
@@ -63,7 +86,7 @@ export async function getPublishedAccessEventById(
     where: { id: eventId, published: true },
     include: { _count: { select: { tickets: true } } },
   });
-  return row ? toEventCard(row) : null;
+  return row ? (await attachHostNames([toEventCard(row)]))[0]! : null;
 }
 
 export async function getOwnedAccessTicketForSave(userId: string, ticketId: string) {
@@ -129,7 +152,7 @@ export async function listAdminAccessEvents(): Promise<AccessEventCard[]> {
     orderBy: { startsAt: "desc" },
     include: { _count: { select: { tickets: true } } },
   });
-  return rows.map(toEventCard);
+  return attachHostNames(rows.map(toEventCard));
 }
 
 export async function getAdminAccessEventById(
@@ -150,7 +173,7 @@ export async function getAdminAccessEventById(
     },
   });
   if (!row) return null;
-  const event = toEventCard(row);
+  const event = (await attachHostNames([toEventCard(row)]))[0]!;
   const tickets: AdminAccessTicketRow[] = row.tickets.map((ticket) => ({
     id: ticket.id,
     userId: ticket.user.id,

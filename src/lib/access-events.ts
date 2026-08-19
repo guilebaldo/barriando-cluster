@@ -10,6 +10,8 @@ export type AccessEventCard = {
   hostId: number | null;
   venueId: number | null;
   hostEmail: string | null;
+  /** Nombre visible del organizador / anfitrión. */
+  hostName: string | null;
   startsAt: string;
   endsAt: string | null;
   priceCents: number;
@@ -87,6 +89,35 @@ export function formatAccessPriceMxn(priceCents: number): string {
 
 export function formatAccessWhen(startsAt: string, endsAt: string | null): string {
   return formatMexicoCityWhen(startsAt, endsAt);
+}
+
+/** «por Barriando» / «por La Berenjena». */
+export function formatAccessHostByline(hostName: string | null | undefined): string | null {
+  const name = hostName?.trim();
+  return name ? `por ${name}` : null;
+}
+
+/**
+ * Estimado de asistencia a partir de pases emitidos (hasta 2 por persona).
+ * Vacío si aún no hay boletos, para no ensuciar la lista.
+ */
+export function formatAccessGoingLabel(
+  soldCount: number,
+  options?: { ended?: boolean; capacity?: number | null }
+): string | null {
+  const ended = Boolean(options?.ended);
+  const capacity = options?.capacity ?? null;
+  if (soldCount <= 0) {
+    if (capacity != null && !ended) return `Cupo ${capacity}`;
+    return null;
+  }
+  if (ended) {
+    return soldCount === 1 ? "1 pase" : `${soldCount} pases`;
+  }
+  if (capacity != null) {
+    return `${soldCount} van · ${capacity} cupo`;
+  }
+  return soldCount === 1 ? "1 va" : `${soldCount} van`;
 }
 
 export function formatAccessScanTime(iso: string): string {

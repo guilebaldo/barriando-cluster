@@ -5,7 +5,7 @@ import Footer from "@/app/components/Footer";
 import SiteShell from "@/app/components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
 import { getPublishedAccessEventById } from "@/lib/access-marketplace";
-import { formatAccessWhen } from "@/lib/access-events";
+import { formatAccessHostByline, formatAccessWhen } from "@/lib/access-events";
 import { stripAccessDescription } from "@/lib/access-description";
 import { isBarrioPassEventTitle } from "@/lib/barriopass";
 import { redirect } from "next/navigation";
@@ -24,10 +24,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Pase no encontrado | Barriando" };
   }
   const when = formatAccessWhen(event.startsAt, event.endsAt);
+  const byline = formatAccessHostByline(event.hostName);
   const plain = stripAccessDescription(event.description);
   return {
     title: `${event.title} | Pases | Barriando`,
-    description: plain || `${when} · ${event.venue}`,
+    description: plain || [byline, when, event.venue].filter(Boolean).join(" · "),
   };
 }
 

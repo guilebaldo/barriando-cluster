@@ -6,6 +6,8 @@ import { ArrowLeft, MapPin } from "lucide-react";
 import {
   accessEventHasEnded,
   accessEventIsSoldOut,
+  formatAccessGoingLabel,
+  formatAccessHostByline,
   formatAccessPriceMxn,
   formatAccessWhen,
   type AccessEventCard,
@@ -28,6 +30,11 @@ export default function PaseEventClient({
   const ended = accessEventHasEnded(event.startsAt, event.endsAt);
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
   const canBuy = !ended && !soldOut;
+  const byline = formatAccessHostByline(event.hostName);
+  const going = formatAccessGoingLabel(event.soldCount, {
+    ended,
+    capacity: event.capacity,
+  });
 
   async function buy() {
     if (!signedIn) {
@@ -64,6 +71,7 @@ export default function PaseEventClient({
             <h1 className="mt-1 text-2xl font-black uppercase tracking-wide text-[#27366D] leading-tight font-sans">
               {event.title}
             </h1>
+            {byline ? <p className="mt-1 text-sm text-slate-500">{byline}</p> : null}
           </div>
           <AccessEventDateBadge startsAt={event.startsAt} />
         </div>
@@ -86,11 +94,7 @@ export default function PaseEventClient({
         ) : null}
         <div className="mt-4 flex items-center justify-between text-sm">
           <span className="font-bold text-amber-700">{formatAccessPriceMxn(event.priceCents)}</span>
-          {event.capacity != null ? (
-            <span className="text-slate-500 text-xs">
-              {event.soldCount}/{event.capacity} ocupados
-            </span>
-          ) : null}
+          {going ? <span className="text-slate-500 text-xs">{going}</span> : null}
         </div>
 
         {error ? <p className="mt-3 text-xs text-red-700">{error}</p> : null}
