@@ -22,6 +22,27 @@ function Recenter({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
+/** Leaflet calcula mal el tamaño en drawers, tabs y contenedores con animación. */
+function MapSizeFix() {
+  const map = useMap();
+  useEffect(() => {
+    const run = () => map.invalidateSize({ animate: false });
+    run();
+    const t1 = window.setTimeout(run, 50);
+    const t2 = window.setTimeout(run, 320);
+    const container = map.getContainer();
+    const observed = container.parentElement ?? container;
+    const ro = new ResizeObserver(run);
+    ro.observe(observed);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      ro.disconnect();
+    };
+  }, [map]);
+  return null;
+}
+
 function MapClickHandler({
   onPick,
 }: {
@@ -122,7 +143,7 @@ export default function LeafletLocationPicker({
   return (
     <div className={className}>
       <div
-        className={`relative z-0 isolate h-full min-h-56 rounded-xl overflow-hidden border border-slate-200 ${
+        className={`relative z-0 isolate h-56 w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100 ${
           disabled ? "opacity-60 pointer-events-none" : ""
         }`}
       >
@@ -131,12 +152,13 @@ export default function LeafletLocationPicker({
           zoom={16}
           scrollWheelZoom={!disabled && scrollWheelZoom}
           className="h-full w-full !z-0"
-          style={{ zIndex: 0 }}
+          style={{ zIndex: 0, minHeight: "14rem" }}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          <MapSizeFix />
           <Recenter lat={markerPos[0]} lng={markerPos[1]} />
           {!disabled ? <MapClickHandler onPick={onChange} /> : null}
           <Marker

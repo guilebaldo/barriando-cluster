@@ -78,7 +78,8 @@ export default function AdminSocioMapMarkerEditor({
           Marcador del mapa
         </p>
         <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-          Mueve el pin y guarda. No necesitas cuenta vinculada ni llenar el resto del perfil.
+          Mapa OpenStreetMap (no usa tu cuenta de Google). Mueve el pin y guarda; no necesitas
+          cuenta vinculada ni llenar el resto del perfil.
         </p>
       </div>
       <LeafletLocationPicker
