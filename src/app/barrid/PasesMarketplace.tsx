@@ -544,6 +544,7 @@ function EventDetail({
           venue={event.venue}
           latitude={event.latitude}
           longitude={event.longitude}
+          mapsUrl={event.mapsUrl}
           className="mt-3"
         />
 

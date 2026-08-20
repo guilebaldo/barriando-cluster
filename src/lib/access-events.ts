@@ -20,6 +20,8 @@ export type AccessEventCard = {
   published: boolean;
   /** Imagen pública para preview al compartir (WhatsApp / OG). Ruta o URL absoluta. */
   coverUrl: string | null;
+  /** Link de Google Maps de la sede (negocio registrado), si hay. */
+  mapsUrl: string | null;
 };
 
 /** Organizador sintético: el Clúster (no es un socio del directorio). */

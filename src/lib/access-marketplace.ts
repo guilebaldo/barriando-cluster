@@ -49,24 +49,80 @@ function toEventCard(
     soldCount: row._count.tickets,
     published: row.published,
     coverUrl: row.coverUrl,
+    mapsUrl: null,
     hostName: null,
   };
 }
 
+function httpMapsUrl(...candidates: Array<string | null | undefined>): string | null {
+  for (const raw of candidates) {
+    const value = raw?.trim();
+    if (value && /^https?:\/\//i.test(value)) return value;
+  }
+  return null;
+}
+
 async function attachHostNames(cards: AccessEventCard[]): Promise<AccessEventCard[]> {
   const names = new Map<number, string>();
+  const mapsBySocioId = new Map<number, string>();
   names.set(BARRIANDO_PASE_HOST_ID, BARRIANDO_PASE_HOST_NAME);
-  for (const socio of listaSocios) names.set(socio.id, socio.name);
+  for (const socio of listaSocios) {
+    names.set(socio.id, socio.name);
+    const maps = httpMapsUrl(socio.direccion);
+    if (maps) mapsBySocioId.set(socio.id, maps);
+  }
   try {
     const { getPublicSociosList } = await import("@/lib/public-socios");
     const publicList = await getPublicSociosList();
-    for (const socio of publicList) names.set(socio.id, socio.name);
+    for (const socio of publicList) {
+      names.set(socio.id, socio.name);
+      const maps = httpMapsUrl(socio.direccion);
+      if (maps) mapsBySocioId.set(socio.id, maps);
+    }
   } catch {
     // El catálogo estático alcanza si el roster no carga.
   }
+
+  const missingVenueIds = [
+    ...new Set(
+      cards
+        .map((card) => card.venueId)
+        .filter((id): id is number => id != null && id > 0 && !mapsBySocioId.has(id))
+    ),
+  ];
+  if (missingVenueIds.length > 0) {
+    try {
+      const [businesses, profiles] = await Promise.all([
+        prisma.business.findMany({
+          where: { id: { in: missingVenueIds } },
+          select: { id: true, mapsUrl: true },
+        }),
+        prisma.user.findMany({
+          where: { socioId: { in: missingVenueIds } },
+          select: {
+            socioId: true,
+            socioProfile: { select: { googleBusinessUrl: true } },
+          },
+        }),
+      ]);
+      for (const biz of businesses) {
+        const maps = httpMapsUrl(biz.mapsUrl);
+        if (maps) mapsBySocioId.set(biz.id, maps);
+      }
+      for (const user of profiles) {
+        if (user.socioId == null || mapsBySocioId.has(user.socioId)) continue;
+        const maps = httpMapsUrl(user.socioProfile?.googleBusinessUrl);
+        if (maps) mapsBySocioId.set(user.socioId, maps);
+      }
+    } catch {
+      // Sin Business/perfil: se usa fallback de coordenadas en el mini mapa.
+    }
+  }
+
   return cards.map((card) => ({
     ...card,
     hostName: card.hostId != null ? names.get(card.hostId) ?? null : null,
+    mapsUrl: card.venueId != null ? mapsBySocioId.get(card.venueId) ?? null : null,
   }));
 }
 

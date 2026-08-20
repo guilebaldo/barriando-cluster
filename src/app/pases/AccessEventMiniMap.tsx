@@ -12,16 +12,37 @@ const AccessEventMiniMapInner = dynamic(() => import("./AccessEventMiniMapInner"
   ),
 });
 
+function fallbackMapsUrl(
+  venue: string,
+  latitude: number | null | undefined,
+  longitude: number | null | undefined
+): string {
+  const hasCoords =
+    latitude != null &&
+    longitude != null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
+  if (hasCoords) {
+    return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    `${venue}, Centro Histórico, Puebla, México`
+  )}`;
+}
+
 /** Miniatura del lugar: Leaflet/OSM (el CSP bloquea iframes de Google Maps). */
 export default function AccessEventMiniMap({
   venue,
   latitude = null,
   longitude = null,
+  mapsUrl = null,
   className = "",
 }: {
   venue: string;
   latitude?: number | null;
   longitude?: number | null;
+  /** Google Maps del negocio sede (maps.app.goo.gl / ficha registrada). */
+  mapsUrl?: string | null;
   className?: string;
 }) {
   const hasCoords =
@@ -30,19 +51,25 @@ export default function AccessEventMiniMap({
     Number.isFinite(latitude) &&
     Number.isFinite(longitude);
 
-  const openSrc = hasCoords
-    ? `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        `${venue}, Centro Histórico, Puebla, México`
-      )}`;
+  const registered =
+    mapsUrl?.trim() && /^https?:\/\//i.test(mapsUrl.trim()) ? mapsUrl.trim() : null;
+  const openSrc = registered ?? fallbackMapsUrl(venue, latitude, longitude);
 
   return (
     <div className={className}>
-      <AccessEventMiniMapInner
-        venue={venue}
-        latitude={latitude}
-        longitude={longitude}
-      />
+      <a
+        href={openSrc}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Abrir ${venue} en Google Maps`}
+        className="block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#27366D]/30"
+      >
+        <AccessEventMiniMapInner
+          venue={venue}
+          latitude={latitude}
+          longitude={longitude}
+        />
+      </a>
       {!hasCoords ? (
         <p className="mt-1.5 text-[10px] text-slate-400">
           Ubicación aproximada · Centro Histórico
