@@ -42,6 +42,17 @@ export default function PrivacidadPage() {
             <li>Información técnica de navegación (cookies esenciales)</li>
           </ul>
 
+          <h2 className="text-base font-bold text-slate-950 mt-8 mb-3">Cookies</h2>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Usamos cookies y almacenamiento local estrictamente necesarios para operar el sitio:
+            mantener tu sesión iniciada (Auth.js) y recordar temporalmente el plan de membresía que
+            elegiste antes de registrarte. No instalamos cookies propias de publicidad ni de
+            analítica de marketing. Al aceptar el aviso en el sitio, confirmas el uso de estas
+            cookies esenciales. Algunos servicios de terceros (por ejemplo, autenticación con
+            Google/Apple, pagos con Stripe o embeds de video) pueden establecer sus propias cookies
+            conforme a sus políticas.
+          </p>
+
           <h2 className="text-base font-bold text-slate-950 mt-8 mb-3">Finalidades</h2>
           <ul className="text-sm text-slate-600 leading-relaxed list-disc pl-5 space-y-1">
             <li>Vinculación empresarial y gestión de la membresía al Clúster</li>
@@ -72,7 +83,7 @@ export default function PrivacidadPage() {
           </p>
 
           <p className="text-xs text-slate-400 mt-10 pt-6 border-t border-slate-100">
-            Última actualización: junio 2026
+            Última actualización: agosto 2026
           </p>
         </article>
 

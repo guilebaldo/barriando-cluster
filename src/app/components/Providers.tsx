@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import type { Session } from "next-auth";
 import SessionRefetchOnShow from "./SessionRefetchOnShow";
 import AppBottomNav from "./AppBottomNav";
+import CookieConsentBanner from "./CookieConsentBanner";
 import StandaloneViewportFix from "./StandaloneViewportFix";
 import { ensureInstallPromptListener } from "@/lib/add-to-home-screen";
 
@@ -31,6 +32,7 @@ export default function Providers({
       {children}
       {/* Persistente: no remontar el hub en cada página (rompe anclaje en standalone). */}
       <AppBottomNav />
+      <CookieConsentBanner />
     </SessionProvider>
   );
 }
