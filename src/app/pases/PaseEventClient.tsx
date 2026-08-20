@@ -4,7 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, MapPin } from "lucide-react";
 import {
+  accessEventDetailPlace,
   accessEventHasEnded,
+  accessEventHasMapPin,
   accessEventIsSoldOut,
   formatAccessGoingLabel,
   formatAccessHostByline,
@@ -35,6 +37,8 @@ export default function PaseEventClient({
     ended,
     capacity: event.capacity,
   });
+  const place = accessEventDetailPlace(event);
+  const showMap = accessEventHasMapPin(event);
 
   async function buy() {
     if (!signedIn) {
@@ -77,18 +81,32 @@ export default function PaseEventClient({
         </div>
 
         <p className="mt-3 text-sm text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>
-        <p className="mt-1 text-sm text-slate-500 inline-flex items-center gap-1.5">
-          <MapPin className="w-4 h-4" />
-          {event.venue}
-        </p>
+        {place.name ? (
+          <p className="mt-1 text-sm font-medium text-slate-700 inline-flex items-center gap-1.5">
+            <MapPin className="w-4 h-4 shrink-0 text-slate-500" />
+            {place.name}
+          </p>
+        ) : null}
+        {place.detail ? (
+          <p
+            className={`text-sm text-slate-500 ${
+              place.name ? "mt-0.5 pl-6" : "mt-1 inline-flex items-center gap-1.5"
+            }`}
+          >
+            {!place.name ? <MapPin className="w-4 h-4 shrink-0" /> : null}
+            {place.detail}
+          </p>
+        ) : null}
 
-        <AccessEventMiniMap
-          venue={event.venue}
-          latitude={event.latitude}
-          longitude={event.longitude}
-          mapsUrl={event.mapsUrl}
-          className="mt-4"
-        />
+        {showMap ? (
+          <AccessEventMiniMap
+            venue={event.venue}
+            latitude={event.latitude}
+            longitude={event.longitude}
+            mapsUrl={event.mapsUrl}
+            className="mt-4"
+          />
+        ) : null}
 
         {event.description ? (
           <AccessEventDescription html={event.description} className="mt-4" />

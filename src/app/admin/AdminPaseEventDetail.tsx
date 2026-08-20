@@ -11,6 +11,7 @@ import {
 import {
   ACCESS_ATTENDANCE_COLOR,
   ACCESS_ATTENDANCE_LABEL,
+  accessEventDetailPlace,
   formatAccessGoingLabel,
   formatAccessHostByline,
   formatAccessScanTime,
@@ -33,6 +34,7 @@ export default function AdminPaseEventDetail({
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const hasTickets = event.soldCount > 0;
+  const place = accessEventDetailPlace(event);
 
   const attendance = useMemo(() => {
     let onTime = 0;
@@ -62,7 +64,8 @@ export default function AdminPaseEventDetail({
           <p className="mt-1 text-xs text-slate-500">
             {[
               formatAccessHostByline(event.hostName),
-              event.venue,
+              place.name,
+              place.detail,
               formatAccessWhen(event.startsAt, event.endsAt),
               formatAccessGoingLabel(event.soldCount, { capacity: event.capacity }),
             ]

@@ -50,6 +50,7 @@ function toEventCard(
     published: row.published,
     coverUrl: row.coverUrl,
     mapsUrl: null,
+    venueName: null,
     hostName: null,
   };
 }
@@ -122,6 +123,7 @@ async function attachHostNames(cards: AccessEventCard[]): Promise<AccessEventCar
   return cards.map((card) => ({
     ...card,
     hostName: card.hostId != null ? names.get(card.hostId) ?? null : null,
+    venueName: card.venueId != null ? names.get(card.venueId) ?? null : null,
     mapsUrl: card.venueId != null ? mapsBySocioId.get(card.venueId) ?? null : null,
   }));
 }

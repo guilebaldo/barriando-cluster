@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Plus } from "lucide-react";
 import { toggleAccessEventPublished, type AccessEventHostOption } from "./pases-actions";
-import { formatAccessHostByline, formatAccessWhen, type AccessEventCard } from "@/lib/access-events";
+import { accessEventListPlace, formatAccessHostByline, formatAccessWhen, type AccessEventCard } from "@/lib/access-events";
 import AdminPaseEventForm from "./AdminPaseEventForm";
 
 function PublishSwitch({
@@ -148,7 +148,7 @@ export default function AdminPasesSection({
                   </p>
                 ) : null}
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  {row.venue} · {formatAccessWhen(row.startsAt, row.endsAt)}
+                  {accessEventListPlace(row)} · {formatAccessWhen(row.startsAt, row.endsAt)}
                 </p>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   {row.capacity != null ? `${row.soldCount}/${row.capacity}` : `${row.soldCount} vendidos`}
@@ -219,7 +219,7 @@ export default function AdminPasesSection({
                         <p className="text-slate-500 mt-0.5">{formatAccessHostByline(row.hostName)}</p>
                       ) : null}
                       <p className="text-slate-500 mt-0.5">
-                        {row.venue} · {formatAccessWhen(row.startsAt, row.endsAt)}
+                        {accessEventListPlace(row)} · {formatAccessWhen(row.startsAt, row.endsAt)}
                       </p>
                     </td>
                     <td className="px-4 py-3">

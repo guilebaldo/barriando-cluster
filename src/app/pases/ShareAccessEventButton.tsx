@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Share2 } from "lucide-react";
 import {
+  accessEventListPlace,
   accessEventPublicPath,
   formatAccessWhen,
   type AccessEventCard,
@@ -25,7 +26,8 @@ export default function ShareAccessEventButton({
     const url = `${window.location.origin}${accessEventPublicPath(event.id)}`;
     const when = formatAccessWhen(event.startsAt, event.endsAt);
     const byline = event.hostName?.trim() ? ` por ${event.hostName.trim()}` : "";
-    const text = `${event.title}${byline} · ${when} · ${event.venue}`;
+    const place = accessEventListPlace(event);
+    const text = `${event.title}${byline} · ${when}${place ? ` · ${place}` : ""}`;
 
     try {
       if (typeof navigator.share === "function") {

@@ -11,8 +11,11 @@ import {
   Users,
 } from "lucide-react";
 import {
+  accessEventDetailPlace,
   accessEventHasEnded,
+  accessEventHasMapPin,
   accessEventIsSoldOut,
+  accessEventListPlace,
   formatAccessGoingLabel,
   formatAccessHostByline,
   formatAccessPriceMxn,
@@ -244,6 +247,7 @@ function EventRow({
   const soldOut = accessEventIsSoldOut(event.capacity, event.soldCount);
   const byline = formatAccessHostByline(event.hostName);
   const going = formatAccessGoingLabel(event.soldCount, { ended });
+  const place = accessEventListPlace(event);
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm hover:border-amber-300/80 transition">
@@ -260,10 +264,12 @@ function EventRow({
             {byline ? (
               <p className="mt-0.5 text-[11px] text-slate-500 truncate">{byline}</p>
             ) : null}
-            <p className="mt-1 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
-              <MapPin className="w-3 h-3 shrink-0" />
-              {event.venue}
-            </p>
+            {place ? (
+              <p className="mt-1 text-[11px] text-slate-500 truncate inline-flex items-center gap-1">
+                <MapPin className="w-3 h-3 shrink-0" />
+                {place}
+              </p>
+            ) : null}
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span className="text-xs font-bold text-amber-700">
                 {formatAccessPriceMxn(event.priceCents)}
@@ -510,6 +516,8 @@ function EventDetail({
     ended,
     capacity: event.capacity,
   });
+  const place = accessEventDetailPlace(event);
+  const showMap = accessEventHasMapPin(event);
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-4">
@@ -535,18 +543,32 @@ function EventDetail({
         </div>
 
         <p className="mt-3 text-xs text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>
-        <p className="mt-1 text-xs text-slate-500 inline-flex items-center gap-1">
-          <MapPin className="w-3.5 h-3.5" />
-          {event.venue}
-        </p>
+        {place.name ? (
+          <p className="mt-1 text-xs font-medium text-slate-700 inline-flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+            {place.name}
+          </p>
+        ) : null}
+        {place.detail ? (
+          <p
+            className={`text-xs text-slate-500 ${
+              place.name ? "mt-0.5 pl-5" : "mt-1 inline-flex items-center gap-1"
+            }`}
+          >
+            {!place.name ? <MapPin className="w-3.5 h-3.5 shrink-0" /> : null}
+            {place.detail}
+          </p>
+        ) : null}
 
-        <AccessEventMiniMap
-          venue={event.venue}
-          latitude={event.latitude}
-          longitude={event.longitude}
-          mapsUrl={event.mapsUrl}
-          className="mt-3"
-        />
+        {showMap ? (
+          <AccessEventMiniMap
+            venue={event.venue}
+            latitude={event.latitude}
+            longitude={event.longitude}
+            mapsUrl={event.mapsUrl}
+            className="mt-3"
+          />
+        ) : null}
 
         {event.description ? (
           <AccessEventDescription html={event.description} className="mt-3" />

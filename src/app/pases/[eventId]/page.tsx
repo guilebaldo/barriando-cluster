@@ -5,7 +5,7 @@ import Footer from "@/app/components/Footer";
 import SiteShell from "@/app/components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
 import { getPublishedAccessEventById } from "@/lib/access-marketplace";
-import { formatAccessHostByline, formatAccessWhen } from "@/lib/access-events";
+import { formatAccessHostByline, accessEventListPlace, formatAccessWhen } from "@/lib/access-events";
 import { absoluteAccessCoverUrl, absoluteAccessEventUrl } from "@/lib/access-event-share";
 import { stripAccessDescription } from "@/lib/access-description";
 import { isBarrioPassEventTitle } from "@/lib/barriopass";
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const when = formatAccessWhen(event.startsAt, event.endsAt);
   const byline = formatAccessHostByline(event.hostName);
   const plain = stripAccessDescription(event.description);
-  const description = plain || [byline, when, event.venue].filter(Boolean).join(" · ");
+  const description = plain || [byline, when, accessEventListPlace(event)].filter(Boolean).join(" · ");
   const title = `${event.title} | Pases | Barriando`;
   const cover = absoluteAccessCoverUrl(event.coverUrl);
   const pageUrl = absoluteAccessEventUrl(event.id);

@@ -125,10 +125,15 @@ export default function AdminPaseEventForm({
       setForm((f) => ({ ...f, hostId }));
       return;
     }
+    const hasPin = host.latitude != null && host.longitude != null;
     setForm((f) => ({
       ...f,
       hostId,
+      venueId: hostId,
       hostEmail: host.email ?? f.hostEmail,
+      venue: host.address?.trim() || host.name,
+      latitude: hasPin ? host.latitude : f.latitude,
+      longitude: hasPin ? host.longitude : f.longitude,
     }));
   }
 
@@ -142,12 +147,13 @@ export default function AdminPaseEventForm({
       setForm((f) => ({ ...f, venueId }));
       return;
     }
+    const hasPin = sede.latitude != null && sede.longitude != null;
     setForm((f) => ({
       ...f,
       venueId,
       venue: sede.address?.trim() || sede.name,
-      latitude: sede.latitude != null && sede.longitude != null ? sede.latitude : f.latitude,
-      longitude: sede.latitude != null && sede.longitude != null ? sede.longitude : f.longitude,
+      latitude: hasPin ? sede.latitude : f.latitude,
+      longitude: hasPin ? sede.longitude : f.longitude,
     }));
   }
 
@@ -223,28 +229,20 @@ export default function AdminPaseEventForm({
           ))}
         </select>
         <span className="block text-[10px] text-slate-400">
-          Quién convoca el evento. No mueve la dirección ni el pin.
+          Quién convoca. También precarga sede, dirección postal (si hay en operaciones) y el pin;
+          luego puedes cambiar sede o mover el marcador.
         </span>
       </label>
       <label className="space-y-1 sm:col-span-2">
-        <span className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
           Sede
-          {form.hostId ? (
-            <button
-              type="button"
-              onClick={() => applySede(form.hostId)}
-              className="font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-700"
-            >
-              Usar la del organizador
-            </button>
-          ) : null}
         </span>
         <select
           className="border border-slate-200 rounded-lg p-2 w-full bg-white"
           value={form.venueId}
           onChange={(e) => applySede(e.target.value)}
         >
-          <option value="">Otra / escribir dirección</option>
+          <option value="">Otra / escribir en dirección</option>
           {hosts.map((host) => (
             <option key={host.id} value={host.id}>
               {host.name}
@@ -253,8 +251,8 @@ export default function AdminPaseEventForm({
           ))}
         </select>
         <span className="block text-[10px] text-slate-400">
-          El negocio donde ocurre: el mismo del organizador u otro socio. Rellena la
-          dirección y el pin dados de alta; puedes ajustarlos.
+          Negocio donde ocurre. Si no está en la lista, déjalo vacío y escribe el lugar o un link
+          (Zoom, Meet, etc.) en Dirección.
         </span>
       </label>
       <label className="space-y-1 sm:col-span-2">
@@ -281,10 +279,14 @@ export default function AdminPaseEventForm({
         </span>
         <input
           className="border border-slate-200 rounded-lg p-2 w-full"
-          placeholder="Calle, colonia o punto de encuentro"
+          placeholder="Calle y número, o link a videollamada"
           value={form.venue}
           onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))}
         />
+        <span className="block text-[10px] text-slate-400">
+          Se precarga con el domicilio de operaciones de la sede. Puedes cambiarlo si el evento es
+          en otra ubicación.
+        </span>
       </label>
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -379,7 +381,7 @@ export default function AdminPaseEventForm({
         autoGeolocate={false}
         showCoordinates
         scrollWheelZoom={false}
-        hint="Al elegir sede se coloca el pin del negocio; puedes moverlo. El organizador no mueve el mapa."
+        hint="Al elegir organizador o sede se coloca el pin del negocio; puedes moverlo si el evento es en otro lugar."
         className="h-56 lg:h-[28rem] rounded-xl overflow-hidden"
       />
     </div>

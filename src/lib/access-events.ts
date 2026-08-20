@@ -22,7 +22,43 @@ export type AccessEventCard = {
   coverUrl: string | null;
   /** Link de Google Maps de la sede (negocio registrado), si hay. */
   mapsUrl: string | null;
+  /** Nombre del socio sede (venueId); null si el lugar es libre / virtual. */
+  venueName: string | null;
 };
+
+/** Lugar corto en la lista: nombre de sede, o dirección/link si no hay sede. */
+export function accessEventListPlace(
+  event: Pick<AccessEventCard, "venueName" | "venue">
+): string {
+  return event.venueName?.trim() || event.venue.trim();
+}
+
+/**
+ * Detalle en ficha: nombre de sede + dirección/notas si aportan algo más
+ * (postal, otra ubicación, Zoom, etc.).
+ */
+export function accessEventDetailPlace(event: Pick<AccessEventCard, "venueName" | "venue">): {
+  name: string | null;
+  detail: string | null;
+} {
+  const name = event.venueName?.trim() || null;
+  const detail = event.venue.trim() || null;
+  if (name && detail && detail !== name) return { name, detail };
+  if (name) return { name, detail: null };
+  return { name: null, detail };
+}
+
+export function accessEventHasMapPin(
+  event: Pick<AccessEventCard, "latitude" | "longitude" | "mapsUrl">
+): boolean {
+  const hasCoords =
+    event.latitude != null &&
+    event.longitude != null &&
+    Number.isFinite(event.latitude) &&
+    Number.isFinite(event.longitude);
+  const hasMaps = Boolean(event.mapsUrl?.trim() && /^https?:\/\//i.test(event.mapsUrl.trim()));
+  return hasCoords || hasMaps;
+}
 
 /** Organizador sintético: el Clúster (no es un socio del directorio). */
 export const BARRIANDO_PASE_HOST_ID = -1;
