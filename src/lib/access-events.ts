@@ -18,6 +18,8 @@ export type AccessEventCard = {
   capacity: number | null;
   soldCount: number;
   published: boolean;
+  /** Imagen pública para preview al compartir (WhatsApp / OG). Ruta o URL absoluta. */
+  coverUrl: string | null;
 };
 
 /** Organizador sintético: el Clúster (no es un socio del directorio). */

@@ -27,6 +27,7 @@ function toEventCard(
     endsAt: Date | null;
     priceCents: number;
     capacity: number | null;
+    coverUrl: string | null;
     published: boolean;
     _count: { tickets: number };
   }
@@ -47,6 +48,7 @@ function toEventCard(
     capacity: row.capacity,
     soldCount: row._count.tickets,
     published: row.published,
+    coverUrl: row.coverUrl,
     hostName: null,
   };
 }

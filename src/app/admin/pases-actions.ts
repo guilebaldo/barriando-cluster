@@ -33,6 +33,11 @@ const accessEventSchema = z.object({
   hostId: z.string().nullable().optional(),
   venueId: z.string().nullable().optional(),
   hostEmail: z.string().trim().max(200).optional().default(""),
+  coverUrl: z
+    .union([z.string(), z.null()])
+    .optional()
+    .transform((v) => (v ?? "").trim())
+    .pipe(z.string().max(500)),
   latitude: z.number().finite().nullable().optional(),
   longitude: z.number().finite().nullable().optional(),
   startsAt: z.string().trim().min(1, "Falta la fecha de inicio."),
@@ -63,6 +68,15 @@ function parseOptionalCatalogId(raw: string | null | undefined): number | null {
   if (n === BARRIANDO_PASE_HOST_ID) return n;
   if (n < 1) return null;
   return n;
+}
+
+function parseOptionalCoverUrl(raw: string | null | undefined): string | null {
+  const value = raw?.trim() ?? "";
+  if (!value) return null;
+  if (value.length > 500) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("/")) return value;
+  return `/${value}`;
 }
 
 function parseOptionalEmail(raw: string | null | undefined): string | null {
@@ -219,6 +233,7 @@ export async function createAccessEvent(
         hostId: parseOptionalCatalogId(parsed.data.hostId),
         venueId: parseOptionalCatalogId(parsed.data.venueId),
         hostEmail: parseOptionalEmail(hostEmailRaw),
+        coverUrl: parseOptionalCoverUrl(parsed.data.coverUrl),
         latitude,
         longitude,
         startsAt,
@@ -287,6 +302,7 @@ export async function updateAccessEvent(
         hostId: parseOptionalCatalogId(parsed.data.hostId),
         venueId: parseOptionalCatalogId(parsed.data.venueId),
         hostEmail: parseOptionalEmail(hostEmailRaw),
+        coverUrl: parseOptionalCoverUrl(parsed.data.coverUrl),
         latitude,
         longitude,
         startsAt,

@@ -38,6 +38,7 @@ const emptyForm = {
   endsAt: "",
   priceMxn: "",
   capacity: "",
+  coverUrl: "",
 };
 
 function priceIsValid(raw: string): boolean {
@@ -62,7 +63,8 @@ function formsEqual(a: typeof emptyForm, b: typeof emptyForm): boolean {
     a.startsAt === b.startsAt &&
     a.endsAt === b.endsAt &&
     a.priceMxn === b.priceMxn &&
-    a.capacity === b.capacity
+    a.capacity === b.capacity &&
+    a.coverUrl === b.coverUrl
   );
 }
 
@@ -80,6 +82,7 @@ function formFromEvent(event: AccessEventCard) {
     endsAt: formatMexicoCityLocalInput(event.endsAt),
     priceMxn: (event.priceCents / 100).toFixed(2),
     capacity: event.capacity != null ? String(event.capacity) : "",
+    coverUrl: event.coverUrl ?? "",
   };
 }
 
@@ -166,6 +169,7 @@ export default function AdminPaseEventForm({
       endsAt: form.endsAt.trim() || null,
       priceMxn: form.priceMxn,
       capacity: form.capacity.trim() || null,
+      coverUrl: form.coverUrl.trim(),
       published: event ? event.published : false,
     };
     if (event) {
@@ -281,6 +285,29 @@ export default function AdminPaseEventForm({
           value={form.venue}
           onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))}
         />
+      </label>
+      <label className="space-y-1 sm:col-span-2">
+        <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Imagen al compartir
+        </span>
+        <input
+          className="border border-slate-200 rounded-lg p-2 w-full"
+          placeholder="/pases/covers/tu-flyer.png"
+          value={form.coverUrl}
+          onChange={(e) => setForm((f) => ({ ...f, coverUrl: e.target.value }))}
+        />
+        <span className="block text-[10px] text-slate-400">
+          Ruta en el sitio o URL. Sale en la tarjeta de WhatsApp / redes al compartir el link; no
+          se muestra como cabecera en la app.
+        </span>
+        {form.coverUrl.trim() ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={form.coverUrl.trim()}
+            alt="Vista previa de la imagen al compartir"
+            className="mt-1 max-h-40 w-auto rounded-lg border border-slate-200 object-contain bg-slate-50"
+          />
+        ) : null}
       </label>
       <label className="space-y-1">
         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">

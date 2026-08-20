@@ -6,6 +6,7 @@ import SiteShell from "@/app/components/SiteShell";
 import { getSession } from "@/lib/auth-utils";
 import { getPublishedAccessEventById } from "@/lib/access-marketplace";
 import { formatAccessHostByline, formatAccessWhen } from "@/lib/access-events";
+import { absoluteAccessCoverUrl, absoluteAccessEventUrl } from "@/lib/access-event-share";
 import { stripAccessDescription } from "@/lib/access-description";
 import { isBarrioPassEventTitle } from "@/lib/barriopass";
 import { redirect } from "next/navigation";
@@ -26,9 +27,38 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const when = formatAccessWhen(event.startsAt, event.endsAt);
   const byline = formatAccessHostByline(event.hostName);
   const plain = stripAccessDescription(event.description);
+  const description = plain || [byline, when, event.venue].filter(Boolean).join(" · ");
+  const title = `${event.title} | Pases | Barriando`;
+  const cover = absoluteAccessCoverUrl(event.coverUrl);
+  const pageUrl = absoluteAccessEventUrl(event.id);
+
   return {
-    title: `${event.title} | Pases | Barriando`,
-    description: plain || [byline, when, event.venue].filter(Boolean).join(" · "),
+    title,
+    description,
+    openGraph: {
+      title: event.title,
+      description,
+      url: pageUrl,
+      type: "website",
+      locale: "es_MX",
+      siteName: "Barriando",
+      ...(cover
+        ? {
+            images: [
+              {
+                url: cover,
+                alt: event.title,
+              },
+            ],
+          }
+        : {}),
+    },
+    twitter: {
+      card: cover ? "summary_large_image" : "summary",
+      title: event.title,
+      description,
+      ...(cover ? { images: [cover] } : {}),
+    },
   };
 }
 
