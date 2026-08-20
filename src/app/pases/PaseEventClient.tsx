@@ -80,7 +80,9 @@ export default function PaseEventClient({
           <AccessEventDateBadge startsAt={event.startsAt} />
         </div>
 
-        <p className="mt-3 text-sm text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>
+        <p className="mt-3 text-sm text-slate-600">
+          {formatAccessWhen(event.startsAt, event.endsAt, { style: "long" })}
+        </p>
         {place.name ? (
           <p className="mt-1 text-sm font-medium text-slate-700 inline-flex items-center gap-1.5">
             <MapPin className="w-4 h-4 shrink-0 text-slate-500" />

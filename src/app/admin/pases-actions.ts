@@ -143,6 +143,7 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
                 codigoPostal: true,
                 municipio: true,
                 estado: true,
+                pais: true,
               },
             },
           },
@@ -162,8 +163,9 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
       codigoPostal: user.socioProfile?.codigoPostal ?? undefined,
       municipio: user.socioProfile?.municipio ?? undefined,
       estado: user.socioProfile?.estado ?? undefined,
+      pais: user.socioProfile?.pais ?? undefined,
     });
-    const address = user.socioProfile?.address?.trim() || composed || "";
+    const address = composed || user.socioProfile?.address?.trim() || "";
     if (address && !addressBySocioId.has(user.socioId)) {
       addressBySocioId.set(user.socioId, address);
     }

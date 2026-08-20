@@ -24,6 +24,8 @@ export type AccessEventCard = {
   mapsUrl: string | null;
   /** Nombre del socio sede (venueId); null si el lugar es libre / virtual. */
   venueName: string | null;
+  /** Dirección postal completa del socio sede (colonia, municipio, etc.). */
+  venueAddress: string | null;
 };
 
 /** Lugar corto en la lista: nombre de sede, o dirección/link si no hay sede. */
@@ -34,15 +36,29 @@ export function accessEventListPlace(
 }
 
 /**
- * Detalle en ficha: nombre de sede + dirección/notas si aportan algo más
- * (postal, otra ubicación, Zoom, etc.).
+ * Detalle en ficha: nombre de sede + dirección postal (o notas / Zoom).
+ * Prefiere la dirección estructurada del socio (colonia, municipio…) sobre
+ * un `venue` corto tipo solo calle y número.
  */
-export function accessEventDetailPlace(event: Pick<AccessEventCard, "venueName" | "venue">): {
+export function accessEventDetailPlace(
+  event: Pick<AccessEventCard, "venueName" | "venue" | "venueAddress">
+): {
   name: string | null;
   detail: string | null;
 } {
   const name = event.venueName?.trim() || null;
-  const detail = event.venue.trim() || null;
+  const postal = event.venueAddress?.trim() || null;
+  const free = event.venue.trim() || null;
+  let detail: string | null = postal || free;
+  if (postal && free && free !== postal) {
+    const freeLower = free.toLowerCase();
+    const postalLower = postal.toLowerCase();
+    const freeIsPrefixOfPostal =
+      postalLower.startsWith(freeLower) || postalLower.includes(freeLower);
+    if (!freeIsPrefixOfPostal && free !== name) {
+      detail = `${postal} · ${free}`;
+    }
+  }
   if (name && detail && detail !== name) return { name, detail };
   if (name) return { name, detail: null };
   return { name: null, detail };
@@ -127,8 +143,12 @@ export function formatAccessPriceMxn(priceCents: number): string {
   }).format(priceCents / 100);
 }
 
-export function formatAccessWhen(startsAt: string, endsAt: string | null): string {
-  return formatMexicoCityWhen(startsAt, endsAt);
+export function formatAccessWhen(
+  startsAt: string,
+  endsAt: string | null,
+  options?: { style?: "short" | "long" }
+): string {
+  return formatMexicoCityWhen(startsAt, endsAt, options);
 }
 
 /** «por Barriando» / «por La Berenjena». */
@@ -179,12 +199,13 @@ export function accessEventPublicPath(eventId: string): string {
   return `/pases/${eventId}`;
 }
 
-/** Día corto + número + mes abreviado + hora (hora de Puebla). */
+/** Día / mes (corto y largo) + hora (hora de Puebla). El badge amarillo usa short. */
 export function formatAccessEventDateParts(startsAt: string): {
   weekday: string;
   weekdayShort: string;
   day: number;
   month: string;
+  monthLong: string;
   time: string;
 } {
   return mexicoCityDateParts(new Date(startsAt));

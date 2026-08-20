@@ -66,7 +66,7 @@ export default function AdminPaseEventDetail({
               formatAccessHostByline(event.hostName),
               place.name,
               place.detail,
-              formatAccessWhen(event.startsAt, event.endsAt),
+              formatAccessWhen(event.startsAt, event.endsAt, { style: "long" }),
               formatAccessGoingLabel(event.soldCount, { capacity: event.capacity }),
             ]
               .filter(Boolean)

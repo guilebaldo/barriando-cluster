@@ -542,7 +542,9 @@ function EventDetail({
           <EventDateBadge startsAt={event.startsAt} />
         </div>
 
-        <p className="mt-3 text-xs text-slate-600">{formatAccessWhen(event.startsAt, event.endsAt)}</p>
+        <p className="mt-3 text-xs text-slate-600">
+          {formatAccessWhen(event.startsAt, event.endsAt, { style: "long" })}
+        </p>
         {place.name ? (
           <p className="mt-1 text-xs font-medium text-slate-700 inline-flex items-center gap-1">
             <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-500" />

@@ -51,6 +51,7 @@ function toEventCard(
     coverUrl: row.coverUrl,
     mapsUrl: null,
     venueName: null,
+    venueAddress: null,
     hostName: null,
   };
 }
@@ -66,6 +67,7 @@ function httpMapsUrl(...candidates: Array<string | null | undefined>): string | 
 async function attachHostNames(cards: AccessEventCard[]): Promise<AccessEventCard[]> {
   const names = new Map<number, string>();
   const mapsBySocioId = new Map<number, string>();
+  const addressBySocioId = new Map<number, string>();
   names.set(BARRIANDO_PASE_HOST_ID, BARRIANDO_PASE_HOST_NAME);
   for (const socio of listaSocios) {
     names.set(socio.id, socio.name);
@@ -84,25 +86,41 @@ async function attachHostNames(cards: AccessEventCard[]): Promise<AccessEventCar
     // El catálogo estático alcanza si el roster no carga.
   }
 
-  const missingVenueIds = [
+  const venueIds = [
     ...new Set(
       cards
         .map((card) => card.venueId)
-        .filter((id): id is number => id != null && id > 0 && !mapsBySocioId.has(id))
+        .filter((id): id is number => id != null && id > 0)
     ),
   ];
-  if (missingVenueIds.length > 0) {
+  const missingMapsIds = venueIds.filter((id) => !mapsBySocioId.has(id));
+  if (venueIds.length > 0) {
     try {
+      const { composeBusinessAddress } = await import("@/lib/business-address");
       const [businesses, profiles] = await Promise.all([
-        prisma.business.findMany({
-          where: { id: { in: missingVenueIds } },
-          select: { id: true, mapsUrl: true },
-        }),
+        missingMapsIds.length > 0
+          ? prisma.business.findMany({
+              where: { id: { in: missingMapsIds } },
+              select: { id: true, mapsUrl: true },
+            })
+          : Promise.resolve([] as Array<{ id: number; mapsUrl: string | null }>),
         prisma.user.findMany({
-          where: { socioId: { in: missingVenueIds } },
+          where: { socioId: { in: venueIds } },
           select: {
             socioId: true,
-            socioProfile: { select: { googleBusinessUrl: true } },
+            socioProfile: {
+              select: {
+                googleBusinessUrl: true,
+                address: true,
+                street: true,
+                streetNumber: true,
+                colonia: true,
+                codigoPostal: true,
+                municipio: true,
+                estado: true,
+                pais: true,
+              },
+            },
           },
         }),
       ]);
@@ -111,9 +129,23 @@ async function attachHostNames(cards: AccessEventCard[]): Promise<AccessEventCar
         if (maps) mapsBySocioId.set(biz.id, maps);
       }
       for (const user of profiles) {
-        if (user.socioId == null || mapsBySocioId.has(user.socioId)) continue;
-        const maps = httpMapsUrl(user.socioProfile?.googleBusinessUrl);
-        if (maps) mapsBySocioId.set(user.socioId, maps);
+        if (user.socioId == null) continue;
+        if (!mapsBySocioId.has(user.socioId)) {
+          const maps = httpMapsUrl(user.socioProfile?.googleBusinessUrl);
+          if (maps) mapsBySocioId.set(user.socioId, maps);
+        }
+        if (addressBySocioId.has(user.socioId)) continue;
+        const composed = composeBusinessAddress({
+          street: user.socioProfile?.street ?? undefined,
+          streetNumber: user.socioProfile?.streetNumber ?? undefined,
+          colonia: user.socioProfile?.colonia ?? undefined,
+          codigoPostal: user.socioProfile?.codigoPostal ?? undefined,
+          municipio: user.socioProfile?.municipio ?? undefined,
+          estado: user.socioProfile?.estado ?? undefined,
+          pais: user.socioProfile?.pais ?? undefined,
+        });
+        const address = composed || user.socioProfile?.address?.trim() || "";
+        if (address) addressBySocioId.set(user.socioId, address);
       }
     } catch {
       // Sin Business/perfil: se usa fallback de coordenadas en el mini mapa.
@@ -124,6 +156,8 @@ async function attachHostNames(cards: AccessEventCard[]): Promise<AccessEventCar
     ...card,
     hostName: card.hostId != null ? names.get(card.hostId) ?? null : null,
     venueName: card.venueId != null ? names.get(card.venueId) ?? null : null,
+    venueAddress:
+      card.venueId != null ? addressBySocioId.get(card.venueId) ?? null : null,
     mapsUrl: card.venueId != null ? mapsBySocioId.get(card.venueId) ?? null : null,
   }));
 }

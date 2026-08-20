@@ -78,6 +78,7 @@ export function mexicoCityDateParts(date: Date): {
   weekdayShort: string;
   day: number;
   month: string;
+  monthLong: string;
   time: string;
 } {
   const weekdayRaw = date.toLocaleDateString("es-MX", {
@@ -90,6 +91,10 @@ export function mexicoCityDateParts(date: Date): {
   const monthRaw = date
     .toLocaleDateString("es-MX", { timeZone: MEXICO_CITY_TZ, month: "short" })
     .replace(/\./g, "");
+  const monthLongRaw = date.toLocaleDateString("es-MX", {
+    timeZone: MEXICO_CITY_TZ,
+    month: "long",
+  });
   const dayRaw = date.toLocaleDateString("es-MX", {
     timeZone: MEXICO_CITY_TZ,
     day: "numeric",
@@ -107,6 +112,7 @@ export function mexicoCityDateParts(date: Date): {
     weekdayShort: capitalizeEs(weekdayShortRaw),
     day: Number(dayRaw),
     month: capitalizeEs(monthRaw),
+    monthLong: capitalizeEs(monthLongRaw),
     time,
   };
 }
@@ -116,15 +122,23 @@ function capitalizeEs(value: string): string {
   return value.charAt(0).toLocaleUpperCase("es-MX") + value.slice(1);
 }
 
-export function formatMexicoCityWhen(startsAt: string, endsAt: string | null): string {
+export function formatMexicoCityWhen(
+  startsAt: string,
+  endsAt: string | null,
+  options?: { style?: "short" | "long" }
+): string {
+  const long = options?.style === "long";
   const start = new Date(startsAt);
   const startParts = mexicoCityDateParts(start);
-  const startLabel = `${startParts.weekdayShort} ${startParts.day} ${startParts.month} ${startParts.time}`;
+  const startWeekday = long ? startParts.weekday : startParts.weekdayShort;
+  const startMonth = long ? startParts.monthLong : startParts.month;
+  const startLabel = `${startWeekday} ${startParts.day} ${startMonth} ${startParts.time}`;
   if (!endsAt) return startLabel;
   const end = new Date(endsAt);
   const endParts = mexicoCityDateParts(end);
   const sameDay =
     formatMexicoCityLocalInput(start).slice(0, 10) === formatMexicoCityLocalInput(end).slice(0, 10);
-  const endLabel = sameDay ? endParts.time : `${endParts.day} ${endParts.month} ${endParts.time}`;
+  const endMonth = long ? endParts.monthLong : endParts.month;
+  const endLabel = sameDay ? endParts.time : `${endParts.day} ${endMonth} ${endParts.time}`;
   return `${startLabel} – ${endLabel}`;
 }
