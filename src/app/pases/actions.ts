@@ -285,15 +285,26 @@ export async function deleteAccessTicket(
 
     const ticket = await prisma.accessTicket.findUnique({
       where: { id: ticketId },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, eventId: true },
     });
     if (!ticket || ticket.userId !== session.id) {
       return { ok: false, error: "No encontramos ese pase." };
     }
 
+    const eventId = ticket.eventId;
     await prisma.accessTicket.delete({ where: { id: ticket.id } });
     revalidatePath("/pases");
     revalidatePath("/pases/mios");
+    revalidatePath(`/pases/${eventId}`);
+    revalidatePath(`/admin/pases/${eventId}`);
+    const { notifyHostAccessTicketCancelled } = await import(
+      "@/lib/notify-access-ticket-sold"
+    );
+    await notifyHostAccessTicketCancelled({
+      eventId,
+      cancelledByUserId: session.id,
+      qty: 1,
+    });
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

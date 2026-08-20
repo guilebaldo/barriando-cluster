@@ -36,7 +36,7 @@ export function getResendApiKey(): string | undefined {
 }
 
 export type SendEmailParams = {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
   text: string;
@@ -64,8 +64,10 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     return { ok: false, error: "RESEND_API_KEY missing", skipped: true };
   }
 
-  const to = params.to.trim().toLowerCase();
-  if (!to || !to.includes("@")) {
+  const toList = (Array.isArray(params.to) ? params.to : [params.to])
+    .map((value) => value.trim().toLowerCase())
+    .filter((value, index, all) => value.includes("@") && all.indexOf(value) === index);
+  if (toList.length === 0) {
     return { ok: false, error: "Invalid recipient" };
   }
 
@@ -95,7 +97,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
       },
       body: JSON.stringify({
         from: getEmailFrom(),
-        to,
+        to: toList.length === 1 ? toList[0] : toList,
         subject: params.subject,
         html: params.html,
         text: params.text,
@@ -115,7 +117,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
     }
 
     console.info("[email] sent:", {
-      to: redactEmail(to),
+      to: toList.map(redactEmail).join(","),
       subject: params.subject,
       id: body.id,
       tags: params.tags,

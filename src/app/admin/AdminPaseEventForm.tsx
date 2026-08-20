@@ -257,20 +257,20 @@ export default function AdminPaseEventForm({
       </label>
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          Correo del responsable
+          Correos del responsable
         </span>
         <input
           className="border border-slate-200 rounded-lg p-2 w-full"
-          type="email"
+          type="text"
           inputMode="email"
           autoComplete="email"
-          placeholder="avisos@negocio.mx"
+          placeholder="avisos@negocio.mx, otro@negocio.mx"
           value={form.hostEmail}
           onChange={(e) => setForm((f) => ({ ...f, hostEmail: e.target.value }))}
         />
         <span className="block text-[10px] text-slate-400">
-          Recibe un aviso cada vez que alguien obtiene un pase. Al elegir un socio se sugiere el
-          correo de su cuenta; puedes cambiarlo.
+          Avisos de pase confirmado o cancelado, con cupo y lista de asistentes. Varios correos
+          separados por coma. Al elegir un socio se sugiere el de su cuenta.
         </span>
       </label>
       <label className="space-y-1 sm:col-span-2">
