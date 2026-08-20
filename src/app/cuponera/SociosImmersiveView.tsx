@@ -8,6 +8,8 @@ import {
   Gift,
   Grid2X2,
   List,
+  Loader2,
+  LocateFixed,
   MapPin,
   Search,
   X,
@@ -36,6 +38,18 @@ type ViewMode = "icons" | "list";
 type SheetMode = "peek" | "half" | "full";
 
 const SHEET_ORDER: SheetMode[] = ["peek", "half", "full"];
+
+const GEO_OPTIONS_FAST: PositionOptions = {
+  enableHighAccuracy: false,
+  timeout: 10_000,
+  maximumAge: 60_000,
+};
+
+const GEO_OPTIONS_PRECISE: PositionOptions = {
+  enableHighAccuracy: true,
+  timeout: 12_000,
+  maximumAge: 5_000,
+};
 
 function stepSheet(mode: SheetMode, delta: 1 | -1): SheetMode {
   const idx = SHEET_ORDER.indexOf(mode);
@@ -81,6 +95,8 @@ export default function SociosImmersiveView({
     benefit: SocioBenefitInfo;
   } | null>(null);
   const [userLocation, setUserLocation] = useState<UserMapLocation | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [recenterNonce, setRecenterNonce] = useState(0);
 
   useEffect(() => {
     setStandalone(isStandaloneDisplay());
@@ -263,6 +279,41 @@ export default function SociosImmersiveView({
     setSelectedId(null);
     setSheetMode("half");
   }, [resetListScroll]);
+
+  const recenterOnMe = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+
+    const finishOk = (pos: GeolocationPosition) => {
+      setLocating(false);
+      setUserLocation({
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+        speed:
+          typeof pos.coords.speed === "number" && Number.isFinite(pos.coords.speed)
+            ? pos.coords.speed
+            : null,
+        heading:
+          typeof pos.coords.heading === "number" && Number.isFinite(pos.coords.heading)
+            ? pos.coords.heading
+            : null,
+      });
+      setSelectedId(null);
+      setSheetMode("peek");
+      setRecenterNonce((n) => n + 1);
+    };
+
+    const fail = () => setLocating(false);
+
+    navigator.geolocation.getCurrentPosition(finishOk, (err) => {
+      if (err.code === err.PERMISSION_DENIED) {
+        fail();
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(finishOk, fail, GEO_OPTIONS_PRECISE);
+    }, GEO_OPTIONS_FAST);
+  }, []);
 
   useEffect(() => {
     if (selectedId != null && sheetMode === "full") {
@@ -699,7 +750,24 @@ export default function SociosImmersiveView({
             immersive
             bottomSheetHeight={viewport.isLg ? 0 : mapSheetHeight}
             userLocation={userLocation}
+            recenterNonce={recenterNonce}
           />
+          <button
+            type="button"
+            onClick={recenterOnMe}
+            disabled={locating}
+            className="absolute z-[5] right-3 w-11 h-11 rounded-full bg-white border border-slate-200 shadow-md text-[#27366D] flex items-center justify-center active:scale-95 transition disabled:opacity-70"
+            style={{
+              bottom: viewport.isLg ? 12 : Math.max(12, mapSheetHeight + 12),
+            }}
+            aria-label="Centrar mi ubicación"
+          >
+            {locating ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <LocateFixed className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
         <div

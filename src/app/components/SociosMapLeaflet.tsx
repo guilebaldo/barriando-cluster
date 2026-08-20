@@ -112,6 +112,36 @@ function FitAllOnce({
   return null;
 }
 
+function RecenterOnUser({
+  userLocation,
+  nonce,
+  bottomSheetHeight,
+}: {
+  userLocation: UserMapLocation | null;
+  nonce: number;
+  bottomSheetHeight: number;
+}) {
+  const map = useMap();
+  const lastNonceRef = useRef(0);
+
+  useEffect(() => {
+    if (!userLocation || nonce === 0 || nonce === lastNonceRef.current) return;
+    lastNonceRef.current = nonce;
+    const offsetY =
+      bottomSheetHeight > 0 ? Math.round(bottomSheetHeight * 0.55 + 28) : 0;
+    const zoom = Math.max(map.getZoom(), 16);
+    leafletFlyToWithBottomBias(
+      map,
+      [userLocation.latitude, userLocation.longitude],
+      zoom,
+      offsetY,
+      0.55
+    );
+  }, [map, userLocation, nonce, bottomSheetHeight]);
+
+  return null;
+}
+
 function SocioMarker({
   lat,
   lng,
@@ -164,6 +194,7 @@ export default function SociosMapLeaflet({
   immersive = false,
   bottomSheetHeight = 0,
   userLocation = null,
+  recenterNonce = 0,
 }: {
   socios: Socio[];
   selectedId?: number | null;
@@ -171,6 +202,7 @@ export default function SociosMapLeaflet({
   immersive?: boolean;
   bottomSheetHeight?: number;
   userLocation?: UserMapLocation | null;
+  recenterNonce?: number;
 }) {
   const puntos = useMemo(
     () =>
@@ -207,6 +239,11 @@ export default function SociosMapLeaflet({
         <FocusSelected
           selectedId={selectedId}
           puntos={puntos}
+          bottomSheetHeight={bottomSheetHeight}
+        />
+        <RecenterOnUser
+          userLocation={userLocation}
+          nonce={recenterNonce}
           bottomSheetHeight={bottomSheetHeight}
         />
         {userLocation ? (
