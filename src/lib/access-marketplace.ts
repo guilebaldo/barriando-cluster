@@ -147,6 +147,37 @@ async function attachHostNames(cards: AccessEventCard[]): Promise<AccessEventCar
         const address = composed || user.socioProfile?.address?.trim() || "";
         if (address) addressBySocioId.set(user.socioId, address);
       }
+
+      const stillMissing = venueIds.filter((id) => !addressBySocioId.has(id));
+      if (stillMissing.length > 0) {
+        const overrides = await prisma.catalogSocioOverride.findMany({
+          where: { socioId: { in: stillMissing } },
+          select: {
+            socioId: true,
+            address: true,
+            street: true,
+            streetNumber: true,
+            colonia: true,
+            codigoPostal: true,
+            municipio: true,
+            estado: true,
+            pais: true,
+          },
+        });
+        for (const override of overrides) {
+          const composed = composeBusinessAddress({
+            street: override.street ?? undefined,
+            streetNumber: override.streetNumber ?? undefined,
+            colonia: override.colonia ?? undefined,
+            codigoPostal: override.codigoPostal ?? undefined,
+            municipio: override.municipio ?? undefined,
+            estado: override.estado ?? undefined,
+            pais: override.pais ?? undefined,
+          });
+          const address = composed || override.address?.trim() || "";
+          if (address) addressBySocioId.set(override.socioId, address);
+        }
+      }
     } catch {
       // Sin Business/perfil: se usa fallback de coordenadas en el mini mapa.
     }

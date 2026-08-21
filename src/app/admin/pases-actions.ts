@@ -170,6 +170,37 @@ export async function listAccessEventHosts(): Promise<AccessEventHostOption[]> {
       addressBySocioId.set(user.socioId, address);
     }
   }
+
+  const missingAddressIds = socioIds.filter((id) => !addressBySocioId.has(id));
+  if (missingAddressIds.length > 0) {
+    const overrides = await prisma.catalogSocioOverride.findMany({
+      where: { socioId: { in: missingAddressIds } },
+      select: {
+        socioId: true,
+        address: true,
+        street: true,
+        streetNumber: true,
+        colonia: true,
+        codigoPostal: true,
+        municipio: true,
+        estado: true,
+        pais: true,
+      },
+    });
+    for (const override of overrides) {
+      const composed = composeBusinessAddress({
+        street: override.street ?? undefined,
+        streetNumber: override.streetNumber ?? undefined,
+        colonia: override.colonia ?? undefined,
+        codigoPostal: override.codigoPostal ?? undefined,
+        municipio: override.municipio ?? undefined,
+        estado: override.estado ?? undefined,
+        pais: override.pais ?? undefined,
+      });
+      const address = composed || override.address?.trim() || "";
+      if (address) addressBySocioId.set(override.socioId, address);
+    }
+  }
   const sociosRows = socios
     .map((socio) => {
       const coord = resolveSocioMapCoord(socio);

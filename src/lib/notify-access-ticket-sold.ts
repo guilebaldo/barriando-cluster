@@ -19,8 +19,9 @@ export function parseHostNotifyEmails(raw: string | null | undefined): string[] 
   return out;
 }
 
-function holderLabel(nombre: string | null, email: string | null): string {
-  return nombre?.trim() || email?.trim() || "Sin nombre";
+/** Solo nombre visible; nunca el correo del asistente (el responsable puede no ser admin). */
+function holderDisplayName(nombre: string | null | undefined): string {
+  return nombre?.trim() || "Sin nombre";
 }
 
 function capacitySummary(sold: number, capacity: number | null): string {
@@ -32,7 +33,7 @@ function capacitySummary(sold: number, capacity: number | null): string {
 }
 
 function formatHoldersList(
-  tickets: Array<{ user: { nombre: string | null; email: string | null } }>
+  tickets: Array<{ user: { nombre: string | null } }>
 ): { html: string; text: string } {
   if (tickets.length === 0) {
     return {
@@ -41,13 +42,10 @@ function formatHoldersList(
     };
   }
   const lines = tickets.map((ticket, i) => {
-    const name = holderLabel(ticket.user.nombre, ticket.user.email);
-    const email = ticket.user.email?.trim();
+    const name = holderDisplayName(ticket.user.nombre);
     return {
-      html: `<li style="margin:0 0 4px;">${i + 1}. ${escapeHtml(name)}${
-        email && email !== name ? ` &lt;${escapeHtml(email)}&gt;` : ""
-      }</li>`,
-      text: `${i + 1}. ${name}${email && email !== name ? ` <${email}>` : ""}`,
+      html: `<li style="margin:0 0 4px;">${i + 1}. ${escapeHtml(name)}</li>`,
+      text: `${i + 1}. ${name}`,
     };
   });
   return {
@@ -72,7 +70,7 @@ async function loadHostNotifyContext(eventId: string) {
       tickets: {
         orderBy: { createdAt: "asc" },
         select: {
-          user: { select: { nombre: true, email: true } },
+          user: { select: { nombre: true } },
         },
       },
     },
@@ -90,7 +88,7 @@ export async function notifyHostAccessTicketSold(params: {
       loadHostNotifyContext(params.eventId),
       prisma.user.findUnique({
         where: { id: params.buyerUserId },
-        select: { nombre: true, email: true },
+        select: { nombre: true },
       }),
     ]);
     const recipients = parseHostNotifyEmails(event?.hostEmail);
@@ -98,8 +96,7 @@ export async function notifyHostAccessTicketSold(params: {
 
     const origin = resolvePublicAppOrigin();
     const eventUrl = `${origin}/pases/${params.eventId}`;
-    const adminUrl = `${origin}/admin/pases/${params.eventId}`;
-    const buyerName = holderLabel(buyer?.nombre ?? null, buyer?.email ?? null);
+    const buyerName = holderDisplayName(buyer?.nombre);
     const qtyLabel = params.qty === 1 ? "1 pase" : `${params.qty} pases`;
     const when = formatAccessWhen(
       event.startsAt.toISOString(),
@@ -147,10 +144,8 @@ export async function notifyHostAccessTicketSold(params: {
         title: "Confirmación de pase",
         preheader: `${qtyLabel} para ${event.title}. ${cupo}.`,
         bodyHtml,
-        ctaLabel: "Ver asistentes en admin",
-        ctaUrl: adminUrl,
         asideHtml,
-        footerNote: `Página pública: ${eventUrl}`,
+        footerNote: `Página del evento: ${eventUrl}`,
       }),
       text: [
         "Hola,",
@@ -166,7 +161,7 @@ export async function notifyHostAccessTicketSold(params: {
         when,
         event.venue,
         "",
-        adminUrl,
+        eventUrl,
         "",
         "— Barriando",
       ].join("\n"),
@@ -187,15 +182,15 @@ export async function notifyHostAccessTicketCancelled(params: {
       loadHostNotifyContext(params.eventId),
       prisma.user.findUnique({
         where: { id: params.cancelledByUserId },
-        select: { nombre: true, email: true },
+        select: { nombre: true },
       }),
     ]);
     const recipients = parseHostNotifyEmails(event?.hostEmail);
     if (!event || recipients.length === 0) return;
 
     const origin = resolvePublicAppOrigin();
-    const adminUrl = `${origin}/admin/pases/${params.eventId}`;
-    const who = holderLabel(cancelledBy?.nombre ?? null, cancelledBy?.email ?? null);
+    const eventUrl = `${origin}/pases/${params.eventId}`;
+    const who = holderDisplayName(cancelledBy?.nombre);
     const qty = params.qty ?? 1;
     const qtyLabel = qty === 1 ? "1 pase" : `${qty} pases`;
     const when = formatAccessWhen(
@@ -244,10 +239,8 @@ export async function notifyHostAccessTicketCancelled(params: {
         title: "Cancelación de pase",
         preheader: `${qtyLabel} liberado. ${cupo}.`,
         bodyHtml,
-        ctaLabel: "Ver asistentes en admin",
-        ctaUrl: adminUrl,
         asideHtml,
-        footerNote: "Recibes este aviso porque eres responsable de este evento en Barriando.",
+        footerNote: `Página del evento: ${eventUrl}`,
       }),
       text: [
         "Hola,",
@@ -263,7 +256,7 @@ export async function notifyHostAccessTicketCancelled(params: {
         when,
         event.venue,
         "",
-        adminUrl,
+        eventUrl,
         "",
         "— Barriando",
       ].join("\n"),

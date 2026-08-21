@@ -11,7 +11,7 @@ import { getPlanLabel, isBusinessPlan } from "@/lib/membresia";
 import { advanceBillingAnniversary } from "@/lib/subscription-lifecycle";
 import { publishBusinessPresenceOnPayment, allocateNextSocioId } from "@/lib/publish-business";
 import { toSocioProfileDbFields } from "@/lib/business-profile-payload";
-import { emptyBusinessProfile } from "@/lib/business-address";
+import { emptyBusinessProfile, composeBusinessAddress } from "@/lib/business-address";
 import type { SocioProfileFormInitial } from "@/app/panel/business-profile-types";
 import type { MembershipPlan } from "@/generated/prisma/client";
 import {
@@ -1125,6 +1125,15 @@ export type CatalogMembershipRow = {
   /** Pin persistido en Business (admin / alta manual). */
   mapLatitude: number | null;
   mapLongitude: number | null;
+  /** Domicilio en CatalogSocioOverride (ops, con o sin cuenta). */
+  address: string;
+  street: string;
+  streetNumber: string;
+  colonia: string;
+  codigoPostal: string;
+  municipio: string;
+  estado: string;
+  pais: string;
   offersBenefit: boolean;
   benefitTitle: string;
   benefitDescription: string;
@@ -1182,6 +1191,22 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
       businesses.map((b) => [b.id, { lat: b.latitude, lng: b.longitude }] as const)
     );
 
+    const overrides = await prisma.catalogSocioOverride.findMany({
+      where: { socioId: { in: rows.map((r) => r.socioId) } },
+      select: {
+        socioId: true,
+        address: true,
+        street: true,
+        streetNumber: true,
+        colonia: true,
+        codigoPostal: true,
+        municipio: true,
+        estado: true,
+        pais: true,
+      },
+    });
+    const overrideBySocioId = new Map(overrides.map((o) => [o.socioId, o]));
+
     return rows
       .map((row) => {
         const catalog = listaSocios.find((s) => s.id === row.socioId);
@@ -1201,6 +1226,7 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
           typeof bizCoords?.lng === "number" && Number.isFinite(bizCoords.lng)
             ? bizCoords.lng
             : null;
+        const override = overrideBySocioId.get(row.socioId);
         return {
           socioId: row.socioId,
           businessName:
@@ -1220,6 +1246,14 @@ export async function listCatalogMemberships(): Promise<CatalogMembershipRow[]> 
           categoria,
           mapLatitude,
           mapLongitude,
+          address: override?.address ?? "",
+          street: override?.street ?? "",
+          streetNumber: override?.streetNumber ?? "",
+          colonia: override?.colonia ?? "",
+          codigoPostal: override?.codigoPostal ?? "",
+          municipio: override?.municipio ?? "",
+          estado: override?.estado ?? "",
+          pais: override?.pais ?? "",
           offersBenefit: Boolean(row.offersBenefit),
           benefitTitle: row.benefitTitle ?? "",
           benefitDescription: row.benefitDescription ?? "",
@@ -1598,7 +1632,10 @@ export async function updateCatalogSocioWebsite(input: {
     }
 
     if (!website) {
-      await prisma.catalogSocioOverride.deleteMany({ where: { socioId } });
+      await prisma.catalogSocioOverride.updateMany({
+        where: { socioId },
+        data: { website: null },
+      });
     } else {
       let normalized = website;
       if (!/^https?:\/\//i.test(normalized)) {
@@ -1719,16 +1756,54 @@ export async function adminUpdateBusinessProfile(
       update: { businessName, category },
     });
 
-    if (!website) {
-      await prisma.catalogSocioOverride.deleteMany({ where: { socioId: data.socioId } });
-    } else {
-      let normalized = website;
-      if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`;
+    let websiteNormalized: string | null = null;
+    if (website) {
+      websiteNormalized = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+    }
+
+    const composedAddress =
+      composeBusinessAddress({
+        street: data.street,
+        streetNumber: data.streetNumber,
+        colonia: data.colonia,
+        codigoPostal: data.codigoPostal,
+        municipio: data.municipio,
+        estado: data.estado,
+        pais: data.pais,
+      }) ||
+      data.address?.trim() ||
+      null;
+
+    const overrideAddress = {
+      address: composedAddress,
+      street: data.street?.trim() || null,
+      streetNumber: data.streetNumber?.trim() || null,
+      colonia: data.colonia?.trim() || null,
+      codigoPostal: data.codigoPostal?.trim() || null,
+      municipio: data.municipio?.trim() || null,
+      estado: data.estado?.trim() || null,
+      pais: data.pais?.trim() || null,
+    };
+
+    const hasOverridePayload =
+      Boolean(websiteNormalized) ||
+      Object.values(overrideAddress).some((value) => Boolean(value));
+
+    if (hasOverridePayload) {
       await prisma.catalogSocioOverride.upsert({
         where: { socioId: data.socioId },
-        create: { socioId: data.socioId, website: normalized },
-        update: { website: normalized },
+        create: {
+          socioId: data.socioId,
+          website: websiteNormalized,
+          ...overrideAddress,
+        },
+        update: {
+          website: websiteNormalized,
+          ...overrideAddress,
+        },
       });
+    } else {
+      await prisma.catalogSocioOverride.deleteMany({ where: { socioId: data.socioId } });
     }
 
     const linked = await prisma.user.findFirst({
@@ -1737,7 +1812,7 @@ export async function adminUpdateBusinessProfile(
     });
 
     if (!linked) {
-      // Sin cuenta vinculada igual persistimos el pin en Business (Cuponera lo lee).
+      // Sin cuenta vinculada: domicilio ya va en CatalogSocioOverride; pin en Business.
       const hasCoords = data.latitude != null && data.longitude != null;
       if (hasCoords) {
         await prisma.business.upsert({
@@ -1746,14 +1821,14 @@ export async function adminUpdateBusinessProfile(
             id: data.socioId,
             name: businessName,
             category: category,
-            website: website || null,
+            website: websiteNormalized,
             latitude: data.latitude,
             longitude: data.longitude,
           },
           update: {
             name: businessName,
             category: category,
-            ...(website ? { website } : {}),
+            ...(websiteNormalized ? { website: websiteNormalized } : {}),
             latitude: data.latitude,
             longitude: data.longitude,
           },
@@ -1763,11 +1838,12 @@ export async function adminUpdateBusinessProfile(
       revalidatePublicSocios();
       revalidatePath("/socios");
       revalidatePath("/mapa");
+      revalidatePath("/pases");
       return {
         ok: true,
         warning: hasCoords
-          ? "Ubicación guardada en el mapa. Facturación completa requiere cuenta vinculada."
-          : "Nombre y sitio web guardados en roster. Mueve el pin arriba para ubicarlo en el mapa.",
+          ? "Domicilio y ubicación guardados. Facturación completa requiere cuenta vinculada."
+          : "Domicilio guardado en operaciones. Mueve el pin arriba para ubicarlo en el mapa.",
       };
     }
 
@@ -1861,6 +1937,7 @@ export async function adminUpdateBusinessProfile(
     revalidatePath("/panel");
     revalidatePublicSocios();
     revalidatePath("/mapa");
+    revalidatePath("/pases");
     return { ok: true };
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") {

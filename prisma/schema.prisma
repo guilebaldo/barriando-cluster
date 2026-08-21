@@ -300,9 +300,18 @@ model HomePromo {
 
 /** Overrides admin del sitio web para socios del catálogo estático (listaSocios). */
 model CatalogSocioOverride {
-  socioId   Int      @id
-  website   String?
-  updatedAt DateTime @updatedAt
+  socioId      Int      @id
+  website      String?
+  /** Domicilio comercial (ops); sirve aunque no haya cuenta vinculada. */
+  address      String?
+  street       String?
+  streetNumber String?
+  colonia      String?
+  codigoPostal String?
+  municipio    String?
+  estado       String?
+  pais         String?
+  updatedAt    DateTime @updatedAt
 }
 
 // ======================
