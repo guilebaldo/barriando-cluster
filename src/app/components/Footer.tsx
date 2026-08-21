@@ -79,6 +79,7 @@ const FOOTER_COLUMNS = [
       { href: "/equipo", label: "Equipo" },
       { href: "/blog", label: "Blog" },
       { href: "/documenta", label: "Documenta" },
+      { href: "/cinco-de-mayo-parade", label: "Cinco de Mayo Parade" },
       { href: "/FAQ", label: "FAQ" },
     ],
   },

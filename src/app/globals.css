@@ -146,6 +146,47 @@
   animation: float-y 3.5s ease-in-out infinite;
 }
 
+@keyframes parade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes parade-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes parade-kenburns {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.animate-parade-rise {
+  animation: parade-rise 0.95s ease-out both;
+}
+
+.animate-parade-fade {
+  animation: parade-fade 0.8s ease-out both;
+}
+
+.animate-parade-kenburns {
+  animation: parade-kenburns 18s ease-out forwards;
+}
+
 .animate-icon-ring {
   animation: icon-pulse-ring 2.8s ease-in-out infinite;
 }
@@ -399,7 +440,10 @@
   .animate-toast-bar,
   .animate-redeem-success,
   .animate-stamp-press,
-  .animate-nudge-shake {
+  .animate-nudge-shake,
+  .animate-parade-rise,
+  .animate-parade-fade,
+  .animate-parade-kenburns {
     animation: none;
   }
 }
