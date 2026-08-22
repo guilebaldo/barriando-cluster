@@ -565,7 +565,7 @@ export default function SociosImmersiveView({
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
-              className={`w-full pl-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white ${
+              className={`w-full pl-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-[#27366D] focus:bg-white [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none ${
                 searchQuery ? "pr-10" : "pr-3"
               }`}
             />
