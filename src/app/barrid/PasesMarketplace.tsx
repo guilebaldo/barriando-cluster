@@ -7,8 +7,6 @@ import {
   Video,
   ChevronLeft,
   ChevronRight,
-  List,
-  CalendarDays,
   Users,
 } from "lucide-react";
 import {
@@ -30,6 +28,7 @@ import AccessEventMiniMap from "@/app/pases/AccessEventMiniMap";
 import AccessEventMeetingLink from "@/app/pases/AccessEventMeetingLink";
 import AccessEventDateBadge from "@/app/pases/AccessEventDateBadge";
 import AccessEventDescription from "@/app/pases/AccessEventDescription";
+import PasesViewNav from "@/app/pases/PasesViewNav";
 
 type CatalogView = "lista" | "calendario";
 
@@ -75,6 +74,11 @@ export default function PasesMarketplace({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("view") === "calendario") setView("calendario");
+  }, []);
 
   const chronological = useMemo(() => sortEventsChronological(events), [events]);
 
@@ -132,8 +136,12 @@ export default function PasesMarketplace({
         />
       ) : (
         <>
-          <div className="flex justify-center shrink-0">
-            <ViewToggle view={view} onChange={setView} />
+          <div className="mb-3">
+            <PasesViewNav
+              active={view}
+              onViewChange={setView}
+              showMisPases={signedIn}
+            />
           </div>
           {view === "lista" ? (
             <CatalogList events={chronological} onOpen={setSelectedId} />
@@ -143,51 +151,6 @@ export default function PasesMarketplace({
         </>
       )}
     </section>
-  );
-}
-
-function ViewToggle({
-  view,
-  onChange,
-}: {
-  view: CatalogView;
-  onChange: (next: CatalogView) => void;
-}) {
-  return (
-    <div
-      className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm"
-      role="tablist"
-      aria-label="Vista de pases"
-    >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={view === "lista"}
-        onClick={() => onChange("lista")}
-        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
-          view === "lista"
-            ? "bg-[#27366D] text-white"
-            : "text-slate-500 hover:text-[#27366D]"
-        }`}
-      >
-        <List className="w-3.5 h-3.5" />
-        Lista
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={view === "calendario"}
-        onClick={() => onChange("calendario")}
-        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
-          view === "calendario"
-            ? "bg-[#27366D] text-white"
-            : "text-slate-500 hover:text-[#27366D]"
-        }`}
-      >
-        <CalendarDays className="w-3.5 h-3.5" />
-        Calendario
-      </button>
-    </div>
   );
 }
 
