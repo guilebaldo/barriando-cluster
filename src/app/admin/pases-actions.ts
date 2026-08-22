@@ -34,6 +34,8 @@ const accessEventSchema = z.object({
   hostId: z.string().nullable().optional(),
   venueId: z.string().nullable().optional(),
   hostEmail: z.string().trim().max(500).optional().default(""),
+  online: z.boolean().optional().default(false),
+  meetingUrl: z.string().trim().max(500).optional().default(""),
   coverUrl: z
     .union([z.string(), z.null()])
     .optional()
@@ -78,6 +80,25 @@ function parseOptionalCoverUrl(raw: string | null | undefined): string | null {
   if (/^https?:\/\//i.test(value)) return value;
   if (value.startsWith("/")) return value;
   return `/${value}`;
+}
+
+function parseOptionalMeetingUrl(raw: string | null | undefined): string | null {
+  const value = raw?.trim() ?? "";
+  if (!value) return null;
+  if (value.length > 500) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://${value}`;
+}
+
+function meetingUrlInputIsValid(raw: string | null | undefined): boolean {
+  const trimmed = raw?.trim() ?? "";
+  if (!trimmed) return true;
+  try {
+    const url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function parseOptionalHostEmails(raw: string | null | undefined): string | null {
@@ -255,9 +276,14 @@ export async function createAccessEvent(
     if (parsed.data.capacity?.trim() && capacity == null) {
       return { ok: false, error: "El cupo debe ser un número entero." };
     }
-    const latitude = parsed.data.latitude ?? null;
-    const longitude = parsed.data.longitude ?? null;
-    if ((latitude == null) !== (longitude == null)) {
+    const online = Boolean(parsed.data.online);
+    const meetingUrlRaw = parsed.data.meetingUrl?.trim() ?? "";
+    if (!meetingUrlInputIsValid(meetingUrlRaw)) {
+      return { ok: false, error: "El link de conexión no es válido." };
+    }
+    const latitude = online ? null : (parsed.data.latitude ?? null);
+    const longitude = online ? null : (parsed.data.longitude ?? null);
+    if (!online && (latitude == null) !== (longitude == null)) {
       return { ok: false, error: "Marca el lugar en el mapa (latitud y longitud juntas)." };
     }
     const hostEmailRaw = parsed.data.hostEmail?.trim() ?? "";
@@ -274,9 +300,11 @@ export async function createAccessEvent(
         description: sanitizeAccessDescription(parsed.data.description ?? ""),
         venue: parsed.data.venue,
         hostId: parseOptionalCatalogId(parsed.data.hostId),
-        venueId: parseOptionalCatalogId(parsed.data.venueId),
+        venueId: online ? null : parseOptionalCatalogId(parsed.data.venueId),
         hostEmail: parseOptionalHostEmails(hostEmailRaw),
         coverUrl: parseOptionalCoverUrl(parsed.data.coverUrl),
+        online,
+        meetingUrl: parseOptionalMeetingUrl(meetingUrlRaw),
         latitude,
         longitude,
         startsAt,
@@ -326,9 +354,14 @@ export async function updateAccessEvent(
     if (parsed.data.capacity?.trim() && capacity == null) {
       return { ok: false, error: "El cupo debe ser un número entero." };
     }
-    const latitude = parsed.data.latitude ?? null;
-    const longitude = parsed.data.longitude ?? null;
-    if ((latitude == null) !== (longitude == null)) {
+    const online = Boolean(parsed.data.online);
+    const meetingUrlRaw = parsed.data.meetingUrl?.trim() ?? "";
+    if (!meetingUrlInputIsValid(meetingUrlRaw)) {
+      return { ok: false, error: "El link de conexión no es válido." };
+    }
+    const latitude = online ? null : (parsed.data.latitude ?? null);
+    const longitude = online ? null : (parsed.data.longitude ?? null);
+    if (!online && (latitude == null) !== (longitude == null)) {
       return { ok: false, error: "Marca el lugar en el mapa (latitud y longitud juntas)." };
     }
     const hostEmailRaw = parsed.data.hostEmail?.trim() ?? "";
@@ -346,9 +379,11 @@ export async function updateAccessEvent(
         description: sanitizeAccessDescription(parsed.data.description ?? ""),
         venue: parsed.data.venue,
         hostId: parseOptionalCatalogId(parsed.data.hostId),
-        venueId: parseOptionalCatalogId(parsed.data.venueId),
+        venueId: online ? null : parseOptionalCatalogId(parsed.data.venueId),
         hostEmail: parseOptionalHostEmails(hostEmailRaw),
         coverUrl: parseOptionalCoverUrl(parsed.data.coverUrl),
+        online,
+        meetingUrl: parseOptionalMeetingUrl(meetingUrlRaw),
         latitude,
         longitude,
         startsAt,

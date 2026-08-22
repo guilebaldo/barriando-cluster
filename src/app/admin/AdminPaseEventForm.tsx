@@ -32,6 +32,8 @@ const emptyForm = {
   hostId: "" as string,
   venueId: "" as string,
   hostEmail: "",
+  online: false,
+  meetingUrl: "",
   latitude: null as number | null,
   longitude: null as number | null,
   startsAt: "",
@@ -58,6 +60,8 @@ function formsEqual(a: typeof emptyForm, b: typeof emptyForm): boolean {
     a.hostId === b.hostId &&
     a.venueId === b.venueId &&
     a.hostEmail === b.hostEmail &&
+    a.online === b.online &&
+    a.meetingUrl === b.meetingUrl &&
     a.latitude === b.latitude &&
     a.longitude === b.longitude &&
     a.startsAt === b.startsAt &&
@@ -76,6 +80,8 @@ function formFromEvent(event: AccessEventCard) {
     hostId: event.hostId != null ? String(event.hostId) : "",
     venueId: event.venueId != null ? String(event.venueId) : "",
     hostEmail: event.hostEmail ?? "",
+    online: Boolean(event.online),
+    meetingUrl: event.meetingUrl ?? "",
     latitude: event.latitude,
     longitude: event.longitude,
     startsAt: formatMexicoCityLocalInput(event.startsAt),
@@ -167,10 +173,12 @@ export default function AdminPaseEventForm({
       description: form.description,
       venue: form.venue,
       hostId: form.hostId || null,
-      venueId: form.venueId || null,
+      venueId: form.online ? null : form.venueId || null,
       hostEmail: form.hostEmail,
-      latitude: form.latitude,
-      longitude: form.longitude,
+      online: form.online,
+      meetingUrl: form.meetingUrl,
+      latitude: form.online ? null : form.latitude,
+      longitude: form.online ? null : form.longitude,
       startsAt: form.startsAt,
       endsAt: form.endsAt.trim() || null,
       priceMxn: form.priceMxn,
@@ -233,6 +241,52 @@ export default function AdminPaseEventForm({
           luego puedes cambiar sede o mover el marcador.
         </span>
       </label>
+      <label className="flex items-start gap-2 sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+        <input
+          type="checkbox"
+          className="mt-0.5"
+          checked={form.online}
+          onChange={(e) => {
+            const online = e.target.checked;
+            setForm((f) => ({
+              ...f,
+              online,
+              venue: online && !f.venue.trim() ? "Online" : f.venue,
+              venueId: online ? "" : f.venueId,
+              latitude: online ? null : f.latitude,
+              longitude: online ? null : f.longitude,
+            }));
+          }}
+        />
+        <span>
+          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-600">
+            Evento online
+          </span>
+          <span className="block text-[10px] text-slate-400 mt-0.5">
+            Sin mapa: en la ficha se muestra el bloque de link de conexión.
+          </span>
+        </span>
+      </label>
+      {form.online ? (
+        <label className="space-y-1 sm:col-span-2">
+          <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Link de conexión
+          </span>
+          <input
+            className="border border-slate-200 rounded-lg p-2 w-full"
+            type="url"
+            inputMode="url"
+            placeholder="https://zoom.us/j/… o Meet"
+            value={form.meetingUrl}
+            onChange={(e) => setForm((f) => ({ ...f, meetingUrl: e.target.value }))}
+          />
+          <span className="block text-[10px] text-slate-400">
+            Opcional por ahora: si está vacío, la ficha dice que el enlace se compartirá a quienes
+            tengan pase.
+          </span>
+        </label>
+      ) : null}
+      {!form.online ? (
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
           Sede
@@ -251,10 +305,11 @@ export default function AdminPaseEventForm({
           ))}
         </select>
         <span className="block text-[10px] text-slate-400">
-          Negocio donde ocurre. Si no está en la lista, déjalo vacío y escribe el lugar o un link
-          (Zoom, Meet, etc.) en Dirección.
+          Negocio donde ocurre. Si no está en la lista, déjalo vacío y escribe el lugar en
+          Dirección.
         </span>
       </label>
+      ) : null}
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
           Correos del responsable
@@ -275,17 +330,18 @@ export default function AdminPaseEventForm({
       </label>
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
-          Dirección
+          {form.online ? "Etiqueta del lugar" : "Dirección"}
         </span>
         <input
           className="border border-slate-200 rounded-lg p-2 w-full"
-          placeholder="Calle y número, o link a videollamada"
+          placeholder={form.online ? "Online · Zoom" : "Calle y número"}
           value={form.venue}
           onChange={(e) => setForm((f) => ({ ...f, venue: e.target.value }))}
         />
         <span className="block text-[10px] text-slate-400">
-          Se precarga con el domicilio de operaciones de la sede. Puedes cambiarlo si el evento es
-          en otra ubicación.
+          {form.online
+            ? "Texto corto que se muestra en la lista y la ficha (ej. Online)."
+            : "Se precarga con el domicilio de operaciones de la sede. Puedes cambiarlo si el evento es en otra ubicación."}
         </span>
       </label>
       <label className="space-y-1 sm:col-span-2">
@@ -369,7 +425,20 @@ export default function AdminPaseEventForm({
     </div>
   );
 
-  const map = (
+  const map = form.online ? (
+    <div className="space-y-2 h-full lg:sticky lg:top-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        Conexión online
+      </p>
+      <p className="text-sm text-slate-600 leading-relaxed">
+        Este pase no usa mapa. En la ficha pública aparece el bloque de link de conexión
+        {form.meetingUrl.trim() ? "." : " (añade el URL cuando lo tengas)."}
+      </p>
+      {form.meetingUrl.trim() ? (
+        <p className="text-xs text-[#27366D] break-all font-medium">{form.meetingUrl.trim()}</p>
+      ) : null}
+    </div>
+  ) : (
     <div className="space-y-2 h-full lg:sticky lg:top-4">
       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
         Ubicación en el mapa

@@ -326,6 +326,10 @@ model AccessEvent {
   venue       String
   latitude    Float?
   longitude   Float?
+  /** Si true, no se muestra mapa; el lugar es virtual. */
+  online      Boolean  @default(false)
+  /** Zoom / Meet / etc. Visible en la ficha cuando el evento es online (o híbrido). */
+  meetingUrl  String?
   /** Socio que organiza / anfitrión (id de catálogo). No amarra dirección ni pin. */
   hostId      Int?
   /** Socio de la sede: dirección y pin dados de alta. Puede ser el organizador u otro. */

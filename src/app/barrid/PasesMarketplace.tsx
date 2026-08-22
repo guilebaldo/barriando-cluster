@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Ticket,
   MapPin,
+  Video,
   ChevronLeft,
   ChevronRight,
   List,
@@ -26,6 +27,7 @@ import {
 import { startAccessTicketCheckout } from "@/app/pases/actions";
 import ShareAccessEventButton from "@/app/pases/ShareAccessEventButton";
 import AccessEventMiniMap from "@/app/pases/AccessEventMiniMap";
+import AccessEventMeetingLink from "@/app/pases/AccessEventMeetingLink";
 import AccessEventDateBadge from "@/app/pases/AccessEventDateBadge";
 import AccessEventDescription from "@/app/pases/AccessEventDescription";
 
@@ -547,7 +549,11 @@ function EventDetail({
         </p>
         {place.name ? (
           <p className="mt-1 text-xs font-medium text-slate-700 inline-flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+            {event.online ? (
+              <Video className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+            ) : (
+              <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+            )}
             {place.name}
           </p>
         ) : null}
@@ -562,7 +568,9 @@ function EventDetail({
           </p>
         ) : null}
 
-        {showMap ? (
+        {event.online ? (
+          <AccessEventMeetingLink event={event} className="mt-3" />
+        ) : showMap ? (
           <AccessEventMiniMap
             venue={event.venue}
             latitude={event.latitude}

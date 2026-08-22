@@ -7,6 +7,10 @@ export type AccessEventCard = {
   venue: string;
   latitude: number | null;
   longitude: number | null;
+  /** Evento virtual: ficha muestra link de conexión en lugar del mapa. */
+  online: boolean;
+  /** Zoom / Meet / etc. */
+  meetingUrl: string | null;
   hostId: number | null;
   venueId: number | null;
   hostEmail: string | null;
@@ -28,24 +32,32 @@ export type AccessEventCard = {
   venueAddress: string | null;
 };
 
-/** Lugar corto en la lista: nombre de sede, o dirección/link si no hay sede. */
+/** Lugar corto en la lista: Online, nombre de sede, o dirección. */
 export function accessEventListPlace(
-  event: Pick<AccessEventCard, "venueName" | "venue">
+  event: Pick<AccessEventCard, "online" | "venueName" | "venue">
 ): string {
+  if (event.online) {
+    const label = event.venue.trim();
+    if (label && !/^online$/i.test(label)) return label;
+    return "Online";
+  }
   return event.venueName?.trim() || event.venue.trim();
 }
 
 /**
- * Detalle en ficha: nombre de sede + dirección postal (o notas / Zoom).
- * Prefiere la dirección estructurada del socio (colonia, municipio…) sobre
- * un `venue` corto tipo solo calle y número.
+ * Detalle en ficha: nombre de sede + dirección postal (o notas).
+ * En online no usa domicilio de sede; el link va aparte.
  */
 export function accessEventDetailPlace(
-  event: Pick<AccessEventCard, "venueName" | "venue" | "venueAddress">
+  event: Pick<AccessEventCard, "online" | "venueName" | "venue" | "venueAddress">
 ): {
   name: string | null;
   detail: string | null;
 } {
+  if (event.online) {
+    const label = event.venue.trim() || "Online";
+    return { name: label, detail: null };
+  }
   const name = event.venueName?.trim() || null;
   const postal = event.venueAddress?.trim() || null;
   const free = event.venue.trim() || null;
@@ -65,8 +77,9 @@ export function accessEventDetailPlace(
 }
 
 export function accessEventHasMapPin(
-  event: Pick<AccessEventCard, "latitude" | "longitude" | "mapsUrl">
+  event: Pick<AccessEventCard, "online" | "latitude" | "longitude" | "mapsUrl">
 ): boolean {
+  if (event.online) return false;
   const hasCoords =
     event.latitude != null &&
     event.longitude != null &&
@@ -74,6 +87,14 @@ export function accessEventHasMapPin(
     Number.isFinite(event.longitude);
   const hasMaps = Boolean(event.mapsUrl?.trim() && /^https?:\/\//i.test(event.mapsUrl.trim()));
   return hasCoords || hasMaps;
+}
+
+export function accessEventMeetingUrl(
+  event: Pick<AccessEventCard, "meetingUrl">
+): string | null {
+  const raw = event.meetingUrl?.trim() ?? "";
+  if (!raw || !/^https?:\/\//i.test(raw)) return null;
+  return raw;
 }
 
 /** Organizador sintético: el Clúster (no es un socio del directorio). */

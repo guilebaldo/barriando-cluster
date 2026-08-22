@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, Video } from "lucide-react";
 import {
   accessEventDetailPlace,
   accessEventHasEnded,
@@ -17,6 +17,7 @@ import {
 import { startAccessTicketCheckout } from "@/app/pases/actions";
 import ShareAccessEventButton from "./ShareAccessEventButton";
 import AccessEventMiniMap from "./AccessEventMiniMap";
+import AccessEventMeetingLink from "./AccessEventMeetingLink";
 import AccessEventDateBadge from "./AccessEventDateBadge";
 import AccessEventDescription from "./AccessEventDescription";
 
@@ -85,7 +86,11 @@ export default function PaseEventClient({
         </p>
         {place.name ? (
           <p className="mt-1 text-sm font-medium text-slate-700 inline-flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 shrink-0 text-slate-500" />
+            {event.online ? (
+              <Video className="w-4 h-4 shrink-0 text-slate-500" />
+            ) : (
+              <MapPin className="w-4 h-4 shrink-0 text-slate-500" />
+            )}
             {place.name}
           </p>
         ) : null}
@@ -100,7 +105,9 @@ export default function PaseEventClient({
           </p>
         ) : null}
 
-        {showMap ? (
+        {event.online ? (
+          <AccessEventMeetingLink event={event} className="mt-4" />
+        ) : showMap ? (
           <AccessEventMiniMap
             venue={event.venue}
             latitude={event.latitude}

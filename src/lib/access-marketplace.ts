@@ -20,6 +20,8 @@ function toEventCard(
     venue: string;
     latitude: number | null;
     longitude: number | null;
+    online: boolean;
+    meetingUrl: string | null;
     hostId: number | null;
     venueId: number | null;
     hostEmail: string | null;
@@ -39,6 +41,8 @@ function toEventCard(
     venue: row.venue,
     latitude: row.latitude,
     longitude: row.longitude,
+    online: Boolean(row.online),
+    meetingUrl: row.meetingUrl,
     hostId: row.hostId,
     venueId: row.venueId,
     hostEmail: row.hostEmail,
