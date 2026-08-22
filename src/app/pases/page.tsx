@@ -42,7 +42,6 @@ export default async function PasesPage({
       <SiteShell>
         <Navbar />
         <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-8 md:py-12">
-          <h1 className="text-2xl font-black tracking-wide text-slate-950 font-sans mb-4">Pases</h1>
           <PasesMarketplace
             events={events}
             notice={params.pase === "cancelado" ? "cancelado" : null}

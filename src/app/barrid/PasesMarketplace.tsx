@@ -132,7 +132,9 @@ export default function PasesMarketplace({
         />
       ) : (
         <>
-          <ViewToggle view={view} onChange={setView} />
+          <div className="flex justify-center shrink-0">
+            <ViewToggle view={view} onChange={setView} />
+          </div>
           {view === "lista" ? (
             <CatalogList events={chronological} onOpen={setSelectedId} />
           ) : (
@@ -153,7 +155,7 @@ function ViewToggle({
 }) {
   return (
     <div
-      className="shrink-0 inline-flex self-start rounded-lg border border-slate-200 bg-white p-0.5"
+      className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm"
       role="tablist"
       aria-label="Vista de pases"
     >
