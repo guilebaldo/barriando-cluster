@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Ticket } from "lucide-react";
 import AddToHomeScreenModal from "@/app/barrid/AddToHomeScreenModal";
 import PasesMarketplace from "@/app/barrid/PasesMarketplace";
 import type { AccessEventCard } from "@/lib/access-events";
@@ -19,12 +20,12 @@ export default function PasesSignedInHome({
   return (
     <>
       <AddToHomeScreenModal userId={userId} eligible={isFirstLoginUser} />
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <h1 className="text-2xl font-black tracking-wide text-slate-950 font-sans">Pases</h1>
+      <div className="mb-4 flex justify-end">
         <Link
           href="/pases/mios"
-          className="text-[11px] font-bold uppercase tracking-wider text-[#27366D] hover:text-amber-600"
+          className="inline-flex items-center gap-1.5 rounded-xl border-2 border-[#27366D] bg-[#27366D] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-[#27366D]/20 hover:bg-[#1e2b58] hover:border-[#1e2b58] transition active:scale-[0.98]"
         >
+          <Ticket className="w-4 h-4" />
           Mis pases
         </Link>
       </div>
